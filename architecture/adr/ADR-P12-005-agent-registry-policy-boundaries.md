@@ -60,3 +60,16 @@ La revocation du scope parent est opposable a toute nouvelle delegation via un
 fait bool explicite et trusted. Elle reste distincte de l'inactivite temporelle.
 Ce choix ne cree ni registry mutable, ni persistance, ni propagation automatique
 de revocation : ces responsabilites runtime restent hors de 12.4-C.
+
+## Extension Phase 12.4-D
+
+D ajoute l'unique couche qui combine `AccessMatrix`, `CapabilityRegistry` et
+`PermissionScopeEvaluator`. La decision est une intersection : la ceiling matrix
+ne peut jamais etre elargie par un scope. `REQUEST`, `DELEGATE`, `REQUEST_GATE` et
+les resolutions conditionnelles restent des dispositions logiques sans execution.
+
+La delegation finale verifie l'owner specialise et ferme le cas volontairement
+laisse ouvert en C. Routes et autorites restent descriptives ; aucun handler,
+fallback, tool registry, provider, scheduler ou moteur de gate n'est introduit.
+La coherence 4 agents / 24 capabilities / 96 rules est validee fail-closed avant
+l'utilisation d'une policy custom.

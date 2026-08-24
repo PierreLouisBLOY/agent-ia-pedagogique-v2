@@ -2,8 +2,9 @@
 
 La Phase 12.4-C ajoute un evaluator pur du contrat data-only `PermissionScope`.
 Il verifie un `ScopeCheck` sans consulter `AccessMatrix` et ne produit donc pas la
-decision d'autorisation finale du systeme. La Phase 12.4-D combinera la ceiling
-matrix statique et le scope dynamique.
+decision d'autorisation finale du systeme. La Phase 12.4-D combine desormais la
+ceiling matrix statique et le scope dynamique dans une couche distincte. Le scope
+evaluator C reste independant d'`AccessMatrix`.
 
 ## Ordre fail-closed
 

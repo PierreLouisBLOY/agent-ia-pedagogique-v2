@@ -24,8 +24,8 @@ et `block_reason`. Les references et timestamps sont valides a la construction ;
 les metrics sont profondement immutables.
 
 `READY` signifie seulement qu'une transition technique pourra etre envisagee.
-Il ne signifie jamais « autorise » : policy, scope et conditions trusted seront
-revalides immediatement avant lancement dans les lots suivants.
+Il ne signifie jamais « autorise » : depuis 12.5-D, le `PreLaunchGuard` est
+obligatoirement consulte immediatement avant lancement.
 
 ## RunState
 
@@ -52,9 +52,20 @@ pour une dependance. Les candidats suivent l'ordre du plan et restent soumis aux
 controles pre-launch de D. Les deadlines ne sont que des signaux ; elles ne
 produisent aucune annulation ou transition terminale.
 
-## Limites apres 12.5-C
+## Extension executor 12.5-D
 
-Lancement des steps, transitions d'execution, executor, retries et
-replanification restent 12.5-D. Le moteur de gates et les policies de tool calls
-restent 12.10. `BudgetState`, temps actif hors gate, consommation, snapshots
-persistants, reconciliation et recovery complet restent 12.11.
+L'executor porte `READY -> RUNNING`, incremente `attempt_count`, applique les
+quatre resultats terminaux du runner et consomme les signaux de deadline. Une
+attente de gate peut preceder le premier lancement : WAITING_GATE autorise donc
+`started_at=None`. De meme, REPLANNING conserve la valeur de `started_at`, y
+compris `None` lorsqu'une failure policy s'applique avant toute execution.
+
+Une failure policy produit seulement une directive. Aucun retry, backoff,
+replay, nouveau Plan ou succes global implicite n'est execute.
+
+## Limites apres 12.5-D
+
+Le versioning de replan reste 12.5-E. Le moteur concret de gates, le routing et
+les policies de tool calls restent 12.10. `BudgetState`, temps actif hors gate,
+consommation, snapshots persistants, reconciliation et recovery complet restent
+12.11.

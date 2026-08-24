@@ -123,7 +123,7 @@ def test_scheduler_defines_no_execution_or_deferred_engine() -> None:
     }
     class_names = {
         node.name
-        for path in _python_files(BACKEND)
+        for path in _python_files(SCHEDULING)
         for node in ast.walk(_tree(path))
         if isinstance(node, ast.ClassDef)
     }

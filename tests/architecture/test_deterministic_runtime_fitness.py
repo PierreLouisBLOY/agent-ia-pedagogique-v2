@@ -137,6 +137,7 @@ def test_runtime_uses_only_stdlib_and_backend_import_roots() -> None:
         "dataclasses",
         "datetime",
         "enum",
+        "typing",
         "types",
     }
     imported_roots = {
@@ -151,7 +152,6 @@ def test_runtime_uses_only_stdlib_and_backend_import_roots() -> None:
 def test_deferred_runtime_components_are_not_implemented() -> None:
     forbidden_classes = {
         "Scheduler",
-        "PlanExecutor",
         "GateEngine",
         "BudgetState",
         "StateSnapshotStore",
@@ -166,7 +166,6 @@ def test_deferred_runtime_components_are_not_implemented() -> None:
 
     assert class_names.isdisjoint(forbidden_classes)
     assert not (RUNTIME / "scheduler.py").exists()
-    assert not (RUNTIME / "executor.py").exists()
 
 
 def test_runtime_contains_no_concrete_execution_binding() -> None:

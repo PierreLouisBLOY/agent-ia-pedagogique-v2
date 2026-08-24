@@ -68,7 +68,9 @@ atteinte positionne `run_deadline_exceeded` et supprime tous les candidats.
 La baseline 600 secondes n'est pas calculee en wall-clock lorsque
 `gate_wait_pauses_run_deadline=True`, car `RunState` ne porte pas le temps actif
 hors attente humaine. Ce decompte actif et `BudgetState` restent 12.11. Les
-deadlines de C sont seulement des signaux que D devra consommer.
+deadlines de C sont seulement des signaux. Depuis 12.5-D, `PlanExecutor` les
+consomme avant tout lancement : READY expire devient FAILED, tandis qu'un
+timeout susceptible d'avoir suivi un effet RUNNING exige une reconciliation.
 
 ## Joins et limites
 
@@ -79,5 +81,6 @@ deja ete validee en B.
 C n'instancie aucun `AgentInvocation`, `DelegationEnvelope`, use case, tool ou
 gate. Il ne consulte ni `CapabilityAuthorizationPolicy`, ni
 `PermissionScopeEvaluator`, ni `GateDecision`, ni un budget consomme. Execution,
-transitions de lancement et annulation sur timeout restent 12.5-D ; routing tools
-et gates reelles restent 12.10 ; accounting/recovery restent 12.11.
+transitions de lancement et consommation prudente des timeouts sont portees par
+12.5-D sans modifier cette responsabilite. Routing tools et gates reelles
+restent 12.10 ; accounting/recovery restent 12.11.

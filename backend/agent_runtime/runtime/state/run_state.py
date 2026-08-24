@@ -12,9 +12,7 @@ from backend.shared_kernel._strings import require_non_empty
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.time import Instant
 
-_ACTIVE_STATUSES = frozenset(
-    {WorkflowStatus.RUNNING, WorkflowStatus.WAITING_GATE, WorkflowStatus.REPLANNING}
-)
+_STARTED_ACTIVE_STATUSES = frozenset({WorkflowStatus.RUNNING})
 _TERMINAL_STATUSES = frozenset(
     {
         WorkflowStatus.SUCCEEDED,
@@ -92,10 +90,14 @@ class RunState:
 
         if self.status is WorkflowStatus.PLANNED and self.started_at is not None:
             raise ValueError("planned runs must not have started_at")
-        if self.status in _ACTIVE_STATUSES and (
+        if self.status in _STARTED_ACTIVE_STATUSES and (
             self.started_at is None or self.ended_at is not None
         ):
             raise ValueError("active runs require started_at and forbid ended_at")
+        if self.status is WorkflowStatus.REPLANNING and self.ended_at is not None:
+            raise ValueError("replanning runs must not have ended_at")
+        if self.status is WorkflowStatus.WAITING_GATE and self.ended_at is not None:
+            raise ValueError("waiting gate runs must not have ended_at")
         if self.status in _TERMINAL_STATUSES and self.ended_at is None:
             raise ValueError("terminal runs require ended_at")
         if self.status in _STOP_REASON_REQUIRED_STATUSES and self.stop_reason is None:

@@ -80,3 +80,23 @@ actif hors gate est differe a 12.11.
 
 Un candidat reste READY : autorisation, scope, gate et budget remaining seront
 reevalues par la frontiere pre-launch de D avant toute transition RUNNING.
+
+## Extension Phase 12.5-D
+
+`runtime/execution` ajoute la frontiere d'execution deterministe. Le scheduler
+reste l'unique source des candidats et signaux de deadline ; un candidat ne
+devient RUNNING qu'apres un `PreLaunchGuard` injecte ayant retourne ALLOW. Le
+guard et le `StepRunner` sont des Protocols, sans implementation concrete dans
+ce lot.
+
+Un cycle execute une seule decision scheduler. Il applique les resultats
+terminaux du runner, incremente l'attempt au lancement et traduit les
+`FailurePolicy` en directives sans boucle de retry. Un effet UNKNOWN, un timeout
+d'un step RUNNING ou une exception runner exigent une reconciliation au lieu
+d'un replay aveugle. Le refresh final peut propager l'etat du DAG mais ne lance
+pas une seconde vague.
+
+Le run n'est pas marque SUCCEEDED sans evaluateur canonique de
+`success_criteria`. D ne construit aucun nouveau Plan et ne realise aucun
+routing concret. Versioning de replan, gates/routing et recovery restent
+respectivement reserves a 12.5-E, 12.10 et 12.11.

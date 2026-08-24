@@ -11,7 +11,7 @@ Cette baseline materialise sans logique metier la structure normative issue de l
 | `backend/agent_runtime/contracts/` | Contrats techniques runtime agentiques provider-neutral |
 | `backend/agent_runtime/registry/` | Catalogues statiques agents/capabilities et ceiling matrix exhaustive |
 | `backend/agent_runtime/policy/` | Garde-fous techniques runtime configurables, sans autorite metier |
-| `backend/agent_runtime/runtime/` | Plan, validation du DAG, etat technique et scheduler de decision pur, sans execution ni effet metier |
+| `backend/agent_runtime/runtime/` | Plan, validation du DAG, etat technique, scheduler pur et frontiere d'execution deterministe sans binding concret ni autorite metier |
 | `backend/modules/` | Coeur metier decoupe en M01 a M12 et MX1 |
 | `backend/adapters/inbound/` | Entrees API, UI locale, CLI, outils agents et batch |
 | `backend/adapters/outbound/` | Integrations sortantes futures |
@@ -46,3 +46,8 @@ Chaque module porte les memes sous-frontieres `domain/`, `contracts/`, `ports/` 
 Le metier reste local a son module. Le shared kernel demeure generique. Les adaptateurs consomment les ports et use cases prevus; les outils agents entrent uniquement par `backend/adapters/inbound/agent_tools/`. Les contrats restent independants de HTTP, d'un ORM et des SDK fournisseurs.
 
 Les repertoires globaux `backend/domain/`, `backend/repositories/` et `backend/services/` sont interdits. Les tests de `tests/architecture/` gardent cette baseline sans anticiper les fitness functions completes des phases suivantes.
+
+Sous `backend/agent_runtime/runtime/execution/`, le guard pre-launch et le runner
+restent des Protocols injectes. Cette zone applique uniquement les transitions
+techniques et directives de 12.5-D ; elle ne contient aucun adapter, provider,
+gate engine, routing concret, retry loop ou repository.

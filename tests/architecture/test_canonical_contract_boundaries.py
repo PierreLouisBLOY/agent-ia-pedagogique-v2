@@ -193,13 +193,11 @@ def test_delegation_request_has_no_parallel_class_definition() -> None:
     assert definitions == []
 
 
-def test_agent_runtime_does_not_define_execution_or_adapter_logic() -> None:
+def test_agent_runtime_does_not_define_adapter_or_concrete_binding_logic() -> None:
     forbidden_fragments = (
         "Handler",
         "Provider",
         "Repository",
-        "PlanExecutor",
-        "StepRunner",
     )
     definitions = [
         f"{path.relative_to(ROOT).as_posix()}: {node.name}"

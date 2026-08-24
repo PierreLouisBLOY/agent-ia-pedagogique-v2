@@ -315,11 +315,25 @@ def test_planned_run_rejects_started_at() -> None:
 
 @pytest.mark.parametrize(
     "status",
-    [WorkflowStatus.RUNNING, WorkflowStatus.WAITING_GATE, WorkflowStatus.REPLANNING],
+    [WorkflowStatus.RUNNING],
 )
 def test_active_run_requires_started_at(status: WorkflowStatus) -> None:
     with pytest.raises(ValueError):
         _run_state(status=status)
+
+
+def test_waiting_gate_run_can_precede_first_execution() -> None:
+    state = _run_state(status=WorkflowStatus.WAITING_GATE)
+
+    assert state.started_at is None
+    assert state.ended_at is None
+
+
+def test_replanning_run_can_precede_first_execution() -> None:
+    state = _run_state(status=WorkflowStatus.REPLANNING)
+
+    assert state.started_at is None
+    assert state.ended_at is None
 
 
 @pytest.mark.parametrize(

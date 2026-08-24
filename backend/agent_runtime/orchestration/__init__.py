@@ -9,6 +9,16 @@ from backend.agent_runtime.orchestration.compilation import (
     PlanCompiler,
     PlanStepBinding,
 )
+from backend.agent_runtime.orchestration.coordination import (
+    CompletionDisposition,
+    CoordinationAction,
+    CoordinationDecision,
+    CoordinationError,
+    CoordinationErrorCode,
+    OrchestrationCoordinator,
+    WorkflowCompletionDecision,
+    WorkflowCompletionEvaluator,
+)
 from backend.agent_runtime.orchestration.selection import (
     WorkflowRequirements,
     WorkflowSelectionDecision,
@@ -35,6 +45,11 @@ from backend.agent_runtime.orchestration.workflows import (
 __all__ = [
     "BASELINE_WORKFLOW_CATALOG",
     "BASELINE_WORKFLOW_RESPONSIBILITY_DESCRIPTORS",
+    "CompletionDisposition",
+    "CoordinationAction",
+    "CoordinationDecision",
+    "CoordinationError",
+    "CoordinationErrorCode",
     "HumanGateAnchor",
     "HumanGateBinding",
     "PlanCompilationCode",
@@ -42,6 +57,7 @@ __all__ = [
     "PlanCompilationRequest",
     "PlanCompiler",
     "PlanStepBinding",
+    "OrchestrationCoordinator",
     "WorkflowRequirements",
     "WorkflowCatalog",
     "WorkflowGateProfile",
@@ -58,4 +74,6 @@ __all__ = [
     "WorkflowSelectionStatus",
     "WorkflowSelector",
     "WorkflowTopologyDescriptor",
+    "WorkflowCompletionDecision",
+    "WorkflowCompletionEvaluator",
 ]

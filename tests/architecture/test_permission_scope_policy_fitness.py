@@ -95,7 +95,7 @@ def test_runtime_mode_and_autonomy_are_absent_from_permission_inputs() -> None:
 def test_only_the_scoped_permission_evaluator_is_added() -> None:
     evaluator_definitions = [
         (path.relative_to(ROOT).as_posix(), node.name)
-        for path in (ROOT / "backend" / "agent_runtime").rglob("*.py")
+        for path in POLICY.rglob("*.py")
         for node in ast.walk(_tree(path))
         if isinstance(node, ast.ClassDef) and "Evaluator" in node.name
     ]

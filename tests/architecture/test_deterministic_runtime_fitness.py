@@ -135,6 +135,7 @@ def test_runtime_uses_only_stdlib_and_backend_import_roots() -> None:
         "backend",
         "collections",
         "dataclasses",
+        "datetime",
         "enum",
         "types",
     }

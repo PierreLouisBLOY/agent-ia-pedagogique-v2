@@ -7,6 +7,15 @@ from backend.agent_runtime.runtime.planning import (
     PlanValidationResult,
     PlanValidator,
 )
+from backend.agent_runtime.runtime.scheduling import (
+    DependencyDisposition,
+    DeterministicScheduler,
+    SchedulerStateError,
+    SchedulingDecision,
+    dependency_disposition,
+    effective_step_deadline,
+    refresh_schedulable_state,
+)
 from backend.agent_runtime.runtime.state import (
     InvalidInitialPlanError,
     RunState,
@@ -17,13 +26,20 @@ from backend.agent_runtime.runtime.state import (
 
 __all__ = [
     "InvalidInitialPlanError",
+    "DependencyDisposition",
+    "DeterministicScheduler",
     "Plan",
     "PlanValidationCode",
     "PlanValidationIssue",
     "PlanValidationResult",
     "PlanValidator",
     "RunState",
+    "SchedulerStateError",
+    "SchedulingDecision",
     "StepRuntimeStatus",
     "StepState",
+    "dependency_disposition",
+    "effective_step_deadline",
     "initialize_run_state",
+    "refresh_schedulable_state",
 ]

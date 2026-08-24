@@ -43,9 +43,18 @@ L'ordre suit l'ordre des cles fourni lors de la construction de `step_states`.
 steps en `PENDING` et le run en `PLANNED`. Elle ne calcule pas `READY`, ne lance
 rien, ne resout aucun scope et ne consomme aucun budget.
 
-## Limites de 12.5-B
+## Extension scheduler 12.5-C
 
-Scheduler, selection et lancement des steps, transitions, executor, retries et
-replanification arrivent en 12.5-C/D. Le moteur de gates et les policies de tool
-calls restent 12.10. `BudgetState`, consommation, snapshots persistants,
-reconciliation et recovery complet restent 12.11.
+Le scheduler pur peut maintenant deriver `PENDING -> READY/BLOCKED`, propager un
+blocage et retourner des `launch_candidate_ids` bornes. Il ne change ni le
+`WorkflowStatus` global, ni READY en RUNNING. PARTIAL/SKIPPED restent non resolus
+pour une dependance. Les candidats suivent l'ordre du plan et restent soumis aux
+controles pre-launch de D. Les deadlines ne sont que des signaux ; elles ne
+produisent aucune annulation ou transition terminale.
+
+## Limites apres 12.5-C
+
+Lancement des steps, transitions d'execution, executor, retries et
+replanification restent 12.5-D. Le moteur de gates et les policies de tool calls
+restent 12.10. `BudgetState`, temps actif hors gate, consommation, snapshots
+persistants, reconciliation et recovery complet restent 12.11.

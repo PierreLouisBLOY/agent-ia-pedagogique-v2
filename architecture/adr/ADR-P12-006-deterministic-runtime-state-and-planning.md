@@ -41,9 +41,10 @@ enveloppes de budget. Elle ne charge ni n'evalue `PermissionScope`, ne verifie
 aucune `GateDecision` et ne constitue pas une autorisation. Un futur etat `READY`
 ne signifiera jamais qu'un lancement est autorise.
 
-Aucun framework ni provider n'est requis. Le scheduler et l'executor sont
-reserves aux lots 12.5-C/D. Gates d'execution et routing concret restent 12.10 ;
-snapshots, consommation budgetaire et recovery complet restent 12.11.
+Aucun framework ni provider n'est requis. Le scheduler de decision pur arrive en
+12.5-C ; l'executor et les transitions de lancement restent reserves a 12.5-D.
+Gates d'execution et routing concret restent 12.10 ; snapshots, consommation
+budgetaire et recovery complet restent 12.11.
 
 ## Consequences
 
@@ -64,3 +65,18 @@ commun, et une capability `REQUEST_GATE` pour AG-01 possede un ancetre
 `StepKind.GATE`. Le join ne realise aucune aggregation semantique et la gate ne
 prouve aucune decision. Scope, gate et budget seront toujours reevalues juste
 avant lancement ; execution des gates et routing concret restent 12.10.
+
+## Extension Phase 12.5-C
+
+`runtime/scheduling` ajoute une decision pure et sans etat interne. Elle derive
+READY/BLOCKED, propage les blocages jusqu'au point fixe, borne les candidats par
+`max_parallel_steps` et emet seulement des signaux de deadline. L'ordre des
+candidats suit `Plan.steps`, jamais l'ordre accidentel d'un mapping de state.
+
+PARTIAL et SKIPPED restent non resolus en l'absence de policy declarative plus
+precise. Les JOIN suivent la semantique ordinaire des dependances et n'agregent
+aucune donnee. Une deadline atteinte ne mute aucun step. Le calcul exact du temps
+actif hors gate est differe a 12.11.
+
+Un candidat reste READY : autorisation, scope, gate et budget remaining seront
+reevalues par la frontiere pre-launch de D avant toute transition RUNNING.

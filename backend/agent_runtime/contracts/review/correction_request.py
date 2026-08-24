@@ -21,6 +21,7 @@ class CorrectionRequest:
     target_production_ref: ContractRef
     review_ref: ContractRef
     finding_ids: tuple[str, ...] = ()
+    evidence_refs: tuple[ContractRef, ...] = ()
     preserve_constraints: Mapping[str, object] = field(default_factory=dict)
     allowed_changes: Mapping[str, object] = field(default_factory=dict)
     forbidden_changes: Mapping[str, object] = field(default_factory=dict)
@@ -38,7 +39,11 @@ class CorrectionRequest:
             require_non_empty(finding_id, "finding_id")
         if len(finding_ids) != len(set(finding_ids)):
             raise ValueError("finding_ids must be unique")
+        evidence_refs = tuple(self.evidence_refs)
+        for evidence_ref in evidence_refs:
+            require_contract_ref(evidence_ref, "evidence_ref")
         object.__setattr__(self, "finding_ids", finding_ids)
+        object.__setattr__(self, "evidence_refs", evidence_refs)
         object.__setattr__(
             self,
             "preserve_constraints",

@@ -16,9 +16,9 @@ Domain/Application, hors modules metier, hors adaptateurs et hors infrastructure
 | C-06 | `EvidenceItem`, `EvidenceSet` | `contracts/evidence/` | IMPLEMENTED C2 |
 | C-07 | `ProductionRequest` | `contracts/production/production_request.py` | IMPLEMENTED C2 |
 | C-08 | `ProductionCandidate` | `contracts/production/production_candidate.py` | IMPLEMENTED C2 |
-| C-09 | `ReviewRequest` | `contracts/review/review_request.py` | IMPLEMENTED C2 |
-| C-10 | `Finding`, `ReviewResult` | `contracts/review/` | IMPLEMENTED C2 |
-| C-11 | `CorrectionRequest` | `contracts/review/correction_request.py` | IMPLEMENTED C2 |
+| C-09 | `ReviewRequest`, `ReviewDimension` | `contracts/review/` | IMPLEMENTED C2 |
+| C-10 | `Finding`, `FindingSeverity`, `ReviewResult`, `OverallAssessment` | `contracts/review/` | IMPLEMENTED C2 |
+| C-11 | `CorrectionRequest` avec preuves de correction | `contracts/review/correction_request.py` | IMPLEMENTED C2 |
 | C-12 | `UseCaseRequest` | `contracts/application/use_case_request.py` | IMPLEMENTED C2 |
 | C-13 | `UseCaseResult` | `contracts/application/use_case_result.py` | IMPLEMENTED C2 |
 | C-14 | `ToolCallRequest` | `contracts/tools/tool_call_request.py` | IMPLEMENTED C2 |
@@ -64,13 +64,21 @@ delegation, l'agent source et le step correle.
 
 Les contrats evidence distinguent l'intention de recherche de son resultat.
 `EvidenceItem` exige une provenance minimale et `EvidenceSet` accepte explicitement
-un resultat vide. Aucun item fictif n'est fabrique.
+un resultat vide. Aucun item fictif n'est fabrique. Les `source_kind` manifestement
+generatifs sont detectes par composants lexicaux snake-case, kebab-case, espaces,
+camelCase et PascalCase. Un simple composant `model`, sans `output` ni `generated`,
+reste autorise pour ne pas bloquer les modeles de donnees documentaires.
 
 `ProductionRequest` decrit une intention de production. `ProductionCandidate`
 reste non canonique : son enum `ProductionValidationState` ne contient que
 `candidate`. Revue, correction, validation et promotion restent des responsabilites
 distinctes. `ReviewResult` ne modifie pas sa cible et `CorrectionRequest` decrit
 une transformation version-orientee ulterieure.
+
+La review reutilise les vocabulaires exacts de Phase 11.12 : `ReviewDimension`,
+`FindingSeverity` et `OverallAssessment`. `ReviewStatus` reste uniquement le statut
+d'execution de la review. Aucune policy ne derive automatiquement le besoin de
+correction depuis une severite ou une assessment.
 
 `UseCaseRequest` compose le `UseCaseContext` canonique et ne connait aucun handler.
 `UseCaseResult` compose `ApplicationOutcome`; ses erreurs metier, avertissements et
@@ -79,7 +87,9 @@ qu'exprimer une intention et son resultat public. Un `tool_id` ne confere aucune
 autorisation et aucun outil n'est execute dans cette zone.
 
 Les gates emploient les statuts exacts `pending`, `approved`, `rejected`, `deferred`
-et `expired`. Une decision ne peut etre attribuee logiquement a AG-01. Les events
+et `expired`. `GateDecision` compose sa `GateRequest` pour verrouiller localement
+gate, acteur requis, correlation, step, fenetre temporelle et option selectionnee,
+sans moteur de decision. Une decision ne peut etre attribuee logiquement a AG-01. Les events
 emploient le `WorkflowStatus` exact de Phase 11.8 et ne mettent en oeuvre aucun
 backend de logs ou de traces.
 

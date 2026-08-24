@@ -12,6 +12,7 @@ from backend.agent_runtime.contracts import (
     AgentId,
     AgentResult,
     AgentResultStatus,
+    BudgetSpec,
     ContractMeta,
     CorrectionRequest,
     DelegationEnvelope,
@@ -22,15 +23,18 @@ from backend.agent_runtime.contracts import (
     ExecutorKind,
     ExecutorRef,
     Finding,
+    FindingSeverity,
     GateDecision,
     GateDecisionValue,
     GateRequest,
     GateStatus,
     InvocationStatus,
+    OverallAssessment,
     PermissionScope,
     ProductionCandidate,
     ProductionRequest,
     ProductionValidationState,
+    ReviewDimension,
     ReviewRequest,
     ReviewResult,
     ReviewStatus,
@@ -65,13 +69,14 @@ def _meta[TStatus](
     actor: ActorRef | None = None,
     step_id: str = "step-1",
     created_at: Instant = NOW,
+    correlation_id: str = "corr-1",
 ) -> ContractMeta[TStatus]:
     return ContractMeta(
         schema_version="12.3-C2",
         run_id="run-1",
         step_id=step_id,
         parent_step_id=None,
-        correlation_id=CorrelationId("corr-1"),
+        correlation_id=CorrelationId(correlation_id),
         created_at=created_at,
         actor=actor or _actor(),
         status=status,
@@ -120,6 +125,29 @@ def _evidence_item(evidence_id: str = "evidence-1") -> EvidenceItem:
     )
 
 
+def _gate_request(
+    *,
+    gate_id: str = "gate-1",
+    required_actor: ActorRef | None = None,
+    step_id: str = "step-1",
+    correlation_id: str = "corr-1",
+    expires_at: Instant | None = None,
+) -> GateRequest:
+    return GateRequest(
+        meta=_meta(
+            GateStatus.PENDING,
+            step_id=step_id,
+            correlation_id=correlation_id,
+        ),
+        gate_id=gate_id,
+        gate_type="approval",
+        reason="Canonical promotion requires authority",
+        options=({"id": "approve"}, {"id": "reject"}),
+        required_actor=required_actor or _actor(ActorKind.USER, "user-1"),
+        expires_at=expires_at,
+    )
+
+
 def test_c2_types_are_publicly_materialized() -> None:
     assert all(
         item is not None
@@ -148,6 +176,30 @@ def test_c2_types_are_publicly_materialized() -> None:
 def test_c2_enums_have_exact_canonical_values() -> None:
     assert [item.value for item in ProductionValidationState] == ["candidate"]
     assert [item.value for item in ReviewStatus] == ["completed", "incomplete", "failed"]
+    assert [item.value for item in ReviewDimension] == [
+        "REV-ACC",
+        "REV-COV",
+        "REV-PED",
+        "REV-INS",
+        "REV-STR",
+        "REV-SRC",
+        "REV-CON",
+        "REV-FMT",
+        "REV-RSK",
+    ]
+    assert [item.value for item in FindingSeverity] == [
+        "info",
+        "minor",
+        "major",
+        "blocking",
+    ]
+    assert [item.value for item in OverallAssessment] == [
+        "acceptable",
+        "acceptable_with_reservations",
+        "correction_required",
+        "unusable",
+        "incomplete",
+    ]
     assert [item.value for item in GateStatus] == [
         "pending",
         "approved",
@@ -266,6 +318,57 @@ def test_evidence_item_requires_minimum_provenance() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    "source_kind",
+    [
+        "llm",
+        "llm_output",
+        "llm-output",
+        "generated_by_llm",
+        "llmGenerated",
+        "model_output",
+        "model-generated-output",
+        "agent_output",
+        "agentOutput",
+        "generated_agent_output",
+    ],
+)
+def test_evidence_item_rejects_lexical_generative_source_kinds(
+    source_kind: str,
+) -> None:
+    with pytest.raises(ValueError):
+        EvidenceItem(
+            evidence_id="evidence-1",
+            source_ref="generation-1",
+            source_kind=source_kind,
+            locator="response",
+            retrieved_at=NOW,
+        )
+
+
+@pytest.mark.parametrize(
+    "source_kind",
+    [
+        "official_document",
+        "user_document",
+        "database_record",
+        "web_source",
+        "tool_observation",
+        "data_model",
+    ],
+)
+def test_evidence_item_accepts_legitimate_source_kinds(source_kind: str) -> None:
+    item = EvidenceItem(
+        evidence_id="evidence-1",
+        source_ref="source-1",
+        source_kind=source_kind,
+        locator="section-1",
+        retrieved_at=NOW,
+    )
+
+    assert item.source_kind == source_kind
+
+
 def test_evidence_set_accepts_empty_and_rejects_duplicate_ids() -> None:
     empty = EvidenceSet(meta=_meta(AgentResultStatus.SUCCEEDED))
     assert empty.evidence_items == ()
@@ -320,23 +423,29 @@ def test_review_request_result_and_finding_keep_review_separate_from_validation(
     request = ReviewRequest(
         meta=_meta(InvocationStatus.PLANNED),
         target_production_ref="production-1",
-        review_dimensions=("accuracy",),
+        review_dimensions=(ReviewDimension.ACCURACY, ReviewDimension.SOURCES),
+        review_budget=BudgetSpec(max_steps=2),
     )
     finding = Finding(
         finding_id="finding-1",
-        dimension="accuracy",
-        severity="major",
+        dimension=ReviewDimension.ACCURACY,
+        severity=FindingSeverity.MAJOR,
         description="A citation is missing",
         target_locator={"section": "intro"},
         rationale="The claim has no source.",
+        correction_required=True,
+        confidence={"level": "high"},
+        suggested_action={"kind": "add_source"},
     )
     result = ReviewResult(
         meta=_meta(ReviewStatus.COMPLETED),
         review_id="review-1",
         target_production_ref=request.target_production_ref,
         findings=(finding,),
-        overall_assessment={"summary": "Correction needed"},
+        overall_assessment=OverallAssessment.CORRECTION_REQUIRED,
         correction_required=True,
+        coverage=request.review_dimensions,
+        evidence_refs_used=("evidence-1",),
     )
     assert result.target_production_ref == request.target_production_ref
     assert "validated" not in {item.name for item in fields(ReviewResult)}
@@ -347,12 +456,98 @@ def test_finding_rejects_nested_private_reasoning() -> None:
     with pytest.raises(ValueError):
         Finding(
             finding_id="finding-1",
-            dimension="accuracy",
-            severity="major",
+            dimension=ReviewDimension.ACCURACY,
+            severity=FindingSeverity.MAJOR,
             description="Issue",
             target_locator={"debug": {"chain-of-thought": "hidden"}},
             rationale="Public rationale",
+            correction_required=True,
         )
+
+
+def test_review_request_rejects_duplicate_dimensions() -> None:
+    with pytest.raises(ValueError):
+        ReviewRequest(
+            meta=_meta(InvocationStatus.PLANNED),
+            target_production_ref="production-1",
+            review_dimensions=(ReviewDimension.ACCURACY, ReviewDimension.ACCURACY),
+        )
+
+
+def test_finding_fields_are_safe_without_deriving_correction_policy() -> None:
+    finding = Finding(
+        finding_id="finding-1",
+        dimension=ReviewDimension.RISK,
+        severity=FindingSeverity.BLOCKING,
+        description="A risk needs authority review",
+        target_locator={"section": "safety"},
+        rationale="The public criterion is unmet.",
+        correction_required=False,
+        confidence={"level": "high"},
+        suggested_action={"kind": "escalate"},
+    )
+
+    assert finding.correction_required is False
+    with pytest.raises(TypeError):
+        finding.confidence["level"] = "low"  # type: ignore[index]
+    with pytest.raises(ValueError):
+        Finding(
+            finding_id="finding-2",
+            dimension=ReviewDimension.RISK,
+            severity=FindingSeverity.MINOR,
+            description="Issue",
+            target_locator={"section": "safety"},
+            rationale="Public rationale",
+            correction_required=True,
+            suggested_action={"privateReasoning": "hidden"},
+        )
+    with pytest.raises(TypeError):
+        Finding(
+            finding_id="finding-3",
+            dimension=ReviewDimension.ACCURACY,
+            severity=FindingSeverity.INFO,
+            description="Issue",
+            target_locator={"section": "intro"},
+            rationale="Public rationale",
+            correction_required="yes",  # type: ignore[arg-type]
+        )
+
+
+def test_review_result_validates_coverage_and_evidence_refs() -> None:
+    with pytest.raises(ValueError):
+        ReviewResult(
+            meta=_meta(ReviewStatus.COMPLETED),
+            review_id="review-1",
+            target_production_ref="production-1",
+            findings=(),
+            overall_assessment=OverallAssessment.ACCEPTABLE,
+            correction_required=False,
+            coverage=(ReviewDimension.ACCURACY, ReviewDimension.ACCURACY),
+            evidence_refs_used=(),
+        )
+    with pytest.raises(ValueError):
+        ReviewResult(
+            meta=_meta(ReviewStatus.INCOMPLETE),
+            review_id="review-2",
+            target_production_ref="production-1",
+            findings=(),
+            overall_assessment=OverallAssessment.INCOMPLETE,
+            correction_required=False,
+            coverage=(),
+            evidence_refs_used=("",),
+        )
+
+    structurally_independent = ReviewResult(
+        meta=_meta(ReviewStatus.COMPLETED),
+        review_id="review-3",
+        target_production_ref="production-1",
+        findings=(),
+        overall_assessment=OverallAssessment.ACCEPTABLE,
+        correction_required=True,
+        coverage=(ReviewDimension.FORMAT,),
+        evidence_refs_used=(),
+    )
+    assert structurally_independent.correction_required is True
 
 
 def test_correction_request_is_immutable_and_version_oriented() -> None:
@@ -361,12 +556,21 @@ def test_correction_request_is_immutable_and_version_oriented() -> None:
         target_production_ref="production-version-1",
         review_ref="review-1",
         finding_ids=("finding-1",),
+        evidence_refs=("evidence-1",),
         expected_delta={"new_version": True},
     )
     assert request.target_production_ref == "production-version-1"
     assert request.review_ref == "review-1"
+    assert request.evidence_refs == ("evidence-1",)
     with pytest.raises(FrozenInstanceError):
         request.review_ref = "review-2"  # type: ignore[misc]
+    with pytest.raises(ValueError):
+        CorrectionRequest(
+            meta=_meta(InvocationStatus.PLANNED),
+            target_production_ref="production-version-1",
+            review_ref="review-1",
+            evidence_refs=("",),
+        )
 
 
 def test_use_case_request_composes_context_and_rejects_private_payload() -> None:
@@ -455,14 +659,7 @@ def test_tool_call_result_preserves_refs_and_can_be_correlated_locally() -> None
 
 def test_gate_request_is_pending_and_decision_refuses_ag_01() -> None:
     approver = _actor(ActorKind.USER, "user-1")
-    request = GateRequest(
-        meta=_meta(GateStatus.PENDING),
-        gate_id="gate-1",
-        gate_type="approval",
-        reason="Canonical promotion requires authority",
-        options=({"id": "approve"}, {"id": "reject"}),
-        required_actor=approver,
-    )
+    request = _gate_request(required_actor=approver)
     decision = GateDecision(
         meta=_meta(GateStatus.APPROVED, actor=approver),
         gate_id="gate-1",
@@ -470,10 +667,13 @@ def test_gate_request_is_pending_and_decision_refuses_ag_01() -> None:
         actor=approver,
         decided_at=NOW,
         decision_ref="decision-1",
+        request=request,
+        selected_option={"id": "approve"},
     )
     assert decision.gate_id == request.gate_id
 
     ag_01 = _actor(actor_id=AgentId.AG_01.value)
+    ag_01_request = _gate_request(required_actor=ag_01)
     with pytest.raises(ValueError):
         GateDecision(
             meta=_meta(GateStatus.REJECTED, actor=ag_01),
@@ -482,11 +682,13 @@ def test_gate_request_is_pending_and_decision_refuses_ag_01() -> None:
             actor=ag_01,
             decided_at=NOW,
             decision_ref="decision-2",
+            request=ag_01_request,
         )
 
 
 def test_gate_decision_requires_utc_and_matching_status() -> None:
     approver = _actor(ActorKind.USER, "user-1")
+    request = _gate_request(required_actor=approver)
     non_utc = Instant(datetime(2026, 8, 24, 14, 0, tzinfo=timezone(timedelta(hours=2))))
     with pytest.raises(ValueError):
         GateDecision(
@@ -496,6 +698,7 @@ def test_gate_decision_requires_utc_and_matching_status() -> None:
             actor=approver,
             decided_at=non_utc,
             decision_ref="decision-1",
+            request=request,
         )
     with pytest.raises(ValueError):
         GateDecision(
@@ -505,6 +708,103 @@ def test_gate_decision_requires_utc_and_matching_status() -> None:
             actor=approver,
             decided_at=NOW,
             decision_ref="decision-1",
+            request=request,
+        )
+
+
+def test_gate_decision_rejects_mismatched_gate_id_and_required_actor() -> None:
+    approver = _actor(ActorKind.USER, "user-1")
+    request = _gate_request(required_actor=approver)
+    with pytest.raises(ValueError):
+        GateDecision(
+            meta=_meta(GateStatus.APPROVED, actor=approver),
+            gate_id="other-gate",
+            decision=GateDecisionValue.APPROVED,
+            actor=approver,
+            decided_at=NOW,
+            decision_ref="decision-1",
+            request=request,
+        )
+
+    other_actor = _actor(ActorKind.USER, "user-2")
+    with pytest.raises(ValueError):
+        GateDecision(
+            meta=_meta(GateStatus.APPROVED, actor=other_actor),
+            gate_id="gate-1",
+            decision=GateDecisionValue.APPROVED,
+            actor=other_actor,
+            decided_at=NOW,
+            decision_ref="decision-1",
+            request=request,
+        )
+
+
+def test_gate_decision_rejects_mismatched_correlation_and_step() -> None:
+    approver = _actor(ActorKind.USER, "user-1")
+    request = _gate_request(required_actor=approver)
+    with pytest.raises(ValueError):
+        GateDecision(
+            meta=_meta(GateStatus.APPROVED, actor=approver, correlation_id="other"),
+            gate_id="gate-1",
+            decision=GateDecisionValue.APPROVED,
+            actor=approver,
+            decided_at=NOW,
+            decision_ref="decision-1",
+            request=request,
+        )
+    with pytest.raises(ValueError):
+        GateDecision(
+            meta=_meta(GateStatus.APPROVED, actor=approver, step_id="other-step"),
+            gate_id="gate-1",
+            decision=GateDecisionValue.APPROVED,
+            actor=approver,
+            decided_at=NOW,
+            decision_ref="decision-1",
+            request=request,
+        )
+
+
+def test_gate_decision_enforces_request_time_window() -> None:
+    approver = _actor(ActorKind.USER, "user-1")
+    expires_at = Instant(datetime(2026, 8, 24, 12, 30, tzinfo=UTC))
+    request = _gate_request(required_actor=approver, expires_at=expires_at)
+    after_expiration = Instant(datetime(2026, 8, 24, 12, 31, tzinfo=UTC))
+    before_creation = Instant(datetime(2026, 8, 24, 11, 59, tzinfo=UTC))
+    with pytest.raises(ValueError):
+        GateDecision(
+            meta=_meta(GateStatus.APPROVED, actor=approver),
+            gate_id="gate-1",
+            decision=GateDecisionValue.APPROVED,
+            actor=approver,
+            decided_at=after_expiration,
+            decision_ref="decision-1",
+            request=request,
+        )
+    with pytest.raises(ValueError):
+        GateDecision(
+            meta=_meta(GateStatus.APPROVED, actor=approver),
+            gate_id="gate-1",
+            decision=GateDecisionValue.APPROVED,
+            actor=approver,
+            decided_at=before_creation,
+            decision_ref="decision-1",
+            request=request,
+        )
+
+
+def test_gate_decision_selected_option_must_match_request_option() -> None:
+    approver = _actor(ActorKind.USER, "user-1")
+    request = _gate_request(required_actor=approver)
+    with pytest.raises(ValueError):
+        GateDecision(
+            meta=_meta(GateStatus.APPROVED, actor=approver),
+            gate_id="gate-1",
+            decision=GateDecisionValue.APPROVED,
+            actor=approver,
+            decided_at=NOW,
+            decision_ref="decision-1",
+            request=request,
+            selected_option={"id": "unknown"},
         )
 
 

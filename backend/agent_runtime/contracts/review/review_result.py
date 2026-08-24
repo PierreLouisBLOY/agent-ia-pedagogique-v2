@@ -11,6 +11,10 @@ from backend.agent_runtime.contracts.common import (
     require_contract_ref,
 )
 from backend.agent_runtime.contracts.review.finding import Finding
+from backend.agent_runtime.contracts.review.vocabulary import (
+    OverallAssessment,
+    ReviewDimension,
+)
 from backend.shared_kernel._strings import require_non_empty
 
 
@@ -28,8 +32,10 @@ class ReviewResult:
     review_id: str
     target_production_ref: ContractRef
     findings: tuple[Finding, ...]
-    overall_assessment: Mapping[str, object]
+    overall_assessment: OverallAssessment
     correction_required: bool
+    coverage: tuple[ReviewDimension, ...]
+    evidence_refs_used: tuple[ContractRef, ...]
     confidence: Mapping[str, object] = field(default_factory=dict)
     limitations: tuple[Mapping[str, object], ...] = ()
     warnings: tuple[Mapping[str, object], ...] = ()
@@ -47,16 +53,23 @@ class ReviewResult:
         finding_ids = [item.finding_id for item in findings]
         if len(finding_ids) != len(set(finding_ids)):
             raise ValueError("findings must have unique finding_id values")
+        if not isinstance(self.overall_assessment, OverallAssessment):
+            raise TypeError("overall_assessment must be an OverallAssessment")
         if not isinstance(self.correction_required, bool):
             raise TypeError("correction_required must be a bool")
+        coverage = tuple(self.coverage)
+        if any(not isinstance(item, ReviewDimension) for item in coverage):
+            raise TypeError("coverage must contain ReviewDimension values")
+        if len(coverage) != len(set(coverage)):
+            raise ValueError("coverage must contain unique dimensions")
+        evidence_refs_used = tuple(self.evidence_refs_used)
+        for evidence_ref in evidence_refs_used:
+            require_contract_ref(evidence_ref, "evidence_ref_used")
         limitations = tuple(freeze_agent_safe_mapping(item) for item in self.limitations)
         warnings = tuple(freeze_agent_safe_mapping(item) for item in self.warnings)
         object.__setattr__(self, "findings", findings)
-        object.__setattr__(
-            self,
-            "overall_assessment",
-            freeze_agent_safe_mapping(self.overall_assessment),
-        )
+        object.__setattr__(self, "coverage", coverage)
+        object.__setattr__(self, "evidence_refs_used", evidence_refs_used)
         object.__setattr__(self, "confidence", freeze_agent_safe_mapping(self.confidence))
         object.__setattr__(self, "limitations", limitations)
         object.__setattr__(self, "warnings", warnings)

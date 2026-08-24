@@ -10,6 +10,8 @@ from backend.agent_runtime.contracts.common import (
     require_contract_ref,
 )
 from backend.agent_runtime.contracts.invocation import InvocationStatus
+from backend.agent_runtime.contracts.policy import BudgetSpec
+from backend.agent_runtime.contracts.review.vocabulary import ReviewDimension
 
 
 @dataclass(frozen=True, slots=True)
@@ -18,12 +20,13 @@ class ReviewRequest:
 
     meta: ContractMeta[InvocationStatus]
     target_production_ref: ContractRef
-    review_dimensions: tuple[str, ...]
+    review_dimensions: tuple[ReviewDimension, ...]
     criteria: Mapping[str, object] = field(default_factory=dict)
     evidence_refs: tuple[ContractRef, ...] = ()
     severity_policy: Mapping[str, object] = field(default_factory=dict)
     context_slice: Mapping[str, object] = field(default_factory=dict)
     independence_requirements: Mapping[str, object] = field(default_factory=dict)
+    review_budget: BudgetSpec | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.meta, ContractMeta):
@@ -34,11 +37,15 @@ class ReviewRequest:
         dimensions = tuple(self.review_dimensions)
         if not dimensions:
             raise ValueError("review_dimensions must not be empty")
-        if any(not isinstance(item, str) or not item.strip() for item in dimensions):
-            raise ValueError("review_dimensions must contain non-empty strings")
+        if any(not isinstance(item, ReviewDimension) for item in dimensions):
+            raise TypeError("review_dimensions must contain ReviewDimension values")
+        if len(dimensions) != len(set(dimensions)):
+            raise ValueError("review_dimensions must be unique")
         evidence_refs = tuple(self.evidence_refs)
         for evidence_ref in evidence_refs:
             require_contract_ref(evidence_ref, "evidence_ref")
+        if self.review_budget is not None and not isinstance(self.review_budget, BudgetSpec):
+            raise TypeError("review_budget must be a BudgetSpec")
         object.__setattr__(self, "review_dimensions", dimensions)
         object.__setattr__(self, "criteria", freeze_agent_safe_mapping(self.criteria))
         object.__setattr__(self, "evidence_refs", evidence_refs)

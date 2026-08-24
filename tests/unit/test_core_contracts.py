@@ -80,6 +80,7 @@ def test_application_outcome_accepts_canonical_success_mapping(
     outcome: ApplicationOutcome[str, FakeValidationResult] = ApplicationOutcome(
         outcome_status=status,
         success=success,
+        correlation_id=CorrelationId("corr-1"),
     )
 
     assert outcome.success is success
@@ -96,6 +97,7 @@ def test_application_outcome_rejects_incoherent_success(status: OutcomeStatus) -
         ApplicationOutcome[object, object](
             outcome_status=status,
             success=not canonical_success,
+            correlation_id=CorrelationId("corr-1"),
         )
 
 
@@ -104,13 +106,33 @@ def test_application_outcome_is_generic_over_m09_validation_result() -> None:
     outcome: ApplicationOutcome[str, FakeValidationResult] = ApplicationOutcome(
         outcome_status=OutcomeStatus.SUCCESS,
         success=True,
+        correlation_id=CorrelationId("corr-1"),
         data="created",
         validation_result=validation,
-        correlation_id=CorrelationId("corr-1"),
     )
 
     assert outcome.validation_result is validation
     assert outcome.data == "created"
+
+
+def test_application_outcome_requires_correlation_argument() -> None:
+    with pytest.raises(TypeError):
+        ApplicationOutcome[object, object](  # type: ignore[call-arg]
+            outcome_status=OutcomeStatus.SUCCESS,
+            success=True,
+        )
+
+
+@pytest.mark.parametrize("invalid_correlation", [None, "corr-1"])
+def test_application_outcome_rejects_invalid_correlation(
+    invalid_correlation: object,
+) -> None:
+    with pytest.raises(TypeError):
+        ApplicationOutcome[object, object](
+            outcome_status=OutcomeStatus.SUCCESS,
+            success=True,
+            correlation_id=invalid_correlation,  # type: ignore[arg-type]
+        )
 
 
 def test_application_failure_rejects_raw_exceptions() -> None:
@@ -139,6 +161,33 @@ def test_use_case_context_requires_correlation_and_freezes_snapshot() -> None:
         context.context_snapshot["locale"] = "en"  # type: ignore[index]
     with pytest.raises(TypeError):
         UseCaseContext(correlation_id=None)  # type: ignore[arg-type]
+
+
+def test_application_outcome_accepts_and_freezes_safe_side_effects() -> None:
+    outcome: ApplicationOutcome[object, object] = ApplicationOutcome(
+        outcome_status=OutcomeStatus.SUCCESS,
+        success=True,
+        correlation_id=CorrelationId("corr-1"),
+        side_effects=({"kind": "audit", "subjects": ["course-1"]},),
+    )
+
+    assert outcome.side_effects[0]["subjects"] == ("course-1",)
+    with pytest.raises(TypeError):
+        outcome.side_effects[0]["kind"] = "other"  # type: ignore[index]
+
+
+@pytest.mark.parametrize(
+    "side_effect",
+    [RuntimeError("raw"), {"auth_token": "secret"}],
+)
+def test_application_outcome_rejects_unsafe_side_effects(side_effect: object) -> None:
+    with pytest.raises((TypeError, ValueError)):
+        ApplicationOutcome[object, object](
+            outcome_status=OutcomeStatus.SUCCESS,
+            success=True,
+            correlation_id=CorrelationId("corr-1"),
+            side_effects=(side_effect,),  # type: ignore[arg-type]
+        )
 
 
 def test_core_contract_value_objects_are_immutable_and_non_empty() -> None:

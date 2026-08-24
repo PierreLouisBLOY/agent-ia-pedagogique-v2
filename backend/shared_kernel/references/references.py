@@ -10,6 +10,10 @@ class TypedEntityRef:
 
     entity_id: TypedEntityId
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.entity_id, TypedEntityId):
+            raise TypeError("entity_id must be a TypedEntityId")
+
 
 @dataclass(frozen=True, slots=True)
 class VersionRef:
@@ -27,3 +31,9 @@ class ObjectVersionRef:
 
     object_ref: TypedEntityRef
     version_ref: VersionRef
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.object_ref, TypedEntityRef):
+            raise TypeError("object_ref must be a TypedEntityRef")
+        if not isinstance(self.version_ref, VersionRef):
+            raise TypeError("version_ref must be a VersionRef")

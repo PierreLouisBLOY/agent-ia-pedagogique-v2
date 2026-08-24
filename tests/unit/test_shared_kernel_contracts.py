@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from dataclasses import FrozenInstanceError
 from datetime import UTC, date, datetime
 
@@ -55,6 +56,17 @@ def test_identity_and_version_references_use_composition() -> None:
 
     assert exact_ref.object_ref.entity_id.value == "Course-A"
     assert exact_ref.version_ref.value == "v1"
+
+
+def test_reference_composition_rejects_arbitrary_objects() -> None:
+    entity_ref = TypedEntityRef(TypedEntityId("course", "course-1"))
+
+    with pytest.raises(TypeError):
+        TypedEntityRef(RuntimeError("raw"))  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        ObjectVersionRef(RuntimeError("raw"), VersionRef("v1"))  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        ObjectVersionRef(entity_ref, RuntimeError("raw"))  # type: ignore[arg-type]
 
 
 def test_value_objects_are_immutable() -> None:
@@ -126,6 +138,57 @@ def test_business_error_details_are_safe_and_deeply_immutable() -> None:
             message_key="unsafe",
             details={"exception": ValueError("raw")},
         )
+
+
+@pytest.mark.parametrize(
+    "details",
+    [
+        {"password": "x"},
+        {"api_key": "x"},
+        {"sql": "SELECT * FROM private_table"},
+        {"stack_trace": "private stack"},
+        {"provider_payload": {"raw": "payload"}},
+        {"local_path": "C:/private/data"},
+    ],
+)
+def test_business_error_details_reject_sensitive_keys(
+    details: dict[str, object],
+) -> None:
+    with pytest.raises(ValueError):
+        BusinessError(
+            code=BusinessErrorCode("UNSAFE"),
+            domain=BusinessErrorDomain.CORE,
+            category=BusinessErrorCategory.INVALID,
+            severity=BusinessErrorSeverity.ERROR,
+            blocking=True,
+            retryable=False,
+            message_key="unsafe",
+            details=details,
+        )
+
+
+def test_business_error_details_preserve_safe_references() -> None:
+    entity_ref = TypedEntityRef(TypedEntityId("course", "course-1"))
+    object_version_ref = ObjectVersionRef(entity_ref, VersionRef("v1"))
+    error = BusinessError(
+        code=BusinessErrorCode("VERSION_CONFLICT"),
+        domain=BusinessErrorDomain.CORE,
+        category=BusinessErrorCategory.VERSION,
+        severity=BusinessErrorSeverity.ERROR,
+        blocking=True,
+        retryable=True,
+        message_key="version.conflict",
+        details={
+            "subject": entity_ref,
+            "expected": {"object_version": object_version_ref},
+        },
+    )
+
+    assert error.details is not None
+    assert error.details["subject"] is entity_ref
+    expected = error.details["expected"]
+    assert isinstance(expected, Mapping)
+    assert expected["object_version"] is object_version_ref
 
 
 def test_time_primitives_accept_supplied_values_without_reading_a_clock() -> None:

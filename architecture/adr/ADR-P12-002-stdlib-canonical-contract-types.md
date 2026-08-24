@@ -17,6 +17,9 @@ Les value objects et contract objects de ce lot utilisent `dataclass(frozen=True
 vocabulaires fermes utilisent `StrEnum`; les contrats parametriques utilisent les generiques de
 `typing`. La validation locale se limite aux invariants canoniques, notamment les chaines non vides,
 les dates et instants valides, les donnees structurees sures et la coherence de `ApplicationOutcome`.
+Les donnees diagnostiques suivent une politique fail-closed : les cles techniques ou sensibles sont
+refusees, les valeurs sont profondement figees et seules les references canoniques sont admises en
+plus des scalaires et collections data-only. Aucune redaction silencieuse n'est effectuee.
 
 `ApplicationOutcome` parametre le type de son `validation_result`. Il peut donc recevoir le contrat
 proprietaire de M09 sans que `core_contracts` importe M09. `BusinessError`, `ApplicationFailure` et
@@ -31,6 +34,8 @@ dependances du coeur.
 - Le coeur depend uniquement de Python 3.12 et du Shared Kernel selon sa couche.
 - Les objets sont simples a typer, tester et adapter sans semantique HTTP, ORM ou SDK.
 - La serialisation n'est pas une responsabilite de ces contrats.
+- `ApplicationOutcome.correlation_id` est obligatoire et ses side effects utilisent les memes donnees
+  structurees sures que les diagnostics.
 - Une fitness function controle les directions de dependance et l'absence de packages tiers.
 
 ## Criteres de reexamen

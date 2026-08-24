@@ -185,7 +185,7 @@ def test_runtime_contains_no_concrete_execution_binding() -> None:
 def test_workflow_catalogue_is_not_anticipated() -> None:
     workflow_kind_definitions = [
         path.relative_to(ROOT).as_posix()
-        for path in _python_files(BACKEND)
+        for path in _python_files(RUNTIME)
         for node in ast.walk(_tree(path))
         if isinstance(node, ast.ClassDef) and node.name == "WorkflowKind"
     ]

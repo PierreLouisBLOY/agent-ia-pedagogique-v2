@@ -161,7 +161,7 @@ def test_scheduler_constructs_no_execution_contract_or_policy() -> None:
 def test_scheduler_does_not_anticipate_workflow_catalogue() -> None:
     workflow_kind_definitions = [
         path.relative_to(ROOT).as_posix()
-        for path in _python_files(BACKEND)
+        for path in _python_files(SCHEDULING)
         for node in ast.walk(_tree(path))
         if isinstance(node, ast.ClassDef) and node.name == "WorkflowKind"
     ]

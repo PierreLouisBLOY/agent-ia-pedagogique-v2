@@ -9,6 +9,8 @@ Cette baseline materialise sans logique metier la structure normative issue de l
 | `backend/shared_kernel/` | Primitives techniques generiques partagees |
 | `backend/core_contracts/` | Frontieres contractuelles transverses futures |
 | `backend/agent_runtime/contracts/` | Contrats techniques runtime agentiques provider-neutral |
+| `backend/agent_runtime/registry/` | Catalogues statiques agents/capabilities et ceiling matrix exhaustive |
+| `backend/agent_runtime/policy/` | Garde-fous techniques runtime configurables, sans autorite metier |
 | `backend/modules/` | Coeur metier decoupe en M01 a M12 et MX1 |
 | `backend/adapters/inbound/` | Entrees API, UI locale, CLI, outils agents et batch |
 | `backend/adapters/outbound/` | Integrations sortantes futures |

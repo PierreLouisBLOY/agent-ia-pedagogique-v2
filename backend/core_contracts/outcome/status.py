@@ -1,0 +1,9 @@
+from enum import StrEnum
+
+
+class OutcomeStatus(StrEnum):
+    SUCCESS = "SUCCESS"
+    SUCCESS_WITH_WARNING = "SUCCESS_WITH_WARNING"
+    REJECTED = "REJECTED"
+    FAILED = "FAILED"
+    INDETERMINATE = "INDETERMINATE"

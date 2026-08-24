@@ -16,28 +16,16 @@ _SAFE_REFERENCE_TYPES = (
     ObjectVersionRef,
     CorrelationId,
 )
-_FORBIDDEN_KEY_NAMES = frozenset(
+_AUTHENTICATION_COMPONENTS = frozenset(
     {
-        "password",
-        "secret",
-        "secretconfig",
-        "token",
-        "authtoken",
-        "accesstoken",
-        "refreshtoken",
-        "bearertoken",
-        "apikey",
-        "cookie",
-        "sql",
-        "rawsql",
-        "sqlquery",
-        "rawsqlquery",
-        "connectionstring",
-        "stack",
-        "stacktrace",
-        "providerpayload",
-        "filesystempath",
-        "localpath",
+        "auth",
+        "access",
+        "refresh",
+        "bearer",
+        "oauth",
+        "session",
+        "credential",
+        "credentials",
     }
 )
 
@@ -72,5 +60,54 @@ def _freeze_safe_value(value: object) -> object:
 
 
 def _is_forbidden_key(key: str) -> bool:
-    normalized = "".join(character for character in key.casefold() if character.isalnum())
-    return normalized in _FORBIDDEN_KEY_NAMES
+    components = _key_components(key)
+    component_set = frozenset(components)
+
+    if component_set.intersection({"password", "secret", "cookie", "sql"}):
+        return True
+    if {"api", "key"}.issubset(component_set):
+        return True
+    if components == ("token",):
+        return True
+    if "token" in component_set and component_set.intersection(_AUTHENTICATION_COMPONENTS):
+        return True
+    if {"connection", "string"}.issubset(component_set):
+        return True
+    if components == ("stack",) or {"stack", "trace"}.issubset(component_set):
+        return True
+    if {"provider", "payload"}.issubset(component_set):
+        return True
+    return (
+        {"filesystem", "path"}.issubset(component_set)
+        or {"local", "path"}.issubset(component_set)
+    )
+
+
+def _key_components(key: str) -> tuple[str, ...]:
+    components: list[str] = []
+    current: list[str] = []
+
+    for index, character in enumerate(key):
+        if not character.isalnum():
+            if current:
+                components.append("".join(current).casefold())
+                current = []
+            continue
+
+        next_character = key[index + 1] if index + 1 < len(key) else ""
+        starts_camel_word = bool(
+            current
+            and character.isupper()
+            and (
+                current[-1].islower()
+                or (current[-1].isupper() and next_character.islower())
+            )
+        )
+        if starts_camel_word:
+            components.append("".join(current).casefold())
+            current = []
+        current.append(character)
+
+    if current:
+        components.append("".join(current).casefold())
+    return tuple(components)

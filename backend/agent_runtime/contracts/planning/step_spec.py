@@ -37,6 +37,7 @@ class ExecutorKind(StrEnum):
     AG_04 = "AG-04"
     APPLICATION = "APPLICATION"
     UTILITY = "UTILITY"
+    RUNTIME = "RUNTIME"
 
 
 _EXECUTOR_AGENT_IDS = {

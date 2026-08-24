@@ -11,6 +11,7 @@ Cette baseline materialise sans logique metier la structure normative issue de l
 | `backend/agent_runtime/contracts/` | Contrats techniques runtime agentiques provider-neutral |
 | `backend/agent_runtime/registry/` | Catalogues statiques agents/capabilities et ceiling matrix exhaustive |
 | `backend/agent_runtime/policy/` | Garde-fous techniques runtime configurables, sans autorite metier |
+| `backend/agent_runtime/runtime/` | Plan, validation statique du DAG et etat technique immutable, sans scheduler ni effet metier en 12.5-B |
 | `backend/modules/` | Coeur metier decoupe en M01 a M12 et MX1 |
 | `backend/adapters/inbound/` | Entrees API, UI locale, CLI, outils agents et batch |
 | `backend/adapters/outbound/` | Integrations sortantes futures |

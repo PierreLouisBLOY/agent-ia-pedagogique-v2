@@ -8,6 +8,7 @@ aucune transition, policy, machine a etats, recovery ou autorite supplementaire.
 | Invocation / delegation | `planned`, `running`, `succeeded`, `partial`, `failed`, `cancelled`, `escalated` | Runtime agentique |
 | AgentResult | `succeeded`, `partial`, `failed`, `cancelled`, `escalated` | Runtime agentique |
 | Workflow | `planned`, `running`, `waiting_gate`, `replanning`, `succeeded`, `partial`, `failed`, `cancelled`, `escalated` | Runtime agentique |
+| Step runtime | `pending`, `ready`, `running`, `succeeded`, `partial`, `failed`, `cancelled`, `blocked`, `skipped` | Etat technique du runtime deterministe |
 | Production | `candidate` uniquement | Runtime agentique, non canonique |
 | Review | `completed`, `incomplete`, `failed` | Execution de la review |
 | Gate | `pending`, `approved`, `rejected`, `deferred`, `expired` | Autorite externe attendue |
@@ -23,6 +24,12 @@ Une review `incomplete` ne peut pas porter l'evaluation `acceptable` ; les autre
 coherences restent exprimees par les invariants propres a `ReviewResult`.
 `GateDecisionValue` enregistre une decision de l'autorite requise et ne constitue
 pas une policy de transition du workflow.
+
+La Phase 12.5-B reutilise `WorkflowStatus` dans `RunState` et ne cree aucun
+`RunStatus` concurrent. `StepRuntimeStatus` est local a l'etat technique des
+steps. Il ne contient pas `waiting_gate` : la suspension gate reste globale. Un
+step `READY` n'est pas implicitement autorise ; les controles policy et scope
+restent obligatoires juste avant un futur lancement.
 
 ## CLOSED en C3
 

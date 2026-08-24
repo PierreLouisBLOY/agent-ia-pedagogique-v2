@@ -167,6 +167,7 @@ def test_agent_runtime_enums_have_exact_values() -> None:
         "AG-04",
         "APPLICATION",
         "UTILITY",
+        "RUNTIME",
     ]
     assert [item.value for item in InvocationStatus] == [
         "planned",

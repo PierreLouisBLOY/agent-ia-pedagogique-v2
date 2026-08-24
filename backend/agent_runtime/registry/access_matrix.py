@@ -28,6 +28,9 @@ class AccessMode(StrEnum):
     CONDITIONAL = "CONDITIONAL"
 
 
+REQUEST_OR_ALLOW_BY_WORKFLOW: Final[str] = "request_or_allow_by_workflow"
+
+
 @dataclass(frozen=True, slots=True)
 class AgentCapabilityRule:
     agent_id: AgentId
@@ -219,7 +222,7 @@ def _baseline_rules() -> tuple[AgentCapabilityRule, ...]:
                     AgentId.AG_01,
                     code,
                     AccessMode.CONDITIONAL,
-                    condition="request_or_allow_by_workflow",
+                    condition=REQUEST_OR_ALLOW_BY_WORKFLOW,
                 ),
                 _rule(AgentId.AG_02, code, AccessMode.DENY, condition="default"),
                 _rule(AgentId.AG_03, code, AccessMode.ALLOW, limited=True),

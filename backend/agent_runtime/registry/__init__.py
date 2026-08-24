@@ -2,6 +2,7 @@
 
 from backend.agent_runtime.registry.access_matrix import (
     BASELINE_AGENT_CAPABILITY_MATRIX,
+    REQUEST_OR_ALLOW_BY_WORKFLOW,
     AccessMatrix,
     AccessMode,
     AgentCapabilityMatrixConfigurationError,
@@ -28,6 +29,7 @@ __all__ = [
     "BASELINE_AGENT_CAPABILITY_MATRIX",
     "BASELINE_AGENT_REGISTRY",
     "BASELINE_CAPABILITY_REGISTRY",
+    "REQUEST_OR_ALLOW_BY_WORKFLOW",
     "AccessMatrix",
     "AccessMode",
     "AgentCapabilityMatrixConfigurationError",

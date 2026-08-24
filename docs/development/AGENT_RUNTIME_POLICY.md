@@ -20,5 +20,5 @@ d'execution restent differes a 12.10. Aucun fournisseur ou LLM reel n'est requis
 La Phase 12.4-C ajoute, dans la meme zone technique, l'evaluation pure de
 `PermissionScope` et la delegation bornee. Ces policies comparent des scopes et
 des enveloppes ; elles ne consomment aucun budget et ne consultent pas la ceiling
-matrix. La decision finale `AccessMatrix + PermissionScope` reste differee a
-12.4-D.
+matrix. La Phase 12.4-D realise la decision finale distincte par intersection
+`AccessMatrix + PermissionScope`.

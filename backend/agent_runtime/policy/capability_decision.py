@@ -26,6 +26,7 @@ from backend.agent_runtime.registry import (
     BASELINE_AGENT_CAPABILITY_MATRIX,
     BASELINE_AGENT_REGISTRY,
     BASELINE_CAPABILITY_REGISTRY,
+    REQUEST_OR_ALLOW_BY_WORKFLOW,
     AccessMatrix,
     AccessMode,
     AgentRegistry,
@@ -37,8 +38,6 @@ from backend.agent_runtime.registry import (
 )
 from backend.core_contracts.capability import CapabilityId
 from backend.shared_kernel.time import Instant
-
-_CONDITIONAL_WORKFLOW = "request_or_allow_by_workflow"
 
 
 class PolicyDisposition(StrEnum):
@@ -563,7 +562,7 @@ class CapabilityAuthorizationPolicy:
         limited: bool,
     ) -> CapabilityPolicyDecision:
         if (
-            condition != _CONDITIONAL_WORKFLOW
+            condition != REQUEST_OR_ALLOW_BY_WORKFLOW
             or capability.execution_route is not CapabilityExecutionRoute.UTILITY
         ):
             return self._invalid_configuration(

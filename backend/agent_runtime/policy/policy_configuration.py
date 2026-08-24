@@ -3,6 +3,7 @@ from __future__ import annotations
 from backend.agent_runtime.contracts import AgentId
 from backend.agent_runtime.registry import (
     BASELINE_CAPABILITY_REGISTRY,
+    REQUEST_OR_ALLOW_BY_WORKFLOW,
     AccessMatrix,
     AccessMode,
     AgentRegistry,
@@ -18,7 +19,6 @@ _SPECIALISTS = (AgentId.AG_02, AgentId.AG_03, AgentId.AG_04)
 _EXPECTED_CAPABILITY_IDS = frozenset(
     descriptor.capability_id.value for descriptor in BASELINE_CAPABILITY_REGISTRY.all()
 )
-_CONDITIONAL_WORKFLOW = "request_or_allow_by_workflow"
 
 
 class PolicyConfigurationError(ValueError):
@@ -155,7 +155,7 @@ def _validate_utility(access_matrix: AccessMatrix, capability_id: CapabilityId) 
     if code in {"CAP-T02", "CAP-T03"}:
         rule = access_matrix.rule_for(AgentId.AG_01, capability_id)
         _require(
-            rule.mode is AccessMode.CONDITIONAL and rule.condition == _CONDITIONAL_WORKFLOW,
+            rule.mode is AccessMode.CONDITIONAL and rule.condition == REQUEST_OR_ALLOW_BY_WORKFLOW,
             f"{code} AG-01 conditional rule invalid",
         )
         for agent_id in (AgentId.AG_02, AgentId.AG_04):

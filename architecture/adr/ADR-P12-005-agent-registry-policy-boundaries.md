@@ -69,7 +69,8 @@ ne peut jamais etre elargie par un scope. `REQUEST`, `DELEGATE`, `REQUEST_GATE` 
 les resolutions conditionnelles restent des dispositions logiques sans execution.
 
 La delegation finale verifie l'owner specialise et ferme le cas volontairement
-laisse ouvert en C. Routes et autorites restent descriptives ; aucun handler,
+laisse ouvert en C. La capability du mandat doit aussi appartenir aux grants
+parent et enfant. Routes et autorites restent descriptives ; aucun handler,
 fallback, tool registry, provider, scheduler ou moteur de gate n'est introduit.
 La coherence 4 agents / 24 capabilities / 96 rules est validee fail-closed avant
 l'utilisation d'une policy custom.

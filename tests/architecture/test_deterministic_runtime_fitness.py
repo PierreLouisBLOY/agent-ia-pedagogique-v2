@@ -5,8 +5,19 @@ import tomllib
 from dataclasses import fields
 from pathlib import Path
 
-from backend.agent_runtime.contracts import StepSpec
-from backend.agent_runtime.runtime import Plan, RunState
+from backend.agent_runtime.contracts import (
+    ExecutorKind,
+    ExecutorRef,
+    StepKind,
+    StepSpec,
+)
+from backend.agent_runtime.runtime import (
+    Plan,
+    PlanValidationCode,
+    PlanValidator,
+    RunState,
+)
+from backend.core_contracts.capability import CapabilityId
 
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND = ROOT / "backend"
@@ -30,6 +41,40 @@ def _imported_modules(path: Path) -> tuple[str, ...]:
         elif isinstance(node, ast.ImportFrom) and node.module is not None:
             modules.append(node.module)
     return tuple(modules)
+
+
+def _step(
+    step_id: str,
+    *,
+    capability: str = "CAP-R01",
+    depends_on: tuple[str, ...] = (),
+    parallel_group: str | None = None,
+    permission_scope_ref: str | None = "scope-1",
+) -> StepSpec:
+    return StepSpec(
+        step_id=step_id,
+        kind=StepKind.USE_CASE,
+        capability_id=CapabilityId(capability),
+        executor=ExecutorRef(ExecutorKind.APPLICATION),
+        objective=f"Execute {step_id}",
+        depends_on=depends_on,
+        parallel_group=parallel_group,
+        permission_scope_ref=permission_scope_ref,
+        output_contract={"type": "result"},
+    )
+
+
+def _plan(*steps: StepSpec) -> Plan:
+    return Plan(
+        plan_id="fitness-plan",
+        run_id="fitness-run",
+        plan_version=1,
+        objective="Validate static safeguards",
+        success_criteria={},
+        workflow_kind="fitness-workflow",
+        steps=steps,
+        stop_conditions={"failure": "stop"},
+    )
 
 
 def test_runtime_state_and_plan_have_exact_technical_locations() -> None:
@@ -163,6 +208,40 @@ def test_declarative_and_runtime_models_do_not_duplicate_state_or_edges() -> Non
     assert "status" not in step_spec_fields
     assert "dependencies" not in plan_fields
     assert "current_step_id" not in run_state_fields
+
+
+def test_executable_step_without_scope_is_statically_invalid() -> None:
+    result = PlanValidator().validate(
+        _plan(_step("unscoped", permission_scope_ref=None))
+    )
+
+    assert not result.valid
+    assert PlanValidationCode.MISSING_PERMISSION_SCOPE in tuple(
+        issue.code for issue in result.issues
+    )
+
+
+def test_parallel_fan_out_without_join_is_statically_invalid() -> None:
+    result = PlanValidator().validate(
+        _plan(
+            _step("left", parallel_group="branches"),
+            _step("right", parallel_group="branches"),
+        )
+    )
+
+    assert not result.valid
+    assert PlanValidationCode.MISSING_JOIN_STRATEGY in tuple(
+        issue.code for issue in result.issues
+    )
+
+
+def test_request_gate_capability_without_gate_ancestor_is_statically_invalid() -> None:
+    result = PlanValidator().validate(_plan(_step("sensitive", capability="CAP-A02")))
+
+    assert not result.valid
+    assert PlanValidationCode.REQUIRED_GATE_MISSING in tuple(
+        issue.code for issue in result.issues
+    )
 
 
 def test_project_runtime_dependencies_remain_empty() -> None:

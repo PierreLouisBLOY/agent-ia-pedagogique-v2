@@ -4,14 +4,17 @@ from collections import Counter
 from dataclasses import dataclass
 from enum import StrEnum
 
-from backend.agent_runtime.contracts import ExecutorKind, StepKind, StepSpec
+from backend.agent_runtime.contracts import AgentId, ExecutorKind, StepKind, StepSpec
 from backend.agent_runtime.policy import (
     BASELINE_AGENT_RUNTIME_POLICY,
     AgentRuntimePolicy,
     budget_is_narrower_or_equal,
 )
 from backend.agent_runtime.registry import (
+    BASELINE_AGENT_CAPABILITY_MATRIX,
     BASELINE_CAPABILITY_REGISTRY,
+    AccessMatrix,
+    AccessMode,
     CapabilityExecutionRoute,
     CapabilityRegistry,
 )
@@ -29,6 +32,9 @@ class PlanValidationCode(StrEnum):
     AGENT_OWNER_MISMATCH = "AGENT_OWNER_MISMATCH"
     PARALLEL_DEPENDENCY_CONFLICT = "PARALLEL_DEPENDENCY_CONFLICT"
     STEP_BUDGET_OUT_OF_ENVELOPE = "STEP_BUDGET_OUT_OF_ENVELOPE"
+    MISSING_PERMISSION_SCOPE = "MISSING_PERMISSION_SCOPE"
+    MISSING_JOIN_STRATEGY = "MISSING_JOIN_STRATEGY"
+    REQUIRED_GATE_MISSING = "REQUIRED_GATE_MISSING"
 
 
 @dataclass(frozen=True, slots=True)
@@ -95,18 +101,22 @@ _ROUTE_BY_KIND = {
 _CAPABILITY_REQUIRED_KINDS = frozenset(
     {StepKind.AGENT, StepKind.USE_CASE, StepKind.TOOL}
 )
+_PERMISSION_SCOPE_REQUIRED_KINDS = _CAPABILITY_REQUIRED_KINDS
 
 
 @dataclass(frozen=True, slots=True)
 class PlanValidator:
     capability_registry: CapabilityRegistry = BASELINE_CAPABILITY_REGISTRY
     runtime_policy: AgentRuntimePolicy = BASELINE_AGENT_RUNTIME_POLICY
+    access_matrix: AccessMatrix = BASELINE_AGENT_CAPABILITY_MATRIX
 
     def __post_init__(self) -> None:
         if not isinstance(self.capability_registry, CapabilityRegistry):
             raise TypeError("capability_registry must be a CapabilityRegistry")
         if not isinstance(self.runtime_policy, AgentRuntimePolicy):
             raise TypeError("runtime_policy must be an AgentRuntimePolicy")
+        if not isinstance(self.access_matrix, AccessMatrix):
+            raise TypeError("access_matrix must be an AccessMatrix")
 
     def validate(self, plan: Plan) -> PlanValidationResult:
         if not isinstance(plan, Plan):
@@ -115,10 +125,15 @@ class PlanValidator:
         issues: list[PlanValidationIssue] = []
         self._validate_cardinality(plan, issues)
         graph = self._dependency_graph(plan)
+        reachability = {
+            step_id: self._reachable_dependencies(step_id, graph) for step_id in graph
+        }
         self._validate_dependencies(plan, graph, issues)
         self._validate_cycles(graph, issues)
-        self._validate_steps(plan, issues)
-        self._validate_parallel_groups(plan, graph, issues)
+        self._validate_steps(plan, graph, reachability, issues)
+        groups = self._parallel_groups(plan)
+        self._validate_parallel_dependencies(groups, reachability, issues)
+        self._validate_join_strategies(plan, groups, reachability, issues)
         return PlanValidationResult(valid=not issues, issues=tuple(issues))
 
     def _validate_cardinality(
@@ -215,10 +230,25 @@ class PlanValidator:
                 visit(step_id)
 
     def _validate_steps(
-        self, plan: Plan, issues: list[PlanValidationIssue]
+        self,
+        plan: Plan,
+        graph: dict[str, tuple[str, ...]],
+        reachability: dict[str, frozenset[str]],
+        issues: list[PlanValidationIssue],
     ) -> None:
+        steps_by_id: dict[str, StepSpec] = {}
+        for step in plan.steps:
+            steps_by_id.setdefault(step.step_id, step)
         for step in plan.steps:
             self._validate_kind_and_capability(step, issues)
+            self._validate_permission_scope_presence(step, issues)
+            self._validate_required_gate(
+                step,
+                graph,
+                reachability,
+                steps_by_id,
+                issues,
+            )
             if not budget_is_narrower_or_equal(plan.budget_envelope, step.budget):
                 issues.append(
                     PlanValidationIssue(
@@ -227,6 +257,53 @@ class PlanValidator:
                         step_id=step.step_id,
                     )
                 )
+
+    @staticmethod
+    def _validate_permission_scope_presence(
+        step: StepSpec, issues: list[PlanValidationIssue]
+    ) -> None:
+        if (
+            step.kind in _PERMISSION_SCOPE_REQUIRED_KINDS
+            and step.permission_scope_ref is None
+        ):
+            issues.append(
+                PlanValidationIssue(
+                    code=PlanValidationCode.MISSING_PERMISSION_SCOPE,
+                    message=f"permission_scope_ref required for step kind {step.kind.value}",
+                    step_id=step.step_id,
+                )
+            )
+
+    def _validate_required_gate(
+        self,
+        step: StepSpec,
+        graph: dict[str, tuple[str, ...]],
+        reachability: dict[str, frozenset[str]],
+        steps_by_id: dict[str, StepSpec],
+        issues: list[PlanValidationIssue],
+    ) -> None:
+        if step.capability_id is None or not self.capability_registry.contains(
+            step.capability_id
+        ):
+            return
+        rule = self.access_matrix.rule_for(AgentId.AG_01, step.capability_id)
+        if rule.mode is not AccessMode.REQUEST_GATE:
+            return
+        ancestors = reachability.get(step.step_id, frozenset())
+        if any(
+            ancestor in graph and steps_by_id[ancestor].kind is StepKind.GATE
+            for ancestor in ancestors
+        ):
+            return
+        issues.append(
+            PlanValidationIssue(
+                code=PlanValidationCode.REQUIRED_GATE_MISSING,
+                message=(
+                    f"capability {step.capability_id.value} requires a gate ancestor"
+                ),
+                step_id=step.step_id,
+            )
+        )
 
     def _validate_kind_and_capability(
         self, step: StepSpec, issues: list[PlanValidationIssue]
@@ -293,22 +370,21 @@ class PlanValidator:
             )
 
     @staticmethod
-    def _validate_parallel_groups(
-        plan: Plan,
-        graph: dict[str, tuple[str, ...]],
-        issues: list[PlanValidationIssue],
-    ) -> None:
-        reachability = {
-            step_id: PlanValidator._reachable_dependencies(step_id, graph)
-            for step_id in graph
-        }
+    def _parallel_groups(plan: Plan) -> dict[str, tuple[str, ...]]:
         groups: dict[str, list[str]] = {}
         for step in plan.steps:
             if step.parallel_group is not None:
                 group = groups.setdefault(step.parallel_group, [])
                 if step.step_id not in group:
                     group.append(step.step_id)
+        return {name: tuple(step_ids) for name, step_ids in groups.items()}
 
+    @staticmethod
+    def _validate_parallel_dependencies(
+        groups: dict[str, tuple[str, ...]],
+        reachability: dict[str, frozenset[str]],
+        issues: list[PlanValidationIssue],
+    ) -> None:
         for group_name, step_ids in groups.items():
             for left_index, left_id in enumerate(step_ids):
                 for right_id in step_ids[left_index + 1 :]:
@@ -329,6 +405,33 @@ class PlanValidator:
                             related_step_ids=(dependent, dependency),
                         )
                     )
+
+    @staticmethod
+    def _validate_join_strategies(
+        plan: Plan,
+        groups: dict[str, tuple[str, ...]],
+        reachability: dict[str, frozenset[str]],
+        issues: list[PlanValidationIssue],
+    ) -> None:
+        join_ids = tuple(
+            step.step_id for step in plan.steps if step.kind is StepKind.JOIN
+        )
+        for group_name, step_ids in groups.items():
+            if len(step_ids) < 2:
+                continue
+            if any(
+                set(step_ids).issubset(reachability.get(join_id, frozenset()))
+                for join_id in join_ids
+            ):
+                continue
+            issues.append(
+                PlanValidationIssue(
+                    code=PlanValidationCode.MISSING_JOIN_STRATEGY,
+                    message=f"parallel group {group_name} has no common downstream join",
+                    step_id=step_ids[0],
+                    related_step_ids=step_ids,
+                )
+            )
 
     @staticmethod
     def _reachable_dependencies(

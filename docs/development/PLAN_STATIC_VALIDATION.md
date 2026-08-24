@@ -21,25 +21,44 @@ de lever pour une invalidite semantique. Les codes fermes sont :
   `DEPENDENCY_CYCLE` ;
 - `UNKNOWN_CAPABILITY`, `KIND_EXECUTOR_MISMATCH`,
   `CAPABILITY_ROUTE_MISMATCH`, `AGENT_OWNER_MISMATCH` ;
-- `PARALLEL_DEPENDENCY_CONFLICT`, `STEP_BUDGET_OUT_OF_ENVELOPE`.
+- `MISSING_PERMISSION_SCOPE`, `REQUIRED_GATE_MISSING` ;
+- `PARALLEL_DEPENDENCY_CONFLICT`, `MISSING_JOIN_STRATEGY`,
+  `STEP_BUDGET_OUT_OF_ENVELOPE`.
 
 La validation controle la limite de steps, les references et cycles transitifs,
 la coherence kind/executor, l'existence et la route registry d'une capability et
 l'owner des capabilities agent. Les capabilities sont obligatoires pour agent,
 use case et tool, optionnelles pour les control nodes.
 
+Les steps agent, use case et tool doivent aussi porter un
+`permission_scope_ref`. Cette verification prouve seulement la presence d'un
+`ContractRef` : le scope n'est ni charge, ni resolu, ni juge suffisant. Son
+autorisation effective reste un controle pre-launch.
+
 Deux steps d'un meme `parallel_group` ne peuvent avoir de relation de dependance
 directe ou transitive. Ce controle structurel ne pretend pas detecter des
-dependances semantiques cachees dans les donnees. Les budgets sont compares par
-`budget_is_narrower_or_equal` : chaque step conserve ou reduit l'enveloppe bornee
-du plan. Ils ne sont ni sommes, ni reserves, ni consommes.
+dependances semantiques cachees dans les donnees. Tout groupe d'au moins deux
+branches doit converger vers un `StepKind.JOIN` commun, directement ou via les
+tails de chaque branche. Cette preuve est structurelle : elle ne definit aucune
+aggregation semantique des outputs.
+
+Pour une capability connue dont la ceiling rule AG-01 est `REQUEST_GATE`, le DAG
+doit placer un `StepKind.GATE` dans la closure transitive des dependances du step
+sensible. `Plan.gate_refs` ou une gate independante ne suffisent pas. La presence
+du node ne verifie aucune `GateDecision`; l'execution de gate reste en 12.10.
+
+Les budgets sont compares par `budget_is_narrower_or_equal` : chaque step
+conserve ou reduit l'enveloppe bornee du plan. Ils ne sont ni sommes, ni reserves,
+ni consommes.
 
 ## Validations reportees
 
 La validation statique n'est pas une authorization policy et ne consulte pas
-`PermissionScope`. Les schemas I/O detailles, gates reelles, scope resolution,
-`CapabilityAuthorizationPolicy.evaluate`, disponibilite adapter/provider et
-idempotence sont des controles pre-launch de 12.5-C/D ou 12.10. Consommation,
-remaining budget, staleness, snapshots et restore restent 12.11.
+`PermissionScope`. Presence de scope, gate et enveloppe ne remplace jamais leur
+reevaluation pre-launch. Les schemas I/O detailles, gates reelles, scope
+resolution, `CapabilityAuthorizationPolicy.evaluate`, disponibilite
+adapter/provider et idempotence sont des controles pre-launch de 12.5-C/D ou
+12.10. Consommation, remaining budget, staleness, snapshots et restore restent
+12.11.
 
 Aucun contenu agent ou document ne peut modifier policy, permission ou autorite.

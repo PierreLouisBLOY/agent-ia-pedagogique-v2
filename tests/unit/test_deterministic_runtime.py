@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import FrozenInstanceError, fields
+from dataclasses import FrozenInstanceError, fields, replace
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -14,6 +14,12 @@ from backend.agent_runtime.contracts import (
     StepKind,
     StepSpec,
     WorkflowStatus,
+)
+from backend.agent_runtime.registry import (
+    BASELINE_AGENT_CAPABILITY_MATRIX,
+    BASELINE_CAPABILITY_REGISTRY,
+    AccessMatrix,
+    AccessMode,
 )
 from backend.agent_runtime.runtime import (
     InvalidInitialPlanError,
@@ -43,6 +49,7 @@ def _step(
     depends_on: tuple[str, ...] = (),
     parallel_group: str | None = None,
     budget: BudgetSpec | None = None,
+    permission_scope_ref: str | None = "scope-1",
 ) -> StepSpec:
     return StepSpec(
         step_id=step_id,
@@ -53,6 +60,7 @@ def _step(
         depends_on=depends_on,
         parallel_group=parallel_group,
         budget=budget,
+        permission_scope_ref=permission_scope_ref,
         output_contract={"type": "result"},
     )
 
@@ -146,6 +154,24 @@ def test_runtime_executor_has_no_agent_id() -> None:
 
 def test_ag01_is_not_a_specialized_executor() -> None:
     assert "AG-01" not in {item.value for item in ExecutorKind}
+
+
+def test_plan_validation_codes_include_exact_static_safeguards() -> None:
+    assert [item.value for item in PlanValidationCode] == [
+        "DUPLICATE_STEP_ID",
+        "STEP_LIMIT_EXCEEDED",
+        "UNKNOWN_DEPENDENCY",
+        "DEPENDENCY_CYCLE",
+        "UNKNOWN_CAPABILITY",
+        "KIND_EXECUTOR_MISMATCH",
+        "CAPABILITY_ROUTE_MISMATCH",
+        "AGENT_OWNER_MISMATCH",
+        "PARALLEL_DEPENDENCY_CONFLICT",
+        "STEP_BUDGET_OUT_OF_ENVELOPE",
+        "MISSING_PERMISSION_SCOPE",
+        "MISSING_JOIN_STRATEGY",
+        "REQUIRED_GATE_MISSING",
+    ]
 
 
 def test_plan_is_nominally_immutable() -> None:
@@ -382,6 +408,34 @@ def test_initialize_run_state_rejects_invalid_plan() -> None:
         initialize_run_state(plan, CorrelationId("corr-1"))
 
 
+@pytest.mark.parametrize(
+    ("plan", "expected_code"),
+    [
+        (
+            _plan(_step(permission_scope_ref=None)),
+            PlanValidationCode.MISSING_PERMISSION_SCOPE,
+        ),
+        (
+            _plan(
+                _step("left", parallel_group="branches"),
+                _step("right", parallel_group="branches"),
+            ),
+            PlanValidationCode.MISSING_JOIN_STRATEGY,
+        ),
+        (
+            _plan(_step(capability="CAP-A02")),
+            PlanValidationCode.REQUIRED_GATE_MISSING,
+        ),
+    ],
+)
+def test_initialize_run_state_rejects_new_static_safeguard_findings(
+    plan: Plan,
+    expected_code: PlanValidationCode,
+) -> None:
+    with pytest.raises(InvalidInitialPlanError, match=expected_code.value):
+        initialize_run_state(plan, CorrelationId("corr-1"))
+
+
 def test_plan_validator_accepts_nominal_dag() -> None:
     plan = _plan(
         _step("read"),
@@ -455,6 +509,64 @@ def test_plan_validator_requires_capability_for_executable_step() -> None:
         if issue.code is PlanValidationCode.UNKNOWN_CAPABILITY
     )
     assert "capability required" in issue.message
+
+
+@pytest.mark.parametrize(
+    "step",
+    [
+        _step(
+            kind=StepKind.AGENT,
+            executor=ExecutorKind.AG_03,
+            capability="CAP-G01",
+            permission_scope_ref=None,
+        ),
+        _step(permission_scope_ref=None),
+        _step(
+            kind=StepKind.TOOL,
+            executor=ExecutorKind.UTILITY,
+            capability="CAP-T01",
+            permission_scope_ref=None,
+        ),
+    ],
+)
+def test_executable_step_requires_permission_scope_ref(step: StepSpec) -> None:
+    assert PlanValidationCode.MISSING_PERMISSION_SCOPE in _issue_codes(_plan(step))
+
+
+@pytest.mark.parametrize(
+    "step",
+    [
+        _step(
+            kind=StepKind.AGENT,
+            executor=ExecutorKind.AG_03,
+            capability="CAP-G01",
+        ),
+        _step(),
+        _step(
+            kind=StepKind.TOOL,
+            executor=ExecutorKind.UTILITY,
+            capability="CAP-T01",
+        ),
+    ],
+)
+def test_executable_step_with_scope_ref_has_no_missing_scope_issue(
+    step: StepSpec,
+) -> None:
+    assert PlanValidationCode.MISSING_PERMISSION_SCOPE not in _issue_codes(_plan(step))
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [StepKind.GATE, StepKind.JOIN, StepKind.DECISION],
+)
+def test_control_step_does_not_require_permission_scope_ref(kind: StepKind) -> None:
+    step = _step(
+        kind=kind,
+        executor=ExecutorKind.RUNTIME,
+        capability=None,
+        permission_scope_ref=None,
+    )
+    assert PlanValidationCode.MISSING_PERMISSION_SCOPE not in _issue_codes(_plan(step))
 
 
 @pytest.mark.parametrize(
@@ -550,13 +662,182 @@ def test_parallel_group_rejects_transitive_dependency() -> None:
     assert PlanValidationCode.PARALLEL_DEPENDENCY_CONFLICT in _issue_codes(plan)
 
 
-def test_parallel_group_accepts_independent_branches() -> None:
+def test_parallel_group_without_join_is_rejected() -> None:
     plan = _plan(
         _step("root"),
         _step("left", depends_on=("root",), parallel_group="branches"),
         _step("right", depends_on=("root",), parallel_group="branches"),
     )
+
+    assert PlanValidationCode.MISSING_JOIN_STRATEGY in _issue_codes(plan)
+
+
+def test_parallel_group_accepts_direct_common_join() -> None:
+    plan = _plan(
+        _step("root"),
+        _step("left", depends_on=("root",), parallel_group="branches"),
+        _step("right", depends_on=("root",), parallel_group="branches"),
+        _step(
+            "join",
+            kind=StepKind.JOIN,
+            executor=ExecutorKind.RUNTIME,
+            capability="CAP-O04",
+            depends_on=("left", "right"),
+            permission_scope_ref=None,
+        ),
+    )
     assert PlanValidator().validate(plan).valid
+
+
+def test_parallel_group_accepts_join_downstream_of_branch_tails() -> None:
+    plan = _plan(
+        _step("root"),
+        _step("left", depends_on=("root",), parallel_group="branches"),
+        _step("right", depends_on=("root",), parallel_group="branches"),
+        _step("left-tail", depends_on=("left",)),
+        _step("right-tail", depends_on=("right",)),
+        _step(
+            "join",
+            kind=StepKind.JOIN,
+            executor=ExecutorKind.RUNTIME,
+            capability="CAP-O04",
+            depends_on=("left-tail", "right-tail"),
+            permission_scope_ref=None,
+        ),
+    )
+    assert PlanValidator().validate(plan).valid
+
+
+def test_join_covering_only_one_parallel_branch_is_rejected() -> None:
+    plan = _plan(
+        _step("left", parallel_group="branches"),
+        _step("right", parallel_group="branches"),
+        _step(
+            "join",
+            kind=StepKind.JOIN,
+            executor=ExecutorKind.RUNTIME,
+            capability="CAP-O04",
+            depends_on=("left",),
+            permission_scope_ref=None,
+        ),
+    )
+    result = PlanValidator().validate(plan)
+    issue = next(
+        issue
+        for issue in result.issues
+        if issue.code is PlanValidationCode.MISSING_JOIN_STRATEGY
+    )
+
+    assert issue.step_id == "left"
+    assert issue.related_step_ids == ("left", "right")
+    assert "branches" in issue.message
+
+
+def test_single_member_parallel_group_does_not_require_join() -> None:
+    plan = _plan(_step("only", parallel_group="single"))
+    assert PlanValidationCode.MISSING_JOIN_STRATEGY not in _issue_codes(plan)
+
+
+def test_parallel_dependency_conflict_is_preserved_without_join() -> None:
+    plan = _plan(
+        _step("left", parallel_group="branches"),
+        _step("right", depends_on=("left",), parallel_group="branches"),
+    )
+    codes = _issue_codes(plan)
+
+    assert PlanValidationCode.PARALLEL_DEPENDENCY_CONFLICT in codes
+    assert PlanValidationCode.MISSING_JOIN_STRATEGY in codes
+
+
+def test_request_gate_capability_requires_gate_ancestor() -> None:
+    plan = _plan(_step(capability="CAP-A02"))
+    assert PlanValidationCode.REQUIRED_GATE_MISSING in _issue_codes(plan)
+
+
+def test_unrelated_gate_does_not_satisfy_request_gate_capability() -> None:
+    plan = _plan(
+        _step(
+            "gate",
+            kind=StepKind.GATE,
+            executor=ExecutorKind.RUNTIME,
+            capability="CAP-O05",
+            permission_scope_ref=None,
+        ),
+        _step("sensitive", capability="CAP-A02"),
+    )
+    assert PlanValidationCode.REQUIRED_GATE_MISSING in _issue_codes(plan)
+
+
+def test_direct_gate_ancestor_satisfies_request_gate_capability() -> None:
+    gate = _step(
+        "gate",
+        kind=StepKind.GATE,
+        executor=ExecutorKind.RUNTIME,
+        capability="CAP-O05",
+        permission_scope_ref=None,
+    )
+    plan = _plan(gate, _step("sensitive", capability="CAP-A02", depends_on=("gate",)))
+
+    assert gate.executor.kind is ExecutorKind.RUNTIME
+    assert PlanValidator().validate(plan).valid
+
+
+def test_transitive_gate_ancestor_satisfies_request_gate_capability() -> None:
+    plan = _plan(
+        _step(
+            "gate",
+            kind=StepKind.GATE,
+            executor=ExecutorKind.RUNTIME,
+            capability="CAP-O05",
+            permission_scope_ref=None,
+        ),
+        _step(
+            "decision",
+            kind=StepKind.DECISION,
+            executor=ExecutorKind.RUNTIME,
+            capability="CAP-O06",
+            depends_on=("gate",),
+            permission_scope_ref=None,
+        ),
+        _step("sensitive", capability="CAP-A02", depends_on=("decision",)),
+    )
+    assert PlanValidator().validate(plan).valid
+
+
+@pytest.mark.parametrize("capability", ["CAP-A01", "CAP-A03"])
+def test_non_gate_application_capabilities_do_not_require_gate(
+    capability: str,
+) -> None:
+    assert PlanValidator().validate(_plan(_step(capability=capability))).valid
+
+
+def test_custom_request_gate_matrix_rule_requires_gate_ancestor() -> None:
+    capability_id = CapabilityId("CAP-A01")
+    rules = tuple(
+        replace(rule, mode=AccessMode.REQUEST_GATE)
+        if rule.agent_id is AgentId.AG_01 and rule.capability_id == capability_id
+        else rule
+        for rule in BASELINE_AGENT_CAPABILITY_MATRIX.all()
+    )
+    custom_matrix = AccessMatrix(
+        rules,
+        agent_ids=tuple(AgentId),
+        capability_ids=tuple(
+            descriptor.capability_id for descriptor in BASELINE_CAPABILITY_REGISTRY.all()
+        ),
+    )
+    validator = PlanValidator(access_matrix=custom_matrix)
+
+    result = validator.validate(_plan(_step(capability="CAP-A01")))
+
+    assert PlanValidationCode.REQUIRED_GATE_MISSING in tuple(
+        issue.code for issue in result.issues
+    )
+
+
+def test_plan_validator_requires_access_matrix_type() -> None:
+    with pytest.raises(TypeError, match="access_matrix"):
+        PlanValidator(access_matrix=object())  # type: ignore[arg-type]
 
 
 def test_step_budget_narrower_than_plan_is_valid() -> None:

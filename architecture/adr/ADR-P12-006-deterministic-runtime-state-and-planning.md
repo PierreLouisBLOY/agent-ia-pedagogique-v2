@@ -33,11 +33,13 @@ dont `current_step_ids` au pluriel. La factory initiale valide le plan puis cree
 uniquement des steps `PENDING` et un run `PLANNED` ; elle ne calcule pas `READY`.
 
 La validation statique controle cardinalite, references, cycles, coherence
-kind/executor, existence et route des capabilities, owner des agents, conflits de
-dependance transitive dans les groupes paralleles et narrowing des enveloppes de
-budget. Elle ne consulte pas `PermissionScope` et ne constitue pas une
-autorisation. Un futur etat `READY` ne signifiera jamais qu'un lancement est
-autorise.
+kind/executor, existence et route des capabilities, owner des agents, presence
+d'un `permission_scope_ref` pour les steps executables, conflits de dependance
+transitive dans les groupes paralleles, convergence vers un join explicite,
+presence structurelle d'une gate exigee par la ceiling matrix et narrowing des
+enveloppes de budget. Elle ne charge ni n'evalue `PermissionScope`, ne verifie
+aucune `GateDecision` et ne constitue pas une autorisation. Un futur etat `READY`
+ne signifiera jamais qu'un lancement est autorise.
 
 Aucun framework ni provider n'est requis. Le scheduler et l'executor sont
 reserves aux lots 12.5-C/D. Gates d'execution et routing concret restent 12.10 ;
@@ -52,3 +54,13 @@ snapshots, consommation budgetaire et recovery complet restent 12.11.
 - les dependances semantiques cachees ne peuvent pas etre detectees statiquement ;
 - l'autorisation, les schemas I/O, la disponibilite des adapters, les retries et
   le recovery restent hors de ce lot.
+
+## Correctif apres audit 12.5-B
+
+Les findings P12.5B-F01/F02/F03 ajoutent trois preuves structurelles sans etendre
+l'autorite du runtime : un executable reference un scope, chaque
+`parallel_group` d'au moins deux branches converge vers un `StepKind.JOIN`
+commun, et une capability `REQUEST_GATE` pour AG-01 possede un ancetre
+`StepKind.GATE`. Le join ne realise aucune aggregation semantique et la gate ne
+prouve aucune decision. Scope, gate et budget seront toujours reevalues juste
+avant lancement ; execution des gates et routing concret restent 12.10.

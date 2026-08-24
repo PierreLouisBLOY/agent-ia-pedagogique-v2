@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib
 import os
+import subprocess
 import tomllib
 from pathlib import Path
 
@@ -183,6 +184,19 @@ def test_structural_packages_are_importable() -> None:
 
     for package in packages:
         assert importlib.import_module(package).__name__ == package
+
+
+def test_canonical_artifacts_package_is_not_ignored_by_git() -> None:
+    package = "backend/adapters/outbound/artifacts/__init__.py"
+    result = subprocess.run(
+        ["git", "check-ignore", "--no-index", package],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1, result.stdout + result.stderr
 
 
 def test_no_production_dependency_is_declared() -> None:

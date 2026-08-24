@@ -35,12 +35,12 @@ htmlcov/
 
 # Runtime output
 *.log
-logs/
-runtime/
-exports/
-artifacts/
-tmp/
-temp/
+/logs/
+/runtime/
+/exports/
+/artifacts/
+/tmp/
+/temp/
 
 # Build and packaging output
 build/

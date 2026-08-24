@@ -195,10 +195,12 @@ class DeterministicScheduler:
             state.status is StepRuntimeStatus.RUNNING
             for state in refreshed_state.step_states.values()
         )
-        available_slots = max(
-            0,
-            self.runtime_policy.max_parallel_steps - running_count,
-        )
+        if running_count > self.runtime_policy.max_parallel_steps:
+            raise SchedulerStateError(
+                f"run_state has {running_count} RUNNING steps; max_parallel_steps is "
+                f"{self.runtime_policy.max_parallel_steps}"
+            )
+        available_slots = self.runtime_policy.max_parallel_steps - running_count
         timed_out_running_step_ids = tuple(
             step.step_id
             for step in plan.steps

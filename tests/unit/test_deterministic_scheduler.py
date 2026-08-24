@@ -468,6 +468,36 @@ def test_four_running_steps_leave_no_launch_slot() -> None:
     assert decision.launch_candidate_ids == ()
 
 
+def test_baseline_parallel_overflow_fails_closed_with_limit_in_message() -> None:
+    steps = tuple(_step(f"step-{index}") for index in range(5))
+    plan = _plan(*steps)
+    states = {
+        step.step_id: _state(step.step_id, StepRuntimeStatus.RUNNING)
+        for step in steps
+    }
+
+    with pytest.raises(SchedulerStateError, match=r"5 RUNNING steps.*4"):
+        _schedule(plan, states, status=WorkflowStatus.RUNNING)
+
+
+def test_custom_parallel_overflow_fails_closed() -> None:
+    steps = (_step("first"), _step("second"))
+    plan = _plan(*steps)
+    policy = replace(BASELINE_AGENT_RUNTIME_POLICY, max_parallel_steps=1)
+    states = {
+        step.step_id: _state(step.step_id, StepRuntimeStatus.RUNNING)
+        for step in steps
+    }
+
+    with pytest.raises(SchedulerStateError, match=r"2 RUNNING steps.*1"):
+        _schedule(
+            plan,
+            states,
+            status=WorkflowStatus.RUNNING,
+            scheduler=DeterministicScheduler(policy),
+        )
+
+
 def test_custom_parallel_limit_is_applied() -> None:
     steps = (_step("first"), _step("second"))
     plan = _plan(*steps)

@@ -3,9 +3,29 @@ from __future__ import annotations
 import ast
 import tomllib
 from dataclasses import fields
+from datetime import UTC, datetime
 from pathlib import Path
 
-from backend.agent_runtime.contracts import StepSpec
+import pytest
+
+from backend.agent_runtime.contracts import (
+    ExecutorKind,
+    ExecutorRef,
+    StepKind,
+    StepSpec,
+    WorkflowStatus,
+)
+from backend.agent_runtime.runtime import (
+    DeterministicScheduler,
+    Plan,
+    RunState,
+    SchedulerStateError,
+    StepRuntimeStatus,
+    StepState,
+)
+from backend.core_contracts.capability import CapabilityId
+from backend.shared_kernel.correlation import CorrelationId
+from backend.shared_kernel.time import Instant
 
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND = ROOT / "backend"
@@ -158,6 +178,52 @@ def test_scheduler_does_not_anticipate_workflow_catalogue() -> None:
 
 def test_step_spec_remains_declarative_without_runtime_status() -> None:
     assert "status" not in {item.name for item in fields(StepSpec)}
+
+
+def test_parallel_overflow_is_rejected_instead_of_masked() -> None:
+    now = Instant(datetime(2026, 8, 24, 12, 0, tzinfo=UTC))
+    steps = tuple(
+        StepSpec(
+            step_id=f"step-{index}",
+            kind=StepKind.USE_CASE,
+            capability_id=CapabilityId("CAP-R01"),
+            executor=ExecutorRef(ExecutorKind.APPLICATION),
+            objective="Exercise hard parallel limit",
+            permission_scope_ref="scope-1",
+            output_contract={"type": "result"},
+        )
+        for index in range(5)
+    )
+    plan = Plan(
+        plan_id="fitness-plan",
+        run_id="fitness-run",
+        plan_version=1,
+        objective="Reject parallel overflow",
+        success_criteria={},
+        workflow_kind="fitness-workflow",
+        steps=steps,
+        stop_conditions={"failure": "stop"},
+    )
+    run_state = RunState(
+        run_id=plan.run_id,
+        correlation_id=CorrelationId("fitness-correlation"),
+        workflow_kind=plan.workflow_kind,
+        plan_id=plan.plan_id,
+        plan_version=plan.plan_version,
+        status=WorkflowStatus.RUNNING,
+        step_states={
+            step.step_id: StepState(
+                step_id=step.step_id,
+                status=StepRuntimeStatus.RUNNING,
+                started_at=now,
+            )
+            for step in steps
+        },
+        started_at=now,
+    )
+
+    with pytest.raises(SchedulerStateError, match="RUNNING steps"):
+        DeterministicScheduler().schedule(plan=plan, run_state=run_state, now=now)
 
 
 def test_project_runtime_dependencies_remain_empty() -> None:

@@ -37,10 +37,17 @@ jamais mute.
 
 ## Selection et suspension
 
-La capacite vaut `max(0, max_parallel_steps - running_count)`. Les steps READY
-non expires sont choisis strictement dans l'ordre de `Plan.steps`, au plus dans
-la capacite disponible. Le parallelisme DAG reel est exploitable meme sans
-`parallel_group`; celui-ci reste le signal structurel fan-out/join valide en B.
+Apres verification de la hard limit, la capacite vaut
+`max_parallel_steps - running_count`. Les steps READY non expires sont choisis
+strictement dans l'ordre de `Plan.steps`, au plus dans la capacite disponible.
+Le parallelisme DAG reel est exploitable meme sans `parallel_group`; celui-ci
+reste le signal structurel fan-out/join valide en B.
+
+`max_parallel_steps` est une hard limit. La saturation
+`running_count == max_parallel_steps` est un etat valide avec zero slot. Un
+overflow `running_count > max_parallel_steps` est une incoherence technique et
+leve `SchedulerStateError` de facon fail-closed. Le scheduler ne masque pas le
+depassement, ne repare aucun `StepState` et n'invente aucun `stop_reason`.
 
 Les runs PLANNED et RUNNING peuvent produire des candidats. WAITING_GATE,
 REPLANNING et les statuts globaux terminaux n'en produisent aucun. Le scheduler

@@ -12,6 +12,7 @@ from backend.agent_runtime.contracts.common import (
 from backend.agent_runtime.contracts.invocation import InvocationStatus
 from backend.agent_runtime.contracts.policy import BudgetSpec
 from backend.agent_runtime.contracts.review.vocabulary import ReviewDimension
+from backend.shared_kernel.references import ObjectVersionRef
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,7 +20,7 @@ class ReviewRequest:
     """Independent review request that never mutates its production target."""
 
     meta: ContractMeta[InvocationStatus]
-    target_production_ref: ContractRef
+    target_production_ref: ObjectVersionRef
     review_dimensions: tuple[ReviewDimension, ...]
     criteria: Mapping[str, object] = field(default_factory=dict)
     evidence_refs: tuple[ContractRef, ...] = ()
@@ -33,7 +34,8 @@ class ReviewRequest:
             raise TypeError("meta must be a ContractMeta")
         if not isinstance(self.meta.status, InvocationStatus):
             raise TypeError("meta.status must be an InvocationStatus")
-        require_contract_ref(self.target_production_ref, "target_production_ref")
+        if not isinstance(self.target_production_ref, ObjectVersionRef):
+            raise TypeError("target_production_ref must be an ObjectVersionRef")
         dimensions = tuple(self.review_dimensions)
         if not dimensions:
             raise ValueError("review_dimensions must not be empty")

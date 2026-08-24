@@ -11,6 +11,7 @@ from backend.agent_runtime.contracts.common import (
 )
 from backend.agent_runtime.contracts.invocation import InvocationStatus
 from backend.shared_kernel._strings import require_non_empty
+from backend.shared_kernel.references import ObjectVersionRef
 
 
 @dataclass(frozen=True, slots=True)
@@ -18,7 +19,7 @@ class CorrectionRequest:
     """Version-oriented request for a new transformation of a production."""
 
     meta: ContractMeta[InvocationStatus]
-    target_production_ref: ContractRef
+    target_production_ref: ObjectVersionRef
     review_ref: ContractRef
     finding_ids: tuple[str, ...] = ()
     evidence_refs: tuple[ContractRef, ...] = ()
@@ -32,9 +33,12 @@ class CorrectionRequest:
             raise TypeError("meta must be a ContractMeta")
         if not isinstance(self.meta.status, InvocationStatus):
             raise TypeError("meta.status must be an InvocationStatus")
-        require_contract_ref(self.target_production_ref, "target_production_ref")
+        if not isinstance(self.target_production_ref, ObjectVersionRef):
+            raise TypeError("target_production_ref must be an ObjectVersionRef")
         require_contract_ref(self.review_ref, "review_ref")
         finding_ids = tuple(self.finding_ids)
+        if not finding_ids:
+            raise ValueError("finding_ids must not be empty")
         for finding_id in finding_ids:
             require_non_empty(finding_id, "finding_id")
         if len(finding_ids) != len(set(finding_ids)):

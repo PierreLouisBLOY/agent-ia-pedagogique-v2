@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
+from typing import cast
 
 from backend.agent_runtime.contracts.common import (
     ContractMeta,
@@ -54,6 +55,12 @@ class ProductionCandidate:
         uncertainties = tuple(
             freeze_agent_safe_mapping(item) for item in self.uncertainties
         )
+        for lineage_key in ("parent_production_ref", "target_ref"):
+            if lineage_key in self.lineage:
+                require_contract_ref(
+                    cast(ContractRef, self.lineage[lineage_key]),
+                    lineage_key,
+                )
         object.__setattr__(
             self,
             "structured_payload",

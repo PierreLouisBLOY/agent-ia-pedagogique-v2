@@ -16,6 +16,7 @@ from backend.agent_runtime.contracts.review.vocabulary import (
     ReviewDimension,
 )
 from backend.shared_kernel._strings import require_non_empty
+from backend.shared_kernel.references import ObjectVersionRef
 
 
 class ReviewStatus(StrEnum):
@@ -30,7 +31,7 @@ class ReviewResult:
 
     meta: ContractMeta[ReviewStatus]
     review_id: str
-    target_production_ref: ContractRef
+    target_production_ref: ObjectVersionRef
     findings: tuple[Finding, ...]
     overall_assessment: OverallAssessment
     correction_required: bool
@@ -46,7 +47,8 @@ class ReviewResult:
         if not isinstance(self.meta.status, ReviewStatus):
             raise TypeError("meta.status must be a ReviewStatus")
         require_non_empty(self.review_id, "review_id")
-        require_contract_ref(self.target_production_ref, "target_production_ref")
+        if not isinstance(self.target_production_ref, ObjectVersionRef):
+            raise TypeError("target_production_ref must be an ObjectVersionRef")
         findings = tuple(self.findings)
         if any(not isinstance(item, Finding) for item in findings):
             raise TypeError("findings must contain Finding values")
@@ -62,6 +64,24 @@ class ReviewResult:
             raise TypeError("coverage must contain ReviewDimension values")
         if len(coverage) != len(set(coverage)):
             raise ValueError("coverage must contain unique dimensions")
+        if self.meta.status is ReviewStatus.COMPLETED and not coverage:
+            raise ValueError("completed review requires non-empty coverage")
+        if any(finding.dimension not in coverage for finding in findings):
+            raise ValueError("every finding dimension must be included in coverage")
+        finding_requires_correction = any(
+            finding.correction_required for finding in findings
+        )
+        if finding_requires_correction and not self.correction_required:
+            raise ValueError("finding correction requirement must be reflected by result")
+        if (
+            self.overall_assessment is OverallAssessment.CORRECTION_REQUIRED
+            and not self.correction_required
+        ):
+            raise ValueError("correction_required assessment requires correction")
+        if self.overall_assessment is OverallAssessment.ACCEPTABLE and (
+            self.correction_required or finding_requires_correction
+        ):
+            raise ValueError("acceptable assessment cannot require correction")
         evidence_refs_used = tuple(self.evidence_refs_used)
         for evidence_ref in evidence_refs_used:
             require_contract_ref(evidence_ref, "evidence_ref_used")

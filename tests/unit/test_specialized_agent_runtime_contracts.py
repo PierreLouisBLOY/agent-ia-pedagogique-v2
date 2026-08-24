@@ -52,6 +52,8 @@ from backend.core_contracts.capability import CapabilityId
 from backend.core_contracts.invocation import UseCaseContext
 from backend.core_contracts.outcome import ApplicationOutcome, OutcomeStatus
 from backend.shared_kernel.correlation import CorrelationId
+from backend.shared_kernel.identifiers import TypedEntityId
+from backend.shared_kernel.references import ObjectVersionRef, TypedEntityRef, VersionRef
 from backend.shared_kernel.time import Instant
 
 NOW = Instant(datetime(2026, 8, 24, 12, 0, tzinfo=UTC))
@@ -122,6 +124,18 @@ def _evidence_item(evidence_id: str = "evidence-1") -> EvidenceItem:
         retrieved_at=NOW,
         relevance={"basis": "direct"},
         authority={"level": "official"},
+    )
+
+
+def _production_version(
+    version: str = "v1",
+    production_id: str = "production-1",
+) -> ObjectVersionRef:
+    return ObjectVersionRef(
+        object_ref=TypedEntityRef(
+            TypedEntityId(entity_type="production", value=production_id)
+        ),
+        version_ref=VersionRef(version),
     )
 
 
@@ -422,7 +436,7 @@ def test_production_candidate_rejects_private_generation_metadata() -> None:
 def test_review_request_result_and_finding_keep_review_separate_from_validation() -> None:
     request = ReviewRequest(
         meta=_meta(InvocationStatus.PLANNED),
-        target_production_ref="production-1",
+        target_production_ref=_production_version(),
         review_dimensions=(ReviewDimension.ACCURACY, ReviewDimension.SOURCES),
         review_budget=BudgetSpec(max_steps=2),
     )
@@ -469,7 +483,7 @@ def test_review_request_rejects_duplicate_dimensions() -> None:
     with pytest.raises(ValueError):
         ReviewRequest(
             meta=_meta(InvocationStatus.PLANNED),
-            target_production_ref="production-1",
+            target_production_ref=_production_version(),
             review_dimensions=(ReviewDimension.ACCURACY, ReviewDimension.ACCURACY),
         )
 
@@ -518,7 +532,7 @@ def test_review_result_validates_coverage_and_evidence_refs() -> None:
         ReviewResult(
             meta=_meta(ReviewStatus.COMPLETED),
             review_id="review-1",
-            target_production_ref="production-1",
+            target_production_ref=_production_version(),
             findings=(),
             overall_assessment=OverallAssessment.ACCEPTABLE,
             correction_required=False,
@@ -529,7 +543,7 @@ def test_review_result_validates_coverage_and_evidence_refs() -> None:
         ReviewResult(
             meta=_meta(ReviewStatus.INCOMPLETE),
             review_id="review-2",
-            target_production_ref="production-1",
+            target_production_ref=_production_version(),
             findings=(),
             overall_assessment=OverallAssessment.INCOMPLETE,
             correction_required=False,
@@ -540,9 +554,9 @@ def test_review_result_validates_coverage_and_evidence_refs() -> None:
     structurally_independent = ReviewResult(
         meta=_meta(ReviewStatus.COMPLETED),
         review_id="review-3",
-        target_production_ref="production-1",
+        target_production_ref=_production_version(),
         findings=(),
-        overall_assessment=OverallAssessment.ACCEPTABLE,
+        overall_assessment=OverallAssessment.ACCEPTABLE_WITH_RESERVATIONS,
         correction_required=True,
         coverage=(ReviewDimension.FORMAT,),
         evidence_refs_used=(),
@@ -553,13 +567,13 @@ def test_review_result_validates_coverage_and_evidence_refs() -> None:
 def test_correction_request_is_immutable_and_version_oriented() -> None:
     request = CorrectionRequest(
         meta=_meta(InvocationStatus.PLANNED),
-        target_production_ref="production-version-1",
+        target_production_ref=_production_version(),
         review_ref="review-1",
         finding_ids=("finding-1",),
         evidence_refs=("evidence-1",),
         expected_delta={"new_version": True},
     )
-    assert request.target_production_ref == "production-version-1"
+    assert request.target_production_ref == _production_version()
     assert request.review_ref == "review-1"
     assert request.evidence_refs == ("evidence-1",)
     with pytest.raises(FrozenInstanceError):
@@ -567,8 +581,9 @@ def test_correction_request_is_immutable_and_version_oriented() -> None:
     with pytest.raises(ValueError):
         CorrectionRequest(
             meta=_meta(InvocationStatus.PLANNED),
-            target_production_ref="production-version-1",
+            target_production_ref=_production_version(),
             review_ref="review-1",
+            finding_ids=("finding-1",),
             evidence_refs=("",),
         )
 

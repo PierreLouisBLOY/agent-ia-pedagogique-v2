@@ -61,6 +61,7 @@ from backend.agent_runtime.contracts.production import (
 )
 from backend.agent_runtime.contracts.review import (
     CorrectionRequest,
+    CorrectionResult,
     Finding,
     FindingSeverity,
     OverallAssessment,
@@ -83,6 +84,7 @@ __all__ = [
     "ContractMeta",
     "ContractRef",
     "CorrectionRequest",
+    "CorrectionResult",
     "DelegationEnvelope",
     "DelegationResult",
     "EffectState",

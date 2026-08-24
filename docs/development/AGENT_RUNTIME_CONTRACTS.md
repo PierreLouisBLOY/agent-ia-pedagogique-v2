@@ -1,32 +1,32 @@
 # Contrats runtime agentiques
 
-Les Phases 12.3-C1 et 12.3-C2 materialisent `backend/agent_runtime/contracts/`
+Les Phases 12.3-C1, C2 et C3 materialisent `backend/agent_runtime/contracts/`
 comme zone technique provider-neutral pour les contrats runtime agentiques. Cette zone est hors
 Domain/Application, hors modules metier, hors adaptateurs et hors infrastructure.
 
 ## Matrice C-01..C-19
 
-| ID | Type materialise | Placement | Statut |
-|---|---|---|---|
-| C-01 | `AgentInvocation` | `contracts/invocation/agent_invocation.py` | IMPLEMENTED C1 |
-| C-02 | `AgentResult` | `contracts/invocation/agent_result.py` | IMPLEMENTED C1 |
-| C-03 | `DelegationEnvelope` | `contracts/planning/delegation.py` | IMPLEMENTED C1 |
-| C-04 | `DelegationResult` | `contracts/delegation/delegation_result.py` | IMPLEMENTED C2 |
-| C-05 | `EvidenceRequest` | `contracts/evidence/evidence_request.py` | IMPLEMENTED C2 |
-| C-06 | `EvidenceItem`, `EvidenceSet` | `contracts/evidence/` | IMPLEMENTED C2 |
-| C-07 | `ProductionRequest` | `contracts/production/production_request.py` | IMPLEMENTED C2 |
-| C-08 | `ProductionCandidate` | `contracts/production/production_candidate.py` | IMPLEMENTED C2 |
-| C-09 | `ReviewRequest`, `ReviewDimension` | `contracts/review/` | IMPLEMENTED C2 |
-| C-10 | `Finding`, `FindingSeverity`, `ReviewResult`, `OverallAssessment` | `contracts/review/` | IMPLEMENTED C2 |
-| C-11 | `CorrectionRequest` avec preuves de correction | `contracts/review/correction_request.py` | IMPLEMENTED C2 |
-| C-12 | `UseCaseRequest` | `contracts/application/use_case_request.py` | IMPLEMENTED C2 |
-| C-13 | `UseCaseResult` | `contracts/application/use_case_result.py` | IMPLEMENTED C2 |
-| C-14 | `ToolCallRequest` | `contracts/tools/tool_call_request.py` | IMPLEMENTED C2 |
-| C-15 | `ToolCallResult` | `contracts/tools/tool_call_result.py` | IMPLEMENTED C2 |
-| C-16 | `GateRequest` | `contracts/gates/gate_request.py` | IMPLEMENTED C2 |
-| C-17 | `GateDecision` | `contracts/gates/gate_decision.py` | IMPLEMENTED C2 |
-| C-18 | `WorkflowEvent` | `contracts/events/workflow_event.py` | IMPLEMENTED C2 |
-| C-19 | `ErrorEnvelope` enrichi Phase 11.13 | `contracts/errors/error_envelope.py` | IMPLEMENTED C1 |
+| ID | Type materialise | Placement | Implementation | Audit C3 |
+|---|---|---|---|---|
+| C-01 | `AgentInvocation` | `contracts/invocation/agent_invocation.py` | C1 | CLOSED |
+| C-02 | `AgentResult` | `contracts/invocation/agent_result.py` | C1 | CLOSED |
+| C-03 | `DelegationEnvelope` | `contracts/planning/delegation.py` | C1 | CLOSED |
+| C-04 | `DelegationResult` | `contracts/delegation/delegation_result.py` | C2 | CLOSED |
+| C-05 | `EvidenceRequest` | `contracts/evidence/evidence_request.py` | C2 | CLOSED |
+| C-06 | `EvidenceSet` + `EvidenceItem` | `contracts/evidence/` | C2 | CLOSED |
+| C-07 | `ProductionRequest` | `contracts/production/production_request.py` | C2 | CLOSED |
+| C-08 | `ProductionCandidate` | `contracts/production/production_candidate.py` | C2 | CLOSED |
+| C-09 | `ReviewRequest`, `ReviewDimension` | `contracts/review/` | C2 | CLOSED |
+| C-10 | `ReviewResult`, `Finding` et vocabulaires | `contracts/review/` | C2 | CLOSED |
+| C-11 | `CorrectionRequest` + `CorrectionResult` complementaire | `contracts/review/` | C2/C3 | CLOSED |
+| C-12 | `UseCaseRequest` | `contracts/application/use_case_request.py` | C2 | CLOSED |
+| C-13 | `UseCaseResult` | `contracts/application/use_case_result.py` | C2 | CLOSED |
+| C-14 | `ToolCallRequest` | `contracts/tools/tool_call_request.py` | C2 | CLOSED |
+| C-15 | `ToolCallResult` | `contracts/tools/tool_call_result.py` | C2 | CLOSED |
+| C-16 | `GateRequest` | `contracts/gates/gate_request.py` | C2 | CLOSED |
+| C-17 | `GateDecision` | `contracts/gates/gate_decision.py` | C2 | CLOSED |
+| C-18 | `WorkflowEvent` | `contracts/events/workflow_event.py` | C2 | CLOSED |
+| C-19 | `ErrorEnvelope` enrichi Phase 11.13 | `contracts/errors/error_envelope.py` | C1 | CLOSED |
 
 Le label historique C-03 `DelegationRequest` est supersede par le nom final
 `DelegationEnvelope`. C-04 etait explicitement hors C1 ; il est inclus dans C2
@@ -96,8 +96,26 @@ backend de logs ou de traces.
 Pour les requetes et resultats sans vocabulaire specialise fixe par Phase 11.8,
 C2 reutilise respectivement `InvocationStatus` et `AgentResultStatus` lorsque leur
 semantique runtime est identique. `UseCaseResult` reutilise `OutcomeStatus` via
-`ApplicationOutcome`. La Phase 12.3-C3 auditera globalement la completude, les
-status mappings, le lineage et le versioning preparatoire.
+`ApplicationOutcome`. La Phase 12.3-C3 clot la completude, les status mappings,
+le lineage et le versioning preparatoire. Les cibles de review et correction
+utilisent desormais une version exacte `ObjectVersionRef`.
+
+`CorrectionResult` materialise le delta complementaire de Phase 11.12 : request,
+version parente, nouvelle version candidate, findings traites ou non resolus,
+resume, avertissements et lineage. Il ne cree, ne persiste, ne valide et ne promeut
+aucune production.
+
+La correlation de `DelegationResult` reste composee via `AgentResult.meta`.
+`DelegationEnvelope` ne possede pas de correlation directe ; C3 n'ajoute donc
+aucun champ ad hoc ou metadata dupliquee.
+
+## Versioning
+
+Les inventaires `AGENT_RUNTIME_STATUS_MAPPING.md` et
+`AGENT_RUNTIME_VERSIONING_INVENTORY.md` distinguent les fermetures C3 des travaux
+DEFERRED TO 12.3-D : compatibilite formelle, versions supportees, migrations et
+schemas de serialization. Aucun registry, parser semver ou mecanisme de migration
+n'est implemente ici.
 
 ## Permissions et erreurs
 
@@ -125,4 +143,4 @@ restent autorisees.
 Le coeur runtime ne contient aucun provider, framework, SDK, HTTP, ORM, SQL,
 scheduler, registry, evaluator, recovery, RAG, LLM, routing policy, tool policy,
 execution de use case, execution d'outil ou gate engine. Ces responsabilites ne
-sont pas introduites par C2.
+sont pas introduites par C3.

@@ -46,6 +46,11 @@ class GateRequest:
             raise TypeError("required_actor must be an ActorRef")
         if self.expires_at is not None and not isinstance(self.expires_at, Instant):
             raise TypeError("expires_at must be an Instant")
+        if (
+            self.expires_at is not None
+            and self.expires_at.value <= self.meta.created_at.value
+        ):
+            raise ValueError("expires_at must be after meta.created_at")
         options = tuple(freeze_agent_safe_mapping(option) for option in self.options)
         object.__setattr__(self, "options", options)
         object.__setattr__(

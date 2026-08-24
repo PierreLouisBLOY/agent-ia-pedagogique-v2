@@ -84,7 +84,7 @@ def test_registry_descriptors_store_no_concrete_execution_binding() -> None:
     assert all(fields.isdisjoint(forbidden_fields) for fields in descriptor_fields.values())
 
 
-def test_no_scheduler_state_or_permission_evaluator_is_implemented() -> None:
+def test_no_scheduler_state_or_composite_permission_engine_is_implemented() -> None:
     class_names = {
         node.name
         for path in _python_files()
@@ -97,7 +97,6 @@ def test_no_scheduler_state_or_permission_evaluator_is_implemented() -> None:
             "Scheduler",
             "RunState",
             "StepState",
-            "PermissionScopeEvaluator",
             "PermissionEvaluator",
             "ToolCallPolicy",
         }

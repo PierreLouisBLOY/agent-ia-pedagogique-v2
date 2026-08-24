@@ -21,8 +21,9 @@ elle ne stocke aucun handler.
 
 `AccessMatrix` materialise exhaustivement les 96 cellules agent-capability. Elle
 est une ceiling policy statique. Elle ne prend aucune decision d'autorisation
-effective : l'evaluation de `PermissionScope` arrivera en 12.4-C. En particulier,
-`CONDITIONAL` ne vaut jamais implicitement `ALLOW`.
+effective : l'evaluation isolee de `PermissionScope` appartient a 12.4-C et la
+combinaison finale a 12.4-D. En particulier, `CONDITIONAL` ne vaut jamais
+implicitement `ALLOW`.
 
 `AgentRuntimePolicy` porte des garde-fous techniques configurables de volumes,
 ratios et deadlines. Ces valeurs ne sont pas des regles Domain. `RuntimeMode` et
@@ -41,3 +42,16 @@ SDK, HTTP, ORM, SQL ou LLM reel n'est introduit.
 - les limites runtime peuvent etre configurees sans couplage a un fournisseur ;
 - l'evaluation des permissions et toute execution restent hors de 12.4-B ;
 - des fitness functions protegent les cardinalites et les frontieres de dependance.
+
+## Extension Phase 12.4-C
+
+La decision de frontiere reste inchangee. C materialise desormais un evaluator
+pur de `PermissionScope`, ses relations conservatrices de narrowing et une policy
+de delegation AG-01 vers AG-02/03/04. Les facts de revocation et de gates
+satisfaites sont fournis explicitement par une couche runtime/policy de confiance.
+
+Cet evaluator ne consulte pas `AccessMatrix`. La combinaison entre ceiling matrix
+et scope, y compris le controle d'ownership du target, reste reservee a 12.4-D.
+Les budgets sont seulement compares comme enveloppes ; `BudgetState`, consommation,
+gate engine, scheduler, routing concret et policy composite de `ToolCall` restent
+hors de C.

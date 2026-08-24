@@ -193,9 +193,8 @@ def test_delegation_request_has_no_parallel_class_definition() -> None:
     assert definitions == []
 
 
-def test_agent_runtime_does_not_define_evaluator_scheduler_or_execution_logic() -> None:
+def test_agent_runtime_does_not_define_scheduler_or_execution_logic() -> None:
     forbidden_fragments = (
-        "Evaluator",
         "Handler",
         "Provider",
         "Repository",

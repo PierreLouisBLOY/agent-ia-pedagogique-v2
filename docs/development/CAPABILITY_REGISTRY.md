@@ -20,5 +20,5 @@ Une cellule absente est une erreur de configuration, jamais un `DENY` implicite.
 
 Les modes `ALLOW`, `DENY`, `REQUEST`, `DELEGATE`, `REQUEST_GATE`, et
 `CONDITIONAL` decrivent cette ceiling. `CONDITIONAL` ne signifie pas `ALLOW`.
-L'evaluator de `PermissionScope` est volontairement absent de 12.4-B et arrivera
-en 12.4-C ; aucune autorisation effective n'est donc calculee ici.
+L'evaluator pur de `PermissionScope`, implemente en 12.4-C, ne consulte pas cette
+matrice. La combinaison effective ceiling + scope reste reservee a 12.4-D.

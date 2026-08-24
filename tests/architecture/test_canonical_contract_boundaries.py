@@ -133,8 +133,41 @@ def test_agent_runtime_contracts_have_one_canonical_definition_each() -> None:
     expected = {
         "AgentInvocation": ["backend/agent_runtime/contracts/invocation/agent_invocation.py"],
         "AgentResult": ["backend/agent_runtime/contracts/invocation/agent_result.py"],
+        "CorrectionRequest": [
+            "backend/agent_runtime/contracts/review/correction_request.py"
+        ],
         "DelegationEnvelope": ["backend/agent_runtime/contracts/planning/delegation.py"],
+        "DelegationResult": [
+            "backend/agent_runtime/contracts/delegation/delegation_result.py"
+        ],
+        "EvidenceItem": ["backend/agent_runtime/contracts/evidence/evidence_item.py"],
+        "EvidenceRequest": [
+            "backend/agent_runtime/contracts/evidence/evidence_request.py"
+        ],
+        "EvidenceSet": ["backend/agent_runtime/contracts/evidence/evidence_set.py"],
+        "Finding": ["backend/agent_runtime/contracts/review/finding.py"],
+        "GateDecision": ["backend/agent_runtime/contracts/gates/gate_decision.py"],
+        "GateRequest": ["backend/agent_runtime/contracts/gates/gate_request.py"],
+        "ProductionCandidate": [
+            "backend/agent_runtime/contracts/production/production_candidate.py"
+        ],
+        "ProductionRequest": [
+            "backend/agent_runtime/contracts/production/production_request.py"
+        ],
+        "ReviewRequest": ["backend/agent_runtime/contracts/review/review_request.py"],
+        "ReviewResult": ["backend/agent_runtime/contracts/review/review_result.py"],
         "StepSpec": ["backend/agent_runtime/contracts/planning/step_spec.py"],
+        "ToolCallRequest": [
+            "backend/agent_runtime/contracts/tools/tool_call_request.py"
+        ],
+        "ToolCallResult": ["backend/agent_runtime/contracts/tools/tool_call_result.py"],
+        "UseCaseRequest": [
+            "backend/agent_runtime/contracts/application/use_case_request.py"
+        ],
+        "UseCaseResult": [
+            "backend/agent_runtime/contracts/application/use_case_result.py"
+        ],
+        "WorkflowEvent": ["backend/agent_runtime/contracts/events/workflow_event.py"],
     }
     actual = {
         class_name: [
@@ -161,7 +194,14 @@ def test_delegation_request_has_no_parallel_class_definition() -> None:
 
 
 def test_agent_runtime_does_not_define_evaluator_scheduler_or_registry_logic() -> None:
-    forbidden_fragments = ("Evaluator", "Scheduler", "Registry")
+    forbidden_fragments = (
+        "Evaluator",
+        "Handler",
+        "Provider",
+        "Registry",
+        "Repository",
+        "Scheduler",
+    )
     definitions = [
         f"{path.relative_to(ROOT).as_posix()}: {node.name}"
         for path in _python_files(AGENT_RUNTIME)
@@ -191,3 +231,44 @@ def test_invocation_and_errors_do_not_import_private_planning_symbols() -> None:
     ]
 
     assert violations == []
+
+
+def test_specialized_application_and_tool_contracts_have_no_active_dependencies() -> None:
+    checked_roots = (
+        AGENT_RUNTIME_CONTRACTS / "application",
+        AGENT_RUNTIME_CONTRACTS / "tools",
+        AGENT_RUNTIME_CONTRACTS / "gates",
+    )
+    forbidden_fragments = (
+        ".handlers",
+        ".repositories",
+        ".repository",
+        ".orm",
+        ".sql",
+        ".providers",
+        ".adapters",
+        ".infrastructure",
+        ".modules",
+    )
+    violations = [
+        f"{path.relative_to(ROOT).as_posix()}: {module}"
+        for root in checked_roots
+        for path in _python_files(root)
+        for module in _imported_modules(path)
+        if any(fragment in module.casefold() for fragment in forbidden_fragments)
+    ]
+
+    assert violations == []
+
+
+def test_contract_ref_has_one_agent_runtime_definition() -> None:
+    definitions = [
+        path.relative_to(ROOT).as_posix()
+        for path in _python_files(AGENT_RUNTIME_CONTRACTS)
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
+        if isinstance(node, ast.TypeAlias)
+        and isinstance(node.name, ast.Name)
+        and node.name.id == "ContractRef"
+    ]
+
+    assert definitions == ["backend/agent_runtime/contracts/common/references.py"]

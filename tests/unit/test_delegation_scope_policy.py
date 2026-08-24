@@ -69,8 +69,16 @@ def _evaluate(
     child: PermissionScope,
     target: AgentId = AgentId.AG_02,
     evaluated_at: Instant = NOW,
+    *,
+    parent_revoked: bool = False,
 ):
-    return DelegationScopePolicy().evaluate_delegation(parent, child, target, evaluated_at)
+    return DelegationScopePolicy().evaluate_delegation(
+        parent,
+        child,
+        target,
+        evaluated_at,
+        parent_revoked=parent_revoked,
+    )
 
 
 def test_ag01_delegable_parent_to_narrowed_ag02_child_is_allowed() -> None:
@@ -78,6 +86,63 @@ def test_ag01_delegable_parent_to_narrowed_ag02_child_is_allowed() -> None:
 
     assert evaluation.allowed
     assert evaluation.code is DelegationScopeCode.ALLOW
+
+
+def test_explicit_non_revoked_parent_remains_allowed() -> None:
+    assert (
+        _evaluate(_parent(), _child(), parent_revoked=False).code
+        is DelegationScopeCode.ALLOW
+    )
+
+
+def test_revoked_parent_cannot_create_child_grant() -> None:
+    assert (
+        _evaluate(_parent(), _child(), parent_revoked=True).code
+        is DelegationScopeCode.PARENT_REVOKED
+    )
+
+
+def test_parent_revocation_precedes_non_delegable_refusal() -> None:
+    parent = _parent(delegable=False)
+
+    assert (
+        _evaluate(parent, _child(parent), parent_revoked=True).code
+        is DelegationScopeCode.PARENT_REVOKED
+    )
+
+
+def test_parent_revocation_precedes_child_narrowing() -> None:
+    parent = _parent()
+    wider_child = _child(
+        parent, capability_ids=(E01, CapabilityId("CAP-G01"))
+    )
+
+    assert (
+        _evaluate(parent, wider_child, parent_revoked=True).code
+        is DelegationScopeCode.PARENT_REVOKED
+    )
+
+
+def test_parent_revocation_precedes_risk_filter() -> None:
+    capability_id = CapabilityId("CAP-A01")
+    parent = _parent(capability_ids=(capability_id,))
+
+    assert (
+        _evaluate(parent, _child(parent), parent_revoked=True).code
+        is DelegationScopeCode.PARENT_REVOKED
+    )
+
+
+@pytest.mark.parametrize("parent_revoked", (1, "true", None))
+def test_parent_revoked_requires_strict_bool(parent_revoked: object) -> None:
+    with pytest.raises(TypeError, match="parent_revoked must be a bool"):
+        DelegationScopePolicy().evaluate_delegation(
+            _parent(),
+            _child(),
+            AgentId.AG_02,
+            NOW,
+            parent_revoked=parent_revoked,  # type: ignore[arg-type]
+        )
 
 
 def test_non_delegable_parent_is_refused() -> None:

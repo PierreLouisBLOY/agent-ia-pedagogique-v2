@@ -58,6 +58,7 @@ def test_permission_policy_imports_respect_runtime_boundaries() -> None:
 
 def test_c_policy_defines_no_deferred_runtime_engine_or_state() -> None:
     forbidden_classes = {
+        "GrantRegistry",
         "Scheduler",
         "RunState",
         "StepState",

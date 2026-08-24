@@ -55,3 +55,8 @@ et scope, y compris le controle d'ownership du target, reste reservee a 12.4-D.
 Les budgets sont seulement compares comme enveloppes ; `BudgetState`, consommation,
 gate engine, scheduler, routing concret et policy composite de `ToolCall` restent
 hors de C.
+
+La revocation du scope parent est opposable a toute nouvelle delegation via un
+fait bool explicite et trusted. Elle reste distincte de l'inactivite temporelle.
+Ce choix ne cree ni registry mutable, ni persistance, ni propagation automatique
+de revocation : ces responsabilites runtime restent hors de 12.4-C.

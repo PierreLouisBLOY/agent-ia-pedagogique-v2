@@ -12,6 +12,13 @@ fenetres temporelles et budgets ; il conserve ou renforce les contraintes, gates
 et denies parent. Le changement de principal attendu est la seule exception a la
 relation generale de narrowing.
 
+La revocation et l'expiration sont deux causes distinctes. `parent_revoked` est un
+fait trusted injecte explicitement par la couche runtime/policy. Lorsqu'il vaut
+`True`, le parent ne peut plus creer de grant enfant, meme s'il reste dans sa
+fenetre temporelle ou si une autre regle aurait produit un refus different.
+`PARENT_INACTIVE` reste reserve a `valid_from` et `expires_at`. Aucune persistance,
+propagation transitive ou registry mutable de revocations n'est implementee ici.
+
 AG-02, AG-03 et AG-04 ne peuvent pas redeleguer dans la baseline : le scope enfant
 doit garder `delegable=False`. Une capability R3 ou R4 est refusee comme droit
 direct delegue. Les risques R0, R1 et R2 passent ce filtre si les autres regles de
@@ -20,7 +27,8 @@ scope sont respectees, sans que cela constitue une autorisation finale.
 Les codes fermes couvrent l'autorisation, les scopes invalides, un parent non
 delegable ou non AG-01, un target invalide, un principal enfant incoherent, un
 parent inactif, un scope enfant plus large, un risque non delegable et une
-tentative de redelegation.
+tentative de redelegation. `PARENT_REVOKED` identifie separement la revocation
+opposable a toute nouvelle delegation.
 
 La policy ne modifie aucun scope et n'execute ni retry, fallback, provider,
 scheduler, gate engine ou use case. Un deny herite ne peut donc pas etre efface

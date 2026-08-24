@@ -25,6 +25,7 @@ class DelegationScopeCode(StrEnum):
     PARENT_NOT_AG01 = "PARENT_NOT_AG01"
     INVALID_TARGET_AGENT = "INVALID_TARGET_AGENT"
     CHILD_PRINCIPAL_MISMATCH = "CHILD_PRINCIPAL_MISMATCH"
+    PARENT_REVOKED = "PARENT_REVOKED"
     PARENT_INACTIVE = "PARENT_INACTIVE"
     NOT_NARROWER = "NOT_NARROWER"
     RISK_NOT_DELEGABLE = "RISK_NOT_DELEGABLE"
@@ -69,6 +70,8 @@ class DelegationScopePolicy:
         child_scope: PermissionScope,
         target_agent: AgentId,
         evaluated_at: Instant,
+        *,
+        parent_revoked: bool = False,
     ) -> DelegationScopeEvaluation:
         if not isinstance(parent_scope, PermissionScope):
             raise TypeError("parent_scope must be a PermissionScope")
@@ -78,6 +81,8 @@ class DelegationScopePolicy:
             raise TypeError("target_agent must be an AgentId")
         if not isinstance(evaluated_at, Instant):
             raise TypeError("evaluated_at must be an Instant")
+        if not isinstance(parent_revoked, bool):
+            raise TypeError("parent_revoked must be a bool")
         if not scope_configuration_is_valid(parent_scope, self.capability_registry):
             return _refusal(DelegationScopeCode.INVALID_PARENT_SCOPE)
         if not scope_configuration_is_valid(child_scope, self.capability_registry):
@@ -94,6 +99,8 @@ class DelegationScopePolicy:
             and child_scope.principal.actor_id == target_agent.value
         ):
             return _refusal(DelegationScopeCode.CHILD_PRINCIPAL_MISMATCH)
+        if parent_revoked:
+            return _refusal(DelegationScopeCode.PARENT_REVOKED)
         if not parent_scope.delegable:
             return _refusal(DelegationScopeCode.PARENT_NOT_DELEGABLE)
         if (

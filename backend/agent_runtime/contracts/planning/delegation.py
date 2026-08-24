@@ -3,13 +3,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
-from backend.agent_runtime.contracts.common import AgentId, freeze_agent_safe_mapping
-from backend.agent_runtime.contracts.planning.step_spec import (
+from backend.agent_runtime.contracts.common import (
+    ActorKind,
+    AgentId,
     ContractRef,
-    StepKind,
-    StepSpec,
-    _require_contract_ref,
+    freeze_agent_safe_mapping,
+    require_contract_ref,
 )
+from backend.agent_runtime.contracts.planning.step_spec import StepKind, StepSpec
 from backend.agent_runtime.contracts.policy import PermissionScope
 from backend.shared_kernel._strings import require_non_empty
 from backend.shared_kernel.time import Instant
@@ -45,9 +46,13 @@ class DelegationEnvelope:
             raise ValueError("source_step.capability_id is required")
         evidence_refs = tuple(self.evidence_refs)
         for evidence_ref in evidence_refs:
-            _require_contract_ref(evidence_ref, "evidence_ref")
+            require_contract_ref(evidence_ref, "evidence_ref")
         if not isinstance(self.permission_scope, PermissionScope):
             raise TypeError("permission_scope must be a PermissionScope")
+        if self.permission_scope.principal.kind is not ActorKind.AGENT:
+            raise ValueError("permission_scope.principal must be an agent")
+        if self.permission_scope.principal.actor_id != self.target_agent.value:
+            raise ValueError("permission_scope.principal must match target_agent")
         if self.deadline is not None and not isinstance(self.deadline, Instant):
             raise TypeError("deadline must be an Instant")
         object.__setattr__(

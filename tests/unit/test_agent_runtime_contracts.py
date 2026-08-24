@@ -17,6 +17,7 @@ from backend.agent_runtime.contracts import (
     AutonomyLevel,
     BudgetSpec,
     ContractMeta,
+    ContractRef,
     DelegationEnvelope,
     EffectState,
     ErrorCategory,
@@ -32,6 +33,7 @@ from backend.agent_runtime.contracts import (
     RuntimeMode,
     StepKind,
     StepSpec,
+    require_contract_ref,
 )
 from backend.core_contracts.capability import CapabilityId
 from backend.shared_kernel.correlation import CorrelationId
@@ -42,11 +44,15 @@ def _actor() -> ActorRef:
     return ActorRef(kind=ActorKind.AGENT, actor_id="agent-runtime")
 
 
-def _meta(status: InvocationStatus | AgentResultStatus) -> ContractMeta[object]:
+def _meta(
+    status: InvocationStatus | AgentResultStatus,
+    *,
+    step_id: str = "step-1",
+) -> ContractMeta[object]:
     return ContractMeta(
         schema_version="12.3-C1",
         run_id="run-1",
-        step_id="step-1",
+        step_id=step_id,
         parent_step_id=None,
         correlation_id=CorrelationId("corr-1"),
         created_at=Instant(datetime(2026, 8, 24, 12, 0, tzinfo=UTC)),
@@ -56,9 +62,9 @@ def _meta(status: InvocationStatus | AgentResultStatus) -> ContractMeta[object]:
     )
 
 
-def _permission_scope() -> PermissionScope:
+def _permission_scope(agent_id: AgentId = AgentId.AG_02) -> PermissionScope:
     return PermissionScope(
-        principal=_actor(),
+        principal=ActorRef(kind=ActorKind.AGENT, actor_id=agent_id.value),
         capability_ids=(CapabilityId("course.generate"),),
         operations=("invoke",),
         resource_scope={"course": "course-1"},
@@ -96,12 +102,12 @@ def _delegation(agent_id: AgentId = AgentId.AG_02) -> DelegationEnvelope:
         context_slice={"locale": "fr-FR"},
         evidence_refs=("evidence-1",),
         constraints={"max_depth": 1},
-        permission_scope=_permission_scope(),
+        permission_scope=_permission_scope(agent_id),
         trace_context={"trace": {"sampled": True}},
     )
 
 
-def _error() -> ErrorEnvelope:
+def _error(*, step_id: str = "step-1") -> ErrorEnvelope:
     return ErrorEnvelope(
         error_code="AG_VALIDATION",
         category=ErrorCategory.VALIDATION,
@@ -109,7 +115,7 @@ def _error() -> ErrorEnvelope:
         retryable=False,
         severity=ErrorSeverity.ERROR,
         message="Invalid agent input",
-        step_id="step-1",
+        step_id=step_id,
         attempt=1,
         effect_state=EffectState.NONE,
         recommended_action=RecommendedAction.STOP,
@@ -240,6 +246,88 @@ def test_contract_meta_trace_flags_are_immutable_and_private_keys_rejected() -> 
         )
 
 
+def test_contract_ref_belongs_to_common_and_validates_publicly() -> None:
+    ref: ContractRef = "contract-1"
+
+    require_contract_ref(ref, "ref")
+    with pytest.raises(ValueError):
+        require_contract_ref(" ", "ref")
+    with pytest.raises(TypeError):
+        require_contract_ref(42, "ref")  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "private_key",
+    [
+        "chain_of_thought",
+        "chain-of-thought",
+        "ChainOfThought",
+        "raw_chain_of_thought",
+        "private_reasoning",
+        "private reasoning",
+        "assistantPrivateReasoning",
+        "system_prompt",
+        "System-Prompt",
+        "raw_system_prompt",
+        "prompt_system",
+    ],
+)
+def test_private_agent_key_variants_are_rejected(private_key: str) -> None:
+    with pytest.raises(ValueError):
+        ContractMeta(
+            schema_version="12.3-C1",
+            run_id="run-1",
+            step_id="step-1",
+            parent_step_id=None,
+            correlation_id=CorrelationId("corr-1"),
+            created_at=Instant(datetime(2026, 8, 24, 12, 0, tzinfo=UTC)),
+            actor=_actor(),
+            status=InvocationStatus.PLANNED,
+            trace_flags={"safe": [{private_key: "blocked"}]},
+        )
+
+
+def test_provider_neutral_query_metadata_remains_accepted_and_frozen() -> None:
+    meta = ContractMeta(
+        schema_version="12.3-C1",
+        run_id="run-1",
+        step_id="step-1",
+        parent_step_id=None,
+        correlation_id=CorrelationId("corr-1"),
+        created_at=Instant(datetime(2026, 8, 24, 12, 0, tzinfo=UTC)),
+        actor=_actor(),
+        status=InvocationStatus.PLANNED,
+        trace_flags={
+            "token_count": 1,
+            "input_tokens": 2,
+            "output_tokens": 3,
+            "token_budget": 4,
+            "remaining_tokens": 5,
+            "search_query": "fractions",
+            "query_kind": "keyword",
+            "query_count": 1,
+        },
+    )
+
+    assert meta.trace_flags["remaining_tokens"] == 5
+    with pytest.raises(TypeError):
+        meta.trace_flags["query_count"] = 2  # type: ignore[index]
+
+
+def test_contract_meta_rejects_parent_step_equal_to_step_id() -> None:
+    with pytest.raises(ValueError):
+        ContractMeta(
+            schema_version="12.3-C1",
+            run_id="run-1",
+            step_id="step-1",
+            parent_step_id="step-1",
+            correlation_id=CorrelationId("corr-1"),
+            created_at=Instant(datetime(2026, 8, 24, 12, 0, tzinfo=UTC)),
+            actor=_actor(),
+            status=InvocationStatus.PLANNED,
+        )
+
+
 @pytest.mark.parametrize(
     ("field_name", "value"),
     [
@@ -350,6 +438,42 @@ def test_delegation_envelope_requires_agent_step_and_coherent_executor() -> None
         )
 
 
+def test_delegation_envelope_requires_permission_scope_agent_principal() -> None:
+    user_scope = PermissionScope(
+        principal=ActorRef(kind=ActorKind.USER, actor_id="user-1"),
+        capability_ids=(CapabilityId("course.generate"),),
+    )
+
+    with pytest.raises(ValueError):
+        DelegationEnvelope(
+            delegation_id="delegation-1",
+            source_step=_agent_step(AgentId.AG_02),
+            target_agent=AgentId.AG_02,
+            context_slice={},
+            evidence_refs=(),
+            constraints={},
+            permission_scope=user_scope,
+        )
+
+
+def test_delegation_envelope_requires_permission_scope_matching_target_agent() -> None:
+    other_agent_scope = PermissionScope(
+        principal=ActorRef(kind=ActorKind.AGENT, actor_id=AgentId.AG_03.value),
+        capability_ids=(CapabilityId("course.generate"),),
+    )
+
+    with pytest.raises(ValueError):
+        DelegationEnvelope(
+            delegation_id="delegation-1",
+            source_step=_agent_step(AgentId.AG_02),
+            target_agent=AgentId.AG_02,
+            context_slice={},
+            evidence_refs=(),
+            constraints={},
+            permission_scope=other_agent_scope,
+        )
+
+
 def test_agent_invocation_composes_same_step_and_delegation() -> None:
     delegation = _delegation()
     invocation = AgentInvocation(
@@ -374,6 +498,20 @@ def test_agent_invocation_composes_same_step_and_delegation() -> None:
             attempt=1,
             autonomy_level=AutonomyLevel.AUT_L2,
             runtime_mode=RuntimeMode.MODE_ORCHESTRATED,
+        )
+
+
+def test_agent_invocation_requires_meta_step_to_match_source_step() -> None:
+    with pytest.raises(ValueError):
+        AgentInvocation(
+            meta=_meta(InvocationStatus.PLANNED, step_id="other-step"),
+            invocation_id="invocation-1",
+            source_step=_agent_step(),
+            delegation=None,
+            agent_id=AgentId.AG_02,
+            attempt=1,
+            autonomy_level=AutonomyLevel.AUT_L1,
+            runtime_mode=RuntimeMode.MODE_DIRECT,
         )
 
 
@@ -416,6 +554,15 @@ def test_agent_result_failure_and_stop_reason_rules() -> None:
         ).error
         is not None
     )
+
+
+def test_agent_result_requires_error_step_to_match_meta_step() -> None:
+    with pytest.raises(ValueError):
+        AgentResult[object](
+            meta=_meta(AgentResultStatus.FAILED, step_id="step-1"),
+            invocation_id="invocation-1",
+            error=_error(step_id="other-step"),
+        )
 
 
 def test_error_envelope_enums_have_exact_values_and_unknown_effect_is_allowed() -> None:

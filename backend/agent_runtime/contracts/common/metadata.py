@@ -31,6 +31,8 @@ class ContractMeta[TStatus]:
         require_non_empty(self.step_id, "step_id")
         if self.parent_step_id is not None:
             require_non_empty(self.parent_step_id, "parent_step_id")
+            if self.parent_step_id == self.step_id:
+                raise ValueError("parent_step_id must not equal step_id")
         if not isinstance(self.correlation_id, CorrelationId):
             raise TypeError("correlation_id must be a CorrelationId")
         if not isinstance(self.created_at, Instant):

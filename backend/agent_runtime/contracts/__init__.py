@@ -1,6 +1,13 @@
 """Provider-neutral agent runtime contracts."""
 
-from backend.agent_runtime.contracts.common import ActorKind, ActorRef, AgentId, ContractMeta
+from backend.agent_runtime.contracts.common import (
+    ActorKind,
+    ActorRef,
+    AgentId,
+    ContractMeta,
+    ContractRef,
+    require_contract_ref,
+)
 from backend.agent_runtime.contracts.errors import (
     EffectState,
     ErrorCategory,
@@ -40,6 +47,7 @@ __all__ = [
     "AutonomyLevel",
     "BudgetSpec",
     "ContractMeta",
+    "ContractRef",
     "DelegationEnvelope",
     "EffectState",
     "ErrorCategory",
@@ -51,6 +59,7 @@ __all__ = [
     "FailurePolicy",
     "InvocationStatus",
     "PermissionScope",
+    "require_contract_ref",
     "RecommendedAction",
     "RuntimeMode",
     "StepKind",

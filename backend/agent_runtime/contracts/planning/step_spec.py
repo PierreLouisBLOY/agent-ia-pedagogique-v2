@@ -4,13 +4,15 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-from backend.agent_runtime.contracts.common import AgentId, freeze_agent_safe_mapping
+from backend.agent_runtime.contracts.common import (
+    AgentId,
+    ContractRef,
+    freeze_agent_safe_mapping,
+    require_contract_ref,
+)
 from backend.agent_runtime.contracts.policy import BudgetSpec
 from backend.core_contracts.capability import CapabilityId
 from backend.shared_kernel._strings import require_non_empty
-from backend.shared_kernel.references import ObjectVersionRef, TypedEntityRef
-
-ContractRef = str | TypedEntityRef | ObjectVersionRef
 
 
 class StepKind(StrEnum):
@@ -88,14 +90,14 @@ class StepSpec:
         require_non_empty(self.objective, "objective")
         input_refs = tuple(self.input_refs)
         for input_ref in input_refs:
-            _require_contract_ref(input_ref, "input_ref")
+            require_contract_ref(input_ref, "input_ref")
         depends_on = tuple(self.depends_on)
         for dependency in depends_on:
             require_non_empty(dependency, "dependency")
         if self.step_id in depends_on:
             raise ValueError("depends_on must not contain step_id")
         if self.permission_scope_ref is not None:
-            _require_contract_ref(self.permission_scope_ref, "permission_scope_ref")
+            require_contract_ref(self.permission_scope_ref, "permission_scope_ref")
         if self.budget is not None and not isinstance(self.budget, BudgetSpec):
             raise TypeError("budget must be a BudgetSpec")
         if not isinstance(self.failure_policy, FailurePolicy):
@@ -116,12 +118,3 @@ class StepSpec:
             "output_contract",
             freeze_agent_safe_mapping(self.output_contract),
         )
-
-
-def _require_contract_ref(value: ContractRef, field_name: str) -> None:
-    if isinstance(value, str):
-        require_non_empty(value, field_name)
-        return
-    if isinstance(value, (TypedEntityRef, ObjectVersionRef)):
-        return
-    raise TypeError(f"{field_name} must be a string or typed reference")

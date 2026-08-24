@@ -4,9 +4,13 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-from backend.agent_runtime.contracts.common import ContractMeta, freeze_agent_safe_mapping
+from backend.agent_runtime.contracts.common import (
+    ContractMeta,
+    ContractRef,
+    freeze_agent_safe_mapping,
+    require_contract_ref,
+)
 from backend.agent_runtime.contracts.errors import ErrorEnvelope
-from backend.agent_runtime.contracts.planning.step_spec import ContractRef, _require_contract_ref
 from backend.shared_kernel._strings import require_non_empty
 
 
@@ -40,13 +44,15 @@ class AgentResult[TPayload]:
         require_non_empty(self.invocation_id, "invocation_id")
         artifact_refs = tuple(self.artifact_refs)
         for artifact_ref in artifact_refs:
-            _require_contract_ref(artifact_ref, "artifact_ref")
+            require_contract_ref(artifact_ref, "artifact_ref")
         evidence_refs = tuple(self.evidence_refs)
         for evidence_ref in evidence_refs:
-            _require_contract_ref(evidence_ref, "evidence_ref")
+            require_contract_ref(evidence_ref, "evidence_ref")
         warnings = tuple(freeze_agent_safe_mapping(warning) for warning in self.warnings)
         if self.error is not None and not isinstance(self.error, ErrorEnvelope):
             raise TypeError("error must be an ErrorEnvelope")
+        if self.error is not None and self.error.step_id != self.meta.step_id:
+            raise ValueError("error.step_id must match meta.step_id")
         if self.stop_reason is not None:
             require_non_empty(self.stop_reason, "stop_reason")
         if self.meta.status is AgentResultStatus.FAILED and (

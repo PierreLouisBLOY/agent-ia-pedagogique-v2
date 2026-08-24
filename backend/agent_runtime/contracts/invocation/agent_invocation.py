@@ -40,6 +40,8 @@ class AgentInvocation:
         require_non_empty(self.invocation_id, "invocation_id")
         if not isinstance(self.source_step, StepSpec):
             raise TypeError("source_step must be a StepSpec")
+        if self.meta.step_id != self.source_step.step_id:
+            raise ValueError("meta.step_id must match source_step.step_id")
         if self.delegation is not None:
             if not isinstance(self.delegation, DelegationEnvelope):
                 raise TypeError("delegation must be a DelegationEnvelope")

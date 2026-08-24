@@ -171,3 +171,23 @@ def test_agent_runtime_does_not_define_evaluator_scheduler_or_registry_logic() -
     ]
 
     assert definitions == []
+
+
+def test_invocation_and_errors_do_not_import_private_planning_symbols() -> None:
+    checked_roots = (
+        ROOT / "backend" / "agent_runtime" / "contracts" / "invocation",
+        ROOT / "backend" / "agent_runtime" / "contracts" / "errors",
+    )
+    violations = [
+        f"{path.relative_to(ROOT).as_posix()}: {alias.name}"
+        for root in checked_roots
+        for path in _python_files(root)
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
+        if isinstance(node, ast.ImportFrom)
+        and node.module is not None
+        and node.module.startswith("backend.agent_runtime.contracts.planning")
+        for alias in node.names
+        if alias.name.startswith("_")
+    ]
+
+    assert violations == []

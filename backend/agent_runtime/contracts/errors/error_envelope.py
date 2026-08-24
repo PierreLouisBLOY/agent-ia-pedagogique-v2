@@ -4,8 +4,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 
-from backend.agent_runtime.contracts.common import freeze_agent_safe_mapping
-from backend.agent_runtime.contracts.planning.step_spec import ContractRef, _require_contract_ref
+from backend.agent_runtime.contracts.common import (
+    ContractRef,
+    freeze_agent_safe_mapping,
+    require_contract_ref,
+)
 from backend.shared_kernel._strings import require_non_empty
 
 
@@ -92,6 +95,6 @@ class ErrorEnvelope:
             raise TypeError("recommended_action must be a RecommendedAction")
         related_refs = tuple(self.related_refs)
         for related_ref in related_refs:
-            _require_contract_ref(related_ref, "related_ref")
+            require_contract_ref(related_ref, "related_ref")
         object.__setattr__(self, "related_refs", related_refs)
         object.__setattr__(self, "details", freeze_agent_safe_mapping(self.details))

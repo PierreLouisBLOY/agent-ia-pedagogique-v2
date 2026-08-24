@@ -13,6 +13,11 @@ from backend.agent_runtime.runtime.execution import (
 )
 from backend.agent_runtime.runtime.planning import (
     Plan,
+    PlanHistory,
+    PlanRevisionCode,
+    PlanRevisionEngine,
+    PlanRevisionIssue,
+    PlanRevisionResult,
     PlanValidationCode,
     PlanValidationIssue,
     PlanValidationResult,
@@ -43,6 +48,11 @@ __all__ = [
     "ExecutionDirective",
     "ExecutionDirectiveCode",
     "Plan",
+    "PlanHistory",
+    "PlanRevisionCode",
+    "PlanRevisionEngine",
+    "PlanRevisionIssue",
+    "PlanRevisionResult",
     "PlanExecutor",
     "PlanValidationCode",
     "PlanValidationIssue",

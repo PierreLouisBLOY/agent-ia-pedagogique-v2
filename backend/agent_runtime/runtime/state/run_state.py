@@ -6,7 +6,8 @@ from types import MappingProxyType
 
 from backend.agent_runtime.contracts import ContractRef, WorkflowStatus
 from backend.agent_runtime.contracts.common import require_contract_ref
-from backend.agent_runtime.runtime.planning import Plan, PlanValidator
+from backend.agent_runtime.runtime.planning.plan import Plan
+from backend.agent_runtime.runtime.planning.validation import PlanValidator
 from backend.agent_runtime.runtime.state.step_state import StepRuntimeStatus, StepState
 from backend.shared_kernel._strings import require_non_empty
 from backend.shared_kernel.correlation import CorrelationId

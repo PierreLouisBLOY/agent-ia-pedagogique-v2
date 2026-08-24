@@ -63,9 +63,20 @@ compris `None` lorsqu'une failure policy s'applique avant toute execution.
 Une failure policy produit seulement une directive. Aucun retry, backoff,
 replay, nouveau Plan ou succes global implicite n'est execute.
 
-## Limites apres 12.5-D
+## Extension revision 12.5-E
 
-Le versioning de replan reste 12.5-E. Le moteur concret de gates, le routing et
+Un replacement accepte reconstruit un nouveau `RunState` dans l'ordre de ses
+steps. SUCCEEDED est le seul statut reutilise completement ; les autres lineages
+existants redeviennent PENDING avec leur `attempt_count`, et les nouveaux steps
+commencent a zero. Les anciennes references globales du run sont conservees.
+
+Si le run n'avait jamais commence, il revient PLANNED avec `started_at=None` ;
+sinon il revient RUNNING avec son timestamp original. L'engine ne calcule jamais
+READY et ne lance aucun step.
+
+## Limites apres 12.5-E
+
+Le planner AG-01 concret reste 12.6. Le moteur concret de gates, le routing et
 les policies de tool calls restent 12.10. `BudgetState`, temps actif hors gate,
 consommation, snapshots persistants, reconciliation et recovery complet restent
-12.11.
+12.11. L'audit cumulatif et la rationalisation sont reserves a 12.5-F.

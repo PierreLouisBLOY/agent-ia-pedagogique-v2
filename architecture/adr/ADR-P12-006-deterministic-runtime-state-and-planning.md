@@ -100,3 +100,21 @@ Le run n'est pas marque SUCCEEDED sans evaluateur canonique de
 `success_criteria`. D ne construit aucun nouveau Plan et ne realise aucun
 routing concret. Versioning de replan, gates/routing et recovery restent
 respectivement reserves a 12.5-E, 12.10 et 12.11.
+
+## Extension Phase 12.5-E
+
+`runtime/planning/revision.py` adopte un Plan de remplacement fourni de
+l'exterieur sans jamais en generer. `PlanHistory` conserve des versions
+immutables et contigues a partir de 1 ; `PlanRevisionEngine` exige current+1 et
+applique la hard limit `AgentRuntimePolicy.max_plan_versions`.
+
+La revision protege l'intention du run, reutilise seulement les StepState
+SUCCEEDED dont l'identite d'execution est stable et reset les autres en PENDING
+en preservant leur attempt lineage. Une semantique modifiee exige un nouveau
+step_id. Les signatures structurelles detectent absence de progres et retour a
+une ancienne structure en ignorant les seuls knobs de controle.
+
+L'etat accepte redevient PLANNED ou RUNNING sans calculer READY. L'histoire
+reste en memoire et ne contient aucun snapshot d'etat. Planner AG-01 concret,
+persistance, recovery, budgets consommes, gates et routing restent hors de cette
+decision.

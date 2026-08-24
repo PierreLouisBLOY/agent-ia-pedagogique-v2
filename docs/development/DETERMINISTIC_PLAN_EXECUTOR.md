@@ -51,6 +51,10 @@ d'une categorie sure. Aucun nouvel appel runner, backoff ou retry count complet
 n'est execute. REPLAN produit REPLANNING sans construire de nouveau `Plan` ;
 ESCALATE et STOP terminalisent explicitement le run.
 
+Depuis 12.5-E, un `PlanRevisionEngine` separe peut adopter un replacement fourni
+de l'exterieur. L'executor D ne le construit toujours pas et ne revise jamais le
+plan dans son propre cycle.
+
 `EffectState.UNKNOWN` est prioritaire : il produit
 RECONCILIATION_REQUIRED et interdit tout replay automatique. Une exception du
 runner laisse egalement le step RUNNING et exige une reconciliation, car un
@@ -83,7 +87,7 @@ snapshot entrant est retourne sans refresh de steps PENDING vers READY.
 
 ## Hors scope
 
-Le versioning et la construction d'un plan de remplacement appartiennent a
-12.5-E. Le routing concret et l'execution des gates appartiennent a 12.10. Les
-retries, backoff, budgets consommes, reconciliation et recovery complets
-appartiennent a 12.11.
+La validation et l'adoption versionnee d'un replacement externe appartiennent a
+12.5-E ; sa generation par un planner concret reste 12.6. Le routing concret et
+l'execution des gates appartiennent a 12.10. Les retries, backoff, budgets
+consommes, reconciliation et recovery complets appartiennent a 12.11.

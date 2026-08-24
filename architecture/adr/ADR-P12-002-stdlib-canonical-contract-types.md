@@ -20,6 +20,8 @@ les dates et instants valides, les donnees structurees sures et la coherence de 
 Les donnees diagnostiques suivent une politique fail-closed : les cles techniques ou sensibles sont
 refusees, les valeurs sont profondement figees et seules les references canoniques sont admises en
 plus des scalaires et collections data-only. Aucune redaction silencieuse n'est effectuee.
+La politique distingue les secrets et tokens d'authentification des compteurs de tokens et des
+metadonnees de recherche provider-neutral necessaires au diagnostic et a la remediation.
 
 `ApplicationOutcome` parametre le type de son `validation_result`. Il peut donc recevoir le contrat
 proprietaire de M09 sans que `core_contracts` importe M09. `BusinessError`, `ApplicationFailure` et

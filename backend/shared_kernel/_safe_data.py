@@ -20,12 +20,18 @@ _FORBIDDEN_KEY_NAMES = frozenset(
     {
         "password",
         "secret",
+        "secretconfig",
         "token",
         "authtoken",
+        "accesstoken",
+        "refreshtoken",
+        "bearertoken",
         "apikey",
         "cookie",
         "sql",
-        "query",
+        "rawsql",
+        "sqlquery",
+        "rawsqlquery",
         "connectionstring",
         "stack",
         "stacktrace",
@@ -33,18 +39,6 @@ _FORBIDDEN_KEY_NAMES = frozenset(
         "filesystempath",
         "localpath",
     }
-)
-_FORBIDDEN_KEY_FRAGMENTS = (
-    "password",
-    "secret",
-    "token",
-    "apikey",
-    "cookie",
-    "connectionstring",
-    "stack",
-    "providerpayload",
-    "filesystempath",
-    "localpath",
 )
 
 
@@ -79,8 +73,4 @@ def _freeze_safe_value(value: object) -> object:
 
 def _is_forbidden_key(key: str) -> bool:
     normalized = "".join(character for character in key.casefold() if character.isalnum())
-    if normalized in _FORBIDDEN_KEY_NAMES:
-        return True
-    if any(fragment in normalized for fragment in _FORBIDDEN_KEY_FRAGMENTS):
-        return True
-    return normalized.startswith(("sql", "query")) or normalized.endswith(("sql", "query"))
+    return normalized in _FORBIDDEN_KEY_NAMES

@@ -144,8 +144,14 @@ def test_business_error_details_are_safe_and_deeply_immutable() -> None:
     "details",
     [
         {"password": "x"},
+        {"auth_token": "x"},
+        {"access_token": "x"},
+        {"refresh-token": "x"},
+        {"BearerToken": "x"},
         {"api_key": "x"},
         {"sql": "SELECT * FROM private_table"},
+        {"sql_query": "SELECT * FROM private_table"},
+        {"raw-sql-query": "SELECT * FROM private_table"},
         {"stack_trace": "private stack"},
         {"provider_payload": {"raw": "payload"}},
         {"local_path": "C:/private/data"},
@@ -165,6 +171,62 @@ def test_business_error_details_reject_sensitive_keys(
             message_key="unsafe",
             details=details,
         )
+
+
+@pytest.mark.parametrize(
+    "details",
+    [
+        {"token_count": 42},
+        {"input_tokens": 10, "output_tokens": 20},
+        {"search_query": "notion TVA"},
+        {"query_kind": "semantic_search"},
+    ],
+)
+def test_business_error_details_accept_provider_neutral_metadata(
+    details: dict[str, object],
+) -> None:
+    error = BusinessError(
+        code=BusinessErrorCode("REMEDIATION_METADATA"),
+        domain=BusinessErrorDomain.CORE,
+        category=BusinessErrorCategory.INDETERMINATE,
+        severity=BusinessErrorSeverity.INFO,
+        blocking=False,
+        retryable=True,
+        message_key="remediation.metadata",
+        details=details,
+    )
+
+    assert error.details == details
+    assert error.details is not None
+    with pytest.raises(TypeError):
+        error.details["new_key"] = "blocked"  # type: ignore[index]
+
+
+def test_provider_neutral_metadata_is_deeply_frozen() -> None:
+    error = BusinessError(
+        code=BusinessErrorCode("REMEDIATION_METADATA"),
+        domain=BusinessErrorDomain.CORE,
+        category=BusinessErrorCategory.INDETERMINATE,
+        severity=BusinessErrorSeverity.INFO,
+        blocking=False,
+        retryable=True,
+        message_key="remediation.metadata",
+        details={
+            "usage": {"input_tokens": 10, "output_tokens": 20},
+            "queries": [{"search_query": "notion TVA"}],
+        },
+    )
+
+    assert error.details is not None
+    usage = error.details["usage"]
+    queries = error.details["queries"]
+    assert isinstance(usage, Mapping)
+    assert isinstance(queries, tuple)
+    assert isinstance(queries[0], Mapping)
+    with pytest.raises(TypeError):
+        usage["input_tokens"] = 99  # type: ignore[index]
+    with pytest.raises(TypeError):
+        queries[0]["search_query"] = "other"  # type: ignore[index]
 
 
 def test_business_error_details_preserve_safe_references() -> None:

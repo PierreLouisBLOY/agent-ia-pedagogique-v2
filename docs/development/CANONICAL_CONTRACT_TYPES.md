@@ -41,6 +41,8 @@ des representations peripheriques. Ils adaptent les types canoniques sans introd
 SQL, exceptions brutes ou secrets dans le coeur.
 Les cles manifestement sensibles ou techniques sont refusees, sans redaction silencieuse. Les
 references canoniques du Shared Kernel restent autorisees comme valeurs de diagnostic immuables.
+Les tokens d'authentification restent interdits, tandis que les compteurs de tokens et les requetes
+de recherche provider-neutral sont des metadonnees de remediation autorisees.
 
 Les contrats runtime agentiques C-01 a C-19, les etats d'execution, le scheduler et les adaptateurs
 LLM/RAG sont reportes a 12.3-C. Les registries, evaluateurs de capability et `PermissionScope`, tool

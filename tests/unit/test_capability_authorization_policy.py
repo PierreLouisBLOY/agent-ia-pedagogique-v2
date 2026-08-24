@@ -131,6 +131,14 @@ def test_policy_vocabularies_are_closed_and_exact() -> None:
         "OWNER_MISMATCH",
         "INVALID_POLICY_CONFIGURATION",
     }
+    assert {item.value for item in DelegationAuthorizationCode} == {
+        "ALLOW",
+        "MATRIX_DENY",
+        "NOT_DELEGATABLE_BY_MATRIX",
+        "OWNER_MISMATCH",
+        "CAPABILITY_NOT_IN_SCOPE",
+        "SCOPE_DELEGATION_DENY",
+    }
 
 
 def test_matrix_deny_precedes_scope_allow_without_evaluating_scope() -> None:
@@ -451,19 +459,21 @@ def _delegation_scopes(
     target_agent: AgentId,
     *,
     parent_agent: AgentId = AgentId.AG_01,
+    parent_capability_ids: tuple[CapabilityId, ...] | None = None,
     child_capability_ids: tuple[CapabilityId, ...] | None = None,
 ) -> tuple[PermissionScope, PermissionScope]:
     parent = _scope(
         parent_agent,
         capability_id,
         PermissionOperation.TRANSFORM,
+        capability_ids=(capability_id,) if parent_capability_ids is None else parent_capability_ids,
         delegable=True,
     )
     child = _scope(
         target_agent,
         capability_id,
         PermissionOperation.TRANSFORM,
-        capability_ids=child_capability_ids or (capability_id,),
+        capability_ids=(capability_id,) if child_capability_ids is None else child_capability_ids,
         valid_from=NOW,
         delegable=False,
     )
@@ -475,6 +485,7 @@ def _evaluate_delegation(
     target_agent: AgentId,
     *,
     parent_agent: AgentId = AgentId.AG_01,
+    parent_capability_ids: tuple[CapabilityId, ...] | None = None,
     child_capability_ids: tuple[CapabilityId, ...] | None = None,
     parent_revoked: bool = False,
 ):
@@ -483,6 +494,7 @@ def _evaluate_delegation(
         capability_id,
         target_agent,
         parent_agent=parent_agent,
+        parent_capability_ids=parent_capability_ids,
         child_capability_ids=child_capability_ids,
     )
     return CapabilityAuthorizationPolicy().evaluate_delegation(
@@ -513,6 +525,56 @@ def test_g01_delegation_to_ag02_is_owner_mismatch() -> None:
     assert not decision.allowed
 
 
+def test_delegated_capability_must_be_in_both_scoped_grants() -> None:
+    e01 = _capability("CAP-E01")
+    decision = _evaluate_delegation(
+        "CAP-G01",
+        AgentId.AG_03,
+        parent_capability_ids=(e01,),
+        child_capability_ids=(e01,),
+    )
+
+    assert decision.code is DelegationAuthorizationCode.CAPABILITY_NOT_IN_SCOPE
+    assert not decision.allowed
+    assert decision.scope_evaluation is None
+
+
+def test_delegated_capability_absent_from_empty_narrow_scopes_is_denied() -> None:
+    decision = _evaluate_delegation(
+        "CAP-G01",
+        AgentId.AG_03,
+        parent_capability_ids=(),
+        child_capability_ids=(),
+    )
+
+    assert decision.code is DelegationAuthorizationCode.CAPABILITY_NOT_IN_SCOPE
+    assert not decision.allowed
+
+
+def test_empty_child_capability_grant_is_preserved_and_denied() -> None:
+    decision = _evaluate_delegation(
+        "CAP-G01",
+        AgentId.AG_03,
+        child_capability_ids=(),
+    )
+
+    assert decision.code is DelegationAuthorizationCode.CAPABILITY_NOT_IN_SCOPE
+    assert not decision.allowed
+
+
+def test_child_grant_for_another_parent_capability_does_not_bind_g01() -> None:
+    e01 = _capability("CAP-E01")
+    decision = _evaluate_delegation(
+        "CAP-G01",
+        AgentId.AG_03,
+        parent_capability_ids=(_capability("CAP-G01"), e01),
+        child_capability_ids=(e01,),
+    )
+
+    assert decision.code is DelegationAuthorizationCode.CAPABILITY_NOT_IN_SCOPE
+    assert not decision.allowed
+
+
 def test_parent_revocation_is_composed_in_final_delegation_denial() -> None:
     decision = _evaluate_delegation("CAP-G01", AgentId.AG_03, parent_revoked=True)
 
@@ -535,7 +597,12 @@ def test_wider_child_scope_is_composed_in_final_delegation_denial() -> None:
 
 @pytest.mark.parametrize("code", ("CAP-A01", "CAP-A02"))
 def test_r3_r4_application_actions_are_not_delegatable_by_matrix(code: str) -> None:
-    decision = _evaluate_delegation(code, AgentId.AG_02)
+    decision = _evaluate_delegation(
+        code,
+        AgentId.AG_02,
+        parent_capability_ids=(),
+        child_capability_ids=(),
+    )
 
     assert decision.code is DelegationAuthorizationCode.NOT_DELEGATABLE_BY_MATRIX
 

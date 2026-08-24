@@ -36,5 +36,6 @@ scheduler, gate engine ou use case. Un deny herite ne peut donc pas etre efface
 ou contourne par reroutage.
 
 La policy finale D exige en plus que la capability soit `DELEGATE` pour AG-01,
-que le target soit l'owner exact et que sa rule soit `ALLOW`. Un refus C reste
-compose dans `SCOPE_DELEGATION_DENY`; un mauvais owner produit `OWNER_MISMATCH`.
+que le target soit l'owner exact, que sa rule soit `ALLOW`, et que la capability
+du mandat appartienne au grant parent ET au grant enfant. Un refus C reste compose
+dans `SCOPE_DELEGATION_DENY`; un mauvais owner produit `OWNER_MISMATCH`.

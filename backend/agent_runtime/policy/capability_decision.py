@@ -169,6 +169,7 @@ class DelegationAuthorizationCode(StrEnum):
     MATRIX_DENY = "MATRIX_DENY"
     NOT_DELEGATABLE_BY_MATRIX = "NOT_DELEGATABLE_BY_MATRIX"
     OWNER_MISMATCH = "OWNER_MISMATCH"
+    CAPABILITY_NOT_IN_SCOPE = "CAPABILITY_NOT_IN_SCOPE"
     SCOPE_DELEGATION_DENY = "SCOPE_DELEGATION_DENY"
 
 
@@ -474,6 +475,15 @@ class CapabilityAuthorizationPolicy:
         if target_rule.mode is not AccessMode.ALLOW:
             return self._delegation_decision(
                 DelegationAuthorizationCode.NOT_DELEGATABLE_BY_MATRIX,
+                capability_id,
+                target_agent,
+            )
+        if (
+            capability_id not in parent_scope.capability_ids
+            or capability_id not in child_scope.capability_ids
+        ):
+            return self._delegation_decision(
+                DelegationAuthorizationCode.CAPABILITY_NOT_IN_SCOPE,
                 capability_id,
                 target_agent,
             )

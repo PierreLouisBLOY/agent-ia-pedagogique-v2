@@ -42,7 +42,8 @@ fine entre operation, payload et boundary aval n'est pas inventee dans D.
 ## Delegation owner-aware
 
 La decision finale exige une rule AG-01 `DELEGATE`, une route `AGENT`, le target
-owner exact et une rule target `ALLOW`, puis compose `DelegationScopePolicy`.
+owner exact et une rule target `ALLOW`. La capability du mandat doit appartenir
+au grant parent ET au grant enfant avant de composer `DelegationScopePolicy`.
 Ainsi CAP-G01 vers AG-03 peut etre autorise, tandis que CAP-G01 vers AG-02 produit
 `OWNER_MISMATCH`, meme si C avait volontairement accepte le narrowing du scope.
 Revocation, temporalite, denies, gates, budget et interdiction de redelegation

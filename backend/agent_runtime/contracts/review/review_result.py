@@ -82,6 +82,11 @@ class ReviewResult:
             self.correction_required or finding_requires_correction
         ):
             raise ValueError("acceptable assessment cannot require correction")
+        if (
+            self.meta.status is ReviewStatus.INCOMPLETE
+            and self.overall_assessment is OverallAssessment.ACCEPTABLE
+        ):
+            raise ValueError("incomplete review cannot be assessed as acceptable")
         evidence_refs_used = tuple(self.evidence_refs_used)
         for evidence_ref in evidence_refs_used:
             require_contract_ref(evidence_ref, "evidence_ref_used")

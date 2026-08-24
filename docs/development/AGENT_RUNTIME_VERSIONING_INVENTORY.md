@@ -28,8 +28,10 @@ la validation formelle des versions supportees reste reservee a 12.3-D.
 
 Le complement `CorrectionResult`, hors famille C-*, porte directement
 `ContractMeta[AgentResultStatus]`. Il correle la `CorrectionRequest`, la version
-parente exacte et la nouvelle version candidate exacte. Il ne rend pas cette
-nouvelle version canonique.
+parente exacte et la nouvelle version candidate exacte. La nouvelle reference
+conserve le meme `object_ref` et porte un `version_ref` opaque distinct, sans
+supposer d'ordre ni d'arithmetique de version. Elle ne rend pas cette nouvelle
+version canonique.
 
 `DelegationEnvelope` ne porte pas de correlation directe exploitable. C3 conserve
 donc la correlation de C-04 via `AgentResult.meta` et le `step_id` de la delegation,

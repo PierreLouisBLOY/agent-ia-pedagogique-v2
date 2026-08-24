@@ -37,8 +37,10 @@ class CorrectionResult:
             raise TypeError("parent_production_ref must be an ObjectVersionRef")
         if self.parent_production_ref != self.request.target_production_ref:
             raise ValueError("parent_production_ref must match request target")
-        if self.new_production_ref == self.parent_production_ref:
-            raise ValueError("new_production_ref must differ from parent_production_ref")
+        if self.new_production_ref.object_ref != self.parent_production_ref.object_ref:
+            raise ValueError("new production version must keep the parent object identity")
+        if self.new_production_ref.version_ref == self.parent_production_ref.version_ref:
+            raise ValueError("new production version must differ from parent version")
         addressed = _validated_finding_ids(self.addressed_findings, "addressed_finding")
         unresolved = _validated_finding_ids(
             self.unresolved_findings,
@@ -53,6 +55,8 @@ class CorrectionResult:
             raise ValueError("meta.step_id must match request meta.step_id")
         if self.meta.correlation_id != self.request.meta.correlation_id:
             raise ValueError("meta correlation must match request correlation")
+        if self.meta.run_id != self.request.meta.run_id:
+            raise ValueError("meta.run_id must match request meta.run_id")
         warnings = tuple(
             freeze_agent_safe_mapping(warning) for warning in self.new_warnings
         )

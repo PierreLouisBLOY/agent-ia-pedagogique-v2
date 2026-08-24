@@ -19,6 +19,8 @@ restent sous autorite Application/Domain. Ils ne sont ni ajoutes a
 `CorrectionResult` ou d'une sortie agentique.
 
 `OverallAssessment` qualifie une review et ne remplace aucun statut de validation.
+Une review `incomplete` ne peut pas porter l'evaluation `acceptable` ; les autres
+coherences restent exprimees par les invariants propres a `ReviewResult`.
 `GateDecisionValue` enregistre une decision de l'autorite requise et ne constitue
 pas une policy de transition du workflow.
 

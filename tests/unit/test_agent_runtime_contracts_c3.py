@@ -37,10 +37,11 @@ def _meta[TStatus](
     *,
     step_id: str = "step-correction",
     correlation_id: str = "corr-1",
+    run_id: str = "run-1",
 ) -> ContractMeta[TStatus]:
     return ContractMeta(
         schema_version="12.3-C3",
-        run_id="run-1",
+        run_id=run_id,
         step_id=step_id,
         parent_step_id=None,
         correlation_id=CorrelationId(correlation_id),
@@ -197,6 +198,50 @@ def test_acceptable_assessment_rejects_correction_finding() -> None:
         )
 
 
+def test_incomplete_review_cannot_be_acceptable() -> None:
+    with pytest.raises(ValueError):
+        ReviewResult(
+            meta=_meta(ReviewStatus.INCOMPLETE),
+            review_id="review-1",
+            target_production_ref=_production_version(),
+            findings=(),
+            overall_assessment=OverallAssessment.ACCEPTABLE,
+            correction_required=False,
+            coverage=(),
+            evidence_refs_used=(),
+        )
+
+
+@pytest.mark.parametrize(
+    ("status", "assessment", "coverage"),
+    [
+        (ReviewStatus.INCOMPLETE, OverallAssessment.INCOMPLETE, ()),
+        (
+            ReviewStatus.COMPLETED,
+            OverallAssessment.ACCEPTABLE,
+            (ReviewDimension.ACCURACY,),
+        ),
+    ],
+)
+def test_review_status_and_assessment_allow_non_contradictory_pairs(
+    status: ReviewStatus,
+    assessment: OverallAssessment,
+    coverage: tuple[ReviewDimension, ...],
+) -> None:
+    result = ReviewResult(
+        meta=_meta(status),
+        review_id="review-1",
+        target_production_ref=_production_version(),
+        findings=(),
+        overall_assessment=assessment,
+        correction_required=False,
+        coverage=coverage,
+        evidence_refs_used=(),
+    )
+
+    assert result.overall_assessment is assessment
+
+
 def test_correction_request_requires_finding_ids() -> None:
     with pytest.raises(ValueError):
         _correction_request(finding_ids=())
@@ -253,6 +298,21 @@ def test_correction_result_rejects_incoherent_parent_and_new_version() -> None:
         )
 
 
+def test_correction_result_rejects_new_version_for_another_production() -> None:
+    request = _correction_request()
+    with pytest.raises(ValueError):
+        CorrectionResult(
+            meta=_meta(AgentResultStatus.SUCCEEDED),
+            request=request,
+            new_production_ref=_production_version("v2", "other-production"),
+            parent_production_ref=request.target_production_ref,
+            addressed_findings=request.finding_ids,
+            unresolved_findings=(),
+            change_summary="Changed",
+            lineage={},
+        )
+
+
 @pytest.mark.parametrize(
     ("addressed", "unresolved"),
     [
@@ -293,6 +353,21 @@ def test_correction_result_requires_request_correlation(
     with pytest.raises(ValueError):
         CorrectionResult(
             meta=meta,
+            request=request,
+            new_production_ref=_production_version("v2"),
+            parent_production_ref=request.target_production_ref,
+            addressed_findings=request.finding_ids,
+            unresolved_findings=(),
+            change_summary="Changed",
+            lineage={},
+        )
+
+
+def test_correction_result_requires_request_run_id() -> None:
+    request = _correction_request()
+    with pytest.raises(ValueError):
+        CorrectionResult(
+            meta=_meta(AgentResultStatus.SUCCEEDED, run_id="other-run"),
             request=request,
             new_production_ref=_production_version("v2"),
             parent_production_ref=request.target_production_ref,

@@ -15,6 +15,8 @@ from backend.agent_runtime.contracts import (
     AgentResultStatus,
     ContractMeta,
     ContractSchemaVersion,
+    CorrectionRequest,
+    CorrectionResult,
     DelegationEnvelope,
     DelegationResult,
     EffectState,
@@ -24,6 +26,7 @@ from backend.agent_runtime.contracts import (
     ErrorSource,
     ExecutorKind,
     ExecutorRef,
+    InvocationStatus,
     PermissionScope,
     RecommendedAction,
     StepKind,
@@ -38,9 +41,11 @@ from backend.agent_runtime.versioning import (
     DuplicateContractMigration,
     MigrationCatalog,
     NestedContractVersionContextRequired,
+    SupplementalContractKind,
     SupportedVersionRange,
     UnsupportedContractVersion,
     VersionBump,
+    VersionedContractKey,
     contract_schema_version,
     ensure_contract_version_supported,
     ensure_nested_contract_version_supported,
@@ -49,12 +54,17 @@ from backend.agent_runtime.versioning import (
 )
 from backend.core_contracts.capability import CapabilityId
 from backend.shared_kernel.correlation import CorrelationId
+from backend.shared_kernel.identifiers import TypedEntityId
+from backend.shared_kernel.references import ObjectVersionRef, TypedEntityRef, VersionRef
 from backend.shared_kernel.time import Instant
 
 NOW = Instant(datetime(2026, 8, 24, 12, 0, tzinfo=UTC))
 
 
-def _meta(version: ContractSchemaVersion = AGENT_CONTRACT_SCHEMA_V1_0) -> ContractMeta[object]:
+def _meta[TStatus](
+    status: TStatus,
+    version: ContractSchemaVersion = AGENT_CONTRACT_SCHEMA_V1_0,
+) -> ContractMeta[TStatus]:
     return ContractMeta(
         schema_version=version,
         run_id="run-1",
@@ -63,7 +73,7 @@ def _meta(version: ContractSchemaVersion = AGENT_CONTRACT_SCHEMA_V1_0) -> Contra
         correlation_id=CorrelationId("corr-1"),
         created_at=NOW,
         actor=ActorRef(ActorKind.AGENT, AgentId.AG_02.value),
-        status=AgentResultStatus.SUCCEEDED,
+        status=status,
     )
 
 
@@ -71,9 +81,32 @@ def _agent_result(
     version: ContractSchemaVersion = AGENT_CONTRACT_SCHEMA_V1_0,
 ) -> AgentResult[object]:
     return AgentResult(
-        meta=_meta(version),
+        meta=_meta(AgentResultStatus.SUCCEEDED, version),
         invocation_id="invocation-1",
         payload={"result": "candidate"},
+    )
+
+
+def _correction_result(
+    version: ContractSchemaVersion = AGENT_CONTRACT_SCHEMA_V1_0,
+) -> CorrectionResult:
+    production = TypedEntityRef(TypedEntityId("production", "production-1"))
+    parent = ObjectVersionRef(production, VersionRef("v1"))
+    request = CorrectionRequest(
+        meta=_meta(InvocationStatus.PLANNED, version),
+        target_production_ref=parent,
+        review_ref="review-1",
+        finding_ids=("finding-1",),
+    )
+    return CorrectionResult(
+        meta=_meta(AgentResultStatus.SUCCEEDED, version),
+        request=request,
+        new_production_ref=ObjectVersionRef(production, VersionRef("v2")),
+        parent_production_ref=parent,
+        addressed_findings=request.finding_ids,
+        unresolved_findings=(),
+        change_summary="Corrected the reviewed finding.",
+        lineage={},
     )
 
 
@@ -202,7 +235,7 @@ def test_baseline_rejects_unsupported_versions_cleanly(version: ContractSchemaVe
     with pytest.raises(UnsupportedContractVersion) as raised:
         BASELINE_POLICY.ensure_supported(ContractFamily.C01, version)
 
-    assert raised.value.family is ContractFamily.C01
+    assert raised.value.key is ContractFamily.C01
     assert raised.value.version == version
     assert str(raised.value) == f"unsupported version {version} for C-01"
 
@@ -235,7 +268,7 @@ def test_nested_contract_version_extraction_requires_parent_context(
     with pytest.raises(NestedContractVersionContextRequired) as raised:
         contract_schema_version(family, contract)
 
-    assert raised.value.family is family
+    assert raised.value.key is family
 
 
 @pytest.mark.parametrize("family", [ContractFamily.C03, ContractFamily.C19])
@@ -243,6 +276,47 @@ def test_nested_contract_parent_version_is_checked_explicitly(family: ContractFa
     ensure_nested_contract_version_supported(family, AGENT_CONTRACT_SCHEMA_V1_0)
     with pytest.raises(UnsupportedContractVersion):
         ensure_nested_contract_version_supported(family, ContractSchemaVersion(2, 0))
+
+
+def test_baseline_supports_correction_result_version_1_0() -> None:
+    key = SupplementalContractKind.CORRECTION_RESULT
+
+    assert BASELINE_POLICY.is_supported(key, AGENT_CONTRACT_SCHEMA_V1_0)
+    ensure_contract_version_supported(key, _correction_result())
+
+
+def test_contract_version_extraction_supports_correction_result() -> None:
+    assert (
+        contract_schema_version(
+            SupplementalContractKind.CORRECTION_RESULT,
+            _correction_result(),
+        )
+        == AGENT_CONTRACT_SCHEMA_V1_0
+    )
+
+
+@pytest.mark.parametrize(
+    "version",
+    [ContractSchemaVersion(1, 1), ContractSchemaVersion(2, 0)],
+)
+def test_correction_result_rejects_unsupported_versions(
+    version: ContractSchemaVersion,
+) -> None:
+    key = SupplementalContractKind.CORRECTION_RESULT
+
+    with pytest.raises(UnsupportedContractVersion) as raised:
+        ensure_contract_version_supported(key, _correction_result(version))
+
+    assert raised.value.key is key
+    assert raised.value.version == version
+
+
+def test_correction_result_versioning_rejects_wrong_contract_type() -> None:
+    with pytest.raises(TypeError):
+        contract_schema_version(
+            SupplementalContractKind.CORRECTION_RESULT,
+            _agent_result(),
+        )
 
 
 @pytest.mark.parametrize(
@@ -283,12 +357,12 @@ def test_version_transition_rules(
 
 @dataclass(frozen=True, slots=True)
 class _FakeAdditiveMigration:
-    family: ContractFamily = ContractFamily.C01
+    key: VersionedContractKey = ContractFamily.C01
     from_version: ContractSchemaVersion = ContractSchemaVersion(1, 0)
     to_version: ContractSchemaVersion = ContractSchemaVersion(1, 1)
 
     def migrate(self, payload: Mapping[str, object]) -> Mapping[str, object]:
-        return {**payload, "optional_field": "default"}
+        return {**payload, "migrated_for": self.key.value}
 
 
 def test_explicit_fake_migration_is_applied_and_frozen() -> None:
@@ -301,7 +375,7 @@ def test_explicit_fake_migration_is_applied_and_frozen() -> None:
         {"nested": {"value": 1}},
     )
 
-    assert migrated["optional_field"] == "default"
+    assert migrated["migrated_for"] == "C-01"
     nested = migrated["nested"]
     assert isinstance(nested, Mapping)
     with pytest.raises(TypeError):
@@ -324,3 +398,27 @@ def test_duplicate_migration_edge_is_rejected() -> None:
 
     with pytest.raises(DuplicateContractMigration):
         MigrationCatalog((migration, migration))
+
+
+def test_explicit_correction_result_migration_is_supported() -> None:
+    key = SupplementalContractKind.CORRECTION_RESULT
+    catalog = MigrationCatalog((_FakeAdditiveMigration(key=key),))
+
+    migrated = catalog.migrate(
+        key,
+        ContractSchemaVersion(1, 0),
+        ContractSchemaVersion(1, 1),
+        {"change_summary": "Corrected"},
+    )
+
+    assert migrated["migrated_for"] == "CorrectionResult"
+
+
+def test_correction_result_migration_edge_does_not_collide_with_c11() -> None:
+    migrations = (
+        _FakeAdditiveMigration(key=ContractFamily.C11),
+        _FakeAdditiveMigration(key=SupplementalContractKind.CORRECTION_RESULT),
+    )
+    catalog = MigrationCatalog(migrations)
+
+    assert len(catalog.registered_edges) == 2

@@ -27,7 +27,9 @@ from backend.agent_runtime.versioning.vocabulary import (
     ContractChangeKind,
     ContractFamily,
     MetadataMode,
+    SupplementalContractKind,
     VersionBump,
+    VersionedContractKey,
 )
 
 __all__ = [
@@ -45,8 +47,10 @@ __all__ = [
     "MigrationCatalog",
     "NestedContractVersionContextRequired",
     "SupportedVersionRange",
+    "SupplementalContractKind",
     "UnsupportedContractVersion",
     "VersionBump",
+    "VersionedContractKey",
     "contract_schema_version",
     "ensure_contract_version_supported",
     "ensure_nested_contract_version_supported",

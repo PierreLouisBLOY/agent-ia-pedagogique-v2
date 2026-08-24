@@ -16,6 +16,7 @@ from backend.agent_runtime.versioning import (
     CONTRACT_VERSION_DESCRIPTORS,
     ContractFamily,
     MetadataMode,
+    SupplementalContractKind,
     SupportedVersionRange,
 )
 
@@ -85,22 +86,42 @@ def test_legacy_phase_labels_are_absent_from_schema_versions() -> None:
 
 def test_contract_family_and_descriptor_matrix_are_exact() -> None:
     expected_families = {f"C-{index:02d}" for index in range(1, 20)}
+    family_descriptors = {
+        key: descriptor
+        for key, descriptor in CONTRACT_VERSION_DESCRIPTORS.items()
+        if isinstance(key, ContractFamily)
+    }
 
     assert {family.value for family in ContractFamily} == expected_families
     assert len(ContractFamily) == 19
-    assert set(CONTRACT_VERSION_DESCRIPTORS) == set(ContractFamily)
-    assert len(CONTRACT_VERSION_DESCRIPTORS) == 19
+    assert set(family_descriptors) == set(ContractFamily)
+    assert len(family_descriptors) == 19
     assert {
         family: descriptor.contract_type.__name__
-        for family, descriptor in CONTRACT_VERSION_DESCRIPTORS.items()
+        for family, descriptor in family_descriptors.items()
     } == EXPECTED_CONTRACT_TYPES
     assert "C-20" not in {family.value for family in ContractFamily}
+
+
+def test_supplemental_contract_kind_and_descriptor_are_exact() -> None:
+    key = SupplementalContractKind.CORRECTION_RESULT
+
+    assert list(SupplementalContractKind) == [key]
+    assert len(CONTRACT_VERSION_DESCRIPTORS) == 20
+    assert len(set(CONTRACT_VERSION_DESCRIPTORS)) == 20
+    assert all(
+        descriptor.key is descriptor_key
+        for descriptor_key, descriptor in CONTRACT_VERSION_DESCRIPTORS.items()
+    )
+    assert CONTRACT_VERSION_DESCRIPTORS[key].contract_type.__name__ == "CorrectionResult"
+    assert CONTRACT_VERSION_DESCRIPTORS[key].metadata_mode is MetadataMode.DIRECT_META
 
 
 def test_descriptor_metadata_modes_match_c3_inventory() -> None:
     assert {
         family: descriptor.metadata_mode
         for family, descriptor in CONTRACT_VERSION_DESCRIPTORS.items()
+        if isinstance(family, ContractFamily)
     } == EXPECTED_METADATA_MODES
 
 
@@ -112,12 +133,14 @@ def test_every_descriptor_uses_baseline_version_1_0() -> None:
     assert all(descriptor.version_path for descriptor in CONTRACT_VERSION_DESCRIPTORS.values())
 
 
-def test_baseline_policy_covers_exactly_all_contract_families() -> None:
+def test_baseline_policy_covers_exactly_all_versioned_contract_keys() -> None:
     expected_range = (SupportedVersionRange(major=1, min_minor=0, max_minor=0),)
 
-    assert set(BASELINE_POLICY.ranges_by_family) == set(ContractFamily)
+    assert set(BASELINE_POLICY.ranges_by_key) == set(CONTRACT_VERSION_DESCRIPTORS)
+    assert len(BASELINE_POLICY.ranges_by_key) == 20
     assert all(
-        BASELINE_POLICY.supported_ranges(family) == expected_range for family in ContractFamily
+        BASELINE_POLICY.supported_ranges(key) == expected_range
+        for key in CONTRACT_VERSION_DESCRIPTORS
     )
 
 

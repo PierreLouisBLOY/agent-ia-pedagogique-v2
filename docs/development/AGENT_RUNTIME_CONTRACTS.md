@@ -18,7 +18,7 @@ Domain/Application, hors modules metier, hors adaptateurs et hors infrastructure
 | C-08 | `ProductionCandidate` | `contracts/production/production_candidate.py` | C2 | CLOSED |
 | C-09 | `ReviewRequest`, `ReviewDimension` | `contracts/review/` | C2 | CLOSED |
 | C-10 | `ReviewResult`, `Finding` et vocabulaires | `contracts/review/` | C2 | CLOSED |
-| C-11 | `CorrectionRequest` + `CorrectionResult` complementaire | `contracts/review/` | C2/C3 | CLOSED |
+| C-11 | `CorrectionRequest` | `contracts/review/correction_request.py` | C2 | CLOSED |
 | C-12 | `UseCaseRequest` | `contracts/application/use_case_request.py` | C2 | CLOSED |
 | C-13 | `UseCaseResult` | `contracts/application/use_case_result.py` | C2 | CLOSED |
 | C-14 | `ToolCallRequest` | `contracts/tools/tool_call_request.py` | C2 | CLOSED |
@@ -31,6 +31,9 @@ Domain/Application, hors modules metier, hors adaptateurs et hors infrastructure
 Le label historique C-03 `DelegationRequest` est supersede par le nom final
 `DelegationEnvelope`. C-04 etait explicitement hors C1 ; il est inclus dans C2
 pour assurer la completude de la serie C-01..C-19.
+
+`CorrectionResult`, defini en Phase 11.12 et materialise en C3, reste un contrat
+complementaire hors de cette serie. Il n'est pas C-20.
 
 ## Hierarchie contractuelle
 
@@ -113,8 +116,9 @@ aucun champ ad hoc ou metadata dupliquee.
 
 La baseline canonique est `ContractSchemaVersion(1, 0)`, rendue `1.0` au format
 strict `MAJOR.MINOR`. `ContractMeta` n'accepte plus de chaine libre. La table
-unique de descripteurs et `BASELINE_POLICY` couvrent exactement C-01..C-19 et
-refusent toute version autre que `1.0` sans fallback.
+unique de descripteurs et `BASELINE_POLICY` couvrent les 19 familles C-* et
+`SupplementalContractKind.CORRECTION_RESULT`, soit 20 sujets. Toute version autre
+que `1.0` est refusee sans fallback, y compris pour `CorrectionResult`.
 
 Les ajouts non ambigus exigent un minor strictement superieur dans le meme major.
 Suppression, renommage et changement semantique exigent un major superieur. C-03

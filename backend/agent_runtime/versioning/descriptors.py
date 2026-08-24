@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Final
@@ -10,6 +11,7 @@ from backend.agent_runtime.contracts import (
     AgentResult,
     ContractSchemaVersion,
     CorrectionRequest,
+    CorrectionResult,
     DelegationEnvelope,
     DelegationResult,
     ErrorEnvelope,
@@ -27,21 +29,26 @@ from backend.agent_runtime.contracts import (
     UseCaseResult,
     WorkflowEvent,
 )
-from backend.agent_runtime.versioning.vocabulary import ContractFamily, MetadataMode
+from backend.agent_runtime.versioning.vocabulary import (
+    ContractFamily,
+    MetadataMode,
+    SupplementalContractKind,
+    VersionedContractKey,
+)
 from backend.shared_kernel._strings import require_non_empty
 
 
 @dataclass(frozen=True, slots=True)
 class ContractVersionDescriptor:
-    family: ContractFamily
+    key: VersionedContractKey
     contract_type: type[object]
     metadata_mode: MetadataMode
     current_version: ContractSchemaVersion
     version_path: str
 
     def __post_init__(self) -> None:
-        if not isinstance(self.family, ContractFamily):
-            raise TypeError("family must be a ContractFamily")
+        if not isinstance(self.key, ContractFamily | SupplementalContractKind):
+            raise TypeError("key must be a VersionedContractKey")
         if not isinstance(self.contract_type, type):
             raise TypeError("contract_type must be a type")
         if not isinstance(self.metadata_mode, MetadataMode):
@@ -52,13 +59,13 @@ class ContractVersionDescriptor:
 
 
 def _descriptor(
-    family: ContractFamily,
+    key: VersionedContractKey,
     contract_type: type[object],
     metadata_mode: MetadataMode,
     version_path: str,
 ) -> ContractVersionDescriptor:
     return ContractVersionDescriptor(
-        family=family,
+        key=key,
         contract_type=contract_type,
         metadata_mode=metadata_mode,
         current_version=AGENT_CONTRACT_SCHEMA_V1_0,
@@ -66,7 +73,9 @@ def _descriptor(
     )
 
 
-CONTRACT_VERSION_DESCRIPTORS: Final = MappingProxyType(
+CONTRACT_VERSION_DESCRIPTORS: Final[
+    Mapping[VersionedContractKey, ContractVersionDescriptor]
+] = MappingProxyType(
     {
         ContractFamily.C01: _descriptor(
             ContractFamily.C01, AgentInvocation, MetadataMode.DIRECT_META, "meta.schema_version"
@@ -133,6 +142,12 @@ CONTRACT_VERSION_DESCRIPTORS: Final = MappingProxyType(
             ErrorEnvelope,
             MetadataMode.NESTED_VALUE,
             "parent.meta.schema_version",
+        ),
+        SupplementalContractKind.CORRECTION_RESULT: _descriptor(
+            SupplementalContractKind.CORRECTION_RESULT,
+            CorrectionResult,
+            MetadataMode.DIRECT_META,
+            "meta.schema_version",
         ),
     }
 )

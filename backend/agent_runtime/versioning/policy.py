@@ -15,7 +15,9 @@ from backend.agent_runtime.versioning.vocabulary import (
     ContractChangeKind,
     ContractFamily,
     MetadataMode,
+    SupplementalContractKind,
     VersionBump,
+    VersionedContractKey,
 )
 
 
@@ -50,52 +52,52 @@ class SupportedVersionRange:
 
 
 class UnsupportedContractVersion(ValueError):
-    def __init__(self, family: ContractFamily, version: ContractSchemaVersion) -> None:
-        self.family = family
+    def __init__(self, key: VersionedContractKey, version: ContractSchemaVersion) -> None:
+        self.key = key
         self.version = version
-        super().__init__(f"unsupported version {version} for {family.value}")
+        super().__init__(f"unsupported version {version} for {key.value}")
 
 
 class NestedContractVersionContextRequired(ValueError):
-    def __init__(self, family: ContractFamily) -> None:
-        self.family = family
-        super().__init__(f"parent version context required for {family.value}")
+    def __init__(self, key: ContractFamily) -> None:
+        self.key = key
+        super().__init__(f"parent version context required for {key.value}")
 
 
 @dataclass(frozen=True, slots=True)
 class ContractVersionPolicy:
-    ranges_by_family: Mapping[ContractFamily, tuple[SupportedVersionRange, ...]]
+    ranges_by_key: Mapping[VersionedContractKey, tuple[SupportedVersionRange, ...]]
 
     def __post_init__(self) -> None:
-        normalized: dict[ContractFamily, tuple[SupportedVersionRange, ...]] = {}
-        for family, ranges in self.ranges_by_family.items():
-            if not isinstance(family, ContractFamily):
-                raise TypeError("policy keys must be ContractFamily values")
+        normalized: dict[VersionedContractKey, tuple[SupportedVersionRange, ...]] = {}
+        for key, ranges in self.ranges_by_key.items():
+            if not isinstance(key, ContractFamily | SupplementalContractKind):
+                raise TypeError("policy keys must be VersionedContractKey values")
             normalized_ranges = tuple(ranges)
             if any(not isinstance(item, SupportedVersionRange) for item in normalized_ranges):
                 raise TypeError("policy ranges must contain SupportedVersionRange values")
-            normalized[family] = normalized_ranges
-        object.__setattr__(self, "ranges_by_family", MappingProxyType(normalized))
+            normalized[key] = normalized_ranges
+        object.__setattr__(self, "ranges_by_key", MappingProxyType(normalized))
 
     def supported_ranges(
-        self, family: ContractFamily
+        self, key: VersionedContractKey
     ) -> tuple[SupportedVersionRange, ...]:
-        if not isinstance(family, ContractFamily):
-            raise TypeError("family must be a ContractFamily")
-        return self.ranges_by_family.get(family, ())
+        if not isinstance(key, ContractFamily | SupplementalContractKind):
+            raise TypeError("key must be a VersionedContractKey")
+        return self.ranges_by_key.get(key, ())
 
     def is_supported(
-        self, family: ContractFamily, version: ContractSchemaVersion
+        self, key: VersionedContractKey, version: ContractSchemaVersion
     ) -> bool:
         if not isinstance(version, ContractSchemaVersion):
             raise TypeError("version must be a ContractSchemaVersion")
-        return any(item.supports(version) for item in self.supported_ranges(family))
+        return any(item.supports(version) for item in self.supported_ranges(key))
 
     def ensure_supported(
-        self, family: ContractFamily, version: ContractSchemaVersion
+        self, key: VersionedContractKey, version: ContractSchemaVersion
     ) -> None:
-        if not self.is_supported(family, version):
-            raise UnsupportedContractVersion(family, version)
+        if not self.is_supported(key, version):
+            raise UnsupportedContractVersion(key, version)
 
 
 _BASELINE_RANGE = SupportedVersionRange(
@@ -106,21 +108,23 @@ _BASELINE_RANGE = SupportedVersionRange(
 
 BASELINE_POLICY = ContractVersionPolicy(
     {
-        family: (_BASELINE_RANGE,) for family in ContractFamily
+        key: (_BASELINE_RANGE,) for key in CONTRACT_VERSION_DESCRIPTORS
     }
 )
 
 
 def contract_schema_version(
-    family: ContractFamily, contract: object
+    key: VersionedContractKey, contract: object
 ) -> ContractSchemaVersion:
-    if not isinstance(family, ContractFamily):
-        raise TypeError("family must be a ContractFamily")
-    descriptor = CONTRACT_VERSION_DESCRIPTORS[family]
+    if not isinstance(key, ContractFamily | SupplementalContractKind):
+        raise TypeError("key must be a VersionedContractKey")
+    descriptor = CONTRACT_VERSION_DESCRIPTORS[key]
     if not isinstance(contract, descriptor.contract_type):
         raise TypeError(f"contract must be a {descriptor.contract_type.__name__}")
     if descriptor.metadata_mode is MetadataMode.NESTED_VALUE:
-        raise NestedContractVersionContextRequired(family)
+        if not isinstance(key, ContractFamily):
+            raise ValueError("supplemental contracts cannot use nested metadata")
+        raise NestedContractVersionContextRequired(key)
     if descriptor.metadata_mode is MetadataMode.COMPOSED_META:
         agent_result = getattr(contract, "agent_result", None)
         if not isinstance(agent_result, AgentResult):
@@ -133,27 +137,27 @@ def contract_schema_version(
 
 
 def ensure_contract_version_supported(
-    family: ContractFamily,
+    key: VersionedContractKey,
     contract: object,
     policy: ContractVersionPolicy = BASELINE_POLICY,
 ) -> None:
     if not isinstance(policy, ContractVersionPolicy):
         raise TypeError("policy must be a ContractVersionPolicy")
-    policy.ensure_supported(family, contract_schema_version(family, contract))
+    policy.ensure_supported(key, contract_schema_version(key, contract))
 
 
 def ensure_nested_contract_version_supported(
-    family: ContractFamily,
+    key: ContractFamily,
     parent_version: ContractSchemaVersion,
     policy: ContractVersionPolicy = BASELINE_POLICY,
 ) -> None:
-    if not isinstance(family, ContractFamily):
-        raise TypeError("family must be a ContractFamily")
-    if CONTRACT_VERSION_DESCRIPTORS[family].metadata_mode is not MetadataMode.NESTED_VALUE:
-        raise ValueError(f"{family.value} is not a nested contract family")
+    if not isinstance(key, ContractFamily):
+        raise TypeError("key must be a ContractFamily")
+    if CONTRACT_VERSION_DESCRIPTORS[key].metadata_mode is not MetadataMode.NESTED_VALUE:
+        raise ValueError(f"{key.value} is not a nested contract family")
     if not isinstance(policy, ContractVersionPolicy):
         raise TypeError("policy must be a ContractVersionPolicy")
-    policy.ensure_supported(family, parent_version)
+    policy.ensure_supported(key, parent_version)
 
 
 def required_bump(kind: ContractChangeKind) -> VersionBump:

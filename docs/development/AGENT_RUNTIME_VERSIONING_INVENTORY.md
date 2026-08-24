@@ -31,7 +31,8 @@ Le complement `CorrectionResult`, hors famille C-*, porte directement
 parente exacte et la nouvelle version candidate exacte. La nouvelle reference
 conserve le meme `object_ref` et porte un `version_ref` opaque distinct, sans
 supposer d'ordre ni d'arithmetique de version. Elle ne rend pas cette nouvelle
-version canonique.
+version canonique. `SupplementalContractKind.CORRECTION_RESULT` lui fournit une
+cle de versioning DIRECT_META distincte de C-11, avec `1.0` comme baseline.
 
 `DelegationEnvelope` ne porte pas de correlation directe exploitable. D1 conserve
 donc la correlation de C-04 via `AgentResult.meta` et le `step_id` de la delegation,
@@ -49,7 +50,8 @@ parent ; C-04 lit `agent_result.meta.schema_version`.
 ## CLOSED en D1
 
 - baseline canonique `1.0` au format strict `MAJOR.MINOR` ;
-- policy de versions supportees couvrant exactement C-01..C-19 ;
+- policy couvrant exactement 19 familles C-* et `CorrectionResult`, soit 20 sujets ;
+- aucune C-20 : `CorrectionResult` reste un contrat supplemental de Phase 11.12 ;
 - refus propre des majors inconnus et minors hors plage ;
 - compatibilite additive par minor et breaking par major ;
 - extraction DIRECT_META, COMPOSED_META et contexte NESTED_VALUE ;

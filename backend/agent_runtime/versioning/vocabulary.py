@@ -23,6 +23,13 @@ class ContractFamily(StrEnum):
     C19 = "C-19"
 
 
+class SupplementalContractKind(StrEnum):
+    CORRECTION_RESULT = "CorrectionResult"
+
+
+type VersionedContractKey = ContractFamily | SupplementalContractKind
+
+
 class MetadataMode(StrEnum):
     DIRECT_META = "DIRECT_META"
     COMPOSED_META = "COMPOSED_META"

@@ -9,7 +9,8 @@ Accepte.
 P11-CONTRACT-02 exige une version explicite pour chaque contrat canonique et
 P11-CONTRACT-20 impose le refus propre d'une version non supportee. C3 a fige la
 matrice C-01..C-19 et les modes de metadata DIRECT_META, COMPOSED_META et
-NESTED_VALUE, sans encore materialiser la policy de compatibilite.
+NESTED_VALUE. C3 a aussi materialise `CorrectionResult`, contrat complementaire
+de Phase 11.12 portant son propre `ContractMeta` sans appartenir a la serie C-*.
 
 Les labels de lots `12.3-C1`, `12.3-C2` et `12.3-C3` ne sont pas des versions de
 schema wire. La baseline n'a aucune version historique de production a migrer.
@@ -25,6 +26,11 @@ des etats et des regles de comparaison sans decision semantique correspondante.
 `ContractSchemaVersion`, jamais une chaine libre. Ce type garantit le format
 canonique, refuse toute coercition silencieuse et rend les comparaisons explicites.
 
+`VersionedContractKey` unit les 19 valeurs inchangees de `ContractFamily` et
+l'unique valeur `SupplementalContractKind.CORRECTION_RESULT`. La policy et les
+descripteurs couvrent donc 20 sujets versionnes. `CorrectionResult` reste un
+contrat complementaire et ne devient pas C-20.
+
 Une modification additive non ambigue est compatible dans le meme major si la
 policy declare le nouveau minor comme supporte. Une suppression, un renommage ou
 un changement semantique exige un major strictement superieur. La version n'est
@@ -38,9 +44,11 @@ C-03 `DelegationEnvelope` et C-19 `ErrorEnvelope` restent des valeurs imbriquees
 versionnees par leur parent. Elles ne recoivent pas de `ContractMeta` duplique.
 C-04 `DelegationResult` est versionne via `agent_result.meta.schema_version`.
 
-Le mecanisme de migration n'execute que des edges explicitement enregistres. La
-baseline ne contient aucune migration de production ; son catalogue est vide et
-les tests utilisent uniquement une migration factice locale.
+Le mecanisme de migration n'execute que des edges explicitement enregistres par
+`VersionedContractKey`. Une migration de `CorrectionResult` reste ainsi distincte
+d'une migration de C-11 `CorrectionRequest`. La baseline ne contient aucune
+migration de production ; son catalogue est vide et les tests utilisent uniquement
+des migrations factices locales.
 
 La serialisation JSON, Pydantic ou autre reste hors du core. Elle appartiendra a
 un boundary ou adaptateur ulterieur, et aucun schema natif provider ne devient
@@ -49,7 +57,8 @@ ni `AgentRegistry`, ni `CapabilityRegistry`, ni evaluator de permissions de 12.4
 
 ## Consequences
 
-- les 19 familles ont `1.0` comme version courante et seule version supportee ;
+- les 19 familles C-* et `CorrectionResult` ont `1.0` comme version courante et
+  seule version supportee, soit 20 sujets de policy ;
 - une extension additive future peut ouvrir une plage minor explicitement ;
 - tout changement breaking exige une nouvelle version majeure ;
 - les contrats imbriques exigent un contexte de version parent explicite ;

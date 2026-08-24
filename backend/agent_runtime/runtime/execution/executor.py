@@ -131,6 +131,8 @@ class PlanExecutor:
             raise TypeError("now must be an Instant")
 
         scheduling = self.scheduler.schedule(plan=plan, run_state=run_state, now=now)
+        if run_state.status in _RUN_TERMINAL_STATUSES:
+            return ExecutionCycleResult(run_state=run_state)
         deadline_result = _consume_deadline_signals(plan, scheduling, now)
         if deadline_result is not None:
             return deadline_result

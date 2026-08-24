@@ -925,15 +925,21 @@ def test_final_refresh_releases_dependent_without_second_wave_launch() -> None:
 
 def test_terminal_run_input_is_noop_without_runner() -> None:
     plan = _plan(_step("root"))
+    initial_state = _run_state(
+        plan,
+        {"root": _state("root", StepRuntimeStatus.PENDING)},
+        status=WorkflowStatus.FAILED,
+    )
     guard, runner, result = _execute(
         plan,
-        {"root": _state("root")},
-        status=WorkflowStatus.FAILED,
+        initial_state.step_states,
+        status=initial_state.status,
     )
 
     assert guard.calls == []
     assert runner.calls == []
-    assert result.run_state.status is WorkflowStatus.FAILED
+    assert result.run_state == initial_state
+    assert result.run_state.step_states["root"].status is StepRuntimeStatus.PENDING
     assert result.launched_step_ids == ()
 
 

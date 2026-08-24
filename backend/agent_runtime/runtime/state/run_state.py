@@ -8,21 +8,15 @@ from backend.agent_runtime.contracts import ContractRef, WorkflowStatus
 from backend.agent_runtime.contracts.common import require_contract_ref
 from backend.agent_runtime.runtime.planning.plan import Plan
 from backend.agent_runtime.runtime.planning.validation import PlanValidator
+from backend.agent_runtime.runtime.state._workflow_statuses import (
+    TERMINAL_WORKFLOW_STATUSES,
+)
 from backend.agent_runtime.runtime.state.step_state import StepRuntimeStatus, StepState
 from backend.shared_kernel._strings import require_non_empty
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.time import Instant
 
 _STARTED_ACTIVE_STATUSES = frozenset({WorkflowStatus.RUNNING})
-_TERMINAL_STATUSES = frozenset(
-    {
-        WorkflowStatus.SUCCEEDED,
-        WorkflowStatus.PARTIAL,
-        WorkflowStatus.FAILED,
-        WorkflowStatus.CANCELLED,
-        WorkflowStatus.ESCALATED,
-    }
-)
 _STOP_REASON_REQUIRED_STATUSES = frozenset(
     {WorkflowStatus.FAILED, WorkflowStatus.CANCELLED, WorkflowStatus.ESCALATED}
 )
@@ -99,7 +93,7 @@ class RunState:
             raise ValueError("replanning runs must not have ended_at")
         if self.status is WorkflowStatus.WAITING_GATE and self.ended_at is not None:
             raise ValueError("waiting gate runs must not have ended_at")
-        if self.status in _TERMINAL_STATUSES and self.ended_at is None:
+        if self.status in TERMINAL_WORKFLOW_STATUSES and self.ended_at is None:
             raise ValueError("terminal runs require ended_at")
         if self.status in _STOP_REASON_REQUIRED_STATUSES and self.stop_reason is None:
             raise ValueError("failed, cancelled and escalated runs require stop_reason")

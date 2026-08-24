@@ -31,17 +31,10 @@ from backend.agent_runtime.runtime.scheduling import (
     refresh_schedulable_state,
 )
 from backend.agent_runtime.runtime.state import RunState, StepRuntimeStatus, StepState
-from backend.shared_kernel.time import Instant
-
-_RUN_TERMINAL_STATUSES = frozenset(
-    {
-        WorkflowStatus.SUCCEEDED,
-        WorkflowStatus.PARTIAL,
-        WorkflowStatus.FAILED,
-        WorkflowStatus.CANCELLED,
-        WorkflowStatus.ESCALATED,
-    }
+from backend.agent_runtime.runtime.state._workflow_statuses import (
+    TERMINAL_WORKFLOW_STATUSES,
 )
+from backend.shared_kernel.time import Instant
 
 _RETRY_FORBIDDEN_CATEGORIES = frozenset(
     {
@@ -131,7 +124,7 @@ class PlanExecutor:
             raise TypeError("now must be an Instant")
 
         scheduling = self.scheduler.schedule(plan=plan, run_state=run_state, now=now)
-        if run_state.status in _RUN_TERMINAL_STATUSES:
+        if run_state.status in TERMINAL_WORKFLOW_STATUSES:
             return ExecutionCycleResult(run_state=run_state)
         deadline_result = _consume_deadline_signals(plan, scheduling, now)
         if deadline_result is not None:
@@ -284,7 +277,7 @@ class PlanExecutor:
             if result_directive.code in _STOP_CYCLE_CODES:
                 break
 
-        if current_state.status not in _RUN_TERMINAL_STATUSES:
+        if current_state.status not in TERMINAL_WORKFLOW_STATUSES:
             current_state = refresh_schedulable_state(plan, current_state)
         return ExecutionCycleResult(
             run_state=current_state,

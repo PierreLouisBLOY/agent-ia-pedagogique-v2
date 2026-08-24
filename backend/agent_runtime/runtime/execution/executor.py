@@ -243,9 +243,35 @@ class PlanExecutor:
                 break
 
             if not isinstance(runner_result, StepExecutionResult):
-                raise TypeError("runner must return StepExecutionResult")
+                directives.append(
+                    ExecutionDirective(
+                        code=ExecutionDirectiveCode.RECONCILIATION_REQUIRED,
+                        step_id=step_id,
+                        reason_code="RUNNER_RESULT_CONTRACT_INVALID_EFFECT_UNKNOWN",
+                    )
+                )
+                break
             if runner_result.error is not None and runner_result.error.step_id != step_id:
-                raise TypeError("runner error step_id must match executed step")
+                directives.append(
+                    ExecutionDirective(
+                        code=ExecutionDirectiveCode.RECONCILIATION_REQUIRED,
+                        step_id=step_id,
+                        reason_code="RUNNER_ERROR_STEP_MISMATCH_EFFECT_UNKNOWN",
+                    )
+                )
+                break
+            if (
+                runner_result.error is not None
+                and runner_result.error.attempt != running_step.attempt_count
+            ):
+                directives.append(
+                    ExecutionDirective(
+                        code=ExecutionDirectiveCode.RECONCILIATION_REQUIRED,
+                        step_id=step_id,
+                        reason_code="RUNNER_ERROR_ATTEMPT_MISMATCH_EFFECT_UNKNOWN",
+                    )
+                )
+                break
 
             current_state, result_directive = _apply_runner_result(
                 run_state=current_state,

@@ -56,6 +56,14 @@ RECONCILIATION_REQUIRED et interdit tout replay automatique. Une exception du
 runner laisse egalement le step RUNNING et exige une reconciliation, car un
 effet a pu avoir lieu avant l'exception.
 
+Toute violation contractuelle detectee apres l'invocation du runner est traitee
+de la meme maniere comme un effet potentiellement inconnu : le step reste
+RUNNING avec son attempt incremente et une reconciliation est obligatoire. Un
+`ErrorEnvelope` retourne doit viser le `step_id` execute et exactement
+l'`attempt` courant. Un mauvais type de resultat ou une erreur mal attribuee
+n'est jamais applique et ne pilote jamais la `FailurePolicy`. Aucun contenu brut
+du resultat fautif n'est recopie dans une directive ou le snapshot.
+
 ## Deadlines et succes global
 
 Les signaux du scheduler sont consommes sans inventer l'absence d'effet :
@@ -69,6 +77,9 @@ Les signaux du scheduler sont consommes sans inventer l'absence d'effet :
 D ne deduit jamais le succes global du seul fait que tous les steps sont
 terminaux. `Plan.success_criteria` reste declaratif et n'a pas encore
 d'evaluateur canonique.
+
+Un run deja terminal est un no-op strict apres validation scheduler : son
+snapshot entrant est retourne sans refresh de steps PENDING vers READY.
 
 ## Hors scope
 

@@ -141,6 +141,32 @@ def test_executor_does_not_embed_deferred_policy_engines() -> None:
     assert symbols.isdisjoint(forbidden_symbols)
 
 
+def test_post_runner_contract_violations_converge_to_reconciliation() -> None:
+    required_reasons = {
+        "RUNNER_RESULT_CONTRACT_INVALID_EFFECT_UNKNOWN",
+        "RUNNER_ERROR_STEP_MISMATCH_EFFECT_UNKNOWN",
+        "RUNNER_ERROR_ATTEMPT_MISMATCH_EFFECT_UNKNOWN",
+    }
+    reconciliation_reasons: set[str] = set()
+    for node in ast.walk(_tree(EXECUTOR)):
+        if not isinstance(node, ast.Call):
+            continue
+        if not isinstance(node.func, ast.Name) or node.func.id != "ExecutionDirective":
+            continue
+        keywords = {item.arg: item.value for item in node.keywords if item.arg}
+        code = keywords.get("code")
+        reason = keywords.get("reason_code")
+        if (
+            isinstance(code, ast.Attribute)
+            and code.attr == "RECONCILIATION_REQUIRED"
+            and isinstance(reason, ast.Constant)
+            and isinstance(reason.value, str)
+        ):
+            reconciliation_reasons.add(reason.value)
+
+    assert required_reasons <= reconciliation_reasons
+
+
 def test_executor_contains_no_retry_loop_or_recursive_cycle() -> None:
     tree = _tree(EXECUTOR)
     recursive_calls = [

@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import FrozenInstanceError
 from datetime import UTC, datetime, timedelta
+from typing import cast
 
 import pytest
 
@@ -167,6 +168,7 @@ def _run_state(
 def _error(
     step_id: str,
     *,
+    attempt: int = 1,
     category: ErrorCategory = ErrorCategory.TRANSIENT,
     retryable: bool = True,
     effect_state: EffectState = EffectState.NONE,
@@ -181,7 +183,7 @@ def _error(
         severity=ErrorSeverity.ERROR,
         message="Safe execution error",
         step_id=step_id,
-        attempt=1,
+        attempt=attempt,
         effect_state=effect_state,
         recommended_action=recommended_action,
     )
@@ -218,7 +220,7 @@ class FakeGuard:
 class FakeRunner:
     def __init__(
         self,
-        results: Mapping[str, StepExecutionResult] | None = None,
+        results: Mapping[str, object] | None = None,
         *,
         raise_for: str | None = None,
         events: list[str] | None = None,
@@ -247,9 +249,12 @@ class FakeRunner:
             self.events.append(f"runner:{step.step_id}")
         if self.raise_for == step.step_id:
             raise RuntimeError("raw sensitive runner exception")
-        return self.results.get(
-            step.step_id,
-            StepExecutionResult(status=StepRuntimeStatus.SUCCEEDED),
+        return cast(
+            StepExecutionResult,
+            self.results.get(
+                step.step_id,
+                StepExecutionResult(status=StepRuntimeStatus.SUCCEEDED),
+            ),
         )
 
 
@@ -479,7 +484,7 @@ def test_condition_required_keeps_step_ready_without_runner() -> None:
             )
         }
     )
-    _, runner, result = _execute(
+    guard, runner, result = _execute(
         plan,
         {"root": _state("root")},
         guard=guard,
@@ -609,8 +614,38 @@ def test_all_normal_runner_terminal_results_are_completed(
     assert result.completed_step_ids == ("root",)
 
 
-def test_runner_error_step_mismatch_fails_before_application() -> None:
-    plan = _plan(_step("root"))
+def test_invalid_runner_result_requires_reconciliation_without_leakage() -> None:
+    sensitive_text = "raw-provider-secret-payload"
+    plan = _plan(_step("root"), _step("second"))
+    runner = FakeRunner({"root": {"raw": sensitive_text}})
+
+    guard, runner, result = _execute(
+        plan,
+        {"root": _state("root"), "second": _state("second")},
+        runner=runner,
+    )
+
+    state = result.run_state.step_states["root"]
+    assert guard.calls == ["root"]
+    assert runner.calls == ["root"]
+    assert state.status is StepRuntimeStatus.RUNNING
+    assert state.attempt_count == 1
+    assert result.launched_step_ids == ("root",)
+    assert result.completed_step_ids == ()
+    assert result.directives[0].code is ExecutionDirectiveCode.RECONCILIATION_REQUIRED
+    assert (
+        result.directives[0].reason_code
+        == "RUNNER_RESULT_CONTRACT_INVALID_EFFECT_UNKNOWN"
+    )
+    assert sensitive_text not in repr(result)
+    assert result.run_state.stop_reason is None
+
+
+def test_runner_error_step_mismatch_requires_reconciliation_before_policy() -> None:
+    plan = _plan(
+        _step("root", failure_policy=FailurePolicy.STOP),
+        _step("second"),
+    )
     runner = FakeRunner(
         {
             "root": StepExecutionResult(
@@ -620,8 +655,122 @@ def test_runner_error_step_mismatch_fails_before_application() -> None:
         }
     )
 
-    with pytest.raises(TypeError, match="step_id"):
-        _execute(plan, {"root": _state("root")}, runner=runner)
+    guard, runner, result = _execute(
+        plan,
+        {"root": _state("root"), "second": _state("second")},
+        runner=runner,
+    )
+
+    assert guard.calls == ["root"]
+    assert runner.calls == ["root"]
+    assert result.run_state.status is WorkflowStatus.RUNNING
+    assert result.run_state.step_states["root"].status is StepRuntimeStatus.RUNNING
+    assert result.completed_step_ids == ()
+    assert result.directives == (
+        ExecutionDirective(
+            ExecutionDirectiveCode.RECONCILIATION_REQUIRED,
+            step_id="root",
+            reason_code="RUNNER_ERROR_STEP_MISMATCH_EFFECT_UNKNOWN",
+        ),
+    )
+
+
+def test_runner_error_attempt_mismatch_requires_reconciliation() -> None:
+    plan = _plan(
+        _step("root", failure_policy=FailurePolicy.RETRY),
+        _step("second"),
+    )
+    runner = FakeRunner(
+        {
+            "root": StepExecutionResult(
+                status=StepRuntimeStatus.FAILED,
+                error=_error("root", attempt=1),
+            )
+        }
+    )
+
+    guard, runner, result = _execute(
+        plan,
+        {
+            "root": _state("root", attempt_count=1),
+            "second": _state("second"),
+        },
+        runner=runner,
+    )
+
+    state = result.run_state.step_states["root"]
+    assert guard.calls == ["root"]
+    assert runner.calls == ["root"]
+    assert runner.attempts == [2]
+    assert state.status is StepRuntimeStatus.RUNNING
+    assert state.attempt_count == 2
+    assert result.completed_step_ids == ()
+    assert result.directives[0].reason_code == (
+        "RUNNER_ERROR_ATTEMPT_MISMATCH_EFFECT_UNKNOWN"
+    )
+    assert all(
+        directive.code
+        not in {
+            ExecutionDirectiveCode.RETRY_REQUIRED,
+            ExecutionDirectiveCode.REPLAN_REQUIRED,
+            ExecutionDirectiveCode.STOPPED,
+        }
+        for directive in result.directives
+    )
+
+
+def test_runner_error_attempt_two_applies_failure_policy_normally() -> None:
+    plan = _plan(_step("root", failure_policy=FailurePolicy.RETRY))
+    runner = FakeRunner(
+        {
+            "root": StepExecutionResult(
+                status=StepRuntimeStatus.FAILED,
+                error=_error("root", attempt=2),
+            )
+        }
+    )
+
+    _, runner, result = _execute(
+        plan,
+        {"root": _state("root", attempt_count=1)},
+        runner=runner,
+    )
+
+    assert runner.attempts == [2]
+    assert result.run_state.step_states["root"].status is StepRuntimeStatus.FAILED
+    assert result.completed_step_ids == ("root",)
+    assert result.directives[0].code is ExecutionDirectiveCode.RETRY_REQUIRED
+
+
+@pytest.mark.parametrize(
+    "status",
+    [StepRuntimeStatus.PARTIAL, StepRuntimeStatus.CANCELLED],
+)
+def test_non_failed_error_attempt_mismatch_requires_reconciliation(
+    status: StepRuntimeStatus,
+) -> None:
+    plan = _plan(_step("root", failure_policy=FailurePolicy.STOP))
+    runner = FakeRunner(
+        {
+            "root": StepExecutionResult(
+                status=status,
+                error=_error("root", attempt=1),
+            )
+        }
+    )
+
+    _, _, result = _execute(
+        plan,
+        {"root": _state("root", attempt_count=1)},
+        runner=runner,
+    )
+
+    assert result.run_state.status is WorkflowStatus.RUNNING
+    assert result.run_state.step_states["root"].status is StepRuntimeStatus.RUNNING
+    assert result.completed_step_ids == ()
+    assert result.directives[0].reason_code == (
+        "RUNNER_ERROR_ATTEMPT_MISMATCH_EFFECT_UNKNOWN"
+    )
 
 
 @pytest.mark.parametrize(

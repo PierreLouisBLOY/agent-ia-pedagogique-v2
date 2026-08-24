@@ -8,6 +8,7 @@ from decimal import Decimal
 import pytest
 
 from backend.agent_runtime.contracts import (
+    AGENT_CONTRACT_SCHEMA_V1_0,
     ActorKind,
     ActorRef,
     AgentId,
@@ -50,7 +51,7 @@ def _meta(
     step_id: str = "step-1",
 ) -> ContractMeta[object]:
     return ContractMeta(
-        schema_version="12.3-C1",
+        schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
         run_id="run-1",
         step_id=step_id,
         parent_step_id=None,
@@ -202,7 +203,7 @@ def test_actor_ref_and_ids_require_non_empty_values() -> None:
 def test_contract_meta_requires_utc_created_at() -> None:
     with pytest.raises(ValueError):
         ContractMeta(
-            schema_version="12.3-C1",
+            schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
             run_id="run-1",
             step_id="step-1",
             parent_step_id=None,
@@ -217,7 +218,7 @@ def test_contract_meta_requires_utc_created_at() -> None:
 
 def test_contract_meta_trace_flags_are_immutable_and_private_keys_rejected() -> None:
     meta = ContractMeta(
-        schema_version="12.3-C1",
+        schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
         run_id="run-1",
         step_id="step-1",
         parent_step_id=None,
@@ -234,7 +235,7 @@ def test_contract_meta_trace_flags_are_immutable_and_private_keys_rejected() -> 
         nested["token_count"] = 5  # type: ignore[index]
     with pytest.raises(ValueError):
         ContractMeta(
-            schema_version="12.3-C1",
+            schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
             run_id="run-1",
             step_id="step-1",
             parent_step_id=None,
@@ -275,7 +276,7 @@ def test_contract_ref_belongs_to_common_and_validates_publicly() -> None:
 def test_private_agent_key_variants_are_rejected(private_key: str) -> None:
     with pytest.raises(ValueError):
         ContractMeta(
-            schema_version="12.3-C1",
+            schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
             run_id="run-1",
             step_id="step-1",
             parent_step_id=None,
@@ -289,7 +290,7 @@ def test_private_agent_key_variants_are_rejected(private_key: str) -> None:
 
 def test_provider_neutral_query_metadata_remains_accepted_and_frozen() -> None:
     meta = ContractMeta(
-        schema_version="12.3-C1",
+        schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
         run_id="run-1",
         step_id="step-1",
         parent_step_id=None,
@@ -317,7 +318,7 @@ def test_provider_neutral_query_metadata_remains_accepted_and_frozen() -> None:
 def test_contract_meta_rejects_parent_step_equal_to_step_id() -> None:
     with pytest.raises(ValueError):
         ContractMeta(
-            schema_version="12.3-C1",
+            schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
             run_id="run-1",
             step_id="step-1",
             parent_step_id="step-1",

@@ -2,11 +2,13 @@
 
 from backend.agent_runtime.contracts.application import UseCaseRequest, UseCaseResult
 from backend.agent_runtime.contracts.common import (
+    AGENT_CONTRACT_SCHEMA_V1_0,
     ActorKind,
     ActorRef,
     AgentId,
     ContractMeta,
     ContractRef,
+    ContractSchemaVersion,
     require_contract_ref,
 )
 from backend.agent_runtime.contracts.delegation import DelegationResult
@@ -73,6 +75,7 @@ from backend.agent_runtime.contracts.review import (
 from backend.agent_runtime.contracts.tools import ToolCallRequest, ToolCallResult
 
 __all__ = [
+    "AGENT_CONTRACT_SCHEMA_V1_0",
     "ActorKind",
     "ActorRef",
     "AgentId",
@@ -83,6 +86,7 @@ __all__ = [
     "BudgetSpec",
     "ContractMeta",
     "ContractRef",
+    "ContractSchemaVersion",
     "CorrectionRequest",
     "CorrectionResult",
     "DelegationEnvelope",

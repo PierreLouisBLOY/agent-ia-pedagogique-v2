@@ -1,6 +1,6 @@
 # Contrats runtime agentiques
 
-Les Phases 12.3-C1, C2 et C3 materialisent `backend/agent_runtime/contracts/`
+Les Phases 12.3-C1, C2, C3 et D1 materialisent `backend/agent_runtime/contracts/`
 comme zone technique provider-neutral pour les contrats runtime agentiques. Cette zone est hors
 Domain/Application, hors modules metier, hors adaptateurs et hors infrastructure.
 
@@ -111,11 +111,20 @@ aucun champ ad hoc ou metadata dupliquee.
 
 ## Versioning
 
-Les inventaires `AGENT_RUNTIME_STATUS_MAPPING.md` et
-`AGENT_RUNTIME_VERSIONING_INVENTORY.md` distinguent les fermetures C3 des travaux
-DEFERRED TO 12.3-D : compatibilite formelle, versions supportees, migrations et
-schemas de serialization. Aucun registry, parser semver ou mecanisme de migration
-n'est implemente ici.
+La baseline canonique est `ContractSchemaVersion(1, 0)`, rendue `1.0` au format
+strict `MAJOR.MINOR`. `ContractMeta` n'accepte plus de chaine libre. La table
+unique de descripteurs et `BASELINE_POLICY` couvrent exactement C-01..C-19 et
+refusent toute version autre que `1.0` sans fallback.
+
+Les ajouts non ambigus exigent un minor strictement superieur dans le meme major.
+Suppression, renommage et changement semantique exigent un major superieur. C-03
+et C-19 prennent leur version du parent ; C-04 la compose via `AgentResult.meta`.
+Le catalogue de migrations est explicite et vide en production pour cette
+baseline. La politique complete est decrite dans
+`AGENT_RUNTIME_VERSIONING_POLICY.md` et decidee par ADR P12-004.
+
+La serialisation concrete reste hors core et hors D1. Le catalogue de familles
+n'est pas un registry d'agents ou de capabilities de 12.4.
 
 ## Permissions et erreurs
 
@@ -143,4 +152,4 @@ restent autorisees.
 Le coeur runtime ne contient aucun provider, framework, SDK, HTTP, ORM, SQL,
 scheduler, registry, evaluator, recovery, RAG, LLM, routing policy, tool policy,
 execution de use case, execution d'outil ou gate engine. Ces responsabilites ne
-sont pas introduites par C3.
+sont pas introduites par D1.

@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta, timezone
 import pytest
 
 from backend.agent_runtime.contracts import (
+    AGENT_CONTRACT_SCHEMA_V1_0,
     ActorKind,
     ActorRef,
     AgentId,
@@ -74,7 +75,7 @@ def _meta[TStatus](
     correlation_id: str = "corr-1",
 ) -> ContractMeta[TStatus]:
     return ContractMeta(
-        schema_version="12.3-C2",
+        schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
         run_id="run-1",
         step_id=step_id,
         parent_step_id=None,

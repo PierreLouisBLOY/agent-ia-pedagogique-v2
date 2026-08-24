@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 import pytest
 
 from backend.agent_runtime.contracts import (
+    AGENT_CONTRACT_SCHEMA_V1_0,
     ActorKind,
     ActorRef,
     AgentResultStatus,
@@ -40,7 +41,7 @@ def _meta[TStatus](
     run_id: str = "run-1",
 ) -> ContractMeta[TStatus]:
     return ContractMeta(
-        schema_version="12.3-C3",
+        schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
         run_id=run_id,
         step_id=step_id,
         parent_step_id=None,

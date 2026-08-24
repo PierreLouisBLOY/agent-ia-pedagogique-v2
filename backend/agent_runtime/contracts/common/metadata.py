@@ -6,6 +6,7 @@ from datetime import timedelta
 
 from backend.agent_runtime.contracts.common.actor import ActorRef
 from backend.agent_runtime.contracts.common.safe_data import freeze_agent_safe_mapping
+from backend.agent_runtime.contracts.common.schema_version import ContractSchemaVersion
 from backend.shared_kernel._strings import require_non_empty
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.time import Instant
@@ -15,7 +16,7 @@ from backend.shared_kernel.time import Instant
 class ContractMeta[TStatus]:
     """Common immutable metadata for agent runtime contracts."""
 
-    schema_version: str
+    schema_version: ContractSchemaVersion
     run_id: str
     step_id: str
     parent_step_id: str | None
@@ -26,7 +27,8 @@ class ContractMeta[TStatus]:
     trace_flags: Mapping[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        require_non_empty(self.schema_version, "schema_version")
+        if not isinstance(self.schema_version, ContractSchemaVersion):
+            raise TypeError("schema_version must be a ContractSchemaVersion")
         require_non_empty(self.run_id, "run_id")
         require_non_empty(self.step_id, "step_id")
         if self.parent_step_id is not None:

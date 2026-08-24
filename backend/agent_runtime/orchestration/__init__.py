@@ -1,5 +1,14 @@
 """Declarative orchestration metadata above the deterministic runtime."""
 
+from backend.agent_runtime.orchestration.compilation import (
+    HumanGateAnchor,
+    HumanGateBinding,
+    PlanCompilationCode,
+    PlanCompilationError,
+    PlanCompilationRequest,
+    PlanCompiler,
+    PlanStepBinding,
+)
 from backend.agent_runtime.orchestration.selection import (
     WorkflowRequirements,
     WorkflowSelectionDecision,
@@ -26,6 +35,13 @@ from backend.agent_runtime.orchestration.workflows import (
 __all__ = [
     "BASELINE_WORKFLOW_CATALOG",
     "BASELINE_WORKFLOW_RESPONSIBILITY_DESCRIPTORS",
+    "HumanGateAnchor",
+    "HumanGateBinding",
+    "PlanCompilationCode",
+    "PlanCompilationError",
+    "PlanCompilationRequest",
+    "PlanCompiler",
+    "PlanStepBinding",
     "WorkflowRequirements",
     "WorkflowCatalog",
     "WorkflowGateProfile",

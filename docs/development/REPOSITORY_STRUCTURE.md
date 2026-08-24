@@ -11,7 +11,7 @@ Cette baseline materialise sans logique metier la structure normative issue de l
 | `backend/agent_runtime/contracts/` | Contrats techniques runtime agentiques provider-neutral |
 | `backend/agent_runtime/registry/` | Catalogues statiques agents/capabilities et ceiling matrix exhaustive |
 | `backend/agent_runtime/policy/` | Garde-fous techniques runtime configurables, sans autorite metier |
-| `backend/agent_runtime/orchestration/` | Catalogue de topologies et selection deterministe depuis des exigences explicites, sans compilation de Plan |
+| `backend/agent_runtime/orchestration/` | Catalogue, selection et compilation deterministes des topologies en Plan canonique, sans execution ni routing |
 | `backend/agent_runtime/runtime/` | Plan et revision versionnee, validation du DAG, etat technique, scheduler pur et frontiere d'execution deterministe sans binding concret ni autorite metier |
 | `backend/modules/` | Coeur metier decoupe en M01 a M12 et MX1 |
 | `backend/adapters/inbound/` | Entrees API, UI locale, CLI, outils agents et batch |
@@ -67,3 +67,8 @@ Sous `backend/agent_runtime/orchestration/selection/`, un selector immutable
 compose ces topologies a partir d'exigences explicites et emet des reason codes
 fermes. Il ne parse aucune intention, ne construit aucun Plan/StepSpec, ne route
 aucun appel et n'evalue aucune permission.
+
+Sous `backend/agent_runtime/orchestration/compilation/`, le PlanCompiler
+materialise une selection et des bindings caller-supplied en Plan/StepSpec
+canoniques, puis appelle PlanValidator. Il n'invente aucune semantique, n'evalue
+aucun scope et n'execute ni ne route aucun step.

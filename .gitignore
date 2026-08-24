@@ -1,0 +1,57 @@
+# Python environments and bytecode
+.venv/
+.venv-validation/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test, lint, and type-check caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Secrets and local configuration
+.env
+.env.*
+*.pem
+*.key
+
+# Runtime databases and SQLite sidecars
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
+*.db-wal
+*.db-shm
+*-wal
+*-shm
+
+# Runtime output
+*.log
+logs/
+runtime/
+exports/
+artifacts/
+tmp/
+temp/
+
+# Build and packaging output
+build/
+dist/
+*.egg-info/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+Desktop.ini

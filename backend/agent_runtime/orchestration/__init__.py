@@ -1,5 +1,14 @@
 """Declarative orchestration metadata above the deterministic runtime."""
 
+from backend.agent_runtime.orchestration.selection import (
+    WorkflowRequirements,
+    WorkflowSelectionDecision,
+    WorkflowSelectionError,
+    WorkflowSelectionReason,
+    WorkflowSelectionStage,
+    WorkflowSelectionStatus,
+    WorkflowSelector,
+)
 from backend.agent_runtime.orchestration.workflows import (
     BASELINE_WORKFLOW_CATALOG,
     BASELINE_WORKFLOW_RESPONSIBILITY_DESCRIPTORS,
@@ -17,6 +26,7 @@ from backend.agent_runtime.orchestration.workflows import (
 __all__ = [
     "BASELINE_WORKFLOW_CATALOG",
     "BASELINE_WORKFLOW_RESPONSIBILITY_DESCRIPTORS",
+    "WorkflowRequirements",
     "WorkflowCatalog",
     "WorkflowGateProfile",
     "WorkflowKind",
@@ -25,5 +35,11 @@ __all__ = [
     "WorkflowResponsibility",
     "WorkflowResponsibilityDescriptor",
     "WorkflowRevisionProfile",
+    "WorkflowSelectionDecision",
+    "WorkflowSelectionError",
+    "WorkflowSelectionReason",
+    "WorkflowSelectionStage",
+    "WorkflowSelectionStatus",
+    "WorkflowSelector",
     "WorkflowTopologyDescriptor",
 ]

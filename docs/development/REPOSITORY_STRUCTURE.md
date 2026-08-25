@@ -91,3 +91,9 @@ execute les canaux dans un ordre ferme, applique l'admissibilite STRUCTURED avan
 la pertinence, deduplique par identite et version, puis fusionne les rangs en
 `Decimal`. Elle ne recherche aucun contenu DOCUMENT, ne construit aucune preuve
 publique et n'ajoute ni adapter, ni retry, ni reranker.
+
+La couche 12.7-D ajoute `EvidenceAgent`, qui separe CAP-E01, CAP-E02 et CAP-E03.
+Elle controle l'identite et la version du contenu, materialise les contrats C-06,
+mesure uniquement la couverture structurelle et preserve les divergences de
+versions. Le meta reste fourni par le caller ; aucun enchainement automatique,
+provider concret, retry ou autorite metier n'est introduit.

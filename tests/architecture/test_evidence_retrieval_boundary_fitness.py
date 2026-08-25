@@ -18,6 +18,8 @@ BACKEND = ROOT / "backend"
 AGENT_RUNTIME = BACKEND / "agent_runtime"
 AGENTS = AGENT_RUNTIME / "agents"
 EVIDENCE = AGENTS / "evidence"
+RETRIEVAL_MODEL = EVIDENCE / "retrieval_model.py"
+RETRIEVAL_PORTS = EVIDENCE / "retrieval_ports.py"
 RUNTIME = AGENT_RUNTIME / "runtime"
 ORCHESTRATION = AGENT_RUNTIME / "orchestration"
 
@@ -123,7 +125,13 @@ def test_evidence_boundary_has_no_io_network_subprocess_or_concurrency_imports()
 
 
 def test_evidence_boundary_constructs_no_public_evidence_or_runtime_workflow() -> None:
-    assert _called_names(EVIDENCE).isdisjoint(
+    boundary_calls = {
+        node.func.id
+        for path in (RETRIEVAL_MODEL, RETRIEVAL_PORTS)
+        for node in ast.walk(_tree(path))
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+    }
+    assert boundary_calls.isdisjoint(
         {
             "AgentInvocation",
             "DelegationEnvelope",

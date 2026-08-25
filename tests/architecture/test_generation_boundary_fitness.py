@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 GENERATION = ROOT / "backend" / "agent_runtime" / "agents" / "generation"
 MODEL = GENERATION / "generation_model.py"
 PORTS = GENERATION / "generation_ports.py"
+BOUNDARY_FILES = (MODEL, PORTS)
 
 
 def _python_files(root: Path) -> tuple[Path, ...]:
@@ -63,6 +64,8 @@ def test_generation_package_exists_with_only_boundary_files() -> None:
     assert GENERATION.is_dir()
     assert {path.name for path in _python_files(GENERATION)} == {
         "__init__.py",
+        "generation_agent.py",
+        "generation_agent_model.py",
         "generation_coordination_model.py",
         "generation_coordinator.py",
         "generation_model.py",
@@ -115,7 +118,13 @@ def test_generation_boundary_has_no_provider_network_sql_or_filesystem_imports()
 
 
 def test_generation_boundary_has_no_io_or_network_attribute_calls() -> None:
-    assert _attribute_calls().isdisjoint(
+    attribute_calls = {
+        node.func.attr
+        for path in BOUNDARY_FILES
+        for node in ast.walk(_tree(path))
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+    }
+    assert attribute_calls.isdisjoint(
         {
             "connect",
             "execute",
@@ -142,14 +151,20 @@ def test_generation_boundary_has_no_while_retry_backoff_or_sleep() -> None:
 
 
 def test_generation_boundary_constructs_no_agent_or_canonical_output_contract() -> None:
-    assert _called_names().isdisjoint(
+    called_names = {
+        node.func.id
+        for path in BOUNDARY_FILES
+        for node in ast.walk(_tree(path))
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+    }
+    assert called_names.isdisjoint(
         {
             "CorrectionResult",
             "EvidenceSet",
             "ProductionCandidate",
         }
     )
-    imports = {module for path in _python_files(GENERATION) for module in _imports(path)}
+    imports = {module for path in BOUNDARY_FILES for module in _imports(path)}
     assert all("production_candidate" not in module for module in imports)
     assert all("correction_result" not in module for module in imports)
 

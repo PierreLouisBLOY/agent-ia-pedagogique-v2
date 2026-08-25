@@ -119,3 +119,11 @@ verifie capability, operation, target et lineage d'evidence, puis autorise au
 plus un appel outbound. Elle revalide tout appel prepare avant execution, ne
 construit aucune `ProductionCandidate` ou correction et ne traduit ni ne retente
 les erreurs techniques du port.
+
+La couche 12.8-D ajoute `GeneratorAgent` pour CAP-G01 et CAP-G02. Apres
+preparation et execution par le coordinateur, une operation explicite revalide
+la lineage et materialise le contrat C-08 existant avec un metadata et une
+`production_id` fournis par le caller. Seuls `SUCCEEDED` et `PARTIAL` produisent
+un candidat ; `REFUSED` et `INSUFFICIENT_EVIDENCE` n'en produisent aucun. Cette
+couche n'ajoute ni CAP-G03, ni correction, ni provider, ni validation, promotion,
+persistance, retry ou wiring runtime.

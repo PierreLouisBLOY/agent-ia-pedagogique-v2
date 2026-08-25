@@ -26,8 +26,9 @@ ProductionRequest + capability + caller-supplied inputs
 | `CAP-G03` | `CORRECT` | refus `CORRECTION_REQUEST_REQUIRED` |
 
 Ce mapping est local et fermé. Il ne route aucun agent, ne consulte pas la
-registry, n’évalue pas une permission et ne modifie pas l’access matrix. CAP-G03
-sera relié à C-11 `CorrectionRequest` en 12.8-E.
+registry, n’évalue pas une permission et ne modifie pas l’access matrix. Le
+chemin C-07 refuse toujours CAP-G03 ; C-11 utilise les methodes de correction
+distinctes ajoutees en 12.8-E.
 
 ## Préparation et anti-forgery
 
@@ -88,5 +89,5 @@ persiste rien, n’appelle aucun use case Application et n’importe ni runtime 
 orchestration. Elle ne choisit aucun provider, modèle, prompt ou endpoint et
 n’effectue aucun HTTP, SQL ou accès filesystem.
 
-Restent différés : l’assemblage AG-03 en 12.8-D, CAP-G03 en 12.8-E, le hardening
+L'assemblage AG-03 est ajoute en 12.8-D et CAP-G03 en 12.8-E. Restent differes le hardening
 en 12.8-F, les workflows en 12.8-G et la clôture en 12.8-H.

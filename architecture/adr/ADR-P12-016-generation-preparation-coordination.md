@@ -38,7 +38,8 @@ CAP-G03 → GenerationOperation.CORRECT
 Ce mapping n’est pas un router : il ne choisit aucun agent, ne consulte pas la
 registry et n’accorde aucune permission. Pour C-07, CAP-G01 interdit une cible,
 CAP-G02 exige une cible et CAP-G03 échoue avec
-`CORRECTION_REQUEST_REQUIRED`. Le branchement C-11 reste différé à 12.8-E.
+`CORRECTION_REQUEST_REQUIRED`. Le branchement C-11 est ajoute en 12.8-E par les
+methodes distinctes `prepare_correction` et `execute_correction`.
 
 `prepare()` copie exactement le step source, le type de production, le brief,
 le format, `ProductionRequest.pedagogical_context`, les contraintes, les
@@ -80,8 +81,8 @@ gate.
 
 - 12.8-D pourra assembler une `ProductionCandidate` à partir d’une sortie dont
   la lineage technique est inspectable ;
-- CAP-G03 demeure fail-closed jusqu’au mapping explicite de `CorrectionRequest`
-  en 12.8-E ;
+- le chemin C-07 demeure fail-closed pour CAP-G03 ; le mapping C-11 explicite
+  utilise le chemin de correction separe ajoute en 12.8-E ;
 - les erreurs de coordination déterministes restent distinctes des erreurs
   techniques du port ;
 - les statuts `REFUSED`, `PARTIAL` et `INSUFFICIENT_EVIDENCE` restent nominaux et

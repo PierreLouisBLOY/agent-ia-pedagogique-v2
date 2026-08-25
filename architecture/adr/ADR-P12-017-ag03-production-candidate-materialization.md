@@ -48,7 +48,8 @@ relation parent.
   bloque uniquement un vocabulaire d'autorite ferme.
 - Les references de preuve utilisees restent un sous-ensemble de C-07.
 - Aucune validation, review, promotion ou persistance n'est realisee.
-- CAP-G03 et les contrats de correction sont differes a 12.8-E.
+- CAP-G03 et les contrats de correction sont traites separement par
+  ADR-P12-018 en 12.8-E, sans modifier la materialisation G01/G02.
 - Le grounding semantique, les controles pedagogiques et le hardening sont
   differes a 12.8-F.
 - Le provider concret et le wiring runtime sont differes ; aucun dispatcher,

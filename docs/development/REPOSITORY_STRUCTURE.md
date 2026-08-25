@@ -127,3 +127,10 @@ la lineage et materialise le contrat C-08 existant avec un metadata et une
 un candidat ; `REFUSED` et `INSUFFICIENT_EVIDENCE` n'en produisent aucun. Cette
 couche n'ajoute ni CAP-G03, ni correction, ni provider, ni validation, promotion,
 persistance, retry ou wiring runtime.
+
+La couche 12.8-E ajoute le chemin CAP-G03 explicite a partir de C-11 et d'une
+cible versionnee deja resolue. Le meme `GenerationPort` produit un resultat
+CORRECT dont le control block ferme est revalide avant construction d'une
+nouvelle candidate C-08 et du `CorrectionResult` existant. La cible n'est jamais
+chargee ou mutee ; aucune boucle locale, review, validation, promotion,
+persistance, provider concret ou integration runtime n'est introduite.

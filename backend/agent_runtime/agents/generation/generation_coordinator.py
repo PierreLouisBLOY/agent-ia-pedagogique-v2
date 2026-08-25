@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from backend.agent_runtime.agents.generation.generation_correction_model import (
+        CorrectionPreparationRequest,
+        PreparedCorrectionCall,
+    )
 from backend.agent_runtime.agents.generation.generation_coordination_model import (
     GenerationCoordinationError,
     GenerationCoordinationErrorCode,
@@ -80,6 +87,71 @@ class GenerationCoordinator:
         _validate_prepared_call(prepared)
         result = self._port.generate(request=prepared.port_request)
         _validate_generation_result(prepared, result)
+        return result
+
+    def prepare_correction(
+        self,
+        *,
+        request: CorrectionPreparationRequest,
+    ) -> PreparedCorrectionCall:
+        from backend.agent_runtime.agents.generation.generation_correction_model import (
+            CorrectionPreparationRequest,
+            PreparedCorrectionCall,
+        )
+
+        if type(request) is not CorrectionPreparationRequest:
+            raise TypeError("request must be a CorrectionPreparationRequest")
+        correction = request.request
+        target = request.target
+        port_request = GenerationPortRequest(
+            operation=GenerationOperation.CORRECT,
+            source_step_id=correction.meta.step_id,
+            production_kind=target.production_kind,
+            objective="apply_bounded_correction_request",
+            output_format=target.output_format,
+            pedagogical_context=target.pedagogical_context,
+            resolved_inputs={
+                "target_content": target.content,
+                "target_structured_payload": target.structured_payload,
+                "caller_resolved_inputs": request.resolved_inputs,
+            },
+            constraints={
+                "review_ref": correction.review_ref,
+                "finding_ids": correction.finding_ids,
+                "preserve_constraints": correction.preserve_constraints,
+                "allowed_changes": correction.allowed_changes,
+                "forbidden_changes": correction.forbidden_changes,
+                "expected_delta": correction.expected_delta,
+            },
+            evidence_refs=correction.evidence_refs,
+            target_ref=None,
+            target_version_ref=correction.target_production_ref,
+            expected_sections=(),
+            output_contract=request.output_contract,
+        )
+        return PreparedCorrectionCall(
+            capability_id=request.capability_id,
+            correction_request=correction,
+            target=target,
+            port_request=port_request,
+        )
+
+    def execute_correction(
+        self,
+        *,
+        prepared: PreparedCorrectionCall,
+    ) -> GenerationPortResult:
+        from backend.agent_runtime.agents.generation.generation_correction_model import (
+            PreparedCorrectionCall,
+            _validate_correction_technical_result,
+            _validate_prepared_correction_call,
+        )
+
+        if type(prepared) is not PreparedCorrectionCall:
+            raise TypeError("prepared must be a PreparedCorrectionCall")
+        _validate_prepared_correction_call(prepared)
+        result = self._port.generate(request=prepared.port_request)
+        _validate_correction_technical_result(prepared, result)
         return result
 
 

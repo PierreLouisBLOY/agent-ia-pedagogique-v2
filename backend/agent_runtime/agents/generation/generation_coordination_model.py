@@ -119,15 +119,23 @@ def _validate_prepared_call(prepared: PreparedGenerationCall) -> None:
             "prepared source step does not match the canonical request",
         )
     if expected_operation is GenerationOperation.GENERATE:
-        if canonical.target_ref is not None or technical.target_ref is not None:
+        if (
+            canonical.target_ref is not None
+            or technical.target_ref is not None
+            or technical.target_version_ref is not None
+        ):
             _raise_mismatch(
                 GenerationCoordinationErrorCode.TARGET_FORBIDDEN_FOR_GENERATE,
                 "CAP-G01 forbids a target reference",
             )
-    elif canonical.target_ref is None or technical.target_ref is None:
+    elif (
+        canonical.target_ref is None
+        or technical.target_ref is None
+        or technical.target_version_ref is not None
+    ):
         _raise_mismatch(
             GenerationCoordinationErrorCode.TARGET_REQUIRED_FOR_TRANSFORM,
-            "CAP-G02 requires a target reference",
+            "CAP-G02 requires only a contract target reference",
         )
 
     exact_pairs = (

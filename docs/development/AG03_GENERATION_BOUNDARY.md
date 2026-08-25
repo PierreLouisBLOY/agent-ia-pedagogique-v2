@@ -85,7 +85,7 @@ adapters outbound.
 - 12.8-C : mapping des contrats canoniques, préparation des inputs, lineage et
   contrôle anti-mismatch request/result ;
 - 12.8-D : `GeneratorAgent`, CAP-G01/G02 et assemblage `ProductionCandidate` ;
-- 12.8-E : CAP-G03, contexte de correction et `CorrectionResult` ;
+- 12.8-E : CAP-G03, cible versionnee resolue et `CorrectionResult` (implemente) ;
 - 12.8-F : grounding complet, hardening des sorties et structured-output repair ;
 - 12.8-G : compatibilité des workflows et fan-out de variantes ;
 - 12.8-H : rationalisation et clôture finale.

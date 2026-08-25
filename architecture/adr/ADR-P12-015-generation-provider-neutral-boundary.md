@@ -67,7 +67,7 @@ production, et n’appelle aucun use case Application.
 Le mapping actif de C-07 `ProductionRequest` et C-11 `CorrectionRequest`, la
 préparation d’inputs et les contrôles anti-mismatch request/result sont différés
 à 12.8-C/E. L’agent et l’assemblage `ProductionCandidate` sont différés à 12.8-D,
-la correction complète à 12.8-E, le hardening à 12.8-F, l’intégration workflow à
+la correction complete a l'extension ADR-P12-018 de 12.8-E, le hardening à 12.8-F, l’intégration workflow à
 12.8-G et la rationalisation finale à 12.8-H. Les adapters provider, le choix de
 modèle et le prompt renderer restent différés à leurs lots dédiés.
 

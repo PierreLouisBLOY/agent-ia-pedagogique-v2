@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[2]
 GENERATION = ROOT / "backend" / "agent_runtime" / "agents" / "generation"
 AGENT = GENERATION / "generation_agent.py"
 AGENT_MODEL = GENERATION / "generation_agent_model.py"
+CORRECTION = GENERATION / "generation_correction.py"
 BOUNDARY_B = (
     GENERATION / "generation_model.py",
     GENERATION / "generation_ports.py",
@@ -75,19 +76,18 @@ def test_d_files_are_confined_to_generation_boundary() -> None:
     assert all(path.is_file() and path.parent == GENERATION for path in D_FILES)
 
 
-def test_production_candidate_is_constructed_only_by_generation_agent() -> None:
+def test_production_candidate_construction_sites_are_exact_for_d_and_e() -> None:
     construction_sites = {
         path
         for path in _python_files(GENERATION)
         if "ProductionCandidate" in _calls((path,))
     }
-    assert construction_sites == {AGENT}
+    assert construction_sites == {AGENT, CORRECTION}
     assert "ProductionCandidate" not in _calls(BOUNDARY_B + COORDINATION_C)
 
 
 def test_d_constructs_no_correction_result_or_evidence_set() -> None:
-    generation_calls = _calls(_python_files(GENERATION))
-    assert generation_calls.isdisjoint({"CorrectionResult", "EvidenceSet"})
+    assert _calls(D_FILES).isdisjoint({"CorrectionResult", "EvidenceSet"})
     imported = {module for path in D_FILES for module in _imports(path)}
     assert all("correction_request" not in module for module in imported)
 
@@ -214,13 +214,19 @@ def test_authority_metadata_is_never_silently_filtered() -> None:
     )
 
 
-def test_generator_agent_public_api_owns_only_g01_and_g02() -> None:
+def test_generator_agent_public_api_keeps_d_and_adds_only_e_methods() -> None:
     public = {
         name
         for name, value in GeneratorAgent.__dict__.items()
         if callable(value) and not name.startswith("_")
     }
-    assert public == {"build_candidate", "generate_production", "transform_production"}
+    assert public == {
+        "build_candidate",
+        "build_correction",
+        "correct_production",
+        "generate_production",
+        "transform_production",
+    }
     assert tuple(inspect.signature(GeneratorAgent.generate_production).parameters) == (
         "self",
         "request",
@@ -232,8 +238,7 @@ def test_generator_agent_public_api_owns_only_g01_and_g02() -> None:
     source = "\n".join(path.read_text(encoding="utf-8") for path in D_FILES)
     assert '"CAP-G01"' in source
     assert '"CAP-G02"' in source
-    assert "CAP-G03" not in source
-    assert "correct_production" not in source
+    assert '"CAP-G03"' in source
 
 
 def test_registry_and_access_matrix_remain_unchanged_for_ag03() -> None:

@@ -161,7 +161,7 @@ def test_coordination_has_no_router_dispatcher_handler_or_store() -> None:
     assert all(not any(item in name for item in forbidden) for name in class_names)
 
 
-def test_coordinator_has_exactly_one_outbound_generate_call_site() -> None:
+def test_coordinator_has_exactly_one_outbound_call_per_execution_path() -> None:
     calls = [
         node
         for node in ast.walk(_tree(COORDINATOR))
@@ -169,7 +169,7 @@ def test_coordinator_has_exactly_one_outbound_generate_call_site() -> None:
         and isinstance(node.func, ast.Attribute)
         and node.func.attr == "generate"
     ]
-    assert len(calls) == 1
+    assert len(calls) == 2
     execute = _method(COORDINATOR, "GenerationCoordinator", "execute")
     execute_calls = [
         node
@@ -179,6 +179,19 @@ def test_coordinator_has_exactly_one_outbound_generate_call_site() -> None:
         and node.func.attr == "generate"
     ]
     assert len(execute_calls) == 1
+    execute_correction = _method(
+        COORDINATOR,
+        "GenerationCoordinator",
+        "execute_correction",
+    )
+    correction_calls = [
+        node
+        for node in ast.walk(execute_correction)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "generate"
+    ]
+    assert len(correction_calls) == 1
 
 
 def test_execute_has_no_exception_translation_or_retry_branch() -> None:
@@ -250,13 +263,18 @@ def test_coordination_error_vocabulary_is_exact_and_authority_free() -> None:
     )
 
 
-def test_coordinator_public_signature_remains_prepare_then_execute_only() -> None:
+def test_coordinator_public_signature_extends_with_explicit_correction_pair() -> None:
     public = {
         name
         for name, value in GenerationCoordinator.__dict__.items()
         if callable(value) and not name.startswith("_")
     }
-    assert public == {"execute", "prepare"}
+    assert public == {
+        "execute",
+        "execute_correction",
+        "prepare",
+        "prepare_correction",
+    }
     assert tuple(inspect.signature(GenerationCoordinator.prepare).parameters) == (
         "self",
         "request",
@@ -265,6 +283,12 @@ def test_coordinator_public_signature_remains_prepare_then_execute_only() -> Non
         "self",
         "prepared",
     )
+    assert tuple(
+        inspect.signature(GenerationCoordinator.prepare_correction).parameters
+    ) == ("self", "request")
+    assert tuple(
+        inspect.signature(GenerationCoordinator.execute_correction).parameters
+    ) == ("self", "prepared")
 
 
 def test_canonical_production_request_contract_shape_remains_reused() -> None:

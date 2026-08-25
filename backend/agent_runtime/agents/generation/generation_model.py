@@ -10,6 +10,7 @@ from backend.agent_runtime.contracts.common import (
     require_contract_ref,
 )
 from backend.shared_kernel._strings import require_non_empty
+from backend.shared_kernel.references import ObjectVersionRef
 
 
 class GenerationOperation(StrEnum):
@@ -32,6 +33,7 @@ class GenerationPortRequest:
     constraints: Mapping[str, object] = field(default_factory=dict)
     evidence_refs: tuple[ContractRef, ...] = ()
     target_ref: ContractRef | None = None
+    target_version_ref: ObjectVersionRef | None = None
     expected_sections: tuple[str, ...] = ()
     output_contract: Mapping[str, object] = field(default_factory=dict)
 
@@ -45,6 +47,15 @@ class GenerationPortRequest:
         evidence_refs = _validated_refs(self.evidence_refs, "evidence_refs")
         if self.target_ref is not None:
             require_contract_ref(self.target_ref, "target_ref")
+        if self.target_version_ref is not None and type(self.target_version_ref) is not ObjectVersionRef:
+            raise TypeError("target_version_ref must be an ObjectVersionRef")
+        if self.operation is GenerationOperation.CORRECT:
+            if self.target_ref is not None:
+                raise ValueError("CORRECT forbids target_ref")
+            if self.target_version_ref is None:
+                raise ValueError("CORRECT requires target_version_ref")
+        elif self.target_version_ref is not None:
+            raise ValueError("target_version_ref is reserved for CORRECT")
         expected_sections = _validated_string_tuple(
             self.expected_sections,
             "expected_sections",
@@ -93,6 +104,7 @@ class GenerationPortResult:
     warnings: tuple[Mapping[str, object], ...] = ()
     uncertainties: tuple[Mapping[str, object], ...] = ()
     execution_metadata: Mapping[str, object] = field(default_factory=dict)
+    operation_details: Mapping[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         require_non_empty(self.source_step_id, "source_step_id")
@@ -113,6 +125,7 @@ class GenerationPortResult:
             "uncertainties",
         )
         execution_metadata = freeze_agent_safe_mapping(self.execution_metadata)
+        operation_details = freeze_agent_safe_mapping(self.operation_details)
 
         has_output = self.content is not None or bool(structured_payload)
         has_limitation = bool(warnings) or bool(uncertainties)
@@ -139,6 +152,7 @@ class GenerationPortResult:
         object.__setattr__(self, "warnings", warnings)
         object.__setattr__(self, "uncertainties", uncertainties)
         object.__setattr__(self, "execution_metadata", execution_metadata)
+        object.__setattr__(self, "operation_details", operation_details)
 
 
 class GenerationPortErrorCode(StrEnum):

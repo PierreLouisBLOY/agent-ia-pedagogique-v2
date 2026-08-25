@@ -13,10 +13,20 @@ from backend.agent_runtime.agents.generation.generation_coordination_model impor
 from backend.agent_runtime.agents.generation.generation_coordinator import (
     GenerationCoordinator,
 )
+from backend.agent_runtime.agents.generation.generation_correction import (
+    materialize_correction,
+)
+from backend.agent_runtime.agents.generation.generation_correction_model import (
+    CorrectionMaterializationCode,
+    CorrectionMaterializationError,
+    CorrectionMaterializationRequest,
+    CorrectionPreparationRequest,
+    PreparedCorrectionCall,
+)
 from backend.agent_runtime.agents.generation.generation_model import (
     GenerationPortResult,
 )
-from backend.agent_runtime.contracts import ProductionCandidate
+from backend.agent_runtime.contracts import CorrectionResult, ProductionCandidate
 
 
 class GeneratorAgent:
@@ -82,6 +92,29 @@ class GeneratorAgent:
             uncertainties=technical.uncertainties,
             generation_metadata=generation_metadata,
         )
+
+    def correct_production(
+        self,
+        *,
+        request: CorrectionPreparationRequest,
+    ) -> tuple[PreparedCorrectionCall, GenerationPortResult]:
+        if type(request) is not CorrectionPreparationRequest:
+            raise TypeError("request must be a CorrectionPreparationRequest")
+        if request.capability_id.value != "CAP-G03":
+            raise CorrectionMaterializationError(
+                CorrectionMaterializationCode.UNSUPPORTED_CAPABILITY,
+                "operation requires CAP-G03",
+            )
+        prepared = self._coordinator.prepare_correction(request=request)
+        result = self._coordinator.execute_correction(prepared=prepared)
+        return prepared, result
+
+    def build_correction(
+        self,
+        *,
+        request: CorrectionMaterializationRequest,
+    ) -> tuple[ProductionCandidate, CorrectionResult]:
+        return materialize_correction(request=request)
 
     @staticmethod
     def _require_capability(

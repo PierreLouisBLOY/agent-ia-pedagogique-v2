@@ -14,6 +14,8 @@ from backend.agent_runtime.agents.generation import (
     GenerationPortResultStatus,
 )
 from backend.agent_runtime.contracts import ProductionCandidate
+from backend.shared_kernel.identifiers import TypedEntityId
+from backend.shared_kernel.references import ObjectVersionRef, TypedEntityRef, VersionRef
 
 
 def _request(**overrides: object) -> GenerationPortRequest:
@@ -166,6 +168,38 @@ def test_request_rejects_invalid_target_ref() -> None:
         _request(target_ref=object())
 
 
+def test_correct_request_requires_exact_version_target_and_no_contract_target() -> None:
+    version_ref = ObjectVersionRef(
+        TypedEntityRef(TypedEntityId("production", "one")),
+        VersionRef("v1"),
+    )
+    request = _request(
+        operation=GenerationOperation.CORRECT,
+        target_ref=None,
+        target_version_ref=version_ref,
+    )
+    assert request.target_version_ref is version_ref
+    with pytest.raises(ValueError, match="requires target_version_ref"):
+        _request(operation=GenerationOperation.CORRECT)
+    with pytest.raises(ValueError, match="forbids target_ref"):
+        _request(
+            operation=GenerationOperation.CORRECT,
+            target_ref="production:one",
+            target_version_ref=version_ref,
+        )
+
+
+def test_non_correction_request_forbids_version_target() -> None:
+    version_ref = ObjectVersionRef(
+        TypedEntityRef(TypedEntityId("production", "one")),
+        VersionRef("v1"),
+    )
+    with pytest.raises(ValueError, match="reserved for CORRECT"):
+        _request(target_version_ref=version_ref)
+    with pytest.raises(TypeError, match="ObjectVersionRef"):
+        _request(operation=GenerationOperation.CORRECT, target_version_ref=object())
+
+
 def test_request_rejects_non_tuple_expected_sections() -> None:
     with pytest.raises(TypeError, match="expected_sections must be a tuple"):
         _request(expected_sections=["Objectives"])
@@ -306,6 +340,14 @@ def test_execution_metadata_is_deeply_immutable() -> None:
     assert result.execution_metadata["technical"] == {"finish": ("stop",)}
     with pytest.raises(TypeError):
         result.execution_metadata["technical"] = {}  # type: ignore[index]
+
+
+def test_operation_details_are_optional_and_deeply_immutable() -> None:
+    assert _result().operation_details == {}
+    result = _result(operation_details={"control": {"items": ["one"]}})
+    assert result.operation_details == {"control": {"items": ("one",)}}
+    with pytest.raises(TypeError):
+        result.operation_details["control"] = {}  # type: ignore[index]
 
 
 def test_result_rejects_non_tuple_warnings_and_uncertainties() -> None:

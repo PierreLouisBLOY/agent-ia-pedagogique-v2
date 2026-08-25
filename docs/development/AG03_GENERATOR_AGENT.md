@@ -47,5 +47,5 @@ par celles de C-07 et les metadata techniques ne conferent aucune autorite.
 
 Cette couche n'effectue aucune recherche, review, validation, promotion ou
 persistance. Elle ne contient aucun provider, retry, fallback ou dispatcher
-runtime. CAP-G03 reste en attente de 12.8-E ; le grounding et le hardening
-complets restent en attente de 12.8-F.
+runtime. CAP-G03 est traite par la frontiere de correction versionnee distincte
+de 12.8-E ; le grounding et le hardening complets restent en attente de 12.8-F.

@@ -9,6 +9,7 @@ Cette baseline materialise sans logique metier la structure normative issue de l
 | `backend/shared_kernel/` | Primitives techniques generiques partagees |
 | `backend/core_contracts/` | Frontieres contractuelles transverses futures |
 | `backend/agent_runtime/contracts/` | Contrats techniques runtime agentiques provider-neutral |
+| `backend/agent_runtime/agents/` | Frontieres techniques provider-neutral des responsabilites agentiques specialisees, sans adapters ni autorite metier |
 | `backend/agent_runtime/registry/` | Catalogues statiques agents/capabilities et ceiling matrix exhaustive |
 | `backend/agent_runtime/policy/` | Garde-fous techniques runtime configurables, sans autorite metier |
 | `backend/agent_runtime/orchestration/` | Catalogue, selection, compilation et coordination deterministes des workflows, sans execution ni routing |
@@ -78,3 +79,9 @@ Sous `backend/agent_runtime/orchestration/coordination/`, AG-01 supervise un
 refuse les directives decisives incoherentes, evalue la completion uniquement a
 quiescence via un Protocol injecte et delegue l'adoption d'un replacement fourni
 a `PlanRevisionEngine`. Il n'execute aucun retry, gate, runner ou handler.
+
+Sous `backend/agent_runtime/agents/evidence/`, la frontiere AG-02 12.7-B decrit
+les requetes techniques, candidats, signaux et acces documentaire provider-neutral
+ainsi que deux Protocols injectables. Elle reutilise les contrats C-05/C-06 sans
+construire de preuve publique et ne contient aucun coordinator, adapter, SQL,
+HTTP, provider ou vector store.

@@ -25,6 +25,13 @@ ferme contenant les findings declares addressed/unresolved et un resume ; il ne
 constitue pas encore un `CorrectionResult` et ces declarations ne sont pas une
 review AG-04.
 
+Le `PreparedCorrectionCall` conserve par identite le
+`CorrectionPreparationRequest` d'origine. Avant l'appel outbound, le coordinateur
+revalide les champs exposes ainsi que `caller_resolved_inputs` et
+`output_contract` contre ce snapshot exact. Ces donnees restent caller-supplied
+et non autoritatives, mais ne peuvent pas etre substituees entre prepare et
+execute. Cette lineage n'ajoute aucun acces repository.
+
 Une materialisation explicite, avec metadata, identite candidate et nouvelle
 version fournis par le caller, construit ensemble :
 

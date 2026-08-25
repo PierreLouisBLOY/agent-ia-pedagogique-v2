@@ -124,6 +124,7 @@ class CorrectionPreparationRequest:
 
 @dataclass(frozen=True, slots=True)
 class PreparedCorrectionCall:
+    preparation_request: CorrectionPreparationRequest
     capability_id: CapabilityId
     correction_request: CorrectionRequest
     target: ResolvedCorrectionTarget
@@ -148,6 +149,8 @@ class CorrectionMaterializationRequest:
 
 
 def _validate_prepared_correction_call(prepared: PreparedCorrectionCall) -> None:
+    if type(prepared.preparation_request) is not CorrectionPreparationRequest:
+        raise TypeError("preparation_request must be a CorrectionPreparationRequest")
     if type(prepared.capability_id) is not CapabilityId:
         raise TypeError("capability_id must be a CapabilityId")
     if prepared.capability_id.value != "CAP-G03":
@@ -164,6 +167,16 @@ def _validate_prepared_correction_call(prepared: PreparedCorrectionCall) -> None
     correction = prepared.correction_request
     target = prepared.target
     technical = prepared.port_request
+    snapshot = prepared.preparation_request
+    if (
+        snapshot.capability_id != prepared.capability_id
+        or snapshot.request != correction
+        or snapshot.target != target
+    ):
+        _raise_correction(
+            CorrectionMaterializationCode.PREPARED_LINEAGE_MISMATCH,
+            "prepared correction fields do not match the preparation snapshot",
+        )
     if target.target_production_ref != correction.target_production_ref:
         _raise_correction(
             CorrectionMaterializationCode.TARGET_LINEAGE_MISMATCH,
@@ -209,10 +222,13 @@ def _validate_prepared_correction_call(prepared: PreparedCorrectionCall) -> None
         technical.resolved_inputs["target_content"] != target.content
         or technical.resolved_inputs["target_structured_payload"]
         != target.structured_payload
+        or technical.resolved_inputs["caller_resolved_inputs"]
+        != snapshot.resolved_inputs
+        or technical.output_contract != snapshot.output_contract
     ):
         _raise_correction(
             CorrectionMaterializationCode.PREPARED_LINEAGE_MISMATCH,
-            "prepared correction target content does not match the resolved target",
+            "prepared correction inputs do not match the preparation snapshot",
         )
 
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, replace
 from datetime import UTC, datetime
 
 import pytest
@@ -267,6 +267,22 @@ def _forge_preparation(
     return forged
 
 
+def _forge_prepared(
+    valid: PreparedCorrectionCall,
+    **overrides: object,
+) -> PreparedCorrectionCall:
+    forged = object.__new__(PreparedCorrectionCall)
+    for name in (
+        "preparation_request",
+        "capability_id",
+        "correction_request",
+        "target",
+        "port_request",
+    ):
+        object.__setattr__(forged, name, overrides.get(name, getattr(valid, name)))
+    return forged
+
+
 def _forge_materialization(
     valid: CorrectionMaterializationRequest,
     **overrides: object,
@@ -356,6 +372,95 @@ def test_prepare_correction_maps_c11_target_and_closed_inputs_exactly() -> None:
         "forbidden_changes": correction.forbidden_changes,
         "expected_delta": correction.expected_delta,
     }
+    assert prepared.preparation_request is preparation
+    assert technical.resolved_inputs["caller_resolved_inputs"] == preparation.resolved_inputs
+    assert technical.output_contract == preparation.output_contract
+
+
+@pytest.mark.parametrize("snapshot_field", ("capability", "request", "target"))
+def test_execute_correction_rejects_snapshot_field_divergence_before_port(
+    snapshot_field: str,
+) -> None:
+    valid_preparation = _preparation()
+    valid_prepared = GenerationCoordinator(RecordingPort(_technical())).prepare_correction(
+        request=valid_preparation
+    )
+    if snapshot_field == "capability":
+        snapshot = _forge_preparation(
+            valid_preparation,
+            CapabilityId("CAP-G01"),
+        )
+    elif snapshot_field == "request":
+        foreign_correction = _correction(target_ref=_version("foreign-v1"))
+        snapshot = _preparation(
+            correction=foreign_correction,
+            target=_target(target_ref=foreign_correction.target_production_ref),
+        )
+    else:
+        snapshot = _preparation(
+            correction=valid_preparation.request,
+            target=ResolvedCorrectionTarget(
+                target_production_ref=valid_preparation.request.target_production_ref,
+                production_kind="different_kind",
+                output_format="markdown",
+                content="Different resolved target.",
+            ),
+        )
+    forged = _forge_prepared(valid_prepared, preparation_request=snapshot)
+    port = RecordingPort(_technical())
+    with pytest.raises(CorrectionMaterializationError) as raised:
+        GenerationCoordinator(port).execute_correction(prepared=forged)
+    assert raised.value.code is CorrectionMaterializationCode.PREPARED_LINEAGE_MISMATCH
+    assert port.calls == []
+
+
+@pytest.mark.parametrize(
+    "caller_inputs",
+    (
+        {"caller": "substituted"},
+        {"caller": {"scope": "substituted-nested"}},
+    ),
+)
+def test_execute_correction_rejects_forged_caller_inputs_before_port(
+    caller_inputs: dict[str, object],
+) -> None:
+    valid = _prepared()
+    resolved_inputs = dict(valid.port_request.resolved_inputs)
+    resolved_inputs["caller_resolved_inputs"] = caller_inputs
+    forged = _forge_prepared(
+        valid,
+        port_request=replace(valid.port_request, resolved_inputs=resolved_inputs),
+    )
+    port = RecordingPort(_technical())
+    with pytest.raises(CorrectionMaterializationError) as raised:
+        GenerationCoordinator(port).execute_correction(prepared=forged)
+    assert raised.value.code is CorrectionMaterializationCode.PREPARED_LINEAGE_MISMATCH
+    assert port.calls == []
+
+
+@pytest.mark.parametrize(
+    "output_contract",
+    (
+        {"type": "substituted"},
+        {"type": "lesson_plan", "schema": {"nested": "substituted"}},
+    ),
+)
+def test_execute_correction_rejects_forged_output_contract_before_port(
+    output_contract: dict[str, object],
+) -> None:
+    valid = _prepared()
+    forged = _forge_prepared(
+        valid,
+        port_request=replace(
+            valid.port_request,
+            output_contract=output_contract,
+        ),
+    )
+    port = RecordingPort(_technical())
+    with pytest.raises(CorrectionMaterializationError) as raised:
+        GenerationCoordinator(port).execute_correction(prepared=forged)
+    assert raised.value.code is CorrectionMaterializationCode.PREPARED_LINEAGE_MISMATCH
+    assert port.calls == []
 
 
 def test_execute_correction_calls_generation_port_once() -> None:

@@ -18,6 +18,18 @@ La requete technique utilise `target_version_ref: ObjectVersionRef` et garde
 `target_ref` a `None`. Le contenu et le payload de la cible sont deja resolus et
 places dans un bloc d'inputs ferme ; AG-03 n'accede a aucun repository.
 
+```text
+CorrectionPreparationRequest
+→ PreparedCorrectionCall.preparation_request (objet exact)
+→ lineage caller_resolved_inputs + output_contract exacte
+→ revalidation avant GenerationPort.generate()
+```
+
+`resolved_inputs` et `output_contract` restent fournis par le caller et ne sont
+pas autoritatifs. Leur snapshot immutable empeche toutefois toute substitution
+entre `prepare_correction()` et `execute_correction()` sans introduire de second
+type de snapshot ou d'acces repository.
+
 Le bloc `operation_details` contient exactement `addressed_findings`,
 `unresolved_findings` et `change_summary`. Les deux listes sont uniques,
 disjointes et couvrent exactement les findings C-11. Elles restent declaratives

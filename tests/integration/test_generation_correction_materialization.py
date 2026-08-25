@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime
 
 import pytest
@@ -215,6 +216,26 @@ def _forge_with_result(
     return forged
 
 
+def _forge_prepared_port_request(
+    valid: PreparedCorrectionCall,
+    port_request: GenerationPortRequest,
+) -> PreparedCorrectionCall:
+    forged = object.__new__(PreparedCorrectionCall)
+    for name in (
+        "preparation_request",
+        "capability_id",
+        "correction_request",
+        "target",
+        "port_request",
+    ):
+        object.__setattr__(
+            forged,
+            name,
+            port_request if name == "port_request" else getattr(valid, name),
+        )
+    return forged
+
+
 def test_e1_succeeded_correction_creates_candidate_and_versioned_result() -> None:
     technical = _technical(details=_details())
     agent, correction, target, prepared, result, port = _execute(technical)
@@ -329,3 +350,54 @@ def test_e7_authority_metadata_cannot_cross_correction_boundary() -> None:
         )
     assert raised.value.code is CorrectionMaterializationCode.TECHNICAL_RESULT_MISMATCH
     assert candidate is correction_result is None
+
+
+def test_e_f01_forged_caller_inputs_fail_before_outbound() -> None:
+    correction = _request()
+    target = _target(correction.target_production_ref)
+    port = FixedPort(_technical(details=_details()))
+    coordinator = GenerationCoordinator(port)
+    preparation = CorrectionPreparationRequest(
+        CapabilityId("CAP-G03"),
+        correction,
+        target,
+        resolved_inputs={"caller": {"scope": "original"}},
+    )
+    prepared = coordinator.prepare_correction(request=preparation)
+    resolved_inputs = dict(prepared.port_request.resolved_inputs)
+    resolved_inputs["caller_resolved_inputs"] = {
+        "caller": {"scope": "substituted"}
+    }
+    forged = _forge_prepared_port_request(
+        prepared,
+        replace(prepared.port_request, resolved_inputs=resolved_inputs),
+    )
+    with pytest.raises(CorrectionMaterializationError) as raised:
+        coordinator.execute_correction(prepared=forged)
+    assert raised.value.code is CorrectionMaterializationCode.PREPARED_LINEAGE_MISMATCH
+    assert port.calls == []
+
+
+def test_e_f01_forged_output_contract_fails_before_outbound() -> None:
+    correction = _request()
+    target = _target(correction.target_production_ref)
+    port = FixedPort(_technical(details=_details()))
+    coordinator = GenerationCoordinator(port)
+    preparation = CorrectionPreparationRequest(
+        CapabilityId("CAP-G03"),
+        correction,
+        target,
+        output_contract={"schema": {"type": "original"}},
+    )
+    prepared = coordinator.prepare_correction(request=preparation)
+    forged = _forge_prepared_port_request(
+        prepared,
+        replace(
+            prepared.port_request,
+            output_contract={"schema": {"type": "substituted"}},
+        ),
+    )
+    with pytest.raises(CorrectionMaterializationError) as raised:
+        coordinator.execute_correction(prepared=forged)
+    assert raised.value.code is CorrectionMaterializationCode.PREPARED_LINEAGE_MISMATCH
+    assert port.calls == []

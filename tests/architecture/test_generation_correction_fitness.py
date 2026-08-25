@@ -11,6 +11,7 @@ from backend.agent_runtime.agents.generation import (
     GenerationCoordinator,
     GenerationPort,
     GeneratorAgent,
+    PreparedCorrectionCall,
 )
 from backend.agent_runtime.contracts import (
     AgentId,
@@ -30,6 +31,7 @@ CORRECTION = GENERATION / "generation_correction.py"
 CORRECTION_MODEL = GENERATION / "generation_correction_model.py"
 MODEL = GENERATION / "generation_model.py"
 PORTS = GENERATION / "generation_ports.py"
+COORDINATOR = GENERATION / "generation_coordinator.py"
 E_FILES = (CORRECTION, CORRECTION_MODEL)
 
 
@@ -67,6 +69,19 @@ def _attribute_calls(paths: tuple[Path, ...]) -> set[str]:
         for node in ast.walk(_tree(path))
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
     }
+
+
+def _method(path: Path, class_name: str, method_name: str) -> ast.FunctionDef:
+    class_node = next(
+        node
+        for node in ast.walk(_tree(path))
+        if isinstance(node, ast.ClassDef) and node.name == class_name
+    )
+    return next(
+        node
+        for node in class_node.body
+        if isinstance(node, ast.FunctionDef) and node.name == method_name
+    )
 
 
 def test_correction_files_are_confined_to_generation_boundary() -> None:
@@ -159,6 +174,59 @@ def test_canonical_c11_and_correction_result_shapes_remain_reused() -> None:
         "lineage",
         "new_warnings",
     )
+
+
+def test_prepared_correction_keeps_the_exact_preparation_snapshot_shape() -> None:
+    assert tuple(item.name for item in fields(PreparedCorrectionCall)) == (
+        "preparation_request",
+        "capability_id",
+        "correction_request",
+        "target",
+        "port_request",
+    )
+    coordinator_source = COORDINATOR.read_text(encoding="utf-8")
+    assert "preparation_request=request" in coordinator_source
+    class_names = {
+        node.name
+        for path in _python_files(GENERATION)
+        for node in ast.walk(_tree(path))
+        if isinstance(node, ast.ClassDef)
+    }
+    assert all("Snapshot" not in name for name in class_names)
+
+
+def test_prepared_correction_revalidates_all_caller_supplied_lineage() -> None:
+    source = CORRECTION_MODEL.read_text(encoding="utf-8")
+    validator = source[
+        source.index("def _validate_prepared_correction_call("):
+        source.index("def _validate_correction_technical_result(")
+    ]
+    assert 'technical.resolved_inputs["caller_resolved_inputs"]' in validator
+    assert "snapshot.resolved_inputs" in validator
+    assert "technical.output_contract != snapshot.output_contract" in validator
+
+
+def test_prepared_correction_validation_happens_before_outbound() -> None:
+    execute = _method(
+        COORDINATOR,
+        "GenerationCoordinator",
+        "execute_correction",
+    )
+    validation_line = next(
+        node.lineno
+        for node in ast.walk(execute)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "_validate_prepared_correction_call"
+    )
+    outbound_line = next(
+        node.lineno
+        for node in ast.walk(execute)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "generate"
+    )
+    assert validation_line < outbound_line
 
 
 def test_correction_has_no_loop_retry_backoff_or_sleep() -> None:

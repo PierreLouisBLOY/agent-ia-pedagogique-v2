@@ -130,6 +130,7 @@ class GenerationCoordinator:
             output_contract=request.output_contract,
         )
         return PreparedCorrectionCall(
+            preparation_request=request,
             capability_id=request.capability_id,
             correction_request=correction,
             target=target,

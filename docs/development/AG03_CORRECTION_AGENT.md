@@ -10,6 +10,7 @@ CorrectionRequest C-11
 → GenerationPortRequest CORRECT
 → GenerationCoordinator.execute_correction()
 → GenerationPortResult + operation_details declares
+→ GenerationOutputGuard → GenerationGuardAssessment obligatoire
 → materialisation caller-supplied
 → nouvelle ProductionCandidate CANDIDATE + CorrectionResult
 ```
@@ -35,6 +36,12 @@ Le bloc `operation_details` contient exactement `addressed_findings`,
 disjointes et couvrent exactement les findings C-11. Elles restent declaratives
 et devront etre revues en aval ; AG-03 ne leur accorde aucune autorite.
 
+L'assessment est recomputé avant la candidate et le `CorrectionResult`. Seuls
+`ALLOW` et `ALLOW_WITH_WARNINGS` autorisent les sorties. Les warnings du guard
+sont ajoutés aux deux contrats sans modifier `addressed_findings`,
+`unresolved_findings` ou `change_summary`. Le guard ne prétend pas établir
+`SOURCE_MATCH`.
+
 | Statut technique | Materialisation |
 | --- | --- |
 | `SUCCEEDED` | candidate + `CorrectionResult` SUCCEEDED |
@@ -45,5 +52,5 @@ et devront etre revues en aval ; AG-03 ne leur accorde aucune autorite.
 Le caller fournit `result_meta`, `production_id` et `new_production_ref`.
 `CorrectionResult` impose meme identite d'objet et nouvelle version. Il n'existe
 ni mutation de la cible, ni boucle locale, retry, validation, promotion,
-persistance, provider concret ou dispatcher runtime. Le hardening complet et les
-workflows restent respectivement differes a 12.8-F et 12.8-G.
+persistance, provider concret ou dispatcher runtime. Les mécanismes sémantiques
+et les workflows restent différés.

@@ -11,7 +11,10 @@ from backend.agent_runtime.agents.generation import (
     CorrectionMaterializationRequest,
     CorrectionPreparationRequest,
     GenerationCoordinator,
+    GenerationGuardPolicy,
+    GenerationGuardRequest,
     GenerationOperation,
+    GenerationOutputGuard,
     GenerationPortRequest,
     GenerationPortResult,
     GenerationPortResultStatus,
@@ -188,6 +191,13 @@ def _materialization(
         target=target,
         prepared=prepared,
         technical_result=technical,
+        guard_assessment=GenerationOutputGuard().assess(
+            request=GenerationGuardRequest(
+                prepared,
+                technical,
+                GenerationGuardPolicy(),
+            )
+        ),
         result_meta=_result_meta(correction, status),
         production_id="candidate-correction-v2",
         new_production_ref=_version("v2"),
@@ -204,6 +214,7 @@ def _forge_with_result(
         "target",
         "prepared",
         "technical_result",
+        "guard_assessment",
         "result_meta",
         "production_id",
         "new_production_ref",

@@ -38,6 +38,12 @@ version fournis par le caller, construit ensemble :
 - une nouvelle `ProductionCandidate` C-08 dans l'etat `CANDIDATE` ;
 - le `CorrectionResult` existant, avec la version cible comme parent.
 
+Depuis 12.8-F, cette requête contient obligatoirement un
+`GenerationGuardAssessment` lié au Prepared et au résultat exacts. Il est
+recomputé avant les deux constructions. Seules les dispositions `ALLOW` et
+`ALLOW_WITH_WARNINGS` matérialisent ; les signaux deviennent des warnings du
+candidat et de `CorrectionResult` sans modifier les findings.
+
 `CorrectionResult` conserve l'autorite sur les invariants de version : meme
 identite d'objet et version differente. La cible n'est jamais mutee.
 
@@ -47,5 +53,5 @@ identite d'objet et version differente. La cible n'est jamais mutee.
 - `REFUSED` et `INSUFFICIENT_EVIDENCE` ne materialisent aucune correction.
 - Aucun retry ou boucle locale n'est introduit ; une repetition releve de WF-7.
 - Aucune validation, promotion, persistance ou review reelle n'est effectuee.
-- Le hardening general reste differe a 12.8-F et les workflows a 12.8-G.
+- Le `SOURCE_MATCH` sémantique, la validation et les workflows restent différés.
 - Aucun provider concret ou wiring runtime n'est ajoute.

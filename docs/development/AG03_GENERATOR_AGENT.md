@@ -8,6 +8,7 @@ CAP-G01/G02
 → GenerationCoordinator.prepare()
 → GenerationCoordinator.execute()
 → GenerationPortResult revalide
+→ GenerationOutputGuard → GenerationGuardAssessment obligatoire
 → materialisation explicite caller-supplied
 → ProductionCandidate C-08 dans l'etat CANDIDATE
 ```
@@ -18,6 +19,11 @@ resultat technique exacts afin que le caller puisse ensuite fournir un
 `result_meta` coherent et une `production_id` nouvelle. `build_candidate()`
 revalide cette chaine avant de construire C-08.
 
+Le build exige un assessment exact et recomputable. Seuls `ALLOW` et
+`ALLOW_WITH_WARNINGS` autorisent C-08 ; `REPAIR_REQUIRED`, `ABSTAIN` et `REJECT`
+bloquent la candidate. Les warnings de signaux non autoritatifs sont ajoutés aux
+warnings techniques.
+
 ```text
 GenerationPortResult.execution_metadata (non fiable)
 → controle authority-free deterministe et recursif
@@ -27,9 +33,9 @@ GenerationPortResult.execution_metadata (non fiable)
 Le controle refuse toute cle reservee a une validation, approbation, promotion,
 review, confiance, qualite canonique, decision de gate ou permission, y compris
 dans les mappings imbriques et sans tenir compte de la casse. Il echoue sans
-filtrer silencieusement les metadata. Ce garde-fou ne signifie jamais que les
-metadata restantes sont `SAFE` ou `TRUSTED` ; le hardening complet du contenu
-reste differe a 12.8-F.
+filtrer silencieusement les metadata. Ce contrôle metadata reste distinct du
+scanner de contenu F et ne signifie jamais que les metadata restantes sont
+`SAFE` ou `TRUSTED`.
 
 ## Statuts
 
@@ -48,4 +54,4 @@ par celles de C-07 et les metadata techniques ne conferent aucune autorite.
 Cette couche n'effectue aucune recherche, review, validation, promotion ou
 persistance. Elle ne contient aucun provider, retry, fallback ou dispatcher
 runtime. CAP-G03 est traite par la frontiere de correction versionnee distincte
-de 12.8-E ; le grounding et le hardening complets restent en attente de 12.8-F.
+de 12.8-E. Le guard F n'établit aucun `SOURCE_MATCH` sémantique.

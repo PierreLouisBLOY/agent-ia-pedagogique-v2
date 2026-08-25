@@ -3,7 +3,12 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import NoReturn
+from typing import TYPE_CHECKING, NoReturn
+
+if TYPE_CHECKING:
+    from backend.agent_runtime.agents.generation.generation_guard_model import (
+        GenerationGuardAssessment,
+    )
 
 from backend.agent_runtime.agents.generation.generation_agent_model import (
     GenerationCandidateMaterializationError,
@@ -140,6 +145,7 @@ class CorrectionMaterializationRequest:
     target: ResolvedCorrectionTarget
     prepared: PreparedCorrectionCall
     technical_result: GenerationPortResult
+    guard_assessment: GenerationGuardAssessment
     result_meta: ContractMeta[AgentResultStatus]
     production_id: str
     new_production_ref: ObjectVersionRef
@@ -316,6 +322,15 @@ def _validated_correction_details(
 def _validate_correction_materialization_request(
     request: CorrectionMaterializationRequest,
 ) -> None:
+    from backend.agent_runtime.agents.generation.generation_guard import (
+        validate_generation_guard_assessment,
+    )
+    from backend.agent_runtime.agents.generation.generation_guard_model import (
+        GenerationGuardAssessment,
+        GenerationGuardDisposition,
+        GenerationGuardError,
+    )
+
     if type(request.correction_request) is not CorrectionRequest:
         raise TypeError("correction_request must be a CorrectionRequest")
     if type(request.target) is not ResolvedCorrectionTarget:
@@ -324,6 +339,8 @@ def _validate_correction_materialization_request(
         raise TypeError("prepared must be a PreparedCorrectionCall")
     if type(request.technical_result) is not GenerationPortResult:
         raise TypeError("technical_result must be a GenerationPortResult")
+    if type(request.guard_assessment) is not GenerationGuardAssessment:
+        raise TypeError("guard_assessment must be a GenerationGuardAssessment")
     if type(request.result_meta) is not ContractMeta:
         raise TypeError("result_meta must be a ContractMeta")
     if not isinstance(request.result_meta.status, AgentResultStatus):
@@ -352,6 +369,32 @@ def _validate_correction_materialization_request(
             CorrectionMaterializationCode.TECHNICAL_RESULT_MISMATCH,
             "technical correction result does not match the prepared call",
         ) from error
+    assessment = request.guard_assessment
+    if assessment.request.prepared != request.prepared:
+        _raise_correction(
+            CorrectionMaterializationCode.PREPARED_LINEAGE_MISMATCH,
+            "guard assessment prepared call does not match correction materialization",
+        )
+    if assessment.request.technical_result != request.technical_result:
+        _raise_correction(
+            CorrectionMaterializationCode.TECHNICAL_RESULT_MISMATCH,
+            "guard assessment technical result does not match correction materialization",
+        )
+    try:
+        validate_generation_guard_assessment(assessment)
+    except GenerationGuardError as error:
+        raise CorrectionMaterializationError(
+            CorrectionMaterializationCode.TECHNICAL_RESULT_MISMATCH,
+            "generation guard assessment is invalid",
+        ) from error
+    if assessment.disposition not in {
+        GenerationGuardDisposition.ALLOW,
+        GenerationGuardDisposition.ALLOW_WITH_WARNINGS,
+    }:
+        _raise_correction(
+            CorrectionMaterializationCode.NO_CORRECTION_FOR_STATUS,
+            "generation guard disposition does not permit correction materialization",
+        )
     status = request.technical_result.status
     if status in {
         GenerationPortResultStatus.REFUSED,

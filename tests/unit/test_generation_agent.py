@@ -9,7 +9,12 @@ from backend.agent_runtime.agents.generation import (
     GenerationCandidateMaterializationCode,
     GenerationCandidateMaterializationError,
     GenerationCoordinator,
+    GenerationGuardAssessment,
+    GenerationGuardError,
+    GenerationGuardPolicy,
+    GenerationGuardRequest,
     GenerationOperation,
+    GenerationOutputGuard,
     GenerationPortError,
     GenerationPortErrorCode,
     GenerationPortRequest,
@@ -193,6 +198,7 @@ def _build_request(
     canonical: ProductionRequest | None = None,
     prepared: PreparedGenerationCall | None = None,
     technical: GenerationPortResult | None = None,
+    guard: GenerationGuardAssessment | None = None,
     meta: ContractMeta[AgentResultStatus] | None = None,
     production_id: str = "production:new",
 ) -> ProductionCandidateBuildRequest:
@@ -202,10 +208,32 @@ def _build_request(
         operation=prepared_value.port_request.operation,
         source_step_id=canonical_value.meta.step_id,
     )
+    if guard is not None:
+        guard_value = guard
+    else:
+        try:
+            guard_value = GenerationOutputGuard().assess(
+                request=GenerationGuardRequest(
+                    prepared_value,
+                    technical_value,
+                    GenerationGuardPolicy(),
+                )
+            )
+        except GenerationGuardError:
+            fallback_prepared = _prepared()
+            fallback_technical = _technical()
+            guard_value = GenerationOutputGuard().assess(
+                request=GenerationGuardRequest(
+                    fallback_prepared,
+                    fallback_technical,
+                    GenerationGuardPolicy(),
+                )
+            )
     return ProductionCandidateBuildRequest(
         canonical_request=canonical_value,
         prepared=prepared_value,
         technical_result=technical_value,
+        guard_assessment=guard_value,
         result_meta=meta or _meta(canonical_value),
         production_id=production_id,
     )
@@ -228,6 +256,7 @@ def _forge_build(
         "canonical_request",
         "prepared",
         "technical_result",
+        "guard_assessment",
         "result_meta",
         "production_id",
     ):

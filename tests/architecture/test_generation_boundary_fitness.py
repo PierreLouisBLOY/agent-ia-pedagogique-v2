@@ -70,6 +70,8 @@ def test_generation_package_exists_with_only_boundary_files() -> None:
         "generation_coordinator.py",
         "generation_correction.py",
         "generation_correction_model.py",
+        "generation_guard.py",
+        "generation_guard_model.py",
         "generation_model.py",
         "generation_ports.py",
     }

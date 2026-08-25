@@ -16,8 +16,13 @@ def materialize_correction(
     if type(request) is not CorrectionMaterializationRequest:
         raise TypeError("request must be a CorrectionMaterializationRequest")
     _validate_correction_materialization_request(request)
+    from backend.agent_runtime.agents.generation.generation_guard import (
+        generation_guard_security_warnings,
+    )
+
     correction = request.correction_request
     technical = request.technical_result
+    guard_warnings = generation_guard_security_warnings(request.guard_assessment)
     addressed, unresolved, change_summary = _validated_correction_details(
         correction,
         technical,
@@ -44,7 +49,7 @@ def materialize_correction(
             "correction_target": parent_ref,
         },
         evidence_refs_used=technical.evidence_refs_used,
-        warnings=technical.warnings,
+        warnings=technical.warnings + guard_warnings,
         uncertainties=technical.uncertainties,
         generation_metadata=generation_metadata,
     )
@@ -64,7 +69,7 @@ def materialize_correction(
             "parent": parent_ref,
             "new_version": new_ref,
         },
-        new_warnings=technical.warnings,
+        new_warnings=technical.warnings + guard_warnings,
     )
     return candidate, result
 

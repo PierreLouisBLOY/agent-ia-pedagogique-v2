@@ -9,7 +9,11 @@ from backend.agent_runtime.agents.generation import (
     GenerationCandidateMaterializationCode,
     GenerationCandidateMaterializationError,
     GenerationCoordinator,
+    GenerationGuardError,
+    GenerationGuardPolicy,
+    GenerationGuardRequest,
     GenerationOperation,
+    GenerationOutputGuard,
     GenerationPortRequest,
     GenerationPortResult,
     GenerationPortResultStatus,
@@ -148,6 +152,13 @@ def _build(
             canonical_request=canonical,
             prepared=prepared,
             technical_result=technical,
+            guard_assessment=GenerationOutputGuard().assess(
+                request=GenerationGuardRequest(
+                    prepared,
+                    technical,
+                    GenerationGuardPolicy(),
+                )
+            ),
             result_meta=_result_meta(canonical, status),
             production_id=production_id,
         )
@@ -160,10 +171,18 @@ def _forged_build(
     technical: GenerationPortResult,
     status: AgentResultStatus,
 ) -> ProductionCandidateBuildRequest:
+    valid_technical = _result(prepared.port_request.operation)
     valid = ProductionCandidateBuildRequest(
         canonical_request=canonical,
         prepared=prepared,
-        technical_result=_result(prepared.port_request.operation),
+        technical_result=valid_technical,
+        guard_assessment=GenerationOutputGuard().assess(
+            request=GenerationGuardRequest(
+                prepared,
+                valid_technical,
+                GenerationGuardPolicy(),
+            )
+        ),
         result_meta=_result_meta(canonical, AgentResultStatus.SUCCEEDED),
         production_id="production:forged",
     )
@@ -172,12 +191,24 @@ def _forged_build(
         "canonical_request",
         "prepared",
         "technical_result",
+        "guard_assessment",
         "result_meta",
         "production_id",
     ):
         value = getattr(valid, field_name)
         if field_name == "technical_result":
             value = technical
+        elif field_name == "guard_assessment":
+            try:
+                value = GenerationOutputGuard().assess(
+                    request=GenerationGuardRequest(
+                        prepared,
+                        technical,
+                        GenerationGuardPolicy(),
+                    )
+                )
+            except GenerationGuardError:
+                value = valid.guard_assessment
         elif field_name == "result_meta":
             value = _result_meta(canonical, status)
         object.__setattr__(forged, field_name, value)

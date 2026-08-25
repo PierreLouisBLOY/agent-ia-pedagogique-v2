@@ -11,7 +11,12 @@ from backend.agent_runtime.agents.generation import (
     CorrectionMaterializationRequest,
     CorrectionPreparationRequest,
     GenerationCoordinator,
+    GenerationGuardAssessment,
+    GenerationGuardError,
+    GenerationGuardPolicy,
+    GenerationGuardRequest,
     GenerationOperation,
+    GenerationOutputGuard,
     GenerationPortError,
     GenerationPortErrorCode,
     GenerationPortRequest,
@@ -233,6 +238,7 @@ def _materialization(
     target: ResolvedCorrectionTarget | None = None,
     prepared: PreparedCorrectionCall | None = None,
     technical: GenerationPortResult | None = None,
+    guard: GenerationGuardAssessment | None = None,
     meta: ContractMeta[AgentResultStatus] | None = None,
     production_id: str = "candidate-corrected-1",
     new_ref: ObjectVersionRef | None = None,
@@ -246,11 +252,33 @@ def _materialization(
         target=target_value,
     )
     technical_value = technical or _technical()
+    if guard is not None:
+        guard_value = guard
+    else:
+        try:
+            guard_value = GenerationOutputGuard().assess(
+                request=GenerationGuardRequest(
+                    prepared_value,
+                    technical_value,
+                    GenerationGuardPolicy(),
+                )
+            )
+        except GenerationGuardError:
+            fallback_prepared = _prepared()
+            fallback_technical = _technical()
+            guard_value = GenerationOutputGuard().assess(
+                request=GenerationGuardRequest(
+                    fallback_prepared,
+                    fallback_technical,
+                    GenerationGuardPolicy(),
+                )
+            )
     return CorrectionMaterializationRequest(
         correction_request=correction_value,
         target=target_value,
         prepared=prepared_value,
         technical_result=technical_value,
+        guard_assessment=guard_value,
         result_meta=meta or _meta(correction_value),
         production_id=production_id,
         new_production_ref=new_ref or _version("v2"),
@@ -293,6 +321,7 @@ def _forge_materialization(
         "target",
         "prepared",
         "technical_result",
+        "guard_assessment",
         "result_meta",
         "production_id",
         "new_production_ref",

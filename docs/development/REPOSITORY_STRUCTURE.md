@@ -134,3 +134,11 @@ CORRECT dont le control block ferme est revalide avant construction d'une
 nouvelle candidate C-08 et du `CorrectionResult` existant. La cible n'est jamais
 chargee ou mutee ; aucune boucle locale, review, validation, promotion,
 persistance, provider concret ou integration runtime n'est introduite.
+
+La couche 12.8-F ajoute un guard pur obligatoire avant matérialisation G01/G02/G03.
+Il revalide Prepared et résultat, contrôle uniquement la présence de grounding
+déclaré et une structure bornée, puis signale des patterns de contenu FR/EN sans
+conserver le texte ni suivre d'URL. Son assessment recomputable bloque les
+dispositions repair/abstain/reject et ne propose qu'un repair non exécutable. Il
+n'importe pas AG-02, n'établit aucun SOURCE_MATCH et n'ajoute ni provider, I/O,
+review, validation, promotion, persistance, retry ou wiring runtime/orchestration.

@@ -25,6 +25,11 @@ doit inventer ni identite, ni horodatage, ni lineage runtime. Le build revalide
 la chaine C-07, appel prepare, resultat technique et metadata avant de construire
 le `ProductionCandidate` C-08 existant.
 
+Depuis 12.8-F, le caller fournit aussi un `GenerationGuardAssessment` lié au
+Prepared et au résultat exacts. L'assessment est recomputé avant C-08 et seules
+les dispositions `ALLOW` / `ALLOW_WITH_WARNINGS` autorisent la construction.
+Les autres dispositions ne produisent aucun candidat.
+
 `GenerationPortResult.execution_metadata` reste une donnee technique non fiable.
 Avant toute construction C-08, un controle deterministe parcourt recursivement
 ses mappings et collections et refuse le vocabulaire reserve a la validation,
@@ -50,7 +55,7 @@ relation parent.
 - Aucune validation, review, promotion ou persistance n'est realisee.
 - CAP-G03 et les contrats de correction sont traites separement par
   ADR-P12-018 en 12.8-E, sans modifier la materialisation G01/G02.
-- Le grounding semantique, les controles pedagogiques et le hardening sont
-  differes a 12.8-F.
+- Le guard F contrôle uniquement le grounding déclaré et la structure ; le
+  `SOURCE_MATCH` sémantique et les contrôles pédagogiques restent différés.
 - Le provider concret et le wiring runtime sont differes ; aucun dispatcher,
   retry ou fallback n'est introduit.

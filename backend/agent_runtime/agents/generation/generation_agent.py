@@ -65,8 +65,13 @@ class GeneratorAgent:
         if type(request) is not ProductionCandidateBuildRequest:
             raise TypeError("request must be a ProductionCandidateBuildRequest")
         _validate_candidate_build_request(request)
+        from backend.agent_runtime.agents.generation.generation_guard import (
+            generation_guard_security_warnings,
+        )
+
         canonical = request.canonical_request
         technical = request.technical_result
+        guard_warnings = generation_guard_security_warnings(request.guard_assessment)
         lineage: dict[str, object] = {
             "source_run_id": canonical.meta.run_id,
             "source_step_id": canonical.meta.step_id,
@@ -88,7 +93,7 @@ class GeneratorAgent:
             structured_payload=technical.structured_payload,
             lineage=lineage,
             evidence_refs_used=technical.evidence_refs_used,
-            warnings=technical.warnings,
+            warnings=technical.warnings + guard_warnings,
             uncertainties=technical.uncertainties,
             generation_metadata=generation_metadata,
         )

@@ -56,6 +56,7 @@ def test_agent_production_packages_are_limited_to_validated_boundaries() -> None
         "__init__.py",
         "evidence",
         "generation",
+        "review",
     }
     assert {
         "__init__.py",

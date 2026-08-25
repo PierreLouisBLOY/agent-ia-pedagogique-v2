@@ -223,6 +223,19 @@ def test_capability_mapping_is_local_closed_and_registry_independent() -> None:
     )
 
 
+def test_pedagogical_context_lineage_is_explicit_and_revalidated() -> None:
+    coordinator_source = COORDINATOR.read_text(encoding="utf-8")
+    model_source = MODEL.read_text(encoding="utf-8")
+    assert "pedagogical_context=canonical.pedagogical_context" in coordinator_source
+    assert "technical.pedagogical_context" in model_source
+    assert "canonical.pedagogical_context" in model_source
+    assert "resolved_inputs" not in model_source[
+        model_source.index("technical.pedagogical_context") : model_source.index(
+            "technical.constraints"
+        )
+    ]
+
+
 def test_coordination_error_vocabulary_is_exact_and_authority_free() -> None:
     assert tuple(item.value for item in GenerationCoordinationErrorCode) == (
         "UNSUPPORTED_CAPABILITY",

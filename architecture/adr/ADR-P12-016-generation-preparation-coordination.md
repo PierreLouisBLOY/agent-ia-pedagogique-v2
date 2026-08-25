@@ -41,16 +41,17 @@ CAP-G02 exige une cible et CAP-G03 échoue avec
 `CORRECTION_REQUEST_REQUIRED`. Le branchement C-11 reste différé à 12.8-E.
 
 `prepare()` copie exactement le step source, le type de production, le brief,
-le format, les contraintes, les références d’evidence, la cible et les sections
-attendues. Seuls `resolved_inputs` et `output_contract` sont fournis séparément
-par le caller et profondément gelés. Le coordinator ne lit ni ne résout aucune
-donnée.
+le format, `ProductionRequest.pedagogical_context`, les contraintes, les
+références d’evidence, la cible et les sections attendues. Le contexte canonique
+est profondément immutable, non autoritaire et distinct de `resolved_inputs`.
+Seuls `resolved_inputs` et `output_contract` sont fournis séparément par le
+caller. Le coordinator ne lit ni ne résout aucune donnée.
 
 `PreparedGenerationCall` est immutable, mais il n’est pas trusted par sa seule
 construction. `execute()` revalide capability, operation, step, type de
-production, objectif, format, contraintes, evidence, cible et sections avant
-tout appel outbound. Cette défense couvre aussi un objet forgé ayant contourné
-le constructeur.
+production, objectif, format, contexte pédagogique, contraintes, evidence,
+cible et sections avant tout appel outbound. Cette défense couvre aussi un objet
+forgé ayant contourné le constructeur.
 
 Le port est appelé au plus une fois. Il n’existe aucun retry, fallback, repair,
 replan ou traduction de `GenerationPortError`. Un résultat d’un autre step ou

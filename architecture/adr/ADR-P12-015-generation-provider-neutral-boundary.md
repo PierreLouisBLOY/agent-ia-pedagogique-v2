@@ -25,8 +25,8 @@ technique immutable et provider-neutral composée de :
 
 - `GenerationOperation`, limité à `GENERATE`, `TRANSFORM` et `CORRECT` ;
 - `GenerationPortRequest`, qui transporte uniquement des inputs déjà résolus,
-  contraintes déclaratives, références d’evidence fournies par le caller et
-  forme de sortie attendue ;
+  le `pedagogical_context` canonique, des contraintes déclaratives, références
+  d’evidence fournies par le caller et forme de sortie attendue ;
 - `GenerationPortResult`, qui transporte une sortie technique nominale, ses
   limitations et ses métadonnées neutres ;
 - `GenerationPortError`, limité aux erreurs techniques `UNAVAILABLE` et
@@ -70,6 +70,11 @@ préparation d’inputs et les contrôles anti-mismatch request/result sont diff
 la correction complète à 12.8-E, le hardening à 12.8-F, l’intégration workflow à
 12.8-G et la rationalisation finale à 12.8-H. Les adapters provider, le choix de
 modèle et le prompt renderer restent différés à leurs lots dédiés.
+
+`GenerationPortRequest.pedagogical_context` transporte explicitement le contexte
+pédagogique de C-07 comme donnée immutable et non autoritaire. Il reste distinct
+de `resolved_inputs`, qui contient uniquement des inputs additionnels déjà
+résolus par l’amont ; aucun des deux champs ne remplace ou ne fusionne l’autre.
 
 ## Conséquences
 

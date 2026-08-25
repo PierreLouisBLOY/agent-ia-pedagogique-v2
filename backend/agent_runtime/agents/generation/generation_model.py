@@ -27,6 +27,7 @@ class GenerationPortRequest:
     production_kind: str
     objective: str
     output_format: str
+    pedagogical_context: Mapping[str, object] = field(default_factory=dict)
     resolved_inputs: Mapping[str, object] = field(default_factory=dict)
     constraints: Mapping[str, object] = field(default_factory=dict)
     evidence_refs: tuple[ContractRef, ...] = ()
@@ -47,6 +48,11 @@ class GenerationPortRequest:
         expected_sections = _validated_string_tuple(
             self.expected_sections,
             "expected_sections",
+        )
+        object.__setattr__(
+            self,
+            "pedagogical_context",
+            freeze_agent_safe_mapping(self.pedagogical_context),
         )
         object.__setattr__(
             self,

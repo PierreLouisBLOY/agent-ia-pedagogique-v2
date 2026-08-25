@@ -30,6 +30,17 @@ canonical request
 le mécanisme outbound remplaçable. `GenerationPortResult` est une sortie
 technique et ne constitue jamais un `ProductionCandidate`.
 
+Le contexte suit une lineage explicite :
+
+```text
+ProductionRequest.pedagogical_context
+→ GenerationPortRequest.pedagogical_context
+```
+
+Cette copie est exacte, profondément immutable et non autoritaire. Elle reste
+distincte de `resolved_inputs`, qui transporte seulement les inputs additionnels
+déjà résolus et autorisés par l’amont.
+
 `GenerationOperation` décrit uniquement la nature technique de l’appel :
 `GENERATE`, `TRANSFORM` ou `CORRECT`. Le mapping conceptuel vers CAP-G01/G02/G03
 n’est pas un routeur et n’est pas exécuté par la boundary B.

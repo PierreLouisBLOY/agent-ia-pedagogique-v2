@@ -134,6 +134,11 @@ def _validate_prepared_call(prepared: PreparedGenerationCall) -> None:
         (technical.production_kind, canonical.production_kind, "production_kind"),
         (technical.objective, canonical.brief, "objective"),
         (technical.output_format, canonical.output_format, "output_format"),
+        (
+            technical.pedagogical_context,
+            canonical.pedagogical_context,
+            "pedagogical_context",
+        ),
         (technical.constraints, canonical.constraints, "constraints"),
         (technical.evidence_refs, canonical.evidence_refs, "evidence_refs"),
         (technical.target_ref, canonical.target_ref, "target_ref"),

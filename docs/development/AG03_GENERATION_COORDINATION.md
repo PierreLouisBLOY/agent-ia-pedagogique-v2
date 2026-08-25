@@ -35,16 +35,19 @@ sera relié à C-11 `CorrectionRequest` en 12.8-E.
 
 - `meta.step_id` vers `source_step_id` ;
 - `production_kind`, `brief` vers `objective` et `output_format` ;
+- `pedagogical_context` vers le champ technique homonyme ;
 - `constraints`, `evidence_refs`, `target_ref` et `expected_sections`.
 
-`resolved_inputs` et `output_contract` sont les seules données injectées depuis
-`GenerationPreparationRequest`. Elles doivent déjà avoir été résolues et
-autorisées par l’amont ; le coordinator ne lit aucune source.
+`pedagogical_context` est copié exactement, profondément gelé et traité comme une
+donnée non autoritaire. `resolved_inputs` et `output_contract` sont les seules
+données injectées depuis `GenerationPreparationRequest`. Elles doivent déjà
+avoir été résolues et autorisées par l’amont ; elles ne remplacent ni ne
+fusionnent le contexte canonique, et le coordinator ne lit aucune source.
 
 `PreparedGenerationCall` est immutable, mais `execute()` revalide tous ses
-champs avant l’appel outbound. Un objet forgé, une capability étrangère, une
-operation divergente, un step différent ou une copie altérée échoue de manière
-fail-closed et le port n’est pas appelé.
+champs, y compris le contexte pédagogique, avant l’appel outbound. Un objet
+forgé, une capability étrangère, une operation divergente, un step différent ou
+une copie altérée échoue de manière fail-closed et le port n’est pas appelé.
 
 ## Lineage de cible et d’evidence
 

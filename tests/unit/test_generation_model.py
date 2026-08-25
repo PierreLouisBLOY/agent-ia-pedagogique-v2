@@ -23,6 +23,7 @@ def _request(**overrides: object) -> GenerationPortRequest:
         "production_kind": "lesson_plan",
         "objective": "Prepare a structured lesson plan",
         "output_format": "markdown",
+        "pedagogical_context": {"grade": "CM1"},
         "resolved_inputs": {"audience": {"level": "beginner"}},
         "constraints": {"max_sections": 4},
         "evidence_refs": ("evidence:one", "evidence:two"),
@@ -103,6 +104,32 @@ def test_request_resolved_inputs_are_deeply_immutable() -> None:
         request.resolved_inputs["nested"]["items"] = ()  # type: ignore[index]
 
 
+def test_request_exposes_explicit_pedagogical_context() -> None:
+    names = tuple(item.name for item in fields(GenerationPortRequest))
+    assert "pedagogical_context" in names
+    assert names.index("pedagogical_context") < names.index("resolved_inputs")
+
+
+def test_request_preserves_simple_pedagogical_context_mapping() -> None:
+    request = _request(pedagogical_context={"grade": "CM1", "language": "fr"})
+    assert request.pedagogical_context == {"grade": "CM1", "language": "fr"}
+
+
+def test_request_pedagogical_context_is_deeply_immutable() -> None:
+    request = _request(
+        pedagogical_context={"audience": {"levels": ["beginner", "mixed"]}}
+    )
+    assert request.pedagogical_context["audience"] == {
+        "levels": ("beginner", "mixed")
+    }
+    with pytest.raises(TypeError):
+        request.pedagogical_context["audience"] = {}  # type: ignore[index]
+
+
+def test_request_allows_empty_pedagogical_context() -> None:
+    assert _request(pedagogical_context={}).pedagogical_context == {}
+
+
 def test_request_constraints_are_deeply_immutable() -> None:
     request = _request(constraints={"style": {"allowed": ["clear"]}})
     assert request.constraints["style"] == {"allowed": ("clear",)}
@@ -163,6 +190,7 @@ def test_request_is_frozen_and_slotted() -> None:
 
 def test_request_has_no_provider_prompt_or_authority_fields() -> None:
     names = {item.name for item in fields(GenerationPortRequest)}
+    assert "pedagogical_context" in names
     assert names.isdisjoint(
         {
             "api_key",

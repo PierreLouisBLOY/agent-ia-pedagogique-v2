@@ -37,7 +37,11 @@ G02 = CapabilityId("CAP-G02")
 G03 = CapabilityId("CAP-G03")
 
 
-def _canonical(*, target_ref: str | None = None) -> ProductionRequest:
+def _canonical(
+    *,
+    target_ref: str | None = None,
+    pedagogical_context: dict[str, object] | None = None,
+) -> ProductionRequest:
     return ProductionRequest(
         meta=ContractMeta(
             schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
@@ -52,7 +56,11 @@ def _canonical(*, target_ref: str | None = None) -> ProductionRequest:
         production_kind="lesson_plan",
         brief="Prepare a grounded lesson plan",
         output_format="markdown",
-        pedagogical_context={"audience": "beginner"},
+        pedagogical_context=(
+            {"audience": {"level": "beginner", "needs": ["scaffolding"]}}
+            if pedagogical_context is None
+            else pedagogical_context
+        ),
         constraints={"max_sections": 4, "tone": "clear"},
         evidence_refs=("evidence:one", "evidence:two"),
         target_ref=target_ref,
@@ -211,6 +219,7 @@ def test_prepare_copies_canonical_fields_exactly() -> None:
     assert technical.production_kind == canonical.production_kind
     assert technical.objective == canonical.brief
     assert technical.output_format == canonical.output_format
+    assert technical.pedagogical_context == canonical.pedagogical_context
     assert technical.constraints == canonical.constraints
     assert technical.evidence_refs == canonical.evidence_refs
     assert technical.target_ref == canonical.target_ref
@@ -224,6 +233,62 @@ def test_prepare_injects_only_caller_supplied_resolved_inputs_and_output_contrac
     assert prepared.port_request.resolved_inputs == {"authorized": {"value": ("one",)}}
     assert prepared.port_request.output_contract == {"required": ("title", "body")}
     assert "audience" not in prepared.port_request.resolved_inputs
+    assert prepared.port_request.pedagogical_context == {
+        "audience": {"level": "beginner", "needs": ("scaffolding",)}
+    }
+
+
+def test_prepare_keeps_nested_pedagogical_context_deeply_immutable() -> None:
+    context = {"audience": {"levels": ["beginner", "mixed"]}}
+    _, _, prepared = _prepare(canonical=_canonical(pedagogical_context=context))
+    assert prepared.port_request.pedagogical_context == {
+        "audience": {"levels": ("beginner", "mixed")}
+    }
+    with pytest.raises(TypeError):
+        prepared.port_request.pedagogical_context["audience"] = {}  # type: ignore[index]
+
+
+def test_prepare_does_not_allow_resolved_inputs_to_replace_canonical_context() -> None:
+    canonical = _canonical(pedagogical_context={"audience": "canonical"})
+    _, _, prepared = _prepare(
+        canonical=canonical,
+        resolved_inputs={"pedagogical_context": {"audience": "contradictory"}},
+    )
+    assert prepared.port_request.pedagogical_context == {"audience": "canonical"}
+    assert prepared.port_request.resolved_inputs == {
+        "pedagogical_context": {"audience": "contradictory"}
+    }
+
+
+def test_prepare_preserves_empty_canonical_pedagogical_context() -> None:
+    _, _, prepared = _prepare(
+        canonical=_canonical(pedagogical_context={}),
+    )
+    assert prepared.port_request.pedagogical_context == {}
+
+
+@pytest.mark.parametrize(
+    ("capability_id", "target_ref", "operation"),
+    (
+        (G01, None, GenerationOperation.GENERATE),
+        (G02, "production:target:v1", GenerationOperation.TRANSFORM),
+    ),
+)
+def test_prepare_preserves_context_for_generate_and_transform(
+    capability_id: CapabilityId,
+    target_ref: str | None,
+    operation: GenerationOperation,
+) -> None:
+    context = {"grade": "CM1", "language": "fr"}
+    _, _, prepared = _prepare(
+        capability_id,
+        canonical=_canonical(
+            target_ref=target_ref,
+            pedagogical_context=context,
+        ),
+        response=_result(operation=operation),
+    )
+    assert prepared.port_request.pedagogical_context == context
 
 
 def test_preparation_request_mappings_are_deeply_immutable() -> None:
@@ -285,6 +350,37 @@ def test_prepared_constructor_rejects_source_step_mismatch() -> None:
             replace(prepared.port_request, source_step_id="forged-step"),
         )
     assert raised.value.code is GenerationCoordinationErrorCode.SOURCE_STEP_MISMATCH
+
+
+def test_prepared_constructor_rejects_divergent_pedagogical_context() -> None:
+    _, _, prepared = _prepare()
+    with pytest.raises(GenerationCoordinationError) as raised:
+        PreparedGenerationCall(
+            G01,
+            prepared.canonical_request,
+            replace(
+                prepared.port_request,
+                pedagogical_context={"audience": "forged"},
+            ),
+        )
+    assert raised.value.code is GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH
+    assert "pedagogical_context" in raised.value.safe_reason
+
+
+def test_prepared_constructor_rejects_nested_context_divergence() -> None:
+    _, _, prepared = _prepare()
+    with pytest.raises(GenerationCoordinationError) as raised:
+        PreparedGenerationCall(
+            G01,
+            prepared.canonical_request,
+            replace(
+                prepared.port_request,
+                pedagogical_context={
+                    "audience": {"level": "advanced", "needs": ["scaffolding"]}
+                },
+            ),
+        )
+    assert raised.value.code is GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH
 
 
 def test_prepared_constructor_rejects_capability_operation_mismatch() -> None:
@@ -393,6 +489,22 @@ def test_execute_revalidates_forged_prepared_before_outbound_call() -> None:
     with pytest.raises(GenerationCoordinationError) as raised:
         coordinator.execute(prepared=forged)
     assert raised.value.code is GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH
+    assert port.calls == []
+
+
+def test_execute_rejects_forged_context_before_outbound_call() -> None:
+    coordinator, port, prepared = _prepare()
+    forged = _forge(
+        prepared,
+        port_request=replace(
+            prepared.port_request,
+            pedagogical_context={"audience": {"level": "forged"}},
+        ),
+    )
+    with pytest.raises(GenerationCoordinationError) as raised:
+        coordinator.execute(prepared=forged)
+    assert raised.value.code is GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH
+    assert "pedagogical_context" in raised.value.safe_reason
     assert port.calls == []
 
 

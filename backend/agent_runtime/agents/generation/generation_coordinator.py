@@ -56,6 +56,7 @@ class GenerationCoordinator:
             production_kind=canonical.production_kind,
             objective=canonical.brief,
             output_format=canonical.output_format,
+            pedagogical_context=canonical.pedagogical_context,
             resolved_inputs=request.resolved_inputs,
             constraints=canonical.constraints,
             evidence_refs=canonical.evidence_refs,

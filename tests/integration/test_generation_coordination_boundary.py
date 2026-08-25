@@ -64,6 +64,9 @@ def _request(*, target_ref: str | None = None) -> ProductionRequest:
         production_kind="learning_activity",
         brief="Generate an evidence-grounded learning activity",
         output_format="structured-markdown",
+        pedagogical_context={
+            "audience": {"level": "beginner", "supports": ["examples"]}
+        },
         constraints={"duration_minutes": 30},
         evidence_refs=("evidence:alpha", "evidence:beta"),
         target_ref=target_ref,
@@ -125,6 +128,9 @@ def test_generate_crosses_boundary_once_with_exact_prepared_lineage() -> None:
     assert technical.operation is GenerationOperation.GENERATE
     assert technical.source_step_id == "step-integration-generation"
     assert technical.target_ref is None
+    assert technical.pedagogical_context == {
+        "audience": {"level": "beginner", "supports": ("examples",)}
+    }
     assert technical.resolved_inputs == {"authorized_input": "already resolved"}
 
 
@@ -140,6 +146,9 @@ def test_transform_crosses_boundary_once_with_same_target_reference() -> None:
     assert port.calls == [technical]
     assert technical.operation is GenerationOperation.TRANSFORM
     assert technical.target_ref == target
+    assert technical.pedagogical_context == {
+        "audience": {"level": "beginner", "supports": ("examples",)}
+    }
 
 
 def test_evidence_subset_is_preserved_without_fetch_or_authority_evaluation() -> None:

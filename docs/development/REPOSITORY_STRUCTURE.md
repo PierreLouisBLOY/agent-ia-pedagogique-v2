@@ -113,3 +113,9 @@ le Protocol outbound unique d'AG-03. Elle reste distincte des contracts
 `ProductionCandidate` et `CorrectionResult`, ne choisit aucun provider, modele
 ou prompt et n'effectue ni recherche, ni acces direct aux donnees, ni validation,
 promotion, retry ou wiring runtime/orchestration.
+
+La couche 12.8-C du meme repertoire prepare deterministement C-07 pour ce port,
+verifie capability, operation, target et lineage d'evidence, puis autorise au
+plus un appel outbound. Elle revalide tout appel prepare avant execution, ne
+construit aucune `ProductionCandidate` ou correction et ne traduit ni ne retente
+les erreurs techniques du port.

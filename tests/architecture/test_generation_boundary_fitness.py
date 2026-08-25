@@ -63,6 +63,8 @@ def test_generation_package_exists_with_only_boundary_files() -> None:
     assert GENERATION.is_dir()
     assert {path.name for path in _python_files(GENERATION)} == {
         "__init__.py",
+        "generation_coordination_model.py",
+        "generation_coordinator.py",
         "generation_model.py",
         "generation_ports.py",
     }

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 
 from backend.agent_runtime.agents.evidence.retrieval_coordination_model import (
@@ -49,6 +49,7 @@ class EvidenceMaterializationCode(StrEnum):
     CONTENT_VERSION_MISMATCH = "CONTENT_VERSION_MISMATCH"
     DUPLICATE_EVIDENCE_ID = "DUPLICATE_EVIDENCE_ID"
     RESULT_META_MISMATCH = "RESULT_META_MISMATCH"
+    RETRIEVAL_LINEAGE_MISMATCH = "RETRIEVAL_LINEAGE_MISMATCH"
 
 
 class EvidenceMaterializationError(ValueError):
@@ -79,18 +80,20 @@ class EvidenceContentUnavailable(RuntimeError):
 @dataclass(frozen=True, slots=True)
 class EvidenceFetchRequest:
     evidence_id: str
+    request: EvidenceRequest
+    retrieval: RetrievalCoordinationResult
     candidate: FusedRetrievalCandidate
-    source_policy: Mapping[str, object]
 
     def __post_init__(self) -> None:
         require_non_empty(self.evidence_id, "evidence_id")
+        if type(self.request) is not EvidenceRequest:
+            raise TypeError("request must be an EvidenceRequest")
+        if type(self.retrieval) is not RetrievalCoordinationResult:
+            raise TypeError("retrieval must be a RetrievalCoordinationResult")
         if type(self.candidate) is not FusedRetrievalCandidate:
             raise TypeError("candidate must be a FusedRetrievalCandidate")
-        object.__setattr__(
-            self,
-            "source_policy",
-            freeze_agent_safe_mapping(self.source_policy),
-        )
+        validate_retrieval_lineage(self.request, self.retrieval)
+        _validate_candidate_membership(self.candidate, self.retrieval)
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,6 +104,7 @@ class MaterializedEvidence:
     channels: tuple[RetrievalChannel, ...]
     freshness: EvidenceFreshnessStatus
     limitations: tuple[str, ...] = ()
+    provenance: Mapping[str, object] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if type(self.item) is not EvidenceItem:
@@ -116,6 +120,11 @@ class MaterializedEvidence:
         if not isinstance(self.freshness, EvidenceFreshnessStatus):
             raise TypeError("freshness must be an EvidenceFreshnessStatus")
         _validate_string_tuple(self.limitations, "limitations")
+        object.__setattr__(
+            self,
+            "provenance",
+            freeze_agent_safe_mapping(self.provenance),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -212,6 +221,7 @@ class EvidenceSetBuildRequest:
             _raise_meta_mismatch("result actor must be AG-02")
         if type(self.retrieval) is not RetrievalCoordinationResult:
             raise TypeError("retrieval must be a RetrievalCoordinationResult")
+        validate_retrieval_lineage(self.request, self.retrieval)
         if not isinstance(self.materialized, tuple):
             raise TypeError("materialized must be a tuple")
         if any(type(item) is not MaterializedEvidence for item in self.materialized):
@@ -235,6 +245,50 @@ class EvidenceSetBuildRequest:
                 _raise_meta_mismatch(
                     "materialized evidence does not match retrieval candidates"
                 )
+
+
+def validate_retrieval_lineage(
+    request: EvidenceRequest,
+    retrieval: RetrievalCoordinationResult,
+) -> None:
+    if type(request) is not EvidenceRequest:
+        raise TypeError("request must be an EvidenceRequest")
+    if type(retrieval) is not RetrievalCoordinationResult:
+        raise TypeError("retrieval must be a RetrievalCoordinationResult")
+    query = retrieval.query
+    if (
+        query.search_goal != request.search_goal
+        or query.scope != request.scope
+        or query.source_policy != request.source_policy
+        or query.filters != request.filters
+        or query.required_authority != request.required_authority
+    ):
+        _raise_lineage_mismatch("retrieval query does not match evidence request")
+    if request.max_items is not None:
+        if query.max_items is None or query.max_items > request.max_items:
+            _raise_lineage_mismatch("retrieval query widens the requested item limit")
+    elif query.max_items is None:
+        _raise_lineage_mismatch("retrieval query must remain technically bounded")
+    if request.max_items == 0 and (
+        retrieval.ranked_candidates or retrieval.channel_results
+    ):
+        _raise_lineage_mismatch("zero-item evidence request requires an empty retrieval")
+
+
+def _validate_candidate_membership(
+    candidate: FusedRetrievalCandidate,
+    retrieval: RetrievalCoordinationResult,
+) -> None:
+    matches = tuple(
+        item
+        for item in retrieval.ranked_candidates
+        if item.identity == candidate.identity
+        and item.technical_rank == candidate.technical_rank
+    )
+    if len(matches) != 1 or matches[0] != candidate:
+        _raise_lineage_mismatch(
+            "fetch candidate does not belong to the retrieval result"
+        )
 
 
 def _coverage_status(
@@ -291,6 +345,13 @@ def _require_non_negative_integer(value: int, field_name: str) -> None:
 def _raise_meta_mismatch(message: str) -> None:
     raise EvidenceMaterializationError(
         EvidenceMaterializationCode.RESULT_META_MISMATCH,
+        message,
+    )
+
+
+def _raise_lineage_mismatch(message: str) -> None:
+    raise EvidenceMaterializationError(
+        EvidenceMaterializationCode.RETRIEVAL_LINEAGE_MISMATCH,
         message,
     )
 

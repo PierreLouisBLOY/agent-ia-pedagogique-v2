@@ -17,6 +17,7 @@ from backend.agent_runtime.agents.evidence.evidence_agent_model import (
     EvidenceSetBuildRequest,
     EvidenceVersionConflict,
     MaterializedEvidence,
+    validate_retrieval_lineage,
 )
 from backend.agent_runtime.agents.evidence.retrieval_coordination_model import (
     BASELINE_RETRIEVAL_COORDINATION_POLICY,
@@ -80,4 +81,5 @@ __all__ = [
     "RetrievalSearchResult",
     "RetrievalSignals",
     "detect_version_conflicts",
+    "validate_retrieval_lineage",
 ]

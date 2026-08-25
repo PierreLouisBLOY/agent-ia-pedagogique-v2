@@ -15,6 +15,8 @@ from backend.agent_runtime.agents.evidence.evidence_agent_model import (
     EvidenceSetBuildRequest,
     EvidenceVersionConflict,
     MaterializedEvidence,
+    _validate_candidate_membership,
+    validate_retrieval_lineage,
 )
 from backend.agent_runtime.agents.evidence.retrieval_coordination_model import (
     FusedRetrievalCandidate,
@@ -76,16 +78,23 @@ class EvidenceAgent:
     ) -> MaterializedEvidence:
         if type(request) is not EvidenceFetchRequest:
             raise TypeError("request must be an EvidenceFetchRequest")
+        validate_retrieval_lineage(request.request, request.retrieval)
+        _validate_candidate_membership(request.candidate, request.retrieval)
         representative = request.candidate.representative
         content_request = DocumentContentRequest(
             candidate_id=representative.candidate_id,
             source_ref=representative.source_ref,
             locator=representative.locator,
-            source_policy=request.source_policy,
+            source_policy=request.retrieval.query.source_policy,
         )
         try:
             content = self.content_port.fetch(request=content_request)
-        except EvidenceContentUnavailable:
+        except EvidenceContentUnavailable as error:
+            if error.candidate_id != representative.candidate_id:
+                raise EvidenceMaterializationError(
+                    EvidenceMaterializationCode.CONTENT_RESULT_MISMATCH,
+                    "content unavailability refers to a different candidate",
+                ) from None
             raise EvidenceMaterializationError(
                 EvidenceMaterializationCode.CONTENT_UNAVAILABLE,
                 f"content unavailable for candidate: {representative.candidate_id}",
@@ -140,6 +149,18 @@ class EvidenceAgent:
             excerpt_or_summary=excerpt,
             checksum_or_version=selected_version,
         )
+        provenance = {
+            "retrieval_candidate_id": representative.candidate_id,
+            "retrieval_identity_key": request.candidate.identity.deterministic_key(),
+            "retrieval_channels": tuple(channel.value for channel in channels),
+            "retrieval_candidate_provenance": representative.provenance,
+            "content_provenance": content.provenance,
+            "content_metadata": content.metadata,
+            "candidate_metadata": representative.metadata,
+            "source_ref": content.source_ref,
+            "locator": content.locator,
+            "resolved_version_or_checksum": selected_version,
+        }
         return MaterializedEvidence(
             item=item,
             identity=request.candidate.identity,
@@ -147,6 +168,7 @@ class EvidenceAgent:
             channels=channels,
             freshness=freshness,
             limitations=tuple(limitations),
+            provenance=provenance,
         )
 
     def assess_evidence_coverage(
@@ -269,6 +291,23 @@ class EvidenceAgent:
                 1 for item in ordered if item.item.checksum_or_version is None
             ),
             "freshness_counts": freshness_counts,
+            "item_lineage": tuple(
+                {
+                    "evidence_id": item.item.evidence_id,
+                    "technical_rank": item.technical_rank,
+                    "source_ref": item.provenance["source_ref"],
+                    "locator": item.provenance["locator"],
+                    "version_or_checksum": item.provenance[
+                        "resolved_version_or_checksum"
+                    ],
+                    "channels": item.provenance["retrieval_channels"],
+                    "candidate_provenance": item.provenance[
+                        "retrieval_candidate_provenance"
+                    ],
+                    "content_provenance": item.provenance["content_provenance"],
+                }
+                for item in ordered
+            ),
         }
         retrieval_metrics = {
             "ranked_candidate_count": len(

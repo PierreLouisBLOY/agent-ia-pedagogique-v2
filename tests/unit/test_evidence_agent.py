@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, fields, replace
 from datetime import UTC, datetime
 from decimal import Decimal
 from unittest.mock import patch
@@ -133,6 +133,8 @@ def _fused(
     authority: dict[str, object] | None = None,
     warnings: tuple[str, ...] = (),
     canonical: bool = True,
+    provenance: dict[str, object] | None = None,
+    metadata: dict[str, object] | None = None,
 ) -> FusedRetrievalCandidate:
     representative = RetrievalCandidate(
         candidate_id=candidate_id or f"candidate-{rank}",
@@ -143,8 +145,9 @@ def _fused(
         signals=RetrievalSignals(structured_rank=rank - 1),
         canonical_object_ref=f"canonical:{object_id}" if canonical else None,
         version_or_checksum=version,
+        provenance=provenance or {},
         authority=authority or {"basis": "official"},
-        metadata={"freshness": freshness},
+        metadata=metadata or {"freshness": freshness},
         security_warnings=warnings,
     )
     identity = RetrievalIdentity.from_candidate(representative)
@@ -169,10 +172,10 @@ def _retrieval(
     return RetrievalCoordinationResult(
         query=RetrievalQuery(
             search_goal="Find evidence",
-            scope={},
-            source_policy={},
-            filters={},
-            required_authority=None,
+            scope={"module": "M04"},
+            source_policy={"kinds": ["canonical"]},
+            filters={"active": True},
+            required_authority={"minimum": "official"},
             max_items=10,
         ),
         mode=mode,
@@ -198,6 +201,8 @@ def _content(
     source_ref: str | None = None,
     locator: str | None = None,
     warnings: tuple[str, ...] = (),
+    provenance: dict[str, object] | None = None,
+    metadata: dict[str, object] | None = None,
 ) -> DocumentContentResult:
     representative = candidate.representative
     return DocumentContentResult(
@@ -208,6 +213,8 @@ def _content(
         retrieved_at=NOW,
         source_kind="canonical_document",
         version_or_checksum=version,
+        provenance=provenance or {},
+        metadata=metadata or {},
         security_warnings=warnings,
     )
 
@@ -234,6 +241,12 @@ def _materialize(
     version: str | None = "v1",
     max_excerpt_chars: int = 4000,
 ) -> MaterializedEvidence:
+    request = _request()
+    retrieval_candidates = tuple(
+        _fused(rank=rank, object_id=f"lineage-{rank}")
+        for rank in range(1, candidate.technical_rank)
+    ) + (candidate,)
+    retrieval = _retrieval(retrieval_candidates)
     agent, _ = _agent(
         _content(candidate, content=content, version=version),
         max_excerpt_chars=max_excerpt_chars,
@@ -241,9 +254,27 @@ def _materialize(
     return agent.fetch_evidence_item(
         request=EvidenceFetchRequest(
             evidence_id=evidence_id or f"evidence-{candidate.technical_rank}",
+            request=request,
+            retrieval=retrieval,
             candidate=candidate,
-            source_policy={"kinds": ["canonical"]},
         )
+    )
+
+
+def _fetch_request(
+    candidate: FusedRetrievalCandidate,
+    *,
+    evidence_id: str = "evidence-1",
+    request: EvidenceRequest | None = None,
+    retrieval: RetrievalCoordinationResult | None = None,
+) -> EvidenceFetchRequest:
+    source_request = request or _request()
+    source_retrieval = retrieval or _retrieval((candidate,))
+    return EvidenceFetchRequest(
+        evidence_id=evidence_id,
+        request=source_request,
+        retrieval=source_retrieval,
+        candidate=candidate,
     )
 
 
@@ -285,6 +316,7 @@ def test_materialization_codes_are_exact() -> None:
         "CONTENT_VERSION_MISMATCH",
         "DUPLICATE_EVIDENCE_ID",
         "RESULT_META_MISMATCH",
+        "RETRIEVAL_LINEAGE_MISMATCH",
     ]
 
 
@@ -338,27 +370,29 @@ def test_search_evidence_constructs_no_evidence_contract() -> None:
     assert type(result) is RetrievalCoordinationResult
 
 
-def test_fetch_request_is_exact_and_source_policy_is_immutable() -> None:
+def test_fetch_request_is_exact_and_has_no_independent_source_policy() -> None:
     candidate = _fused()
-    request = EvidenceFetchRequest("evidence-1", candidate, {"kinds": ["official"]})
+    evidence_request = _request()
+    retrieval = _retrieval((candidate,))
+    request = EvidenceFetchRequest("evidence-1", evidence_request, retrieval, candidate)
     assert request.candidate is candidate
     assert request.evidence_id == "evidence-1"
-    assert request.source_policy["kinds"] == ("official",)
-    with pytest.raises(TypeError):
-        request.source_policy["new"] = True  # type: ignore[index]
+    assert request.request is evidence_request
+    assert request.retrieval is retrieval
+    assert "source_policy" not in {item.name for item in fields(EvidenceFetchRequest)}
 
 
 def test_content_port_is_called_once_with_exact_representative_data() -> None:
     candidate = _fused()
     agent, port = _agent(_content(candidate))
-    request = EvidenceFetchRequest("evidence-1", candidate, {"kinds": ["canonical"]})
+    request = _fetch_request(candidate)
     agent.fetch_evidence_item(request=request)
     assert len(port.calls) == 1
     assert port.calls[0] == DocumentContentRequest(
         candidate_id=candidate.representative.candidate_id,
         source_ref=candidate.representative.source_ref,
         locator=candidate.representative.locator,
-        source_policy=request.source_policy,
+        source_policy=request.request.source_policy,
     )
 
 
@@ -375,7 +409,7 @@ def test_content_result_identity_mismatch_is_rejected(overrides: dict[str, str])
     agent, _ = _agent(_content(candidate, **overrides))
     with pytest.raises(EvidenceMaterializationError) as raised:
         agent.fetch_evidence_item(
-            request=EvidenceFetchRequest("evidence-1", candidate, {})
+            request=_fetch_request(candidate)
         )
     assert raised.value.code is EvidenceMaterializationCode.CONTENT_RESULT_MISMATCH
 
@@ -385,7 +419,7 @@ def test_content_version_mismatch_is_rejected() -> None:
     agent, _ = _agent(_content(candidate, version="v2"))
     with pytest.raises(EvidenceMaterializationError) as raised:
         agent.fetch_evidence_item(
-            request=EvidenceFetchRequest("evidence-1", candidate, {})
+            request=_fetch_request(candidate)
         )
     assert raised.value.code is EvidenceMaterializationCode.CONTENT_VERSION_MISMATCH
 
@@ -408,7 +442,7 @@ def test_version_selection_prefers_content_then_candidate_then_unknown(
     candidate = _fused(version=candidate_version)
     agent, _ = _agent(_content(candidate, version=content_version))
     materialized = agent.fetch_evidence_item(
-        request=EvidenceFetchRequest("evidence-1", candidate, {})
+        request=_fetch_request(candidate)
     )
     assert materialized.item.checksum_or_version == expected
     assert ("VERSION_OR_CHECKSUM_UNKNOWN" in materialized.limitations) is unknown
@@ -488,7 +522,7 @@ def test_security_warnings_are_preserved_descriptively() -> None:
         _content(candidate, warnings=("UNTRUSTED_LINK",)),
     )
     item = agent.fetch_evidence_item(
-        request=EvidenceFetchRequest("evidence-1", candidate, {})
+        request=_fetch_request(candidate)
     )
     assert item.limitations[-2:] == (
         "SECURITY_WARNING:INSTRUCTION_LIKE_CONTENT",
@@ -502,7 +536,7 @@ def test_content_unavailable_is_structured_and_not_retried() -> None:
     agent, port = _agent(unavailable)
     with pytest.raises(EvidenceMaterializationError) as raised:
         agent.fetch_evidence_item(
-            request=EvidenceFetchRequest("evidence-1", candidate, {})
+            request=_fetch_request(candidate)
         )
     assert raised.value.code is EvidenceMaterializationCode.CONTENT_UNAVAILABLE
     assert len(port.calls) == 1
@@ -749,3 +783,270 @@ def test_coverage_assessment_model_rejects_claimed_semantic_or_authority_assessm
             authority_requirement_assessed=False,
             limitations=("SEMANTIC_ADEQUACY_UNASSESSED",),
         )
+
+
+@pytest.mark.parametrize("field_name", ["request", "retrieval"])
+def test_fetch_request_requires_typed_lineage_inputs(field_name: str) -> None:
+    candidate = _fused()
+    values: dict[str, object] = {
+        "evidence_id": "evidence-1",
+        "request": _request(),
+        "retrieval": _retrieval((candidate,)),
+        "candidate": candidate,
+    }
+    values[field_name] = object()
+    with pytest.raises(TypeError):
+        EvidenceFetchRequest(**values)  # type: ignore[arg-type]
+
+
+def test_fetch_request_rejects_candidate_id_injection() -> None:
+    admitted = _fused(object_id="admitted", candidate_id="shared-candidate-id")
+    injected = _fused(object_id="injected", candidate_id="shared-candidate-id")
+    with pytest.raises(EvidenceMaterializationError) as raised:
+        _fetch_request(injected, retrieval=_retrieval((admitted,)))
+    assert raised.value.code is EvidenceMaterializationCode.RETRIEVAL_LINEAGE_MISMATCH
+
+
+def test_fetch_request_rejects_candidate_with_wrong_technical_rank() -> None:
+    admitted = _fused()
+    injected = replace(admitted, technical_rank=2)
+    with pytest.raises(EvidenceMaterializationError) as raised:
+        _fetch_request(injected, retrieval=_retrieval((admitted,)))
+    assert raised.value.code is EvidenceMaterializationCode.RETRIEVAL_LINEAGE_MISMATCH
+
+
+def test_fetch_request_rejects_modified_candidate_from_other_result() -> None:
+    admitted = _fused()
+    modified = replace(admitted, fusion_score=Decimal("0.999"))
+    with pytest.raises(EvidenceMaterializationError) as raised:
+        _fetch_request(modified, retrieval=_retrieval((admitted,)))
+    assert raised.value.code is EvidenceMaterializationCode.RETRIEVAL_LINEAGE_MISMATCH
+
+
+@pytest.mark.parametrize(
+    "field_name,value",
+    [
+        ("search_goal", "Find different evidence"),
+        ("scope", {"module": "M05"}),
+        ("source_policy", {"kinds": ["external"]}),
+        ("filters", {"active": False}),
+        ("required_authority", {"minimum": "community"}),
+    ],
+)
+def test_fetch_request_rejects_retrieval_from_another_c05_request(
+    field_name: str,
+    value: object,
+) -> None:
+    candidate = _fused()
+    foreign_request = replace(_request(), **{field_name: value})
+    with pytest.raises(EvidenceMaterializationError) as raised:
+        _fetch_request(
+            candidate,
+            request=foreign_request,
+            retrieval=_retrieval((candidate,)),
+        )
+    assert raised.value.code is EvidenceMaterializationCode.RETRIEVAL_LINEAGE_MISMATCH
+
+
+def test_fetch_request_rejects_retrieval_item_limit_widening() -> None:
+    candidate = _fused()
+    with pytest.raises(EvidenceMaterializationError) as raised:
+        _fetch_request(
+            candidate,
+            request=replace(_request(), max_items=5),
+            retrieval=_retrieval((candidate,)),
+        )
+    assert raised.value.code is EvidenceMaterializationCode.RETRIEVAL_LINEAGE_MISMATCH
+
+
+def test_fetch_request_accepts_bounded_item_limit_narrowing() -> None:
+    candidate = _fused()
+    retrieval = _retrieval((candidate,))
+    narrowed = replace(retrieval, query=replace(retrieval.query, max_items=5))
+    fetch_request = _fetch_request(candidate, retrieval=narrowed)
+    assert fetch_request.retrieval.query.max_items == 5
+
+
+def test_fetch_request_accepts_technical_bound_for_unbounded_request() -> None:
+    candidate = _fused()
+    request = replace(_request(), max_items=None)
+    fetch_request = _fetch_request(
+        candidate,
+        request=request,
+        retrieval=_retrieval((candidate,)),
+    )
+    assert fetch_request.retrieval.query.max_items == 10
+
+
+def test_fetch_request_rejects_nonempty_retrieval_for_zero_item_request() -> None:
+    candidate = _fused()
+    with pytest.raises(EvidenceMaterializationError) as raised:
+        _fetch_request(
+            candidate,
+            request=replace(_request(), max_items=0),
+            retrieval=_retrieval((candidate,)),
+        )
+    assert raised.value.code is EvidenceMaterializationCode.RETRIEVAL_LINEAGE_MISMATCH
+
+
+def test_content_request_inherits_validated_retrieval_source_policy_exactly() -> None:
+    candidate = _fused()
+    request = replace(
+        _request(),
+        source_policy={"kinds": ["canonical"], "regions": ["fr"]},
+    )
+    retrieval = _retrieval((candidate,))
+    retrieval = replace(
+        retrieval,
+        query=replace(retrieval.query, source_policy=request.source_policy),
+    )
+    agent, port = _agent(_content(candidate))
+    agent.fetch_evidence_item(
+        request=_fetch_request(candidate, request=request, retrieval=retrieval)
+    )
+    assert port.calls[0].source_policy == request.source_policy
+    assert "source_policy" not in {item.name for item in fields(EvidenceFetchRequest)}
+
+
+def test_invalid_lineage_fails_before_any_content_port_call() -> None:
+    candidate = _fused()
+    agent, port = _agent(_content(candidate))
+    with pytest.raises(EvidenceMaterializationError) as raised:
+        agent.fetch_evidence_item(
+            request=EvidenceFetchRequest(
+                evidence_id="evidence-1",
+                request=replace(_request(), filters={"active": False}),
+                retrieval=_retrieval((candidate,)),
+                candidate=candidate,
+            )
+        )
+    assert raised.value.code is EvidenceMaterializationCode.RETRIEVAL_LINEAGE_MISMATCH
+    assert port.calls == []
+
+
+def test_build_request_rejects_retrieval_from_another_c05_request() -> None:
+    with pytest.raises(EvidenceMaterializationError) as raised:
+        EvidenceSetBuildRequest(
+            request=replace(_request(), required_authority={"minimum": "community"}),
+            result_meta=_result_meta(),
+            retrieval=_retrieval(),
+            materialized=(),
+        )
+    assert raised.value.code is EvidenceMaterializationCode.RETRIEVAL_LINEAGE_MISMATCH
+
+
+def _materialized_with_provenance() -> MaterializedEvidence:
+    candidate = _fused(
+        provenance={"catalog": {"record_id": "catalog-7"}},
+        metadata={"freshness": "CURRENT", "collection": {"name": "canon"}},
+    )
+    agent, _ = _agent(
+        _content(
+            candidate,
+            content="RAW CONTENT MUST NOT ENTER PROVENANCE",
+            provenance={"fetch": {"adapter": "controlled"}},
+            metadata={"mime_type": "text/plain", "page": 7},
+        )
+    )
+    return agent.fetch_evidence_item(request=_fetch_request(candidate))
+
+
+def test_materialized_provenance_is_deeply_immutable() -> None:
+    materialized = _materialized_with_provenance()
+    with pytest.raises(TypeError):
+        materialized.provenance["locator"] = "changed"  # type: ignore[index]
+    candidate_provenance = materialized.provenance[
+        "retrieval_candidate_provenance"
+    ]
+    with pytest.raises(TypeError):
+        candidate_provenance["catalog"] = {}  # type: ignore[index]
+
+
+def test_materialized_provenance_preserves_candidate_provenance_and_metadata() -> None:
+    provenance = _materialized_with_provenance().provenance
+    assert provenance["retrieval_candidate_provenance"] == {
+        "catalog": {"record_id": "catalog-7"}
+    }
+    assert provenance["candidate_metadata"] == {
+        "freshness": "CURRENT",
+        "collection": {"name": "canon"},
+    }
+
+
+def test_materialized_provenance_preserves_content_provenance_and_metadata() -> None:
+    provenance = _materialized_with_provenance().provenance
+    assert provenance["content_provenance"] == {
+        "fetch": {"adapter": "controlled"}
+    }
+    assert provenance["content_metadata"] == {
+        "mime_type": "text/plain",
+        "page": 7,
+    }
+
+
+def test_materialized_provenance_excludes_raw_content() -> None:
+    provenance = _materialized_with_provenance().provenance
+    assert "content" not in provenance
+    assert "excerpt_or_summary" not in provenance
+    assert "RAW CONTENT MUST NOT ENTER PROVENANCE" not in repr(provenance)
+
+
+def _evidence_set_with_item_lineage() -> object:
+    first = _fused(rank=1, object_id="one", provenance={"catalog": "one"})
+    second = _fused(rank=2, object_id="two", provenance={"catalog": "two"})
+    retrieval = _retrieval((first, second))
+    first_agent, _ = _agent(
+        _content(first, content="FIRST RAW CONTENT", provenance={"fetch": "one"})
+    )
+    second_agent, _ = _agent(
+        _content(second, content="SECOND RAW CONTENT", provenance={"fetch": "two"})
+    )
+    first_item = first_agent.fetch_evidence_item(
+        request=_fetch_request(
+            first,
+            evidence_id="evidence-1",
+            retrieval=retrieval,
+        )
+    )
+    second_item = second_agent.fetch_evidence_item(
+        request=_fetch_request(
+            second,
+            evidence_id="evidence-2",
+            retrieval=retrieval,
+        )
+    )
+    return first_agent.build_evidence_set(
+        build_request=EvidenceSetBuildRequest(
+            request=_request(),
+            result_meta=_result_meta(),
+            retrieval=retrieval,
+            materialized=(second_item, first_item),
+        )
+    )
+
+
+def test_evidence_set_item_lineage_is_ordered_by_technical_rank() -> None:
+    evidence_set = _evidence_set_with_item_lineage()
+    item_lineage = evidence_set.provenance_summary["item_lineage"]  # type: ignore[attr-defined]
+    assert tuple(item["evidence_id"] for item in item_lineage) == (
+        "evidence-1",
+        "evidence-2",
+    )
+    assert tuple(item["technical_rank"] for item in item_lineage) == (1, 2)
+
+
+def test_evidence_set_item_lineage_excludes_content_and_excerpt() -> None:
+    evidence_set = _evidence_set_with_item_lineage()
+    item_lineage = evidence_set.provenance_summary["item_lineage"]  # type: ignore[attr-defined]
+    assert all("content" not in item for item in item_lineage)
+    assert all("excerpt_or_summary" not in item for item in item_lineage)
+    assert "RAW CONTENT" not in repr(item_lineage)
+
+
+def test_wrong_candidate_content_unavailability_is_a_result_mismatch() -> None:
+    candidate = _fused()
+    agent, port = _agent(EvidenceContentUnavailable("other-candidate", "NOT_FOUND"))
+    with pytest.raises(EvidenceMaterializationError) as raised:
+        agent.fetch_evidence_item(request=_fetch_request(candidate))
+    assert raised.value.code is EvidenceMaterializationCode.CONTENT_RESULT_MISMATCH
+    assert len(port.calls) == 1

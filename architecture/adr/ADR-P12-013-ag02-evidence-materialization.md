@@ -31,11 +31,40 @@ correspondance entre candidats classés et preuves matérialisées.
 `build_evidence_set` assemble le contrat public sans appeler de port. Aucune
 méthode automatique n'enchaîne les capabilities.
 
+CAP-E02 est lié explicitement à la lignée C-05. `EvidenceFetchRequest` porte la
+demande `EvidenceRequest`, son `RetrievalCoordinationResult` et le candidat à
+matérialiser ; il ne porte aucune `source_policy` indépendante. La query de
+retrieval doit reproduire exactement objectif, scope, source policy, filtres et
+autorité requise. Son `max_items` peut seulement être un bornage technique plus
+étroit. Une demande à zéro item exige un retrieval vide. Le candidat doit être
+celui du résultat classé avec la même identité et le même rang technique, et
+pas seulement le même candidate ID. Toute divergence échoue avec
+`RETRIEVAL_LINEAGE_MISMATCH` avant l'appel du port.
+
+La `source_policy` de `DocumentContentRequest` est héritée de la query validée.
+Un caller ne peut donc ni substituer un candidat extérieur au résultat ni
+élargir la policy entre C-05 et l'accès documentaire. La même validation de
+lignée est appliquée par `EvidenceSetBuildRequest`, afin de ne pas attribuer un
+set à une autre demande C-05.
+
 Le résultat documentaire doit correspondre exactement au candidate ID, à la
 source et au locator demandés. Une divergence est rejetée comme
 `CONTENT_RESULT_MISMATCH`. Lorsque versions candidate et contenu sont toutes
 deux connues, elles doivent être égales. La version du contenu est retenue si
 elle existe, sinon celle du candidat ; l'absence des deux reste explicite.
+Une indisponibilité portant le candidate ID d'une autre demande est également
+un `CONTENT_RESULT_MISMATCH`, et non une indisponibilité normale. `source_kind`
+reste la qualification retournée par l'accès de contenu et n'est pas forcé à
+égaler celui du candidat.
+
+La matérialisation conserve une provenance immutable et agent-safe : candidate
+ID et identité de retrieval, canaux, provenance et metadata du candidat,
+provenance et metadata du contenu, source, locator et version résolue. Les
+mappings vides restent explicites. Le contenu documentaire complet n'est pas
+recopié dans cette provenance. `EvidenceSet.provenance_summary` expose une
+`item_lineage` bornée et ordonnée par rang technique avec source, locator,
+version, canaux et provenances candidat/contenu, sans excerpt. Cette extension
+utilise les mappings déjà ouverts de C-06 ; aucun contrat C-06 n'est modifié.
 
 La fraîcheur est seulement rapportée depuis `candidate.metadata.freshness`.
 Elle n'est jamais inférée depuis `retrieved_at`. L'autorité du représentant est
@@ -66,6 +95,10 @@ aucune horloge.
 
 - les contrats C-05/C-06 existants suffisent et ne sont pas modifiés ;
 - le chemin candidat → contenu → `EvidenceItem` → `EvidenceSet` est explicite ;
+- la lignée C-05, le candidat classé et la source policy sont vérifiés avant
+  tout accès documentaire ;
+- la provenance candidat/contenu survit jusqu'au résumé de l'EvidenceSet sans
+  y recopier le contenu ;
 - les avertissements de sécurité restent descriptifs dans les limitations ;
 - le prompt injection reste du texte sans side effect ;
 - aucun provider, SQL, filesystem, vector store, retry ou wiring runtime n'est

@@ -217,8 +217,9 @@ def _materialize_available(
             item = agent.fetch_evidence_item(
                 request=EvidenceFetchRequest(
                     evidence_id=f"evidence-{candidate.technical_rank}",
+                    request=request,
+                    retrieval=retrieval,
                     candidate=candidate,
-                    source_policy=request.source_policy,
                 )
             )
         except EvidenceMaterializationError as error:

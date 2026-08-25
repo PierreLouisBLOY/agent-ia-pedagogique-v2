@@ -16,7 +16,9 @@ Les méthodes restent auditables séparément. Aucune méthode `run`, `execute` 
 explicitement le parcours :
 
 ```text
-RetrievalCandidate fusionné
+C-05 EvidenceRequest
+        ↓ CAP-E01
+RetrievalCoordinationResult + RetrievalCandidate fusionné
         ↓ CAP-E02, accès contrôlé
 DocumentContentResult (donnée non fiable)
         ↓ matérialisation explicite
@@ -33,13 +35,29 @@ contenu et ne construit aucune preuve.
 
 ## CAP-E02 — matérialisation d'un item
 
-Le caller fournit un `evidence_id` stable, le candidat fusionné et la
-`source_policy` existante. L'agent utilise uniquement le représentant déjà
-classé et construit `DocumentContentRequest` avec ses candidate ID, source et
-locator exacts.
+Le caller fournit un `evidence_id` stable, le C-05 `EvidenceRequest`, le
+`RetrievalCoordinationResult` produit pour cette demande et le candidat
+fusionné à matérialiser. `EvidenceFetchRequest` ne possède aucun champ
+`source_policy` indépendant.
+
+Avant tout appel de contenu, la lignée impose l'égalité exacte de
+`search_goal`, `scope`, `source_policy`, `filters` et `required_authority` entre
+C-05 et la query du retrieval. Si le C-05 borne `max_items`, la query doit
+rester bornée à une valeur inférieure ou égale ; si le C-05 ne le borne pas, le
+bornage technique du coordinator est accepté. Un C-05 à zéro item exige un
+retrieval vide. Toute divergence produit `RETRIEVAL_LINEAGE_MISMATCH`.
+
+Le candidat doit appartenir exactement à `retrieval.ranked_candidates` avec la
+même identité et le même rang technique. Une égalité de candidate ID ne suffit
+pas. L'agent utilise alors uniquement le représentant déjà classé et construit
+`DocumentContentRequest` avec ses candidate ID, source et locator exacts. Sa
+`source_policy` est héritée de `retrieval.query.source_policy`, déjà prouvée
+égale à celle de C-05 : elle ne peut pas être élargie par le caller.
 
 Le résultat du port doit reproduire ces trois valeurs. Ce contrôle
 anti-confused-deputy échoue avec `CONTENT_RESULT_MISMATCH` en cas de divergence.
+Une `EvidenceContentUnavailable` qui cite un autre candidate ID échoue avec le
+même code au lieu d'être traitée comme une indisponibilité normale.
 Si versions/checksums candidat et contenu sont tous deux connus et différents,
 `CONTENT_VERSION_MISMATCH` empêche la matérialisation.
 
@@ -64,6 +82,18 @@ Aucun résumé LLM n'est produit.
 sous forme décimale exacte transportable, les rangs par canal et les canaux.
 `EvidenceItem.authority` copie le mapping du représentant sans conclure à sa
 suffisance, sa véracité ou sa conformité.
+
+`MaterializedEvidence.provenance` conserve sous forme immutable et agent-safe :
+
+- le candidate ID, la clé d'identité et les canaux du retrieval ;
+- la provenance et les metadata du candidat ;
+- la provenance et les metadata du contenu ;
+- la source, le locator et la version/checksum résolue.
+
+Les mappings vides sont conservés tels quels. Le contenu complet et l'extrait
+ne sont jamais recopiés dans ce mapping. `source_kind` demeure la qualification
+retournée par l'accès de contenu ; elle n'est pas forcée à égaler celle du
+candidat.
 
 ## CAP-E03 — couverture structurelle
 
@@ -92,15 +122,23 @@ version inconnue, deux locators sans objet canonique ou une simple similarité.
 `build_evidence_set` exige un `ContractMeta[AgentResultStatus]` fourni par le
 caller. Run ID, step ID, correlation ID et acteur AG-02 doivent correspondre à
 la demande. `COMPLETE` et `EMPTY` exigent `SUCCEEDED`; `PARTIAL` exige `PARTIAL`.
-L'agent ne fabrique ni timestamp ni identité.
+`EvidenceSetBuildRequest` réapplique aussi la validation C-05 → retrieval et
+refuse ainsi un résultat provenant d'une autre demande. L'agent ne fabrique ni
+timestamp ni identité.
 
 Le set ordonne les items par rang technique et expose :
 
 - `coverage` : statut, comptes, IDs manquants, dégradation et assessment flags ;
 - `conflicts` : divergences de versions structurées ;
 - `limitations` : mappings contenant uniquement un code stable ;
-- `provenance_summary` : AG-02, capabilities, mode/canaux, versions et fraîcheur ;
+- `provenance_summary` : AG-02, capabilities, mode/canaux, versions, fraîcheur
+  et `item_lineage` ordonnée par rang technique ;
 - `retrieval_metrics` : comptes de candidats, matérialisations et résultats par canal.
+
+Chaque entrée `item_lineage` conserve evidence ID, rang, source, locator,
+version, canaux et provenances candidat/contenu. Elle n'embarque ni contenu ni
+`excerpt_or_summary`. Les mappings ouverts de C-06 suffisent ; aucun contrat
+C-06 n'est modifié.
 
 Un `EvidenceSet` vide avec statut `SUCCEEDED` est valide et ne contient aucune
 preuve synthétique.

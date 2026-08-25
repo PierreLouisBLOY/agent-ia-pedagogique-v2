@@ -85,3 +85,9 @@ les requetes techniques, candidats, signaux et acces documentaire provider-neutr
 ainsi que deux Protocols injectables. Elle reutilise les contrats C-05/C-06 sans
 construire de preuve publique et ne contient aucun coordinator, adapter, SQL,
 HTTP, provider ou vector store.
+
+La couche 12.7-C du meme repertoire ajoute un `RetrievalCoordinator` pur. Elle
+execute les canaux dans un ordre ferme, applique l'admissibilite STRUCTURED avant
+la pertinence, deduplique par identite et version, puis fusionne les rangs en
+`Decimal`. Elle ne recherche aucun contenu DOCUMENT, ne construit aucune preuve
+publique et n'ajoute ni adapter, ni retry, ni reranker.

@@ -19,6 +19,7 @@ E_FILES = (
 )
 EXPANSION = EVIDENCE / "evidence_expansion.py"
 EXPANSION_MODEL = EVIDENCE / "evidence_expansion_model.py"
+SECURITY = EVIDENCE / "evidence_security.py"
 
 
 def _tree(path: Path) -> ast.Module:
@@ -152,6 +153,29 @@ def test_expansion_advisor_cannot_search_fetch_or_coordinate() -> None:
     imported = set(_imports(EXPANSION))
     assert all("retrieval_coordinator" not in module for module in imported)
     assert all("evidence_agent" not in module for module in imported)
+
+
+def test_global_upstream_warning_has_no_all_items_fallback() -> None:
+    source = SECURITY.read_text(encoding="utf-8")
+    function = next(
+        node
+        for node in ast.walk(_tree(SECURITY))
+        if isinstance(node, ast.FunctionDef)
+        and node.name == "_append_upstream_warning_signals"
+    )
+    function_source = ast.unparse(function)
+    assert "or evidence_ids" not in function_source
+    assert "UNATTRIBUTED_UPSTREAM_SECURITY_WARNING" in source
+
+
+def test_advisor_validates_security_lineage_before_any_decision_branch() -> None:
+    source = EXPANSION.read_text(encoding="utf-8")
+    validation_index = source.index(
+        "_validate_security_lineage(current=current, security=security)"
+    )
+    first_decision_index = source.index("if not need.required:")
+    assert validation_index < first_decision_index
+    assert "SECURITY_ASSESSMENT_LINEAGE_MISMATCH" in source
 
 
 def test_round_record_carries_no_document_or_provider_payload() -> None:

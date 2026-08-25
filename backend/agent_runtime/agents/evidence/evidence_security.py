@@ -93,7 +93,7 @@ class EvidenceSecurityScanner:
             reason_code="HTTP_URL_MARKER_PRESENT",
         )
 
-        _append_upstream_warning_signals(
+        unattributed_warning_limitations = _append_upstream_warning_signals(
             signals,
             evidence_set.limitations,
             evidence_ids,
@@ -140,6 +140,7 @@ class EvidenceSecurityScanner:
                 "DOCUMENT_INSTRUCTIONS_NON_AUTHORITATIVE",
                 "EXTERNAL_ACTIONS_DISABLED",
                 "LINKS_NOT_FOLLOWED",
+                *unattributed_warning_limitations,
             ),
         )
 
@@ -199,7 +200,8 @@ def _append_upstream_warning_signals(
     signals: list[EvidenceSecuritySignal],
     limitations: tuple[Mapping[str, object], ...],
     evidence_ids: tuple[str, ...],
-) -> None:
+) -> tuple[str, ...]:
+    unattributed_limitations: list[str] = []
     for limitation in limitations:
         code = _limitation_code(limitation)
         if code is None or not code.startswith("SECURITY_WARNING:"):
@@ -207,13 +209,21 @@ def _append_upstream_warning_signals(
         warning_code = code.removeprefix("SECURITY_WARNING:")
         if not warning_code:
             continue
-        attributed = _attributed_ids(limitation, evidence_ids) or evidence_ids
-        _append_signal(
-            signals,
-            code=EvidenceSecuritySignalCode.UPSTREAM_SECURITY_WARNING,
-            evidence_ids=attributed,
-            reason_code=warning_code,
+        attributed = _attributed_ids(limitation, evidence_ids)
+        if attributed:
+            _append_signal(
+                signals,
+                code=EvidenceSecuritySignalCode.UPSTREAM_SECURITY_WARNING,
+                evidence_ids=attributed,
+                reason_code=warning_code,
+            )
+            continue
+        global_limitation = (
+            f"UNATTRIBUTED_UPSTREAM_SECURITY_WARNING:{warning_code}"
         )
+        if global_limitation not in unattributed_limitations:
+            unattributed_limitations.append(global_limitation)
+    return tuple(unattributed_limitations)
 
 
 def _append_stale_signals(

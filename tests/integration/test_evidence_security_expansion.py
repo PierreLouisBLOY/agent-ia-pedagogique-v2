@@ -318,7 +318,9 @@ def test_e_max_rounds_stops_before_any_round_four_proposal() -> None:
     decision = EvidenceExpansionAdvisor().decide(
         history=EvidenceExpansionHistory(records),
         need=_need("Fourth"),
-        security=_clear_security(requests[-1]),
+        security=EvidenceSecurityScanner().assess(
+            evidence_set=_set(requests[-1], ())
+        ),
     )
     assert decision.action is EvidenceExpansionAction.STOP_MAX_ROUNDS
     assert decision.proposal is None

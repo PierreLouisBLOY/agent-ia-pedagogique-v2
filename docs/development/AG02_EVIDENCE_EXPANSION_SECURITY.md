@@ -37,9 +37,12 @@ indicateur, pas l'intention ou la réalité d'une attaque.
 ## Poisoning, provenance et corroboration
 
 Les avertissements `SECURITY_WARNING:<CODE>` deviennent des signaux upstream
-sans severity inventée. En l'absence d'attribution item-level, ils restent
-globaux au set. Une limitation `SOURCE_REPORTED_STALE` ne devient un signal
-item-level que si un evidence ID est fourni ; aucune attribution n'est inventée.
+uniquement lorsque `evidence_id` ou `evidence_ids` fournit une attribution
+exacte. Sans ID, aucun signal item-level n'est créé : le scanner conserve
+`UNATTRIBUTED_UPSTREAM_SECURITY_WARNING:<CODE>` dans les limitations globales,
+sans l'attribuer à tous les items et sans severity inventée. Une limitation
+`SOURCE_REPORTED_STALE` ne devient également un signal item-level que si un
+evidence ID est fourni ; aucune attribution n'est inventée.
 
 Une divergence structurée `VERSION_DIVERGENCE` est signalée et toutes les
 versions restent présentes.
@@ -72,6 +75,14 @@ Le step ID et le search goal peuvent différer entre rounds.
 
 Le besoin `EvidenceExpansionNeed` est fourni explicitement par le caller. Il
 n'est jamais inféré depuis une instruction trouvée dans l'evidence.
+
+Avant toute décision, l'assessment doit appartenir à la dernière round : les
+evidence IDs reconstruits depuis les groupes de corroboration et les codes de
+signaux dédupliqués doivent être exactement ceux de `EvidenceRoundRecord`.
+Sinon l'advisor lève `SECURITY_ASSESSMENT_LINEAGE_MISMATCH`. Ce contrôle précède
+aussi `NO_EXPANSION`, `STOP_MAX_ROUNDS` et `STOP_NO_PROGRESS`, de sorte qu'un
+assessment étranger n'est jamais accepté silencieusement. Une proposal propage
+les codes du record courant, après cette validation.
 
 La policy baseline est :
 

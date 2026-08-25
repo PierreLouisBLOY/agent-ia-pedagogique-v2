@@ -325,11 +325,16 @@ def test_textual_similarity_does_not_trigger_duplication() -> None:
     )
 
 
-def test_upstream_security_warning_is_preserved_without_severity() -> None:
+def test_upstream_security_warning_with_evidence_id_is_attributed_exactly() -> None:
     assessment = EvidenceSecurityScanner().assess(
         evidence_set=_set(
             _item(),
-            limitations=({"code": "SECURITY_WARNING:UNTRUSTED_MARKUP"},),
+            limitations=(
+                {
+                    "code": "SECURITY_WARNING:UNTRUSTED_MARKUP",
+                    "evidence_id": "evidence-1",
+                },
+            ),
         )
     )
     signal = next(
@@ -339,6 +344,86 @@ def test_upstream_security_warning_is_preserved_without_severity() -> None:
     )
     assert signal.reason_code == "UNTRUSTED_MARKUP"
     assert signal.evidence_ids == ("evidence-1",)
+
+
+def test_upstream_security_warning_with_evidence_ids_is_attributed_exactly() -> None:
+    assessment = EvidenceSecurityScanner().assess(
+        evidence_set=_set(
+            _item("evidence-1"),
+            _item("evidence-2"),
+            limitations=(
+                {
+                    "code": "SECURITY_WARNING:UNTRUSTED_MARKUP",
+                    "evidence_ids": ("evidence-2", "evidence-1"),
+                },
+            ),
+        )
+    )
+    signal = next(
+        item
+        for item in assessment.signals
+        if item.code is EvidenceSecuritySignalCode.UPSTREAM_SECURITY_WARNING
+    )
+    assert signal.evidence_ids == ("evidence-1", "evidence-2")
+
+
+def test_global_upstream_warning_creates_no_item_level_signal() -> None:
+    assessment = EvidenceSecurityScanner().assess(
+        evidence_set=_set(
+            _item(),
+            limitations=({"code": "SECURITY_WARNING:UNTRUSTED_MARKUP"},),
+        )
+    )
+    assert EvidenceSecuritySignalCode.UPSTREAM_SECURITY_WARNING not in _codes(
+        assessment
+    )
+    assert assessment.suspicious_evidence_ids == ()
+
+
+def test_global_upstream_warning_never_invents_an_evidence_id() -> None:
+    assessment = EvidenceSecurityScanner().assess(
+        evidence_set=_set(
+            _item("evidence-1"),
+            _item("evidence-2"),
+            limitations=({"code": "SECURITY_WARNING:GLOBAL_ONLY"},),
+        )
+    )
+    assert all(
+        signal.code is not EvidenceSecuritySignalCode.UPSTREAM_SECURITY_WARNING
+        for signal in assessment.signals
+    )
+    assert assessment.suspicious_evidence_ids == ()
+
+
+def test_global_upstream_warning_is_preserved_as_global_limitation() -> None:
+    assessment = EvidenceSecurityScanner().assess(
+        evidence_set=_set(
+            _item(),
+            limitations=({"code": "SECURITY_WARNING:UNTRUSTED_MARKUP"},),
+        )
+    )
+    assert (
+        "UNATTRIBUTED_UPSTREAM_SECURITY_WARNING:UNTRUSTED_MARKUP"
+        in assessment.limitations
+    )
+
+
+def test_global_upstream_warning_limitations_are_stable_and_deduplicated() -> None:
+    assessment = EvidenceSecurityScanner().assess(
+        evidence_set=_set(
+            _item(),
+            limitations=(
+                {"code": "SECURITY_WARNING:Z_WARNING"},
+                {"code": "SECURITY_WARNING:A_WARNING"},
+                {"code": "SECURITY_WARNING:Z_WARNING"},
+            ),
+        )
+    )
+    assert assessment.limitations[-2:] == (
+        "UNATTRIBUTED_UPSTREAM_SECURITY_WARNING:Z_WARNING",
+        "UNATTRIBUTED_UPSTREAM_SECURITY_WARNING:A_WARNING",
+    )
+    assert assessment.suspicious_evidence_ids == ()
 
 
 def test_security_assessment_is_strictly_deterministic() -> None:

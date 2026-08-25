@@ -12,6 +12,7 @@ from backend.agent_runtime.agents.evidence.evidence_expansion_model import (
     EvidenceExpansionNeed,
     EvidenceExpansionPolicy,
     EvidenceExpansionProposal,
+    EvidenceRoundRecord,
 )
 from backend.agent_runtime.agents.evidence.evidence_security_model import (
     EvidenceSecurityAssessment,
@@ -41,6 +42,7 @@ class EvidenceExpansionAdvisor:
         if type(security) is not EvidenceSecurityAssessment:
             raise TypeError("security must be an EvidenceSecurityAssessment")
         current = history.records[-1]
+        _validate_security_lineage(current=current, security=security)
         if not need.required:
             return EvidenceExpansionDecision(
                 action=EvidenceExpansionAction.NO_EXPANSION,
@@ -96,7 +98,6 @@ class EvidenceExpansionAdvisor:
                 "requested item limit exceeds the allowed evidence bound",
             )
         proposal_max = allowed_max if requested_max is None else requested_max
-        security_codes = _stable_security_codes(security)
         proposal = EvidenceExpansionProposal(
             next_round_number=current.round_number + 1,
             search_goal=next_search_goal,
@@ -106,7 +107,7 @@ class EvidenceExpansionAdvisor:
             required_authority=initial_request.required_authority,
             max_items=proposal_max,
             reason_codes=need.reason_codes,
-            security_signal_codes=security_codes,
+            security_signal_codes=current.security_signal_codes,
         )
         return EvidenceExpansionDecision(
             action=EvidenceExpansionAction.PROPOSE_NEXT_ROUND,
@@ -124,3 +125,24 @@ def _stable_security_codes(
         if signal.code not in codes:
             codes.append(signal.code)
     return tuple(codes)
+
+
+def _validate_security_lineage(
+    *,
+    current: EvidenceRoundRecord,
+    security: EvidenceSecurityAssessment,
+) -> None:
+    assessed_evidence_ids: list[str] = []
+    for group in security.independent_corroboration_groups:
+        for evidence_id in group:
+            if evidence_id not in assessed_evidence_ids:
+                assessed_evidence_ids.append(evidence_id)
+    assessed_codes = _stable_security_codes(security)
+    if (
+        tuple(assessed_evidence_ids) != current.evidence_ids
+        or assessed_codes != current.security_signal_codes
+    ):
+        raise EvidenceExpansionError(
+            EvidenceExpansionErrorCode.SECURITY_ASSESSMENT_LINEAGE_MISMATCH,
+            "security assessment does not match the current evidence round",
+        )

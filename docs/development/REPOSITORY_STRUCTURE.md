@@ -106,3 +106,10 @@ scope et source policy, applique les bornes 3 rounds/12 items et no-progress,
 puis produit uniquement une proposition pour AG-01. Il n'execute aucune round,
 n'introduit ni recursion, ni provider, ni SecurityEvent global, ni wiring
 runtime/orchestration.
+
+Sous `backend/agent_runtime/agents/generation/`, la frontiere 12.8-B definit les
+operations techniques immutables, la requete preparee, le resultat technique et
+le Protocol outbound unique d'AG-03. Elle reste distincte des contracts
+`ProductionCandidate` et `CorrectionResult`, ne choisit aucun provider, modele
+ou prompt et n'effectue ni recherche, ni acces direct aux donnees, ni validation,
+promotion, retry ou wiring runtime/orchestration.

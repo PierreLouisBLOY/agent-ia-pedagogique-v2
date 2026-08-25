@@ -51,10 +51,11 @@ def _called_names(root: Path) -> set[str]:
     return names
 
 
-def test_agent_production_package_is_limited_to_the_evidence_boundary() -> None:
+def test_agent_production_packages_are_limited_to_validated_boundaries() -> None:
     assert {path.name for path in AGENTS.iterdir() if path.name != "__pycache__"} == {
         "__init__.py",
         "evidence",
+        "generation",
     }
     assert {
         "__init__.py",

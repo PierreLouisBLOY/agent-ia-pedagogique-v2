@@ -132,14 +132,14 @@ def _validate_security_lineage(
     current: EvidenceRoundRecord,
     security: EvidenceSecurityAssessment,
 ) -> None:
-    assessed_evidence_ids: list[str] = []
-    for group in security.independent_corroboration_groups:
-        for evidence_id in group:
-            if evidence_id not in assessed_evidence_ids:
-                assessed_evidence_ids.append(evidence_id)
+    assessed_evidence_ids = {
+        evidence_id
+        for group in security.independent_corroboration_groups
+        for evidence_id in group
+    }
     assessed_codes = _stable_security_codes(security)
     if (
-        tuple(assessed_evidence_ids) != current.evidence_ids
+        assessed_evidence_ids != set(current.evidence_ids)
         or assessed_codes != current.security_signal_codes
     ):
         raise EvidenceExpansionError(

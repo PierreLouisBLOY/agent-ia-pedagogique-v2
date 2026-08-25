@@ -35,7 +35,10 @@ Les avertissements upstream restent des reason codes sans severity inventée.
 Un `SECURITY_WARNING:<CODE>` ne produit un signal item-level que si ses evidence
 IDs sont explicitement attribuables. Sans ID, il devient uniquement la
 limitation globale `UNATTRIBUTED_UPSTREAM_SECURITY_WARNING:<CODE>` : il n'est
-jamais attribué artificiellement à tous les items. Une staleness globale non
+jamais attribué artificiellement à tous les items. Une liste d'IDs est validée
+de façon atomique : tout ID inconnu interdit une intersection partielle et
+conserve le warning comme limitation globale ; tous les IDs valides sont remis
+dans l'ordre canonique du set. Une staleness globale non
 attribuable suit la même règle de non-invention et ne produit aucun signal.
 
 Les divergences de version sont signalées sans supprimer de version. Deux
@@ -66,10 +69,12 @@ Une valeur demandée supérieure échoue avec `MAX_ITEMS_WIDENING`; elle n'est p
 tronquée silencieusement.
 
 Avant toute branche de décision, l'advisor lie l'assessment de sécurité à la
-dernière round. Les evidence IDs reconstruits depuis les groupes de
-corroboration doivent correspondre exactement, dans le même ordre, aux IDs du
-record courant. Les codes dédupliqués des signaux doivent être identiques aux
-codes snapshotés. Toute divergence échoue avec
+dernière round. Les evidence IDs des groupes de corroboration doivent avoir
+exactement le même membership que les IDs du record courant ; l'ordre
+inter-groupes n'est pas canonique et n'est donc pas reconstruit. Seul
+`current.evidence_ids` conserve l'ordre canonique de la round. Les codes
+dédupliqués des signaux doivent être identiques aux codes snapshotés. Toute
+divergence échoue avec
 `SECURITY_ASSESSMENT_LINEAGE_MISMATCH`, y compris lorsque la décision aurait été
 `NO_EXPANSION`, `STOP_MAX_ROUNDS` ou `STOP_NO_PROGRESS`. Une proposal propage
 uniquement les codes déjà liés au record courant.

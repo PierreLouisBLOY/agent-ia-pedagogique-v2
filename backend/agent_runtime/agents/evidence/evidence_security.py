@@ -193,6 +193,8 @@ def _attributed_ids(
     else:
         return ()
     requested_set = set(requested)
+    if not requested_set.issubset(known_ids):
+        return ()
     return tuple(item for item in known_ids if item in requested_set)
 
 

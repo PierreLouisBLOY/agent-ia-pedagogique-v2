@@ -375,3 +375,56 @@ def test_g_security_and_expansion_are_strictly_deterministic() -> None:
     )
     assert first_security == second_security
     assert first_decision == second_decision
+
+
+def test_h_interleaved_duplicate_groups_preserve_round_membership_lineage() -> None:
+    request = _request()
+    evidence_set = _set(
+        request,
+        (
+            _item(
+                "evidence-1",
+                text="First representation.",
+                source_ref="source-a",
+                locator="document:a",
+                version="v1",
+            ),
+            _item(
+                "evidence-2",
+                text="Independent representation.",
+                source_ref="source-b",
+                locator="document:b",
+                version="v1",
+            ),
+            _item(
+                "evidence-3",
+                text="Second representation.",
+                source_ref="source-a",
+                locator="document:a",
+                version="v1",
+            ),
+        ),
+    )
+    security = EvidenceSecurityScanner().assess(evidence_set=evidence_set)
+    assert security.independent_corroboration_groups == (
+        ("evidence-1", "evidence-3"),
+        ("evidence-2",),
+    )
+    record = _record(
+        1,
+        request,
+        ("a", "b", "a-copy"),
+        evidence_set,
+        security,
+    )
+    decision = EvidenceExpansionAdvisor().decide(
+        history=EvidenceExpansionHistory((record,)),
+        need=EvidenceExpansionNeed(False, (), None),
+        security=security,
+    )
+    assert record.evidence_ids == (
+        "evidence-1",
+        "evidence-2",
+        "evidence-3",
+    )
+    assert decision.action is EvidenceExpansionAction.NO_EXPANSION

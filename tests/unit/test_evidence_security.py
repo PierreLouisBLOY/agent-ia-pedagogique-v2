@@ -367,6 +367,73 @@ def test_upstream_security_warning_with_evidence_ids_is_attributed_exactly() -> 
     assert signal.evidence_ids == ("evidence-1", "evidence-2")
 
 
+def test_upstream_warning_with_one_foreign_id_has_no_partial_attribution() -> None:
+    assessment = EvidenceSecurityScanner().assess(
+        evidence_set=_set(
+            _item("evidence-1"),
+            _item("evidence-2"),
+            limitations=(
+                {
+                    "code": "SECURITY_WARNING:PARTIAL_INPUT",
+                    "evidence_ids": ("evidence-1", "foreign-id"),
+                },
+            ),
+        )
+    )
+    assert EvidenceSecuritySignalCode.UPSTREAM_SECURITY_WARNING not in _codes(
+        assessment
+    )
+
+
+def test_upstream_warning_with_foreign_id_becomes_global_limitation() -> None:
+    assessment = EvidenceSecurityScanner().assess(
+        evidence_set=_set(
+            _item("evidence-1"),
+            _item("evidence-2"),
+            limitations=(
+                {
+                    "code": "SECURITY_WARNING:PARTIAL_INPUT",
+                    "evidence_ids": ("evidence-1", "foreign-id"),
+                },
+            ),
+        )
+    )
+    assert (
+        "UNATTRIBUTED_UPSTREAM_SECURITY_WARNING:PARTIAL_INPUT"
+        in assessment.limitations
+    )
+
+
+def test_valid_upstream_ids_are_returned_in_three_item_canonical_order() -> None:
+    assessment = EvidenceSecurityScanner().assess(
+        evidence_set=_set(
+            _item("evidence-1"),
+            _item("evidence-2"),
+            _item("evidence-3"),
+            limitations=(
+                {
+                    "code": "SECURITY_WARNING:ORDERED",
+                    "evidence_ids": (
+                        "evidence-3",
+                        "evidence-1",
+                        "evidence-2",
+                    ),
+                },
+            ),
+        )
+    )
+    signal = next(
+        item
+        for item in assessment.signals
+        if item.code is EvidenceSecuritySignalCode.UPSTREAM_SECURITY_WARNING
+    )
+    assert signal.evidence_ids == (
+        "evidence-1",
+        "evidence-2",
+        "evidence-3",
+    )
+
+
 def test_global_upstream_warning_creates_no_item_level_signal() -> None:
     assessment = EvidenceSecurityScanner().assess(
         evidence_set=_set(

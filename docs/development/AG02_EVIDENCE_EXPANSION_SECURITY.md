@@ -41,6 +41,9 @@ uniquement lorsque `evidence_id` ou `evidence_ids` fournit une attribution
 exacte. Sans ID, aucun signal item-level n'est créé : le scanner conserve
 `UNATTRIBUTED_UPSTREAM_SECURITY_WARNING:<CODE>` dans les limitations globales,
 sans l'attribuer à tous les items et sans severity inventée. Une limitation
+contenant plusieurs IDs est atomique : si un seul ID est inconnu, aucune
+intersection partielle n'est attribuée et le warning reste global. Lorsque tous
+les IDs sont valides, le signal suit l'ordre canonique de l'EvidenceSet. Une limitation
 `SOURCE_REPORTED_STALE` ne devient également un signal item-level que si un
 evidence ID est fourni ; aucune attribution n'est inventée.
 
@@ -77,8 +80,10 @@ Le besoin `EvidenceExpansionNeed` est fourni explicitement par le caller. Il
 n'est jamais inféré depuis une instruction trouvée dans l'evidence.
 
 Avant toute décision, l'assessment doit appartenir à la dernière round : les
-evidence IDs reconstruits depuis les groupes de corroboration et les codes de
-signaux dédupliqués doivent être exactement ceux de `EvidenceRoundRecord`.
+groupes de corroboration doivent contenir exactement le même ensemble
+d'evidence IDs que `EvidenceRoundRecord`, sans déduire un ordre depuis les
+groupes. `current.evidence_ids` demeure l'ordre canonique. Les codes de signaux
+dédupliqués doivent être exactement ceux du record.
 Sinon l'advisor lève `SECURITY_ASSESSMENT_LINEAGE_MISMATCH`. Ce contrôle précède
 aussi `NO_EXPANSION`, `STOP_MAX_ROUNDS` et `STOP_NO_PROGRESS`, de sorte qu'un
 assessment étranger n'est jamais accepté silencieusement. Une proposal propage

@@ -133,11 +133,21 @@ def _prepare(
 def _forge(
     prepared: PreparedGenerationCall,
     *,
+    preparation_request: object | None = None,
     capability_id: CapabilityId | None = None,
     canonical_request: ProductionRequest | None = None,
     port_request: GenerationPortRequest | None = None,
 ) -> PreparedGenerationCall:
     forged = object.__new__(PreparedGenerationCall)
+    object.__setattr__(
+        forged,
+        "preparation_request",
+        (
+            prepared.preparation_request
+            if preparation_request is None
+            else preparation_request
+        ),
+    )
     object.__setattr__(forged, "capability_id", capability_id or prepared.capability_id)
     object.__setattr__(
         forged,
@@ -179,6 +189,26 @@ def test_prepare_maps_g02_to_transform_with_required_target() -> None:
     _, _, prepared = _prepare(G02, canonical=_canonical(target_ref=target), response=_result(operation=GenerationOperation.TRANSFORM))
     assert prepared.port_request.operation is GenerationOperation.TRANSFORM
     assert prepared.port_request.target_ref == target
+
+
+@pytest.mark.parametrize(
+    ("capability_id", "target_ref"),
+    ((G01, None), (G02, "production:target:v1")),
+)
+def test_prepare_keeps_exact_preparation_request_for_g01_and_g02(
+    capability_id: CapabilityId,
+    target_ref: str | None,
+) -> None:
+    preparation = GenerationPreparationRequest(
+        capability_id,
+        _canonical(target_ref=target_ref),
+        resolved_inputs={"caller": {"scope": "exact"}},
+        output_contract={"schema": {"type": "lesson"}},
+    )
+    prepared = GenerationCoordinator(RecordingGenerationPort(_result())).prepare(
+        request=preparation
+    )
+    assert prepared.preparation_request is preparation
 
 
 def test_prepare_rejects_g03_for_production_request() -> None:
@@ -236,6 +266,112 @@ def test_prepare_injects_only_caller_supplied_resolved_inputs_and_output_contrac
     assert prepared.port_request.pedagogical_context == {
         "audience": {"level": "beginner", "needs": ("scaffolding",)}
     }
+
+
+def test_execute_accepts_exact_caller_inputs_and_output_contract() -> None:
+    preparation = GenerationPreparationRequest(
+        G01,
+        _canonical(),
+        resolved_inputs={"caller": {"items": ["one", "two"]}},
+        output_contract={"schema": {"required": ["title", "body"]}},
+    )
+    port = RecordingGenerationPort(_result())
+    coordinator = GenerationCoordinator(port)
+    prepared = coordinator.prepare(request=preparation)
+    assert prepared.port_request.resolved_inputs == preparation.resolved_inputs
+    assert prepared.port_request.output_contract == preparation.output_contract
+    coordinator.execute(prepared=prepared)
+    assert port.calls == [prepared.port_request]
+
+
+@pytest.mark.parametrize(
+    ("capability_id", "target_ref", "operation", "forged_inputs"),
+    (
+        (G01, None, GenerationOperation.GENERATE, {"caller": "substituted"}),
+        (
+            G01,
+            None,
+            GenerationOperation.GENERATE,
+            {"caller": {"scope": "substituted-nested"}},
+        ),
+        (
+            G02,
+            "production:target:v1",
+            GenerationOperation.TRANSFORM,
+            {"caller": "substituted-transform"},
+        ),
+    ),
+)
+def test_execute_rejects_forged_caller_inputs_before_port(
+    capability_id: CapabilityId,
+    target_ref: str | None,
+    operation: GenerationOperation,
+    forged_inputs: dict[str, object],
+) -> None:
+    preparation = GenerationPreparationRequest(
+        capability_id,
+        _canonical(target_ref=target_ref),
+        resolved_inputs={"caller": {"scope": "original"}},
+    )
+    port = RecordingGenerationPort(_result(operation=operation))
+    coordinator = GenerationCoordinator(port)
+    prepared = coordinator.prepare(request=preparation)
+    forged = _forge(
+        prepared,
+        port_request=replace(
+            prepared.port_request,
+            resolved_inputs=forged_inputs,
+        ),
+    )
+    with pytest.raises(GenerationCoordinationError) as raised:
+        coordinator.execute(prepared=forged)
+    assert raised.value.code is GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH
+    assert port.calls == []
+
+
+@pytest.mark.parametrize(
+    ("capability_id", "target_ref", "operation", "forged_contract"),
+    (
+        (G01, None, GenerationOperation.GENERATE, {"type": "substituted"}),
+        (
+            G01,
+            None,
+            GenerationOperation.GENERATE,
+            {"schema": {"type": "substituted-nested"}},
+        ),
+        (
+            G02,
+            "production:target:v1",
+            GenerationOperation.TRANSFORM,
+            {"type": "substituted-transform"},
+        ),
+    ),
+)
+def test_execute_rejects_forged_output_contract_before_port(
+    capability_id: CapabilityId,
+    target_ref: str | None,
+    operation: GenerationOperation,
+    forged_contract: dict[str, object],
+) -> None:
+    preparation = GenerationPreparationRequest(
+        capability_id,
+        _canonical(target_ref=target_ref),
+        output_contract={"schema": {"type": "original"}},
+    )
+    port = RecordingGenerationPort(_result(operation=operation))
+    coordinator = GenerationCoordinator(port)
+    prepared = coordinator.prepare(request=preparation)
+    forged = _forge(
+        prepared,
+        port_request=replace(
+            prepared.port_request,
+            output_contract=forged_contract,
+        ),
+    )
+    with pytest.raises(GenerationCoordinationError) as raised:
+        coordinator.execute(prepared=forged)
+    assert raised.value.code is GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH
+    assert port.calls == []
 
 
 def test_prepare_keeps_nested_pedagogical_context_deeply_immutable() -> None:
@@ -334,6 +470,7 @@ def test_prepared_constructor_rejects_forged_canonical_copies(
     forged_port_request = replace(prepared.port_request, **{field_name: forged_value})
     with pytest.raises(GenerationCoordinationError) as raised:
         PreparedGenerationCall(
+            prepared.preparation_request,
             prepared.capability_id,
             prepared.canonical_request,
             forged_port_request,
@@ -345,6 +482,7 @@ def test_prepared_constructor_rejects_source_step_mismatch() -> None:
     _, _, prepared = _prepare()
     with pytest.raises(GenerationCoordinationError) as raised:
         PreparedGenerationCall(
+            prepared.preparation_request,
             G01,
             prepared.canonical_request,
             replace(prepared.port_request, source_step_id="forged-step"),
@@ -356,6 +494,7 @@ def test_prepared_constructor_rejects_divergent_pedagogical_context() -> None:
     _, _, prepared = _prepare()
     with pytest.raises(GenerationCoordinationError) as raised:
         PreparedGenerationCall(
+            prepared.preparation_request,
             G01,
             prepared.canonical_request,
             replace(
@@ -371,6 +510,7 @@ def test_prepared_constructor_rejects_nested_context_divergence() -> None:
     _, _, prepared = _prepare()
     with pytest.raises(GenerationCoordinationError) as raised:
         PreparedGenerationCall(
+            prepared.preparation_request,
             G01,
             prepared.canonical_request,
             replace(
@@ -385,10 +525,18 @@ def test_prepared_constructor_rejects_nested_context_divergence() -> None:
 
 def test_prepared_constructor_rejects_capability_operation_mismatch() -> None:
     _, _, prepared = _prepare()
+    canonical = _canonical(target_ref="production:target:v1")
+    preparation = GenerationPreparationRequest(
+        G02,
+        canonical,
+        prepared.preparation_request.resolved_inputs,
+        prepared.preparation_request.output_contract,
+    )
     with pytest.raises(GenerationCoordinationError) as raised:
         PreparedGenerationCall(
+            preparation,
             G02,
-            _canonical(target_ref="production:target:v1"),
+            canonical,
             replace(
                 prepared.port_request,
                 target_ref="production:target:v1",
@@ -402,6 +550,17 @@ def test_execute_calls_port_exactly_once_and_returns_same_result() -> None:
     coordinator, port, prepared = _prepare(response=expected)
     actual = coordinator.execute(prepared=prepared)
     assert actual is expected
+    assert port.calls == [prepared.port_request]
+
+
+def test_execute_g02_calls_port_exactly_once() -> None:
+    expected = _result(operation=GenerationOperation.TRANSFORM)
+    coordinator, port, prepared = _prepare(
+        G02,
+        canonical=_canonical(target_ref="production:target:v1"),
+        response=expected,
+    )
+    assert coordinator.execute(prepared=prepared) is expected
     assert port.calls == [prepared.port_request]
 
 
@@ -489,6 +648,37 @@ def test_execute_revalidates_forged_prepared_before_outbound_call() -> None:
     with pytest.raises(GenerationCoordinationError) as raised:
         coordinator.execute(prepared=forged)
     assert raised.value.code is GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH
+    assert port.calls == []
+
+
+def test_execute_rejects_divergent_snapshot_capability_before_port() -> None:
+    coordinator, port, prepared = _prepare()
+    forged_snapshot = replace(prepared.preparation_request, capability_id=G02)
+    forged = _forge(prepared, preparation_request=forged_snapshot)
+    with pytest.raises(GenerationCoordinationError) as raised:
+        coordinator.execute(prepared=forged)
+    assert raised.value.code is GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH
+    assert port.calls == []
+
+
+def test_execute_rejects_divergent_snapshot_request_before_port() -> None:
+    coordinator, port, prepared = _prepare()
+    forged_snapshot = replace(
+        prepared.preparation_request,
+        request=_canonical(pedagogical_context={"audience": "foreign"}),
+    )
+    forged = _forge(prepared, preparation_request=forged_snapshot)
+    with pytest.raises(GenerationCoordinationError) as raised:
+        coordinator.execute(prepared=forged)
+    assert raised.value.code is GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH
+    assert port.calls == []
+
+
+def test_execute_rejects_non_preparation_snapshot_type_before_port() -> None:
+    coordinator, port, prepared = _prepare()
+    forged = _forge(prepared, preparation_request=object())
+    with pytest.raises(TypeError, match="GenerationPreparationRequest"):
+        coordinator.execute(prepared=forged)
     assert port.calls == []
 
 

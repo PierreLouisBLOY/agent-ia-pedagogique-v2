@@ -45,10 +45,21 @@ données injectées depuis `GenerationPreparationRequest`. Elles doivent déjà
 avoir été résolues et autorisées par l’amont ; elles ne remplacent ni ne
 fusionnent le contexte canonique, et le coordinator ne lit aucune source.
 
+```text
+GenerationPreparationRequest
+→ PreparedGenerationCall.preparation_request (objet exact)
+→ lineage resolved_inputs/output_contract exacte
+→ revalidation avant GenerationPort.generate()
+```
+
 `PreparedGenerationCall` est immutable, mais `execute()` revalide tous ses
-champs, y compris le contexte pédagogique, avant l’appel outbound. Un objet
-forgé, une capability étrangère, une operation divergente, un step différent ou
-une copie altérée échoue de manière fail-closed et le port n’est pas appelé.
+champs contre cette préparation, y compris les deux mappings caller-supplied et
+le contexte pédagogique, avant l’appel outbound. Un objet forgé, une capability
+étrangère, une operation divergente, un step différent ou une copie altérée
+échoue de manière fail-closed et le port n’est pas appelé.
+
+G01/G02 et G03 appliquent désormais le même pattern de snapshot de préparation.
+Aucun second mécanisme de lineage caller-supplied n’est conservé.
 
 ## Lineage de cible et d’evidence
 

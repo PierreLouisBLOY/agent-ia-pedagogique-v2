@@ -69,6 +69,7 @@ class GenerationPreparationRequest:
 
 @dataclass(frozen=True, slots=True)
 class PreparedGenerationCall:
+    preparation_request: GenerationPreparationRequest
     capability_id: CapabilityId
     canonical_request: ProductionRequest
     port_request: GenerationPortRequest
@@ -93,6 +94,8 @@ def _operation_for_capability(capability_id: CapabilityId) -> GenerationOperatio
 
 
 def _validate_prepared_call(prepared: PreparedGenerationCall) -> None:
+    if type(prepared.preparation_request) is not GenerationPreparationRequest:
+        raise TypeError("preparation_request must be a GenerationPreparationRequest")
     if type(prepared.capability_id) is not CapabilityId:
         raise TypeError("capability_id must be a CapabilityId")
     if type(prepared.canonical_request) is not ProductionRequest:
@@ -106,8 +109,17 @@ def _validate_prepared_call(prepared: PreparedGenerationCall) -> None:
             GenerationCoordinationErrorCode.CORRECTION_REQUEST_REQUIRED,
             "CAP-G03 requires a CorrectionRequest",
         )
+    snapshot = prepared.preparation_request
     canonical = prepared.canonical_request
     technical = prepared.port_request
+    if (
+        snapshot.capability_id != prepared.capability_id
+        or snapshot.request != canonical
+    ):
+        _raise_mismatch(
+            GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH,
+            "prepared generation fields do not match the preparation snapshot",
+        )
     if technical.operation is not expected_operation:
         _raise_mismatch(
             GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH,
@@ -154,6 +166,16 @@ def _validate_prepared_call(prepared: PreparedGenerationCall) -> None:
             technical.expected_sections,
             canonical.expected_sections,
             "expected_sections",
+        ),
+        (
+            technical.resolved_inputs,
+            snapshot.resolved_inputs,
+            "resolved_inputs",
+        ),
+        (
+            technical.output_contract,
+            snapshot.output_contract,
+            "output_contract",
         ),
     )
     for actual, expected, field_name in exact_pairs:

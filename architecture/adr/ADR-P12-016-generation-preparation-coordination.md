@@ -48,11 +48,23 @@ est profondément immutable, non autoritaire et distinct de `resolved_inputs`.
 Seuls `resolved_inputs` et `output_contract` sont fournis séparément par le
 caller. Le coordinator ne lit ni ne résout aucune donnée.
 
-`PreparedGenerationCall` est immutable, mais il n’est pas trusted par sa seule
-construction. `execute()` revalide capability, operation, step, type de
-production, objectif, format, contexte pédagogique, contraintes, evidence,
-cible et sections avant tout appel outbound. Cette défense couvre aussi un objet
-forgé ayant contourné le constructeur.
+```text
+GenerationPreparationRequest
+→ PreparedGenerationCall.preparation_request (objet exact)
+→ lineage resolved_inputs/output_contract exacte
+→ revalidation avant l'appel outbound
+```
+
+`PreparedGenerationCall` est immutable et conserve par identité la préparation
+caller-supplied d'origine, mais il n’est pas trusted par sa seule construction.
+`execute()` revalide capability, requête canonique, `resolved_inputs`,
+`output_contract`, operation, step, type de production, objectif, format,
+contexte pédagogique, contraintes, evidence, cible et sections avant tout appel
+outbound. Cette défense couvre aussi un objet forgé ayant contourné le
+constructeur.
+
+G01/G02 et G03 appliquent désormais le même pattern de snapshot de préparation.
+Aucun second mécanisme de lineage caller-supplied n’est conservé.
 
 Le port est appelé au plus une fois. Il n’existe aucun retry, fallback, repair,
 replan ou traduction de `GenerationPortError`. Un résultat d’un autre step ou

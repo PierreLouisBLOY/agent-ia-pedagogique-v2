@@ -72,6 +72,7 @@ class GenerationCoordinator:
             output_contract=request.output_contract,
         )
         return PreparedGenerationCall(
+            preparation_request=request,
             capability_id=request.capability_id,
             canonical_request=canonical,
             port_request=port_request,

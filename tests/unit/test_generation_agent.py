@@ -239,6 +239,25 @@ def _forge_build(
     return forged
 
 
+def _forge_prepared(
+    valid: PreparedGenerationCall,
+    port_request: GenerationPortRequest,
+) -> PreparedGenerationCall:
+    forged = object.__new__(PreparedGenerationCall)
+    for field_name in (
+        "preparation_request",
+        "capability_id",
+        "canonical_request",
+        "port_request",
+    ):
+        object.__setattr__(
+            forged,
+            field_name,
+            port_request if field_name == "port_request" else getattr(valid, field_name),
+        )
+    return forged
+
+
 def test_materialization_error_codes_are_closed_and_minimal() -> None:
     assert tuple(item.value for item in GenerationCandidateMaterializationCode) == (
         "UNSUPPORTED_CAPABILITY",
@@ -453,17 +472,53 @@ def test_prepared_canonical_request_must_match_build_request() -> None:
 
 def test_forged_prepared_operation_is_rejected() -> None:
     prepared = _prepared()
-    forged = object.__new__(PreparedGenerationCall)
-    object.__setattr__(forged, "capability_id", prepared.capability_id)
-    object.__setattr__(forged, "canonical_request", prepared.canonical_request)
-    object.__setattr__(
-        forged,
-        "port_request",
+    forged = _forge_prepared(
+        prepared,
         replace(prepared.port_request, operation=GenerationOperation.TRANSFORM),
     )
     with pytest.raises(GenerationCandidateMaterializationError) as raised:
         _build_request(prepared=forged)
     assert raised.value.code is GenerationCandidateMaterializationCode.PREPARED_LINEAGE_MISMATCH
+
+
+@pytest.mark.parametrize(
+    ("field_name", "forged_value"),
+    (
+        ("resolved_inputs", {"authorized": {"scope": "substituted"}}),
+        ("output_contract", {"schema": {"type": "substituted"}}),
+    ),
+)
+def test_build_candidate_rejects_forged_preparation_lineage_with_coherent_result(
+    field_name: str,
+    forged_value: dict[str, object],
+) -> None:
+    prepared = _prepared()
+    if field_name == "resolved_inputs":
+        forged_port_request = replace(
+            prepared.port_request,
+            resolved_inputs=forged_value,
+        )
+    else:
+        forged_port_request = replace(
+            prepared.port_request,
+            output_contract=forged_value,
+        )
+    forged = _forge_prepared(
+        prepared,
+        forged_port_request,
+    )
+    technical = _technical(
+        operation=forged.port_request.operation,
+        source_step_id=forged.port_request.source_step_id,
+        evidence_refs_used=("evidence:one",),
+    )
+    valid = _build_request(prepared=prepared, technical=technical)
+    build_request = _forge_build(valid, prepared=forged, technical_result=technical)
+    agent, _, port = _agent()
+    with pytest.raises(GenerationCandidateMaterializationError) as raised:
+        agent.build_candidate(request=build_request)
+    assert raised.value.code is GenerationCandidateMaterializationCode.PREPARED_LINEAGE_MISMATCH
+    assert port.calls == []
 
 
 @pytest.mark.parametrize(

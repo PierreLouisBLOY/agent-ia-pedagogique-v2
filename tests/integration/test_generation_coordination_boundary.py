@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime
 
 import pytest
@@ -15,6 +16,7 @@ from backend.agent_runtime.agents.generation import (
     GenerationPortResult,
     GenerationPortResultStatus,
     GenerationPreparationRequest,
+    PreparedGenerationCall,
 )
 from backend.agent_runtime.contracts import (
     AGENT_CONTRACT_SCHEMA_V1_0,
@@ -120,6 +122,25 @@ def _execute(
     return result, port, prepared.port_request
 
 
+def _forge_prepared_port_request(
+    valid: PreparedGenerationCall,
+    port_request: GenerationPortRequest,
+) -> PreparedGenerationCall:
+    forged = object.__new__(PreparedGenerationCall)
+    for field_name in (
+        "preparation_request",
+        "capability_id",
+        "canonical_request",
+        "port_request",
+    ):
+        object.__setattr__(
+            forged,
+            field_name,
+            port_request if field_name == "port_request" else getattr(valid, field_name),
+        )
+    return forged
+
+
 def test_generate_crosses_boundary_once_with_exact_prepared_lineage() -> None:
     expected = _result(GenerationOperation.GENERATE)
     result, port, technical = _execute("CAP-G01", _request(), expected)
@@ -149,6 +170,50 @@ def test_transform_crosses_boundary_once_with_same_target_reference() -> None:
     assert technical.pedagogical_context == {
         "audience": {"level": "beginner", "supports": ("examples",)}
     }
+
+
+def test_g01_forged_caller_inputs_fail_before_boundary_call() -> None:
+    port = RecordingGenerationPort(_result(GenerationOperation.GENERATE))
+    coordinator = GenerationCoordinator(port)
+    preparation = GenerationPreparationRequest(
+        CapabilityId("CAP-G01"),
+        _request(),
+        resolved_inputs={"authorized_input": {"scope": "original"}},
+    )
+    prepared = coordinator.prepare(request=preparation)
+    forged = _forge_prepared_port_request(
+        prepared,
+        replace(
+            prepared.port_request,
+            resolved_inputs={"authorized_input": {"scope": "substituted"}},
+        ),
+    )
+    with pytest.raises(GenerationCoordinationError) as raised:
+        coordinator.execute(prepared=forged)
+    assert raised.value.code is GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH
+    assert port.calls == []
+
+
+def test_g02_forged_output_contract_fails_before_boundary_call() -> None:
+    port = RecordingGenerationPort(_result(GenerationOperation.TRANSFORM))
+    coordinator = GenerationCoordinator(port)
+    preparation = GenerationPreparationRequest(
+        CapabilityId("CAP-G02"),
+        _request(target_ref="production:activity:v1"),
+        output_contract={"schema": {"type": "original"}},
+    )
+    prepared = coordinator.prepare(request=preparation)
+    forged = _forge_prepared_port_request(
+        prepared,
+        replace(
+            prepared.port_request,
+            output_contract={"schema": {"type": "substituted"}},
+        ),
+    )
+    with pytest.raises(GenerationCoordinationError) as raised:
+        coordinator.execute(prepared=forged)
+    assert raised.value.code is GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH
+    assert port.calls == []
 
 
 def test_evidence_subset_is_preserved_without_fetch_or_authority_evaluation() -> None:

@@ -9,6 +9,8 @@ from pathlib import Path
 from backend.agent_runtime.agents.generation import (
     GenerationCoordinationErrorCode,
     GenerationCoordinator,
+    PreparedCorrectionCall,
+    PreparedGenerationCall,
 )
 from backend.agent_runtime.contracts import ProductionRequest
 from backend.agent_runtime.contracts.common import AgentId
@@ -247,6 +249,44 @@ def test_pedagogical_context_lineage_is_explicit_and_revalidated() -> None:
             "technical.constraints"
         )
     ]
+
+
+def test_prepared_generation_keeps_exact_preparation_snapshot_shape() -> None:
+    assert tuple(item.name for item in fields(PreparedGenerationCall)) == (
+        "preparation_request",
+        "capability_id",
+        "canonical_request",
+        "port_request",
+    )
+    coordinator_source = COORDINATOR.read_text(encoding="utf-8")
+    assert "preparation_request=request" in coordinator_source
+    class_names = {
+        node.name
+        for path in _python_files(GENERATION)
+        for node in ast.walk(_tree(path))
+        if isinstance(node, ast.ClassDef)
+    }
+    assert all("Snapshot" not in name for name in class_names)
+
+
+def test_prepared_generation_revalidates_caller_supplied_lineage() -> None:
+    source = MODEL.read_text(encoding="utf-8")
+    validator = source[
+        source.index("def _validate_prepared_call(") : source.index(
+            "def _raise_mismatch("
+        )
+    ]
+    assert "technical.resolved_inputs" in validator
+    assert "snapshot.resolved_inputs" in validator
+    assert "technical.output_contract" in validator
+    assert "snapshot.output_contract" in validator
+
+
+def test_g01_g02_and_g03_share_one_preparation_snapshot_pattern() -> None:
+    assert fields(PreparedGenerationCall)[0].name == "preparation_request"
+    assert fields(PreparedCorrectionCall)[0].name == "preparation_request"
+    coordinator_source = COORDINATOR.read_text(encoding="utf-8")
+    assert coordinator_source.count("preparation_request=request") == 2
 
 
 def test_coordination_error_vocabulary_is_exact_and_authority_free() -> None:

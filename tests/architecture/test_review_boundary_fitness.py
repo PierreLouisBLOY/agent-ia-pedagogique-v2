@@ -50,6 +50,8 @@ def test_review_package_contains_only_the_provider_neutral_boundary() -> None:
     assert REVIEW.is_dir()
     assert {path.name for path in _python_files(REVIEW)} == {
         "__init__.py",
+        "review_coordination_model.py",
+        "review_coordinator.py",
         "review_model.py",
         "review_ports.py",
     }
@@ -71,7 +73,7 @@ def test_review_port_is_unique_and_has_one_outbound_method() -> None:
     assert public_methods == {"review"}
 
 
-def test_review_boundary_creates_no_agent_coordinator_or_provider() -> None:
+def test_review_boundary_creates_no_agent_or_provider() -> None:
     class_names = {
         node.name
         for path in _python_files(REVIEW)
@@ -79,7 +81,6 @@ def test_review_boundary_creates_no_agent_coordinator_or_provider() -> None:
         if isinstance(node, ast.ClassDef)
     }
     assert "ReviewerAgent" not in class_names
-    assert "ReviewCoordinator" not in class_names
     assert all("Provider" not in name for name in class_names)
     assert all("Handler" not in name for name in class_names)
     assert all("Dispatcher" not in name for name in class_names)
@@ -249,7 +250,6 @@ def test_review_boundary_contains_no_provider_prompt_or_authority_service() -> N
             "prompt_template",
             "provider_response",
             "revieweragent",
-            "reviewcoordinator",
         )
     )
 

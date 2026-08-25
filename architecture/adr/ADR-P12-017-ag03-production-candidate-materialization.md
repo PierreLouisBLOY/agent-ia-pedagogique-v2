@@ -25,6 +25,12 @@ doit inventer ni identite, ni horodatage, ni lineage runtime. Le build revalide
 la chaine C-07, appel prepare, resultat technique et metadata avant de construire
 le `ProductionCandidate` C-08 existant.
 
+`GenerationPortResult.execution_metadata` reste une donnee technique non fiable.
+Avant toute construction C-08, un controle deterministe parcourt recursivement
+ses mappings et collections et refuse le vocabulaire reserve a la validation,
+l'approbation, la promotion, la confiance, la qualite canonique, aux gates et aux
+permissions. Le refus est fail-closed ; aucune cle n'est filtree silencieusement.
+
 Seuls les resultats `SUCCEEDED` et `PARTIAL` materialisent un candidat, avec un
 statut canonique respectivement `SUCCEEDED` ou `PARTIAL`. Les resultats
 `REFUSED` et `INSUFFICIENT_EVIDENCE` sont des issues nominales sans contenu et ne
@@ -38,6 +44,8 @@ relation parent.
 ## Consequences et limites
 
 - Le candidat reste dans l'etat canonique `CANDIDATE`.
+- Le controle authority-free ne declare pas la metadata `SAFE` ou `TRUSTED` ; il
+  bloque uniquement un vocabulaire d'autorite ferme.
 - Les references de preuve utilisees restent un sous-ensemble de C-07.
 - Aucune validation, review, promotion ou persistance n'est realisee.
 - CAP-G03 et les contrats de correction sont differes a 12.8-E.

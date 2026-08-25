@@ -274,3 +274,24 @@ def test_d6_forged_result_fails_closed_before_candidate_construction() -> None:
     with pytest.raises(GenerationCandidateMaterializationError) as raised:
         agent.build_candidate(request=forged)
     assert raised.value.code is GenerationCandidateMaterializationCode.TECHNICAL_RESULT_MISMATCH
+
+
+def test_d_f01_authority_metadata_cannot_cross_into_candidate() -> None:
+    canonical = _canonical()
+    technical = replace(
+        _result(GenerationOperation.GENERATE),
+        execution_metadata={"provider": {"validated": True}},
+    )
+    agent, prepared, result, _ = _execute(canonical, "CAP-G01", technical)
+    assert result is technical
+    candidate = None
+    forged = _forged_build(
+        canonical,
+        prepared,
+        result,
+        AgentResultStatus.SUCCEEDED,
+    )
+    with pytest.raises(GenerationCandidateMaterializationError) as raised:
+        candidate = agent.build_candidate(request=forged)
+    assert raised.value.code is GenerationCandidateMaterializationCode.TECHNICAL_RESULT_MISMATCH
+    assert candidate is None

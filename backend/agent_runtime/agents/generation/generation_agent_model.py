@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 
@@ -25,6 +26,22 @@ from backend.agent_runtime.contracts import (
 )
 from backend.core_contracts.capability import CapabilityId
 from backend.shared_kernel._strings import require_non_empty
+
+_FORBIDDEN_GENERATION_METADATA_AUTHORITY_KEYS = frozenset(
+    {
+        "approved",
+        "canonical",
+        "gate_decision",
+        "permission_scope",
+        "promoted",
+        "quality_score",
+        "reviewed",
+        "safe",
+        "trusted",
+        "validated",
+        "validation_state",
+    }
+)
 
 
 class GenerationCandidateMaterializationCode(StrEnum):
@@ -107,6 +124,9 @@ def _validate_candidate_build_request(
             GenerationCandidateMaterializationCode.TECHNICAL_RESULT_MISMATCH,
             "technical generation result does not match the prepared call",
         ) from error
+    _validate_authority_free_generation_metadata(
+        request.technical_result.execution_metadata
+    )
 
     meta = request.result_meta
     canonical_meta = request.canonical_request.meta
@@ -148,3 +168,20 @@ def _raise_materialization(
     safe_reason: str,
 ) -> None:
     raise GenerationCandidateMaterializationError(code, safe_reason)
+
+
+def _validate_authority_free_generation_metadata(value: object) -> None:
+    if isinstance(value, Mapping):
+        for key, nested_value in value.items():
+            if (
+                isinstance(key, str)
+                and key.casefold() in _FORBIDDEN_GENERATION_METADATA_AUTHORITY_KEYS
+            ):
+                _raise_materialization(
+                    GenerationCandidateMaterializationCode.TECHNICAL_RESULT_MISMATCH,
+                    "technical execution metadata contains forbidden authority vocabulary",
+                )
+            _validate_authority_free_generation_metadata(nested_value)
+    elif isinstance(value, (list, tuple)):
+        for nested_value in value:
+            _validate_authority_free_generation_metadata(nested_value)

@@ -5,7 +5,13 @@ import inspect
 import tomllib
 from pathlib import Path
 
-from backend.agent_runtime.agents.generation import GeneratorAgent
+from backend.agent_runtime.agents.generation import (
+    GenerationCandidateMaterializationCode,
+    GeneratorAgent,
+)
+from backend.agent_runtime.agents.generation.generation_agent_model import (
+    _FORBIDDEN_GENERATION_METADATA_AUTHORITY_KEYS,
+)
 from backend.agent_runtime.contracts import AgentId
 from backend.agent_runtime.registry import (
     BASELINE_AGENT_CAPABILITY_MATRIX,
@@ -155,6 +161,56 @@ def test_d_calls_no_review_validate_promote_or_persist_method() -> None:
     )
     assert _attribute_calls(D_FILES).isdisjoint(
         {"persist", "promote", "review", "validate"}
+    )
+
+
+def test_generation_metadata_authority_vocabulary_is_closed_and_exact() -> None:
+    assert _FORBIDDEN_GENERATION_METADATA_AUTHORITY_KEYS == frozenset(
+        {
+            "approved",
+            "canonical",
+            "gate_decision",
+            "permission_scope",
+            "promoted",
+            "quality_score",
+            "reviewed",
+            "safe",
+            "trusted",
+            "validated",
+            "validation_state",
+        }
+    )
+    assert tuple(item.value for item in GenerationCandidateMaterializationCode) == (
+        "UNSUPPORTED_CAPABILITY",
+        "PREPARED_LINEAGE_MISMATCH",
+        "TECHNICAL_RESULT_MISMATCH",
+        "RESULT_META_MISMATCH",
+        "NO_CANDIDATE_FOR_STATUS",
+    )
+
+
+def test_authority_metadata_validation_precedes_candidate_construction() -> None:
+    agent_source = AGENT.read_text(encoding="utf-8")
+    model_source = AGENT_MODEL.read_text(encoding="utf-8")
+    assert agent_source.index("_validate_candidate_build_request(request)") < agent_source.index(
+        "return ProductionCandidate("
+    )
+    validator_body = model_source[
+        model_source.index("def _validate_candidate_build_request("):
+        model_source.index("def _raise_materialization(")
+    ]
+    assert "_validate_authority_free_generation_metadata(" in validator_body
+
+
+def test_authority_metadata_is_never_silently_filtered() -> None:
+    trees = tuple(_tree(path) for path in D_FILES)
+    assert not any(
+        isinstance(node, ast.Delete)
+        for tree in trees
+        for node in ast.walk(tree)
+    )
+    assert _attribute_calls(D_FILES).isdisjoint(
+        {"clear", "discard", "pop", "popitem", "remove"}
     )
 
 

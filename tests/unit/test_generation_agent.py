@@ -525,7 +525,9 @@ def test_candidate_generation_metadata_is_factual_and_authority_free() -> None:
     technical = _technical(
         execution_metadata={
             "finish_reason": "stop",
+            "latency_bucket": "low",
             "operation": "FORGED",
+            "provider_request_id": "provider-request-1",
             "technical_status": "FORGED",
         }
     )
@@ -534,12 +536,67 @@ def test_candidate_generation_metadata_is_factual_and_authority_free() -> None:
     )
     assert candidate.generation_metadata == {
         "finish_reason": "stop",
+        "latency_bucket": "low",
         "operation": "GENERATE",
+        "provider_request_id": "provider-request-1",
         "technical_status": "SUCCEEDED",
     }
     assert set(candidate.generation_metadata).isdisjoint(
         {"approved", "promoted", "safe", "trusted", "validated", "quality_score"}
     )
+
+
+@pytest.mark.parametrize(
+    "authority_key",
+    (
+        "validated",
+        "Validated",
+        "validation_state",
+        "approved",
+        "promoted",
+        "canonical",
+        "reviewed",
+        "safe",
+        "trusted",
+        "quality_score",
+        "gate_decision",
+        "permission_scope",
+    ),
+)
+def test_candidate_build_request_rejects_authority_metadata_case_insensitively(
+    authority_key: str,
+) -> None:
+    technical = _technical(execution_metadata={authority_key: True})
+    with pytest.raises(GenerationCandidateMaterializationError) as raised:
+        _build_request(technical=technical)
+    assert raised.value.code is GenerationCandidateMaterializationCode.TECHNICAL_RESULT_MISMATCH
+
+
+@pytest.mark.parametrize(
+    "execution_metadata",
+    (
+        {"provider": {"approved": True}},
+        {"details": ({"trusted": True},)},
+    ),
+)
+def test_candidate_build_request_rejects_nested_authority_metadata(
+    execution_metadata: dict[str, object],
+) -> None:
+    technical = _technical(execution_metadata=execution_metadata)
+    with pytest.raises(GenerationCandidateMaterializationError) as raised:
+        _build_request(technical=technical)
+    assert raised.value.code is GenerationCandidateMaterializationCode.TECHNICAL_RESULT_MISMATCH
+
+
+def test_build_candidate_revalidates_forged_authority_metadata() -> None:
+    valid = _build_request()
+    forbidden = _technical(
+        execution_metadata={"provider": {"validated": True}}
+    )
+    forged = _forge_build(valid, technical_result=forbidden)
+    with pytest.raises(GenerationCandidateMaterializationError) as raised:
+        _agent()[0].build_candidate(request=forged)
+    assert raised.value.code is GenerationCandidateMaterializationCode.TECHNICAL_RESULT_MISMATCH
 
 
 def test_build_candidate_revalidates_forged_build_request() -> None:

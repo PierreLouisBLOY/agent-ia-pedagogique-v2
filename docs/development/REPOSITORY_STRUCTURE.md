@@ -97,3 +97,12 @@ Elle controle l'identite et la version du contenu, materialise les contrats C-06
 mesure uniquement la couverture structurelle et preserve les divergences de
 versions. Le meta reste fourni par le caller ; aucun enchainement automatique,
 provider concret, retry ou autorite metier n'est introduit.
+
+La couche 12.7-E du meme repertoire ajoute un scanner pur d'indicateurs
+d'injection/poisoning et un advisor d'expansion bornée. Les documents restent
+des donnees non autoritatives, les duplications ne deviennent pas une
+corroboration independante et les URL ne sont jamais suivies. L'advisor conserve
+scope et source policy, applique les bornes 3 rounds/12 items et no-progress,
+puis produit uniquement une proposition pour AG-01. Il n'execute aucune round,
+n'introduit ni recursion, ni provider, ni SecurityEvent global, ni wiring
+runtime/orchestration.

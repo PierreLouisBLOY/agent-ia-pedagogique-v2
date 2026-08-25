@@ -19,6 +19,29 @@ from backend.agent_runtime.agents.evidence.evidence_agent_model import (
     MaterializedEvidence,
     validate_retrieval_lineage,
 )
+from backend.agent_runtime.agents.evidence.evidence_expansion import (
+    EvidenceExpansionAdvisor,
+)
+from backend.agent_runtime.agents.evidence.evidence_expansion_model import (
+    BASELINE_EVIDENCE_EXPANSION_POLICY,
+    EvidenceExpansionAction,
+    EvidenceExpansionDecision,
+    EvidenceExpansionError,
+    EvidenceExpansionErrorCode,
+    EvidenceExpansionHistory,
+    EvidenceExpansionNeed,
+    EvidenceExpansionPolicy,
+    EvidenceExpansionProposal,
+    EvidenceRoundRecord,
+)
+from backend.agent_runtime.agents.evidence.evidence_security import (
+    EvidenceSecurityScanner,
+)
+from backend.agent_runtime.agents.evidence.evidence_security_model import (
+    EvidenceSecurityAssessment,
+    EvidenceSecuritySignal,
+    EvidenceSecuritySignalCode,
+)
 from backend.agent_runtime.agents.evidence.retrieval_coordination_model import (
     BASELINE_RETRIEVAL_COORDINATION_POLICY,
     FusedRetrievalCandidate,
@@ -48,6 +71,7 @@ from backend.agent_runtime.agents.evidence.retrieval_ports import (
 )
 
 __all__ = [
+    "BASELINE_EVIDENCE_EXPANSION_POLICY",
     "BASELINE_EVIDENCE_MATERIALIZATION_POLICY",
     "BASELINE_RETRIEVAL_COORDINATION_POLICY",
     "DocumentContentRequest",
@@ -57,12 +81,26 @@ __all__ = [
     "EvidenceCoverageAssessment",
     "EvidenceCoverageStatus",
     "EvidenceDocumentContentPort",
+    "EvidenceExpansionAction",
+    "EvidenceExpansionAdvisor",
+    "EvidenceExpansionDecision",
+    "EvidenceExpansionError",
+    "EvidenceExpansionErrorCode",
+    "EvidenceExpansionHistory",
+    "EvidenceExpansionNeed",
+    "EvidenceExpansionPolicy",
+    "EvidenceExpansionProposal",
     "EvidenceFetchRequest",
     "EvidenceFreshnessStatus",
     "EvidenceMaterializationCode",
     "EvidenceMaterializationError",
     "EvidenceMaterializationPolicy",
     "EvidenceSearchPort",
+    "EvidenceRoundRecord",
+    "EvidenceSecurityAssessment",
+    "EvidenceSecurityScanner",
+    "EvidenceSecuritySignal",
+    "EvidenceSecuritySignalCode",
     "EvidenceSetBuildRequest",
     "EvidenceVersionConflict",
     "FusedRetrievalCandidate",

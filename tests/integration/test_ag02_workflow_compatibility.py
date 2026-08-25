@@ -2,6 +2,14 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+from backend.agent_runtime.agents.evidence import (
+    EvidenceAgent,
+    RetrievalCandidate,
+    RetrievalChannel,
+    RetrievalCoordinator,
+    RetrievalSearchResult,
+    RetrievalSignals,
+)
 from backend.agent_runtime.contracts import (
     AGENT_CONTRACT_SCHEMA_V1_0,
     ActorKind,
@@ -39,6 +47,10 @@ from backend.agent_runtime.runtime import (
 from backend.core_contracts.capability import CapabilityId
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.time import Instant
+from tests.support.evidence_retrieval_fakes import (
+    RecordingDocumentContentPort,
+    RecordingEvidenceSearchPort,
+)
 from tests.support.orchestration_fakes import (
     FakePreLaunchGuard,
     FakeWorkflowCompletionEvaluator,
@@ -342,13 +354,70 @@ def test_three_search_rag_branches_keep_distinct_requests_outputs_and_join_refs(
             search_goal=f"Independent evidence question {index}",
             scope={"branch": index},
             source_policy={"kinds": ("canonical",)},
-            filters={"active": True},
+            filters={"active": True, "corpus": f"corpus-{index}"},
             max_items=3,
         )
         for index, step in enumerate(evidence)
     )
+    retrieval_outputs = []
+    search_ports = []
+    content_ports = []
+    for index, request in enumerate(requests):
+        structured_candidate = RetrievalCandidate(
+            candidate_id=f"structured-branch-{index}",
+            channel=RetrievalChannel.STRUCTURED,
+            source_ref=f"source:branch-{index}",
+            source_kind="canonical_document",
+            locator=f"document:branch-{index}",
+            signals=RetrievalSignals(structured_rank=1),
+            canonical_object_ref=f"canonical:branch-{index}",
+            version_or_checksum="v1",
+        )
+        search_port = RecordingEvidenceSearchPort(
+            {
+                RetrievalChannel.STRUCTURED: RetrievalSearchResult(
+                    RetrievalChannel.STRUCTURED,
+                    (structured_candidate,),
+                ),
+                RetrievalChannel.LEXICAL: RetrievalSearchResult(
+                    RetrievalChannel.LEXICAL,
+                    (),
+                ),
+                RetrievalChannel.RELATIONAL: RetrievalSearchResult(
+                    RetrievalChannel.RELATIONAL,
+                    (),
+                ),
+                RetrievalChannel.SEMANTIC: RetrievalSearchResult(
+                    RetrievalChannel.SEMANTIC,
+                    (),
+                ),
+            }
+        )
+        content_port = RecordingDocumentContentPort({})
+        retrieval_outputs.append(
+            EvidenceAgent(
+                RetrievalCoordinator(search_port),
+                content_port,
+            ).search_evidence(request=request)
+        )
+        search_ports.append(search_port)
+        content_ports.append(content_port)
     result_refs = tuple(f"evidence-set-branch-{index}" for index in range(3))
-    join_summary = {reference: f"summary for {request.search_goal}" for reference, request in zip(result_refs, requests, strict=True)}
+    join_summary = {
+        reference: {
+            "goal": request.search_goal,
+            "identity_refs": tuple(
+                candidate.identity.deterministic_key()
+                for candidate in retrieval.ranked_candidates
+            ),
+        }
+        for reference, request, retrieval in zip(
+            result_refs,
+            requests,
+            retrieval_outputs,
+            strict=True,
+        )
+    }
     runner = RecordingStepRunner(
         {
             step.step_id: StepExecutionResult(StepRuntimeStatus.SUCCEEDED, (reference,))
@@ -359,8 +428,17 @@ def test_three_search_rag_branches_keep_distinct_requests_outputs_and_join_refs(
 
     assert len({request.meta.step_id for request in requests}) == 3
     assert len({request.search_goal for request in requests}) == 3
+    assert len({str(request.filters["corpus"]) for request in requests}) == 3
     assert all(step.capability_id == CapabilityId("CAP-E01") for step in evidence)
+    assert all(len(port.calls) == 4 for port in search_ports)
+    assert all(port.calls == [] for port in content_ports)
+    assert len(
+        {
+            output.ranked_candidates[0].identity.deterministic_key()
+            for output in retrieval_outputs
+        }
+    ) == 3
     assert tuple(join_summary) == result_refs
-    assert all(isinstance(value, str) for value in join_summary.values())
+    assert all(set(value) == {"goal", "identity_refs"} for value in join_summary.values())
     assert not any(isinstance(value, EvidenceSet) for value in join_summary.values())
     assert sum(step.executor.kind is ExecutorKind.AG_02 for step in plan.steps) == 3

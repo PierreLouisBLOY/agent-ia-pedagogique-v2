@@ -43,7 +43,7 @@ L’admissibilité structurée précède toute matérialisation. Un score lexica
 
 ## Éléments différés
 
-Restent hors de la phase 12.7 : adaptateurs de recherche ou de contenu réels, configuration fournisseur, observabilité externe, persistance, dispatcher/worker de production, exécution réelle d’AG-03 ou AG-04, promotion, fusion sémantique de plusieurs `EvidenceSet`, phase G et phase 12.8. Toute évolution de ces sujets exige un lot canonique ultérieur et les décisions architecturales applicables.
+Restent hors de la phase 12.7 : adaptateurs de recherche ou de contenu réels, configuration fournisseur, persistance, dispatcher/worker de production, promotion et fusion sémantique de plusieurs `EvidenceSet`. Le séquencement canonique différé reste AG-03 en 12.8, AG-04 en 12.9, routing et gates en 12.10, résilience en 12.11, hardening global en 12.12, observabilité en 12.13 et E2E en 12.15. Toute évolution de ces sujets exige un lot canonique ultérieur et les décisions architecturales applicables.
 
 ## Rationalisation
 

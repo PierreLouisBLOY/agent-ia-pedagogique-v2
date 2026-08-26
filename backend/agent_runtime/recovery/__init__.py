@@ -1,5 +1,9 @@
 """Technical idempotency, accounting, and snapshot boundaries."""
 
+from backend.agent_runtime.recovery.backoff import (
+    DeterministicBackoffPolicy,
+    RetrySchedule,
+)
 from backend.agent_runtime.recovery.budget import (
     BudgetAccountingPolicy,
     BudgetCheckDisposition,
@@ -52,6 +56,23 @@ from backend.agent_runtime.recovery.reconciliation_ports import (
     ApplicationEffectProbePort,
     ToolEffectProbePort,
 )
+from backend.agent_runtime.recovery.replay import (
+    AuthorityRevalidationStatus,
+    DeadlineRevalidationStatus,
+    ReplayGuard,
+    ReplayGuardDecision,
+    ReplayGuardDisposition,
+    ReplayGuardReasonCode,
+    ReplayPreconditions,
+    SnapshotRevalidationStatus,
+)
+from backend.agent_runtime.recovery.retry import (
+    RetryDecision,
+    RetryDisposition,
+    RetryPolicy,
+    RetryPolicyRequest,
+    RetryReasonCode,
+)
 from backend.agent_runtime.recovery.snapshot import (
     EffectLedgerSnapshotRef,
     PlanFingerprint,
@@ -69,6 +90,7 @@ from backend.agent_runtime.recovery.snapshot_ports import StateSnapshotStorePort
 __all__ = [
     "ApplicationEffectProbePort",
     "ApplicationEffectProbeRequest",
+    "AuthorityRevalidationStatus",
     "BudgetAccountingPolicy",
     "BudgetCheckDisposition",
     "BudgetCheckResult",
@@ -79,6 +101,8 @@ __all__ = [
     "BudgetStateErrorCode",
     "BudgetStatePort",
     "BudgetUsageDelta",
+    "DeadlineRevalidationStatus",
+    "DeterministicBackoffPolicy",
     "EffectAttemptRecord",
     "EffectLedgerError",
     "EffectLedgerErrorCode",
@@ -104,9 +128,21 @@ __all__ = [
     "ReconciliationObservation",
     "ReconciliationObservationDisposition",
     "ReconciliationStatus",
+    "ReplayGuard",
+    "ReplayGuardDecision",
+    "ReplayGuardDisposition",
+    "ReplayGuardReasonCode",
+    "ReplayPreconditions",
+    "RetryDecision",
+    "RetryDisposition",
+    "RetryPolicy",
+    "RetryPolicyRequest",
+    "RetryReasonCode",
+    "RetrySchedule",
     "SnapshotFreshnessAssessment",
     "SnapshotFreshnessIssue",
     "SnapshotSequencePolicy",
+    "SnapshotRevalidationStatus",
     "SnapshotStoreError",
     "SnapshotStoreErrorCode",
     "StateSnapshot",

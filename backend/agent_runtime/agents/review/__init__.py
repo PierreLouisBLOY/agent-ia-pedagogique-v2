@@ -1,5 +1,11 @@
 """Provider-neutral technical review boundary for AG-04."""
 
+from backend.agent_runtime.agents.review.review_agent import ReviewerAgent
+from backend.agent_runtime.agents.review.review_agent_model import (
+    ReviewMaterializationError,
+    ReviewMaterializationErrorCode,
+    ReviewResultMaterializationRequest,
+)
 from backend.agent_runtime.agents.review.review_coordination_model import (
     PreparedReviewCall,
     ResolvedReviewTarget,
@@ -24,6 +30,9 @@ __all__ = [
     "ReviewCoordinationError",
     "ReviewCoordinationErrorCode",
     "ReviewCoordinator",
+    "ReviewerAgent",
+    "ReviewMaterializationError",
+    "ReviewMaterializationErrorCode",
     "ReviewOperation",
     "ReviewPort",
     "ReviewPortError",
@@ -32,4 +41,5 @@ __all__ = [
     "ReviewPortResult",
     "ReviewPortResultStatus",
     "ReviewPreparationRequest",
+    "ReviewResultMaterializationRequest",
 ]

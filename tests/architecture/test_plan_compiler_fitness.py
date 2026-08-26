@@ -53,7 +53,13 @@ def test_plan_compiler_is_confined_to_orchestration_compilation() -> None:
         for path in RUNTIME.iterdir()
         if path.is_dir() and not path.name.startswith("__")
     }
-    assert runtime_zones == {"planning", "state", "scheduling", "execution"}
+    assert runtime_zones == {
+        "planning",
+        "state",
+        "scheduling",
+        "execution",
+        "routing",
+    }
 
 
 def test_compilation_has_no_provider_transport_persistence_or_concurrency_import() -> None:

@@ -23,6 +23,21 @@ from backend.agent_runtime.runtime.planning import (
     PlanValidationResult,
     PlanValidator,
 )
+from backend.agent_runtime.runtime.routing import (
+    AgentStepBindings,
+    AgentStepExecutionPort,
+    AgentStepRouter,
+    ResolvedAgentInput,
+    ResolvedGateInput,
+    ResolvedToolInput,
+    ResolvedUseCaseInput,
+    RoutingPreLaunchGuard,
+    RoutingStepRunner,
+    RuntimeControlStepRunnerPort,
+    RuntimeRoutingError,
+    RuntimeRoutingErrorCode,
+    RuntimeRoutingResolverPort,
+)
 from backend.agent_runtime.runtime.scheduling import (
     DependencyDisposition,
     DeterministicScheduler,
@@ -41,6 +56,9 @@ from backend.agent_runtime.runtime.state import (
 )
 
 __all__ = [
+    "AgentStepBindings",
+    "AgentStepExecutionPort",
+    "AgentStepRouter",
     "InvalidInitialPlanError",
     "DependencyDisposition",
     "DeterministicScheduler",
@@ -61,6 +79,12 @@ __all__ = [
     "PreLaunchDecision",
     "PreLaunchDisposition",
     "PreLaunchGuard",
+    "ResolvedAgentInput",
+    "ResolvedGateInput",
+    "ResolvedToolInput",
+    "ResolvedUseCaseInput",
+    "RoutingPreLaunchGuard",
+    "RoutingStepRunner",
     "RunState",
     "SchedulerStateError",
     "SchedulingDecision",
@@ -68,6 +92,10 @@ __all__ = [
     "StepExecutionResult",
     "StepRunner",
     "StepState",
+    "RuntimeControlStepRunnerPort",
+    "RuntimeRoutingError",
+    "RuntimeRoutingErrorCode",
+    "RuntimeRoutingResolverPort",
     "dependency_disposition",
     "effective_step_deadline",
     "initialize_run_state",

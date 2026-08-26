@@ -54,7 +54,13 @@ def test_selection_is_confined_to_its_orchestration_subpackage() -> None:
         for path in RUNTIME.iterdir()
         if path.is_dir() and not path.name.startswith("__")
     }
-    assert runtime_zones == {"planning", "state", "scheduling", "execution"}
+    assert runtime_zones == {
+        "planning",
+        "state",
+        "scheduling",
+        "execution",
+        "routing",
+    }
 
 
 def test_selection_imports_no_runtime_provider_transport_or_persistence() -> None:

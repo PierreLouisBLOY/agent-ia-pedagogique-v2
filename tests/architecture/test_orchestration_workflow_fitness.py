@@ -71,7 +71,13 @@ def test_workflow_catalogue_is_confined_to_the_new_orchestration_package() -> No
         for path in RUNTIME.iterdir()
         if path.is_dir() and not path.name.startswith("__")
     }
-    assert runtime_zones == {"planning", "state", "scheduling", "execution"}
+    assert runtime_zones == {
+        "planning",
+        "state",
+        "scheduling",
+        "execution",
+        "routing",
+    }
 
 
 def test_workflows_define_topologies_not_one_engine_per_workflow() -> None:

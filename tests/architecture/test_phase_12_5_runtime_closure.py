@@ -285,7 +285,7 @@ def test_runtime_structure_boundaries_and_dependencies_are_closed() -> None:
         for module in _imported_modules(path)
     }
 
-    assert zones == {"planning", "state", "scheduling", "execution"}
+    assert zones == {"planning", "state", "scheduling", "execution", "routing"}
     assert not (AGENT_RUNTIME / "planning").exists()
     assert all(not module.startswith(forbidden_prefixes) for module in imports)
     with (ROOT / "pyproject.toml").open("rb") as pyproject_file:

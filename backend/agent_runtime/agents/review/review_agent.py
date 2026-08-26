@@ -8,6 +8,14 @@ from backend.agent_runtime.agents.review.review_agent_model import (
     _materialize_findings,
     _validate_materialization_request,
 )
+from backend.agent_runtime.agents.review.review_assessment import (
+    execute_findings_assessment,
+)
+from backend.agent_runtime.agents.review.review_assessment_model import (
+    CorrectionHandoffSignal,
+    FindingsAssessmentRequest,
+    ReviewAssessmentSignal,
+)
 from backend.agent_runtime.agents.review.review_coordination_model import (
     PreparedReviewCall,
     ReviewPreparationRequest,
@@ -68,3 +76,13 @@ class ReviewerAgent:
             raise ReviewMaterializationError(
                 ReviewMaterializationErrorCode.MATERIALIZATION_MISMATCH
             ) from error
+
+    def assess_findings(
+        self,
+        *,
+        request: FindingsAssessmentRequest,
+    ) -> tuple[ReviewAssessmentSignal, CorrectionHandoffSignal | None]:
+        return execute_findings_assessment(
+            coordinator=self._coordinator,
+            request=request,
+        )

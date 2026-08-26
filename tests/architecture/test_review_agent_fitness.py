@@ -94,13 +94,13 @@ def test_canonical_review_models_and_enums_are_not_duplicated() -> None:
     }
 
 
-def test_reviewer_agent_exposes_only_cap_v01_semantic_review_and_build() -> None:
+def test_reviewer_agent_keeps_d_api_and_adds_only_e_assessment() -> None:
     public = {
         name
         for name, value in ReviewerAgent.__dict__.items()
         if callable(value) and not name.startswith("_")
     }
-    assert public == {"semantic_review", "build_review_result"}
+    assert public == {"semantic_review", "build_review_result", "assess_findings"}
     assert tuple(inspect.signature(ReviewerAgent.semantic_review).parameters) == (
         "self",
         "request",
@@ -109,10 +109,13 @@ def test_reviewer_agent_exposes_only_cap_v01_semantic_review_and_build() -> None
         "self",
         "request",
     )
+    assert tuple(inspect.signature(ReviewerAgent.assess_findings).parameters) == (
+        "self",
+        "request",
+    )
     source = "\n".join(path.read_text(encoding="utf-8") for path in D_FILES)
     assert '"CAP-V01"' in source
     assert '"CAP-V02"' not in source
-    assert "assess_findings" not in source
 
 
 def test_d_has_no_runtime_or_orchestration_dependency_in_either_direction() -> None:

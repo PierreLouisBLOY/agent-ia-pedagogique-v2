@@ -52,6 +52,8 @@ def test_review_package_contains_only_the_provider_neutral_boundary() -> None:
         "__init__.py",
         "review_agent.py",
         "review_agent_model.py",
+        "review_assessment.py",
+        "review_assessment_model.py",
         "review_coordination_model.py",
         "review_coordinator.py",
         "review_model.py",

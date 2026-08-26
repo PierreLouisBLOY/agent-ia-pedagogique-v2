@@ -6,6 +6,13 @@ from backend.agent_runtime.agents.review.review_agent_model import (
     ReviewMaterializationErrorCode,
     ReviewResultMaterializationRequest,
 )
+from backend.agent_runtime.agents.review.review_assessment_model import (
+    CorrectionHandoffSignal,
+    FindingsAssessmentRequest,
+    ReviewAssessmentError,
+    ReviewAssessmentErrorCode,
+    ReviewAssessmentSignal,
+)
 from backend.agent_runtime.agents.review.review_coordination_model import (
     PreparedReviewCall,
     ResolvedReviewTarget,
@@ -25,11 +32,16 @@ from backend.agent_runtime.agents.review.review_model import (
 from backend.agent_runtime.agents.review.review_ports import ReviewPort
 
 __all__ = [
+    "CorrectionHandoffSignal",
+    "FindingsAssessmentRequest",
     "PreparedReviewCall",
     "ResolvedReviewTarget",
     "ReviewCoordinationError",
     "ReviewCoordinationErrorCode",
     "ReviewCoordinator",
+    "ReviewAssessmentError",
+    "ReviewAssessmentErrorCode",
+    "ReviewAssessmentSignal",
     "ReviewerAgent",
     "ReviewMaterializationError",
     "ReviewMaterializationErrorCode",

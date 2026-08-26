@@ -263,6 +263,39 @@ def test_output_declarations_cannot_opt_into_active_or_executable_content() -> N
     )
 
 
+def test_existing_output_uses_observed_metadata_for_post_validation() -> None:
+    common = {
+        "operation": SandboxOperation.WRITE,
+        "path": "output/report.pdf",
+        "declared_output_bytes": 10,
+        "declared_mime_type": "application/pdf",
+    }
+
+    assert _evaluate(
+        **common,
+        resolved=_resolved(
+            "output/report.pdf",
+            observed_mime_type="image/png",
+        ),
+    ).code is SandboxDecisionCode.MIME_FORBIDDEN
+    assert _evaluate(
+        **common,
+        resolved=_resolved(
+            "output/report.pdf",
+            observed_mime_type="application/pdf",
+            size_bytes=50 * 1024 * 1024 + 1,
+        ),
+    ).code is SandboxDecisionCode.OUTPUT_TOO_LARGE
+    assert _evaluate(
+        **common,
+        resolved=_resolved(
+            "output/report.pdf",
+            observed_mime_type="application/pdf",
+            is_executable_content=True,
+        ),
+    ).code is SandboxDecisionCode.EXECUTION_FORBIDDEN
+
+
 def test_decision_is_immutable_and_data_only() -> None:
     decision = _evaluate()
 

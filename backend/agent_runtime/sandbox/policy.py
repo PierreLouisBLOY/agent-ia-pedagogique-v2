@@ -379,6 +379,16 @@ def _validate_output_metadata(
     if operation is SandboxOperation.WRITE:
         if not resolved_path.exists or not resolved_path.is_file:
             return SandboxDecisionCode.INVALID_METADATA
+        if resolved_path.is_executable_content:
+            return SandboxDecisionCode.EXECUTION_FORBIDDEN
+        if resolved_path.has_active_content and not profile.allow_active_content:
+            return SandboxDecisionCode.ACTIVE_CONTENT_FORBIDDEN
+        if resolved_path.observed_mime_type is None:
+            return SandboxDecisionCode.INVALID_METADATA
+        if resolved_path.observed_mime_type not in profile.allowed_mime_types:
+            return SandboxDecisionCode.MIME_FORBIDDEN
+        if resolved_path.size_bytes > profile.max_output_bytes:
+            return SandboxDecisionCode.OUTPUT_TOO_LARGE
     elif resolved_path.exists:
         return SandboxDecisionCode.INVALID_METADATA
     if relative_path.extension not in profile.allowed_output_extensions:

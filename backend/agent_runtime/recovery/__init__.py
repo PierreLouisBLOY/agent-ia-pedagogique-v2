@@ -19,6 +19,28 @@ from backend.agent_runtime.recovery.budget import (
     retry_count_from_attempt_count,
 )
 from backend.agent_runtime.recovery.budget_ports import BudgetStatePort
+from backend.agent_runtime.recovery.circuit_breaker import (
+    CircuitBreakerError,
+    CircuitBreakerErrorCode,
+    CircuitBreakerKey,
+    CircuitBreakerPolicy,
+    CircuitBreakerPolicyConfig,
+    CircuitBreakerState,
+    CircuitBreakerStatus,
+    CircuitCheckDecision,
+    CircuitCheckDisposition,
+    CircuitCheckReasonCode,
+    CircuitCheckRequest,
+    CircuitOutcomeRecord,
+    CircuitProbeLease,
+    circuit_id_for,
+)
+from backend.agent_runtime.recovery.circuit_breaker_engine import (
+    CircuitBreakerEngine,
+)
+from backend.agent_runtime.recovery.circuit_breaker_ports import (
+    CircuitBreakerStorePort,
+)
 from backend.agent_runtime.recovery.idempotency import IdempotencyPolicy
 from backend.agent_runtime.recovery.model import (
     EffectAttemptRecord,
@@ -74,6 +96,7 @@ from backend.agent_runtime.recovery.retry import (
     RetryReasonCode,
 )
 from backend.agent_runtime.recovery.snapshot import (
+    CircuitBreakerSnapshotRef,
     EffectLedgerSnapshotRef,
     PlanFingerprint,
     SnapshotFreshnessAssessment,
@@ -101,6 +124,22 @@ __all__ = [
     "BudgetStateErrorCode",
     "BudgetStatePort",
     "BudgetUsageDelta",
+    "CircuitBreakerEngine",
+    "CircuitBreakerError",
+    "CircuitBreakerErrorCode",
+    "CircuitBreakerKey",
+    "CircuitBreakerPolicy",
+    "CircuitBreakerPolicyConfig",
+    "CircuitBreakerSnapshotRef",
+    "CircuitBreakerState",
+    "CircuitBreakerStatus",
+    "CircuitBreakerStorePort",
+    "CircuitCheckDecision",
+    "CircuitCheckDisposition",
+    "CircuitCheckReasonCode",
+    "CircuitCheckRequest",
+    "CircuitOutcomeRecord",
+    "CircuitProbeLease",
     "DeadlineRevalidationStatus",
     "DeterministicBackoffPolicy",
     "EffectAttemptRecord",
@@ -152,6 +191,7 @@ __all__ = [
     "EffectiveBudgetLimits",
     "assess_snapshot_freshness",
     "application_probe_request_for",
+    "circuit_id_for",
     "resolve_effective_budget_limits",
     "retry_count_from_attempt_count",
     "snapshot_id_for",

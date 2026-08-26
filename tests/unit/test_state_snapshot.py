@@ -15,6 +15,7 @@ from backend.agent_runtime.contracts import (
 )
 from backend.agent_runtime.recovery import (
     BudgetState,
+    CircuitBreakerSnapshotRef,
     EffectiveBudgetLimits,
     EffectLedgerRecord,
     EffectLedgerSnapshotRef,
@@ -36,6 +37,7 @@ from backend.agent_runtime.runtime.state import RunState, StepRuntimeStatus, Ste
 from backend.core_contracts.capability import CapabilityId
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.time import Instant
+from tests.support.circuit_breaker_fakes import make_open_state
 
 NOW = Instant(datetime(2026, 8, 26, 12, 0, tzinfo=UTC))
 LATER = Instant(NOW.value + timedelta(minutes=1))
@@ -78,6 +80,7 @@ def _snapshot(
     budget_state: BudgetState | None = None,
     plan_fingerprint: PlanFingerprint = PLAN_FINGERPRINT,
     effect_ledger_refs: tuple[EffectLedgerSnapshotRef, ...] = (),
+    circuit_breaker_refs: tuple[CircuitBreakerSnapshotRef, ...] = (),
     captured_at: Instant = LATER,
 ) -> StateSnapshot:
     state = run_state or _run_state()
@@ -92,6 +95,7 @@ def _snapshot(
         budget_state=budget_state or _budget(run_id=state.run_id),
         effect_ledger_refs=effect_ledger_refs,
         captured_at=captured_at,
+        circuit_breaker_refs=circuit_breaker_refs,
     )
 
 
@@ -151,6 +155,7 @@ def test_snapshot_contains_only_typed_technical_state() -> None:
         "budget_state",
         "effect_ledger_refs",
         "captured_at",
+        "circuit_breaker_refs",
     }
     assert "payload" not in repr(_snapshot()).lower()
 
@@ -355,3 +360,76 @@ def test_snapshot_does_not_copy_effect_state_from_ledger() -> None:
 
     assert record.effect_state is EffectState.NONE
     assert not hasattr(snapshot.effect_ledger_refs[0], "effect_state")
+
+
+def test_circuit_snapshot_ref_is_minimal_unique_and_opaque() -> None:
+    state = make_open_state()
+    ref = CircuitBreakerSnapshotRef(state.circuit_id, state.version)
+    snapshot = _snapshot(circuit_breaker_refs=(ref,))
+
+    assert snapshot.circuit_breaker_refs == (ref,)
+    assert {item.name for item in fields(CircuitBreakerSnapshotRef)} == {
+        "circuit_id",
+        "version",
+    }
+    assert not hasattr(ref, "status")
+    assert not hasattr(ref, "half_open_lease")
+    with pytest.raises(ValueError, match="duplicates"):
+        _snapshot(circuit_breaker_refs=(ref, ref))
+    with pytest.raises(ValueError, match=">= 1"):
+        CircuitBreakerSnapshotRef(state.circuit_id, 0)
+
+
+def test_sequence_policy_rejects_present_circuit_version_regression() -> None:
+    state = make_open_state()
+    first = _snapshot(
+        sequence=1,
+        circuit_breaker_refs=(CircuitBreakerSnapshotRef(state.circuit_id, 2),),
+    )
+    regressed = _snapshot(
+        sequence=2,
+        circuit_breaker_refs=(CircuitBreakerSnapshotRef(state.circuit_id, 1),),
+        captured_at=LATEST,
+    )
+
+    with pytest.raises(SnapshotStoreError) as raised:
+        SnapshotSequencePolicy().validate_save(
+            previous=first,
+            snapshot=regressed,
+            expected_previous_sequence=1,
+        )
+    assert raised.value.code is SnapshotStoreErrorCode.SNAPSHOT_VERSION_CONFLICT
+
+
+def test_sequence_policy_does_not_invent_complete_circuit_membership() -> None:
+    state = make_open_state()
+    first = _snapshot(
+        circuit_breaker_refs=(CircuitBreakerSnapshotRef(state.circuit_id, 1),)
+    )
+    successor = _snapshot(sequence=2, captured_at=LATEST)
+
+    SnapshotSequencePolicy().validate_save(
+        previous=first,
+        snapshot=successor,
+        expected_previous_sequence=1,
+    )
+
+
+def test_stale_circuit_is_reported_without_resetting_current_open_state() -> None:
+    current = replace(make_open_state(), version=2)
+    before = current
+    snapshot = _snapshot(
+        circuit_breaker_refs=(CircuitBreakerSnapshotRef(current.circuit_id, 1),)
+    )
+
+    assessment = assess_snapshot_freshness(
+        snapshot=snapshot,
+        current_budget=snapshot.budget_state,
+        current_ledger_records={},
+        current_plan_fingerprint=PLAN_FINGERPRINT,
+        current_circuit_states={current.circuit_id: current},
+    )
+
+    assert assessment.issues == (SnapshotFreshnessIssue.STALE_CIRCUIT,)
+    assert current == before
+    assert current.status.value == "OPEN"

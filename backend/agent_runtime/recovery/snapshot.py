@@ -10,6 +10,7 @@ from typing import Self
 
 from backend.agent_runtime.contracts import ContractSchemaVersion
 from backend.agent_runtime.recovery.budget import BudgetState
+from backend.agent_runtime.recovery.circuit_breaker import CircuitBreakerState
 from backend.agent_runtime.recovery.model import EffectLedgerRecord
 from backend.agent_runtime.runtime.state import RunState
 from backend.shared_kernel._strings import require_non_empty
@@ -17,6 +18,7 @@ from backend.shared_kernel.time import Instant
 
 _HEX_DIGEST = re.compile(r"^[0-9a-f]{64}$")
 _EFFECT_RECORD_ID = re.compile(r"^effect:v1:[0-9a-f]{64}$")
+_CIRCUIT_ID = re.compile(r"^circuit:v1:[0-9a-f]{64}$")
 _SNAPSHOT_ID = re.compile(r"^snapshot:v1:[0-9a-f]{64}$")
 _MAX_FINGERPRINT_INPUT_BYTES = 65_536
 
@@ -56,6 +58,7 @@ class SnapshotFreshnessIssue(StrEnum):
     STALE_LEDGER = "STALE_LEDGER"
     STALE_BUDGET = "STALE_BUDGET"
     PLAN_MISMATCH = "PLAN_MISMATCH"
+    STALE_CIRCUIT = "STALE_CIRCUIT"
 
 
 @dataclass(frozen=True, slots=True)
@@ -120,6 +123,22 @@ class EffectLedgerSnapshotRef:
 
 
 @dataclass(frozen=True, slots=True)
+class CircuitBreakerSnapshotRef:
+    circuit_id: str
+    version: int
+
+    def __post_init__(self) -> None:
+        if type(self.circuit_id) is not str:
+            raise TypeError("circuit_id must be a string")
+        if not _CIRCUIT_ID.fullmatch(self.circuit_id):
+            raise ValueError("circuit_id must be an opaque circuit identifier")
+        if type(self.version) is not int:
+            raise TypeError("version must be an integer")
+        if self.version < 1:
+            raise ValueError("version must be >= 1")
+
+
+@dataclass(frozen=True, slots=True)
 class StateSnapshot:
     snapshot_id: str
     schema_version: ContractSchemaVersion
@@ -132,6 +151,7 @@ class StateSnapshot:
     budget_state: BudgetState
     effect_ledger_refs: tuple[EffectLedgerSnapshotRef, ...]
     captured_at: Instant
+    circuit_breaker_refs: tuple[CircuitBreakerSnapshotRef, ...] = ()
 
     def __post_init__(self) -> None:
         if type(self.snapshot_id) is not str:
@@ -169,6 +189,19 @@ class StateSnapshot:
             raise ValueError("effect_ledger_refs must not contain duplicate records")
         if not isinstance(self.captured_at, Instant):
             raise TypeError("captured_at must be an Instant")
+        if not isinstance(self.circuit_breaker_refs, tuple):
+            raise TypeError("circuit_breaker_refs must be a tuple")
+        if any(
+            not isinstance(item, CircuitBreakerSnapshotRef)
+            for item in self.circuit_breaker_refs
+        ):
+            raise TypeError(
+                "circuit_breaker_refs must contain CircuitBreakerSnapshotRef values"
+            )
+        if len({item.circuit_id for item in self.circuit_breaker_refs}) != len(
+            self.circuit_breaker_refs
+        ):
+            raise ValueError("circuit_breaker_refs must not contain duplicates")
         self._validate_cross_checks()
         expected_id = snapshot_id_for(
             run_id=self.run_id,
@@ -194,6 +227,7 @@ class StateSnapshot:
         budget_state: BudgetState,
         effect_ledger_refs: tuple[EffectLedgerSnapshotRef, ...],
         captured_at: Instant,
+        circuit_breaker_refs: tuple[CircuitBreakerSnapshotRef, ...] = (),
     ) -> Self:
         return cls(
             snapshot_id=snapshot_id_for(
@@ -213,6 +247,7 @@ class StateSnapshot:
             budget_state=budget_state,
             effect_ledger_refs=effect_ledger_refs,
             captured_at=captured_at,
+            circuit_breaker_refs=circuit_breaker_refs,
         )
 
     def _validate_cross_checks(self) -> None:
@@ -353,6 +388,18 @@ class SnapshotSequencePolicy:
                 raise SnapshotStoreError(
                     SnapshotStoreErrorCode.SNAPSHOT_VERSION_CONFLICT
                 )
+        current_circuit_refs = {
+            item.circuit_id: item.version for item in snapshot.circuit_breaker_refs
+        }
+        for circuit_ref in previous.circuit_breaker_refs:
+            current_version = current_circuit_refs.get(circuit_ref.circuit_id)
+            if (
+                current_version is not None
+                and current_version < circuit_ref.version
+            ):
+                raise SnapshotStoreError(
+                    SnapshotStoreErrorCode.SNAPSHOT_VERSION_CONFLICT
+                )
 
 
 def assess_snapshot_freshness(
@@ -361,6 +408,7 @@ def assess_snapshot_freshness(
     current_budget: BudgetState,
     current_ledger_records: Mapping[str, EffectLedgerRecord],
     current_plan_fingerprint: PlanFingerprint,
+    current_circuit_states: Mapping[str, CircuitBreakerState] | None = None,
 ) -> SnapshotFreshnessAssessment:
     """Identify stale technical references without restoring or mutating runtime state."""
     if not isinstance(snapshot, StateSnapshot):
@@ -393,4 +441,24 @@ def assess_snapshot_freshness(
         for record_id, record in current_ledger_records.items()
     ):
         issues.append(SnapshotFreshnessIssue.STALE_LEDGER)
+    if current_circuit_states is not None:
+        if not isinstance(current_circuit_states, Mapping):
+            raise TypeError("current_circuit_states must be a mapping or None")
+        for circuit_id, state in current_circuit_states.items():
+            require_non_empty(circuit_id, "current_circuit_states key")
+            if not isinstance(state, CircuitBreakerState):
+                raise TypeError(
+                    "current_circuit_states values must be CircuitBreakerState values"
+                )
+            if state.circuit_id != circuit_id:
+                raise ValueError("current_circuit_states key must match circuit_id")
+        snapshot_circuit_versions = {
+            item.circuit_id: item.version for item in snapshot.circuit_breaker_refs
+        }
+        if any(
+            circuit_id in snapshot_circuit_versions
+            and snapshot_circuit_versions[circuit_id] < state.version
+            for circuit_id, state in current_circuit_states.items()
+        ):
+            issues.append(SnapshotFreshnessIssue.STALE_CIRCUIT)
     return SnapshotFreshnessAssessment(tuple(issues))

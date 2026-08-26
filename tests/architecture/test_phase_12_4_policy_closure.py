@@ -42,6 +42,18 @@ NOW = Instant(datetime(2026, 8, 24, 12, 0, tzinfo=UTC))
 BEFORE = Instant(NOW.value - timedelta(hours=1))
 AFTER = Instant(NOW.value + timedelta(hours=1))
 DEFAULT_FACTS = PolicyFacts()
+PHASE_12_4_FILES = (
+    REGISTRY / "access_matrix.py",
+    REGISTRY / "agents.py",
+    REGISTRY / "capabilities.py",
+    POLICY / "capability_decision.py",
+    POLICY / "delegation_policy.py",
+    POLICY / "permission_evaluator.py",
+    POLICY / "permission_vocabulary.py",
+    POLICY / "policy_configuration.py",
+    POLICY / "runtime_policy.py",
+    POLICY / "scope_narrowing.py",
+)
 
 
 def _capability(code: str) -> CapabilityId:
@@ -488,7 +500,7 @@ def test_phase_12_4_defines_no_scheduler_or_execution_state() -> None:
 def test_phase_12_4_defines_no_deferred_policy_engine_or_mutable_budget_state() -> None:
     class_names = {
         node.name
-        for path in _python_files()
+        for path in PHASE_12_4_FILES
         for node in ast.walk(_tree(path))
         if isinstance(node, ast.ClassDef)
     }

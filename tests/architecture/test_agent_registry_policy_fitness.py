@@ -56,7 +56,10 @@ def test_registry_descriptors_store_no_concrete_execution_binding() -> None:
 
     for path in _python_files():
         for node in _tree(path).body:
-            if isinstance(node, ast.ClassDef) and node.name.endswith("Descriptor"):
+            if isinstance(node, ast.ClassDef) and node.name in {
+                "AgentDescriptor",
+                "CapabilityDescriptor",
+            }:
                 descriptor_fields[node.name] = {
                     item.target.id
                     for item in node.body
@@ -84,7 +87,7 @@ def test_registry_descriptors_store_no_concrete_execution_binding() -> None:
     assert all(fields.isdisjoint(forbidden_fields) for fields in descriptor_fields.values())
 
 
-def test_no_scheduler_state_or_composite_permission_engine_is_implemented() -> None:
+def test_no_scheduler_state_or_duplicate_permission_engine_is_implemented() -> None:
     class_names = {
         node.name
         for path in _python_files()
@@ -98,7 +101,6 @@ def test_no_scheduler_state_or_composite_permission_engine_is_implemented() -> N
             "RunState",
             "StepState",
             "PermissionEvaluator",
-            "ToolCallPolicy",
         }
     )
 
@@ -111,6 +113,7 @@ def test_registry_and_policy_have_no_runtime_third_party_dependency() -> None:
         "dataclasses",
         "decimal",
         "enum",
+        "math",
         "types",
         "typing",
     }

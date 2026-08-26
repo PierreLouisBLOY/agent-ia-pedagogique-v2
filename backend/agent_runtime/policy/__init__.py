@@ -42,6 +42,12 @@ from backend.agent_runtime.policy.scope_narrowing import (
     resource_scope_contains,
     resource_scopes_intersect,
 )
+from backend.agent_runtime.policy.tool_call_policy import (
+    ToolCallDecision,
+    ToolCallDecisionCode,
+    ToolCallDisposition,
+    ToolCallPolicy,
+)
 
 __all__ = [
     "BASELINE_AGENT_RUNTIME_POLICY",
@@ -64,6 +70,10 @@ __all__ = [
     "ScopeCheck",
     "ScopeEvaluation",
     "ScopeEvaluationCode",
+    "ToolCallDecision",
+    "ToolCallDecisionCode",
+    "ToolCallDisposition",
+    "ToolCallPolicy",
     "budget_is_narrower_or_equal",
     "authority_for",
     "constraints_are_narrower_or_equal",

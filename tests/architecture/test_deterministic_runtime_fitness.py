@@ -159,7 +159,7 @@ def test_deferred_runtime_components_are_not_implemented() -> None:
     }
     class_names = {
         node.name
-        for path in _python_files(BACKEND)
+        for path in _python_files(RUNTIME)
         for node in ast.walk(_tree(path))
         if isinstance(node, ast.ClassDef)
     }

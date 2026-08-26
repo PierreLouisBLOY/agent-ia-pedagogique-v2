@@ -8,13 +8,26 @@ from typing import NoReturn
 from backend.agent_runtime.agents.review.review_coordination_model import (
     ResolvedReviewTarget,
 )
-from backend.agent_runtime.agents.review.review_model import (
-    ReviewPortResultStatus,
-    _reject_authority_keys,
+from backend.agent_runtime.agents.review.review_model import ReviewPortResultStatus
+from backend.agent_runtime.agents.review.review_security import (
+    ReviewSecurityGuard,
+    finding_lineage_fingerprint,
+    freeze_evidence_security_by_ref,
+    reject_activatable_review_metadata,
+    reject_review_authority,
+    require_security_output_allowed,
+    validate_finding_locator,
+)
+from backend.agent_runtime.agents.review.review_security_model import (
+    EvidenceSecurityByRef,
+    ReviewSecurityAssessment,
+    ReviewSecurityPolicy,
+    ReviewSecuritySignalCode,
 )
 from backend.agent_runtime.contracts import (
     ActorKind,
     AgentId,
+    ContractMeta,
     Finding,
     FindingSeverity,
     OverallAssessment,
@@ -150,6 +163,8 @@ class FindingsAssessmentRequest:
     review_ref: ContractRef
     resolved_inputs: Mapping[str, object] = field(default_factory=dict)
     output_contract: Mapping[str, object] = field(default_factory=_default_output_contract)
+    security_policy: ReviewSecurityPolicy = field(default_factory=ReviewSecurityPolicy)
+    evidence_security_by_ref: EvidenceSecurityByRef = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if type(self.capability_id) is not CapabilityId:
@@ -160,6 +175,8 @@ class FindingsAssessmentRequest:
             raise TypeError("source_result must be a ReviewResult")
         if type(self.target) is not ResolvedReviewTarget:
             raise TypeError("target must be a ResolvedReviewTarget")
+        if type(self.security_policy) is not ReviewSecurityPolicy:
+            raise TypeError("security_policy must be a ReviewSecurityPolicy")
         object.__setattr__(
             self,
             "resolved_inputs",
@@ -169,6 +186,11 @@ class FindingsAssessmentRequest:
             self,
             "output_contract",
             freeze_agent_safe_mapping(self.output_contract),
+        )
+        object.__setattr__(
+            self,
+            "evidence_security_by_ref",
+            freeze_evidence_security_by_ref(self.evidence_security_by_ref),
         )
         _validate_findings_assessment_request(self)
 
@@ -189,6 +211,9 @@ class ReviewAssessmentSignal:
     limitations: tuple[Mapping[str, object], ...]
     warnings: tuple[Mapping[str, object], ...]
     technical_status: ReviewPortResultStatus
+    target_snapshot_fingerprint: str
+    finding_lineage_fingerprints: tuple[tuple[str, str], ...]
+    security_signal_codes: tuple[ReviewSecuritySignalCode, ...]
 
     def __post_init__(self) -> None:
         _require_contract_ref(self.review_ref)
@@ -213,6 +238,26 @@ class ReviewAssessmentSignal:
         _validate_ref_tuple(self.evidence_refs_used, "evidence_refs_used")
         if type(self.technical_status) is not ReviewPortResultStatus:
             raise TypeError("technical_status must be a ReviewPortResultStatus")
+        require_non_empty(
+            self.target_snapshot_fingerprint,
+            "target_snapshot_fingerprint",
+        )
+        if type(self.finding_lineage_fingerprints) is not tuple or any(
+            type(item) is not tuple
+            or len(item) != 2
+            or any(type(value) is not str or not value for value in item)
+            for item in self.finding_lineage_fingerprints
+        ):
+            raise TypeError("finding lineage fingerprints must be string pairs")
+        if tuple(item[0] for item in self.finding_lineage_fingerprints) != (
+            self.assessed_finding_ids
+        ):
+            raise ValueError("finding lineage fingerprints must match assessed findings")
+        if type(self.security_signal_codes) is not tuple or any(
+            type(code) is not ReviewSecuritySignalCode
+            for code in self.security_signal_codes
+        ):
+            raise TypeError("security_signal_codes must contain review security codes")
         object.__setattr__(self, "confidence", freeze_agent_safe_mapping(self.confidence))
         object.__setattr__(self, "limitations", _freeze_mapping_tuple(self.limitations))
         object.__setattr__(self, "warnings", _freeze_mapping_tuple(self.warnings))
@@ -230,6 +275,7 @@ class CorrectionHandoffSignal:
     suggested_actions: tuple[Mapping[str, object], ...]
     limitations: tuple[Mapping[str, object], ...]
     warnings: tuple[Mapping[str, object], ...]
+    security_signal_codes: tuple[ReviewSecuritySignalCode, ...]
 
     def __post_init__(self) -> None:
         if self.destination_agent_id is not AgentId.AG_01:
@@ -252,6 +298,11 @@ class CorrectionHandoffSignal:
         )
         object.__setattr__(self, "limitations", _freeze_mapping_tuple(self.limitations))
         object.__setattr__(self, "warnings", _freeze_mapping_tuple(self.warnings))
+        if type(self.security_signal_codes) is not tuple or any(
+            type(code) is not ReviewSecuritySignalCode
+            for code in self.security_signal_codes
+        ):
+            raise TypeError("security_signal_codes must contain review security codes")
 
 
 def _validate_findings_assessment_request(request: FindingsAssessmentRequest) -> None:
@@ -261,13 +312,47 @@ def _validate_findings_assessment_request(request: FindingsAssessmentRequest) ->
     if request.output_contract != _default_output_contract():
         _raise_assessment(ReviewAssessmentErrorCode.SNAPSHOT_MISMATCH)
     try:
-        _reject_authority_keys(request.resolved_inputs, "resolved_inputs")
+        reject_activatable_review_metadata(request.resolved_inputs)
     except (TypeError, ValueError):
         _raise_assessment(ReviewAssessmentErrorCode.AUTHORITY_METADATA_FORBIDDEN)
 
     source_request = request.source_request
     source_result = request.source_result
+    if (
+        type(source_request.meta) is not ContractMeta
+        or type(source_request.target_production_ref) is not ObjectVersionRef
+        or type(source_request.review_dimensions) is not tuple
+        or any(
+            type(item) is not ReviewDimension
+            for item in source_request.review_dimensions
+        )
+        or len(source_request.review_dimensions)
+        != len(set(source_request.review_dimensions))
+        or type(source_request.evidence_refs) is not tuple
+    ):
+        _raise_assessment(ReviewAssessmentErrorCode.SOURCE_REVIEW_MISMATCH)
+    try:
+        _validate_ref_tuple(source_request.evidence_refs, "source_evidence_refs")
+    except (TypeError, ValueError):
+        _raise_assessment(ReviewAssessmentErrorCode.EVIDENCE_OUT_OF_SCOPE)
     target_ref = source_request.target_production_ref
+    if (
+        type(source_result.meta) is not ContractMeta
+        or type(source_result.target_production_ref) is not ObjectVersionRef
+        or type(source_result.findings) is not tuple
+        or type(source_result.coverage) is not tuple
+        or any(type(item) is not ReviewDimension for item in source_result.coverage)
+        or len(source_result.coverage) != len(set(source_result.coverage))
+        or type(source_result.evidence_refs_used) is not tuple
+        or not isinstance(source_result.confidence, Mapping)
+        or type(source_result.limitations) is not tuple
+        or type(source_result.warnings) is not tuple
+        or any(
+            not isinstance(item, Mapping)
+            for item in source_result.limitations + source_result.warnings
+        )
+    ):
+        _raise_assessment(ReviewAssessmentErrorCode.SOURCE_REVIEW_MISMATCH)
     try:
         require_non_empty(source_result.review_id, "review_id")
     except (TypeError, ValueError):
@@ -295,6 +380,13 @@ def _validate_findings_assessment_request(request: FindingsAssessmentRequest) ->
         or type(finding.dimension) is not ReviewDimension
         or type(finding.severity) is not FindingSeverity
         or type(finding.correction_required) is not bool
+        or type(finding.description) is not str
+        or not finding.description.strip()
+        or type(finding.rationale) is not str
+        or not finding.rationale.strip()
+        or not isinstance(finding.target_locator, Mapping)
+        or not isinstance(finding.confidence, Mapping)
+        or not isinstance(finding.suggested_action, Mapping)
         for finding in source_result.findings
     ):
         _raise_assessment(ReviewAssessmentErrorCode.SOURCE_REVIEW_MISMATCH)
@@ -320,9 +412,37 @@ def _validate_findings_assessment_request(request: FindingsAssessmentRequest) ->
         for finding in source_result.findings
     ):
         _raise_assessment(ReviewAssessmentErrorCode.SOURCE_REVIEW_MISMATCH)
+    reject_activatable_review_metadata(source_result.confidence)
+    reject_activatable_review_metadata(source_result.limitations)
+    reject_activatable_review_metadata(source_result.warnings)
+    for finding in source_result.findings:
+        reject_review_authority(finding.target_locator)
+        reject_activatable_review_metadata(finding.confidence)
+        reject_activatable_review_metadata(finding.suggested_action)
+        finding_lineage_fingerprint(finding)
+        if request.security_policy.require_locator_validation:
+            validate_finding_locator(
+                request.target,
+                finding.target_locator,
+                policy=request.security_policy,
+            )
     blocking_ids = _blocking_finding_ids(source_result)
     if blocking_ids and not source_result.correction_required:
         _raise_assessment(ReviewAssessmentErrorCode.ASSESSMENT_INCOHERENT)
+    security = _assessment_request_security(request)
+    require_security_output_allowed(security, request.security_policy)
+
+
+def _assessment_request_security(
+    request: FindingsAssessmentRequest,
+) -> ReviewSecurityAssessment:
+    return ReviewSecurityGuard().assess(
+        target=request.target,
+        policy=request.security_policy,
+        review_evidence_refs=request.source_request.evidence_refs,
+        required_evidence_refs=request.source_result.evidence_refs_used,
+        evidence_security_by_ref=request.evidence_security_by_ref,
+    )
 
 
 def _blocking_finding_ids(source_result: ReviewResult) -> tuple[str, ...]:

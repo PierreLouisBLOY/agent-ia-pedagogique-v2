@@ -90,7 +90,12 @@ def _finding(
         "dimension": dimension,
         "severity": FindingSeverity.MINOR.value,
         "description": "A claim needs a more precise citation.",
-        "target_locator": {"section": "content", "paragraph": 3},
+        "target_locator": {
+            "kind": "text_span",
+            "start": 0,
+            "end": 5,
+            "quote": "Exact",
+        },
         "rationale": "The available reference supports only part of the statement.",
         "correction_required": correction_required,
         "evidence_refs": evidence_refs,

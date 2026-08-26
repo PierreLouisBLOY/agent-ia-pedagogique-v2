@@ -58,6 +58,8 @@ def test_review_package_contains_only_the_provider_neutral_boundary() -> None:
         "review_coordinator.py",
         "review_model.py",
         "review_ports.py",
+        "review_security.py",
+        "review_security_model.py",
     }
 
 
@@ -184,13 +186,15 @@ def test_review_boundary_has_no_io_network_retry_or_loop_surface() -> None:
     )
 
 
-def test_review_boundary_does_not_reuse_other_agent_security_engines() -> None:
+def test_review_boundary_reuses_only_evidence_security_models_not_engines() -> None:
     source = "\n".join(path.read_text(encoding="utf-8") for path in _python_files(REVIEW))
     assert "GenerationOutputGuard" not in source
     assert "EvidenceSecurityScanner" not in source
     imports = {module for path in _python_files(REVIEW) for module in _imports(path)}
     assert all("agents.generation" not in module for module in imports)
-    assert all("agents.evidence" not in module for module in imports)
+    assert {
+        module for module in imports if "agents.evidence" in module
+    } == {"backend.agent_runtime.agents.evidence.evidence_security_model"}
 
 
 def test_review_boundary_does_not_duplicate_canonical_review_models_or_enums() -> None:

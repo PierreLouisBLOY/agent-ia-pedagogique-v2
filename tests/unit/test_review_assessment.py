@@ -94,7 +94,12 @@ def _finding(
         dimension=dimension,
         severity=severity,
         description="Public finding description.",
-        target_locator={"section": "content", "paragraph": 2},
+        target_locator={
+            "kind": "text_span",
+            "start": 0,
+            "end": 6,
+            "quote": "Caller",
+        },
         rationale="Public concise rationale.",
         correction_required=correction_required,
         evidence_refs=evidence_refs,
@@ -363,6 +368,7 @@ def test_provider_snapshot_is_exact_closed_and_immutable() -> None:
         "evidence_refs",
         "confidence",
         "suggested_action",
+        "lineage_fingerprint",
     }
     assert technical_finding["severity"] == FindingSeverity.MAJOR.value
     with pytest.raises(TypeError):

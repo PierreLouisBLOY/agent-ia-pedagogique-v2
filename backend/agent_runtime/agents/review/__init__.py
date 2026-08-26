@@ -30,11 +30,27 @@ from backend.agent_runtime.agents.review.review_model import (
     ReviewPortResultStatus,
 )
 from backend.agent_runtime.agents.review.review_ports import ReviewPort
+from backend.agent_runtime.agents.review.review_security import (
+    ReviewSecurityGuard,
+    finding_lineage_fingerprint,
+    target_snapshot_fingerprint,
+    validate_finding_locator,
+)
+from backend.agent_runtime.agents.review.review_security_model import (
+    LocatorValidationResult,
+    ReviewSecurityAssessment,
+    ReviewSecurityDisposition,
+    ReviewSecurityError,
+    ReviewSecurityPolicy,
+    ReviewSecuritySignal,
+    ReviewSecuritySignalCode,
+)
 
 __all__ = [
     "CorrectionHandoffSignal",
     "FindingsAssessmentRequest",
     "PreparedReviewCall",
+    "LocatorValidationResult",
     "ResolvedReviewTarget",
     "ReviewCoordinationError",
     "ReviewCoordinationErrorCode",
@@ -53,5 +69,15 @@ __all__ = [
     "ReviewPortResult",
     "ReviewPortResultStatus",
     "ReviewPreparationRequest",
+    "ReviewSecurityAssessment",
+    "ReviewSecurityDisposition",
+    "ReviewSecurityError",
+    "ReviewSecurityGuard",
+    "ReviewSecurityPolicy",
+    "ReviewSecuritySignal",
+    "ReviewSecuritySignalCode",
     "ReviewResultMaterializationRequest",
+    "finding_lineage_fingerprint",
+    "target_snapshot_fingerprint",
+    "validate_finding_locator",
 ]

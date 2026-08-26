@@ -6,6 +6,7 @@ from backend.agent_runtime.agents.review.review_agent_model import (
     ReviewResultMaterializationRequest,
     _materialization_payload,
     _materialize_findings,
+    _review_security_assessment,
     _validate_materialization_request,
 )
 from backend.agent_runtime.agents.review.review_assessment import (
@@ -22,6 +23,12 @@ from backend.agent_runtime.agents.review.review_coordination_model import (
 )
 from backend.agent_runtime.agents.review.review_coordinator import ReviewCoordinator
 from backend.agent_runtime.agents.review.review_model import ReviewPortResult
+from backend.agent_runtime.agents.review.review_security import (
+    ReviewSecurityGuard,
+    reject_activatable_review_metadata,
+    require_security_output_allowed,
+)
+from backend.agent_runtime.agents.review.review_security_model import ReviewSecurityPolicy
 from backend.agent_runtime.contracts import ReviewResult
 
 
@@ -42,6 +49,15 @@ class ReviewerAgent:
             raise TypeError("request must be a ReviewPreparationRequest")
         if request.capability_id.value != "CAP-V01":
             raise ReviewMaterializationError(ReviewMaterializationErrorCode.UNSUPPORTED_CAPABILITY)
+        reject_activatable_review_metadata(request.resolved_inputs)
+        reject_activatable_review_metadata(request.output_contract)
+        security_policy = ReviewSecurityPolicy()
+        security = ReviewSecurityGuard().assess(
+            target=request.target,
+            policy=security_policy,
+            review_evidence_refs=request.request.evidence_refs,
+        )
+        require_security_output_allowed(security, security_policy)
         prepared = self._coordinator.prepare(request=request)
         technical_result = self._coordinator.execute(prepared=prepared)
         return prepared, technical_result
@@ -58,6 +74,8 @@ class ReviewerAgent:
         assessment, correction_required, coverage, confidence = _materialization_payload(
             request, findings
         )
+        security = _review_security_assessment(request)
+        require_security_output_allowed(security, request.security_policy)
         try:
             return ReviewResult(
                 meta=request.result_meta,
@@ -69,8 +87,10 @@ class ReviewerAgent:
                 coverage=coverage,
                 evidence_refs_used=request.technical_result.evidence_refs_used,
                 confidence=confidence,
-                limitations=request.technical_result.limitations,
-                warnings=request.technical_result.warnings,
+                limitations=(
+                    request.technical_result.limitations + security.limitations
+                ),
+                warnings=request.technical_result.warnings + security.warnings,
             )
         except (TypeError, ValueError) as error:
             raise ReviewMaterializationError(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import NoReturn, cast
 
@@ -15,6 +15,19 @@ from backend.agent_runtime.agents.review.review_model import (
     ReviewOperation,
     ReviewPortResult,
     ReviewPortResultStatus,
+)
+from backend.agent_runtime.agents.review.review_security import (
+    ReviewSecurityGuard,
+    freeze_evidence_security_by_ref,
+    reject_activatable_review_metadata,
+    reject_review_authority,
+    require_security_output_allowed,
+    validate_finding_locator,
+)
+from backend.agent_runtime.agents.review.review_security_model import (
+    EvidenceSecurityByRef,
+    ReviewSecurityAssessment,
+    ReviewSecurityPolicy,
 )
 from backend.agent_runtime.contracts import (
     ActorKind,
@@ -145,8 +158,17 @@ class ReviewResultMaterializationRequest:
     technical_result: ReviewPortResult
     result_meta: ContractMeta[ReviewStatus]
     review_id: str
+    security_policy: ReviewSecurityPolicy = field(default_factory=ReviewSecurityPolicy)
+    evidence_security_by_ref: EvidenceSecurityByRef = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        if type(self.security_policy) is not ReviewSecurityPolicy:
+            raise TypeError("security_policy must be a ReviewSecurityPolicy")
+        object.__setattr__(
+            self,
+            "evidence_security_by_ref",
+            freeze_evidence_security_by_ref(self.evidence_security_by_ref),
+        )
         _validate_materialization_request(self)
 
 
@@ -169,6 +191,14 @@ def _validate_materialization_request(
     prepared = request.prepared
     technical = request.technical_result
     canonical = prepared.canonical_request
+
+    _revalidate_technical_result_shape(technical)
+    reject_activatable_review_metadata(technical.structured_payload)
+    reject_review_authority(technical.technical_findings)
+    reject_activatable_review_metadata(technical.limitations)
+    reject_activatable_review_metadata(technical.warnings)
+    reject_activatable_review_metadata(technical.uncertainties)
+    reject_activatable_review_metadata(technical.execution_metadata)
 
     if type(prepared.capability_id) is not CapabilityId:
         _raise_materialization(ReviewMaterializationErrorCode.MATERIALIZATION_MISMATCH)
@@ -211,6 +241,8 @@ def _validate_materialization_request(
 
     findings = _materialize_findings(request)
     _materialization_payload(request, findings)
+    security = _review_security_assessment(request)
+    require_security_output_allowed(security, request.security_policy)
 
 
 def _review_status_for(status: ReviewPortResultStatus) -> ReviewStatus:
@@ -280,8 +312,16 @@ def _materialize_finding(
     if not set(evidence_refs).issubset(request.technical_result.evidence_refs_used):
         _raise_materialization(ReviewMaterializationErrorCode.FINDING_EVIDENCE_NOT_USED)
     target_locator = _agent_safe_mapping(raw["target_locator"])
+    if request.security_policy.require_locator_validation:
+        validate_finding_locator(
+            request.prepared.target,
+            target_locator,
+            policy=request.security_policy,
+        )
     confidence = _agent_safe_mapping(raw["confidence"])
     suggested_action = _agent_safe_mapping(raw["suggested_action"])
+    reject_activatable_review_metadata(confidence)
+    reject_activatable_review_metadata(suggested_action)
     return Finding(
         finding_id=finding_id,
         dimension=dimension,
@@ -403,9 +443,48 @@ def _agent_safe_mapping(raw: object) -> Mapping[str, object]:
     if not isinstance(raw, Mapping):
         _raise_materialization(ReviewMaterializationErrorCode.INVALID_TECHNICAL_FINDING)
     try:
-        return freeze_agent_safe_mapping(cast(Mapping[str, object], raw))
+        frozen = freeze_agent_safe_mapping(cast(Mapping[str, object], raw))
     except (TypeError, ValueError):
         _raise_materialization(ReviewMaterializationErrorCode.INVALID_TECHNICAL_FINDING)
+    reject_review_authority(frozen)
+    return frozen
+
+
+def _revalidate_technical_result_shape(technical: ReviewPortResult) -> None:
+    try:
+        freeze_agent_safe_mapping(technical.structured_payload)
+        freeze_agent_safe_mapping(technical.execution_metadata)
+        structured_sequences = (
+            technical.technical_findings,
+            technical.limitations,
+            technical.warnings,
+            technical.uncertainties,
+        )
+        if any(
+            type(values) is not tuple
+            or any(not isinstance(value, Mapping) for value in values)
+            for values in structured_sequences
+        ):
+            raise TypeError("technical sequences must contain mappings")
+        tuple(
+            freeze_agent_safe_mapping(value)
+            for values in structured_sequences
+            for value in values
+        )
+    except (TypeError, ValueError):
+        _raise_materialization(ReviewMaterializationErrorCode.MATERIALIZATION_MISMATCH)
+
+
+def _review_security_assessment(
+    request: ReviewResultMaterializationRequest,
+) -> ReviewSecurityAssessment:
+    return ReviewSecurityGuard().assess(
+        target=request.prepared.target,
+        policy=request.security_policy,
+        review_evidence_refs=request.prepared.canonical_request.evidence_refs,
+        required_evidence_refs=request.technical_result.evidence_refs_used,
+        evidence_security_by_ref=request.evidence_security_by_ref,
+    )
 
 
 def _raise_materialization(code: ReviewMaterializationErrorCode) -> NoReturn:

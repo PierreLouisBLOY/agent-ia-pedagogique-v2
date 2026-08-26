@@ -8,6 +8,7 @@ from backend.agent_runtime.agents.review.review_assessment_model import (
     FindingsAssessmentRequest,
     ReviewAssessmentErrorCode,
     ReviewAssessmentSignal,
+    _assessment_request_security,
     _blocking_finding_ids,
     _correction_finding_ids,
     _raise_assessment,
@@ -24,6 +25,15 @@ from backend.agent_runtime.agents.review.review_model import (
     ReviewPortResult,
     ReviewPortResultStatus,
     _reject_authority_keys,
+)
+from backend.agent_runtime.agents.review.review_security import (
+    finding_lineage_fingerprint,
+    reject_activatable_review_metadata,
+    require_security_output_allowed,
+    target_snapshot_fingerprint,
+)
+from backend.agent_runtime.agents.review.review_security_model import (
+    ReviewSecurityAssessment,
 )
 from backend.agent_runtime.contracts import AgentId, Finding, OverallAssessment
 from backend.agent_runtime.contracts.common import (
@@ -44,6 +54,8 @@ def execute_findings_assessment(
     if type(request) is not FindingsAssessmentRequest:
         raise TypeError("request must be a FindingsAssessmentRequest")
     _validate_findings_assessment_request(request)
+    security = _assessment_request_security(request)
+    require_security_output_allowed(security, request.security_policy)
     preparation = ReviewPreparationRequest(
         capability_id=request.capability_id,
         request=request.source_request,
@@ -54,7 +66,7 @@ def execute_findings_assessment(
     prepared = coordinator.prepare(request=preparation)
     _validate_assessment_prepared(request, prepared)
     technical_result = coordinator.execute(prepared=prepared)
-    signal = _assessment_signal(request, technical_result)
+    signal = _assessment_signal(request, technical_result, security)
     handoff = _correction_handoff(request, signal)
     return signal, handoff
 
@@ -69,6 +81,9 @@ def _assessment_resolved_inputs(
                 "review_ref": request.review_ref,
                 "review_id": source.review_id,
                 "target_production_ref": source.target_production_ref,
+                "target_snapshot_fingerprint": target_snapshot_fingerprint(
+                    request.target
+                ),
                 "findings": _findings_snapshot(source.findings),
                 "overall_assessment": source.overall_assessment.value,
                 "correction_required": source.correction_required,
@@ -96,6 +111,7 @@ def _findings_snapshot(findings: tuple[Finding, ...]) -> tuple[Mapping[str, obje
             "evidence_refs": finding.evidence_refs,
             "confidence": finding.confidence,
             "suggested_action": finding.suggested_action,
+            "lineage_fingerprint": finding_lineage_fingerprint(finding),
         }
         for finding in findings
     )
@@ -126,6 +142,7 @@ def _validate_assessment_prepared(
 def _assessment_signal(
     request: FindingsAssessmentRequest,
     technical: ReviewPortResult,
+    security: ReviewSecurityAssessment,
 ) -> ReviewAssessmentSignal:
     if type(technical.status) is not ReviewPortResultStatus:
         _raise_assessment(ReviewAssessmentErrorCode.INVALID_TECHNICAL_PAYLOAD)
@@ -176,8 +193,12 @@ def _assessment_signal(
     if not isinstance(confidence, Mapping):
         _raise_assessment(ReviewAssessmentErrorCode.INVALID_TECHNICAL_PAYLOAD)
 
-    limitations = request.source_result.limitations + technical.limitations
-    warnings = request.source_result.warnings + technical.warnings
+    limitations = (
+        request.source_result.limitations
+        + technical.limitations
+        + security.limitations
+    )
+    warnings = request.source_result.warnings + technical.warnings + security.warnings
     return ReviewAssessmentSignal(
         review_ref=request.review_ref,
         review_id=request.source_result.review_id,
@@ -193,6 +214,12 @@ def _assessment_signal(
         limitations=limitations,
         warnings=warnings,
         technical_status=technical.status,
+        target_snapshot_fingerprint=security.target_snapshot_fingerprint,
+        finding_lineage_fingerprints=tuple(
+            (finding.finding_id, finding_lineage_fingerprint(finding))
+            for finding in request.source_result.findings
+        ),
+        security_signal_codes=tuple(signal.code for signal in security.signals),
     )
 
 
@@ -242,6 +269,9 @@ def _revalidated_technical_mappings(
         _reject_authority_keys(payload, "structured_payload")
         _reject_authority_keys(frozen_sequences, "technical_diagnostics")
         _reject_authority_keys(execution_metadata, "execution_metadata")
+        reject_activatable_review_metadata(payload)
+        reject_activatable_review_metadata(frozen_sequences)
+        reject_activatable_review_metadata(execution_metadata)
     except (TypeError, ValueError):
         _raise_assessment(ReviewAssessmentErrorCode.AUTHORITY_METADATA_FORBIDDEN)
     return payload
@@ -295,4 +325,5 @@ def _correction_handoff(
         suggested_actions=suggested_actions,
         limitations=signal.limitations,
         warnings=signal.warnings,
+        security_signal_codes=signal.security_signal_codes,
     )

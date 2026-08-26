@@ -120,7 +120,8 @@ def _finding(
         "dimension": dimension,
         "severity": severity,
         "description": description,
-        "target_locator": target_locator or {"section": "content", "paragraph": 2},
+        "target_locator": target_locator
+        or {"kind": "text_span", "start": 0, "end": 6, "quote": "Caller"},
         "rationale": rationale,
         "correction_required": correction_required,
         "evidence_refs": evidence_refs,
@@ -364,7 +365,12 @@ def test_multiple_findings_are_materialized_and_mappings_are_immutable() -> None
                 dimension=ReviewDimension.SOURCES.value,
                 severity=FindingSeverity.INFO.value,
                 evidence_refs=("evidence:two",),
-                target_locator={"path": ["sources", 1]},
+                target_locator={
+                    "kind": "text_span",
+                    "start": 7,
+                    "end": 15,
+                    "quote": "resolved",
+                },
             ),
         ),
         evidence_refs_used=("evidence:one", "evidence:two"),
@@ -377,9 +383,14 @@ def test_multiple_findings_are_materialized_and_mappings_are_immutable() -> None
         "finding-1",
         "finding-2",
     )
-    assert result.findings[1].target_locator == {"path": ("sources", 1)}
+    assert result.findings[1].target_locator == {
+        "kind": "text_span",
+        "start": 7,
+        "end": 15,
+        "quote": "resolved",
+    }
     with pytest.raises(TypeError):
-        result.findings[1].target_locator["path"] = ()  # type: ignore[index]
+        result.findings[1].target_locator["start"] = 0  # type: ignore[index]
 
 
 def test_duplicate_finding_ids_are_rejected() -> None:

@@ -195,10 +195,12 @@ _FORBIDDEN_AUTHORITY_KEYS = frozenset(
         "gate_approved",
         "permission_granted",
         "promoted",
+        "promotion_allowed",
         "review_passed",
         "safe",
         "trusted",
         "validated",
+        "validator_passed",
     }
 )
 

@@ -96,7 +96,12 @@ def _finding(
         ),
         severity=severity,
         description="Public issue.",
-        target_locator={"section": "content"},
+        target_locator={
+            "kind": "text_span",
+            "start": 0,
+            "end": 5,
+            "quote": "Exact",
+        },
         rationale="Public rationale.",
         correction_required=correction_required,
         evidence_refs=evidence_refs,

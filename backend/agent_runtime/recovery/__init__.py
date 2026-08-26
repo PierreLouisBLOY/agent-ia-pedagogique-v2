@@ -1,5 +1,20 @@
-"""Technical idempotency and effect-ledger boundary."""
+"""Technical idempotency, accounting, and snapshot boundaries."""
 
+from backend.agent_runtime.recovery.budget import (
+    BudgetAccountingPolicy,
+    BudgetCheckDisposition,
+    BudgetCheckResult,
+    BudgetDimension,
+    BudgetMetricCompleteness,
+    BudgetState,
+    BudgetStateError,
+    BudgetStateErrorCode,
+    BudgetUsageDelta,
+    EffectiveBudgetLimits,
+    resolve_effective_budget_limits,
+    retry_count_from_attempt_count,
+)
+from backend.agent_runtime.recovery.budget_ports import BudgetStatePort
 from backend.agent_runtime.recovery.idempotency import IdempotencyPolicy
 from backend.agent_runtime.recovery.model import (
     EffectAttemptRecord,
@@ -15,19 +30,56 @@ from backend.agent_runtime.recovery.model import (
     ReconciliationStatus,
 )
 from backend.agent_runtime.recovery.ports import EffectLedgerPort
+from backend.agent_runtime.recovery.snapshot import (
+    EffectLedgerSnapshotRef,
+    PlanFingerprint,
+    SnapshotFreshnessAssessment,
+    SnapshotFreshnessIssue,
+    SnapshotSequencePolicy,
+    SnapshotStoreError,
+    SnapshotStoreErrorCode,
+    StateSnapshot,
+    assess_snapshot_freshness,
+    snapshot_id_for,
+)
+from backend.agent_runtime.recovery.snapshot_ports import StateSnapshotStorePort
 
 __all__ = [
+    "BudgetAccountingPolicy",
+    "BudgetCheckDisposition",
+    "BudgetCheckResult",
+    "BudgetDimension",
+    "BudgetMetricCompleteness",
+    "BudgetState",
+    "BudgetStateError",
+    "BudgetStateErrorCode",
+    "BudgetStatePort",
+    "BudgetUsageDelta",
     "EffectAttemptRecord",
     "EffectLedgerError",
     "EffectLedgerErrorCode",
     "EffectLedgerLifecycle",
     "EffectLedgerPort",
     "EffectLedgerRecord",
+    "EffectLedgerSnapshotRef",
     "EffectReservationDisposition",
     "EffectReservationResult",
     "IdempotencyIdentity",
     "IdempotencyKeyFingerprint",
     "IdempotencyPolicy",
     "IntentFingerprint",
+    "PlanFingerprint",
     "ReconciliationStatus",
+    "SnapshotFreshnessAssessment",
+    "SnapshotFreshnessIssue",
+    "SnapshotSequencePolicy",
+    "SnapshotStoreError",
+    "SnapshotStoreErrorCode",
+    "StateSnapshot",
+    "StateSnapshotStorePort",
+    "EffectiveBudgetLimits",
+    "assess_snapshot_freshness",
+    "resolve_effective_budget_limits",
+    "retry_count_from_attempt_count",
+    "snapshot_id_for",
 ]

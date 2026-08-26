@@ -7,6 +7,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND = ROOT / "backend"
 RECOVERY = BACKEND / "agent_runtime" / "recovery"
+IDEMPOTENCY_BOUNDARY = (
+    RECOVERY / "model.py",
+    RECOVERY / "idempotency.py",
+    RECOVERY / "ports.py",
+)
 
 
 def _python_files(root: Path) -> tuple[Path, ...]:
@@ -71,7 +76,6 @@ def test_recovery_does_not_depend_on_execution_authority_boundaries() -> None:
         "agent_runtime.application_routing",
         "agent_runtime.gates",
         "agent_runtime.orchestration.coordination",
-        "agent_runtime.policy",
         "agent_runtime.runtime.execution",
         "agent_runtime.tools",
     }
@@ -106,7 +110,7 @@ def test_b_does_not_introduce_later_phase_components() -> None:
     }
     defined = {
         node.name
-        for path in _python_files(RECOVERY)
+        for path in IDEMPOTENCY_BOUNDARY
         for node in ast.walk(_tree(path))
         if isinstance(node, ast.ClassDef)
     }

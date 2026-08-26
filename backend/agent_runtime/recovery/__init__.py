@@ -30,6 +30,28 @@ from backend.agent_runtime.recovery.model import (
     ReconciliationStatus,
 )
 from backend.agent_runtime.recovery.ports import EffectLedgerPort
+from backend.agent_runtime.recovery.reconciliation import (
+    ApplicationEffectProbeRequest,
+    EffectReconciliationDisposition,
+    EffectReconciliationError,
+    EffectReconciliationErrorCode,
+    EffectReconciliationPolicy,
+    EffectReconciliationRequest,
+    EffectReconciliationResult,
+    ReconciliationEligibility,
+    ReconciliationObservation,
+    ReconciliationObservationDisposition,
+    ToolEffectProbeRequest,
+    application_probe_request_for,
+    tool_probe_request_for,
+)
+from backend.agent_runtime.recovery.reconciliation_engine import (
+    EffectReconciliationEngine,
+)
+from backend.agent_runtime.recovery.reconciliation_ports import (
+    ApplicationEffectProbePort,
+    ToolEffectProbePort,
+)
 from backend.agent_runtime.recovery.snapshot import (
     EffectLedgerSnapshotRef,
     PlanFingerprint,
@@ -45,6 +67,8 @@ from backend.agent_runtime.recovery.snapshot import (
 from backend.agent_runtime.recovery.snapshot_ports import StateSnapshotStorePort
 
 __all__ = [
+    "ApplicationEffectProbePort",
+    "ApplicationEffectProbeRequest",
     "BudgetAccountingPolicy",
     "BudgetCheckDisposition",
     "BudgetCheckResult",
@@ -62,6 +86,13 @@ __all__ = [
     "EffectLedgerPort",
     "EffectLedgerRecord",
     "EffectLedgerSnapshotRef",
+    "EffectReconciliationDisposition",
+    "EffectReconciliationEngine",
+    "EffectReconciliationError",
+    "EffectReconciliationErrorCode",
+    "EffectReconciliationPolicy",
+    "EffectReconciliationRequest",
+    "EffectReconciliationResult",
     "EffectReservationDisposition",
     "EffectReservationResult",
     "IdempotencyIdentity",
@@ -69,6 +100,9 @@ __all__ = [
     "IdempotencyPolicy",
     "IntentFingerprint",
     "PlanFingerprint",
+    "ReconciliationEligibility",
+    "ReconciliationObservation",
+    "ReconciliationObservationDisposition",
     "ReconciliationStatus",
     "SnapshotFreshnessAssessment",
     "SnapshotFreshnessIssue",
@@ -77,9 +111,13 @@ __all__ = [
     "SnapshotStoreErrorCode",
     "StateSnapshot",
     "StateSnapshotStorePort",
+    "ToolEffectProbePort",
+    "ToolEffectProbeRequest",
     "EffectiveBudgetLimits",
     "assess_snapshot_freshness",
+    "application_probe_request_for",
     "resolve_effective_budget_limits",
     "retry_count_from_attempt_count",
     "snapshot_id_for",
+    "tool_probe_request_for",
 ]

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from threading import Lock
+from typing import Protocol
 
 from backend.agent_runtime.recovery import (
     EffectLedgerError,
@@ -14,14 +15,40 @@ from backend.shared_kernel._strings import require_non_empty
 from backend.shared_kernel.time import Instant
 
 
+class EffectLedgerCasValidator(Protocol):
+    def __call__(
+        self,
+        *,
+        current: EffectLedgerRecord,
+        expected_version: int,
+        replacement: EffectLedgerRecord,
+    ) -> None: ...
+
+
 class InMemoryEffectLedgerFake:
     """Thread-safe test fake; no production store is provided by Phase 12.11-B."""
 
-    def __init__(self, policy: IdempotencyPolicy | None = None) -> None:
+    def __init__(
+        self,
+        policy: IdempotencyPolicy | None = None,
+        *,
+        initial_records: tuple[EffectLedgerRecord, ...] = (),
+        cas_validator: EffectLedgerCasValidator | None = None,
+    ) -> None:
         self._policy = policy or IdempotencyPolicy()
         self._records: dict[str, EffectLedgerRecord] = {}
         self._collision_index: dict[str, str] = {}
+        self._cas_validator = cas_validator or self._policy.validate_compare_and_set
         self._lock = Lock()
+        for record in initial_records:
+            if not isinstance(record, EffectLedgerRecord):
+                raise TypeError("initial_records must contain EffectLedgerRecord values")
+            if record.record_id in self._records:
+                raise ValueError("initial_records must have distinct record IDs")
+            if record.identity.collision_key in self._collision_index:
+                raise ValueError("initial_records must have distinct collision keys")
+            self._records[record.record_id] = record
+            self._collision_index[record.identity.collision_key] = record.record_id
 
     def reserve(
         self,
@@ -75,7 +102,7 @@ class InMemoryEffectLedgerFake:
                 raise EffectLedgerError(EffectLedgerErrorCode.VERSION_CONFLICT)
             if replacement.record_id != record_id:
                 raise EffectLedgerError(EffectLedgerErrorCode.INVALID_RECORD)
-            self._policy.validate_compare_and_set(
+            self._cas_validator(
                 current=current,
                 expected_version=expected_version,
                 replacement=replacement,

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
-from backend.agent_runtime.contracts.common import AgentId, ContractMeta
+from backend.agent_runtime.contracts.common import ActorKind, AgentId, ContractMeta
 from backend.agent_runtime.contracts.planning import DelegationEnvelope, StepKind, StepSpec
 from backend.agent_runtime.contracts.policy import AutonomyLevel, RuntimeMode
 from backend.shared_kernel._strings import require_non_empty
@@ -49,6 +49,13 @@ class AgentInvocation:
                 raise ValueError("agent_id must match delegation.target_agent")
             if self.delegation.source_step != self.source_step:
                 raise ValueError("delegation.source_step must match source_step")
+            if not (
+                self.meta.actor.kind is ActorKind.AGENT
+                and self.meta.actor.actor_id == AgentId.AG_01.value
+            ):
+                raise ValueError("only AG-01 may create a delegated invocation")
+            if self.delegation.source_agent is not AgentId.AG_01:
+                raise ValueError("delegation source must be AG-01")
         if not isinstance(self.agent_id, AgentId):
             raise TypeError("agent_id must be an AgentId")
         if not isinstance(self.attempt, int) or isinstance(self.attempt, bool):

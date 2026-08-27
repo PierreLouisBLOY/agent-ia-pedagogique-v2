@@ -127,7 +127,8 @@ def _delegation() -> DelegationEnvelope:
         evidence_refs=(),
         constraints={},
         permission_scope=PermissionScope(
-            principal=ActorRef(ActorKind.AGENT, AgentId.AG_02.value)
+            principal=ActorRef(ActorKind.AGENT, AgentId.AG_02.value),
+            capability_ids=(CapabilityId("course.generate"),),
         ),
     )
 

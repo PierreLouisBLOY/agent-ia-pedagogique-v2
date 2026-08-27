@@ -31,6 +31,8 @@ class DelegationEnvelope:
     permission_scope: PermissionScope
     deadline: Instant | None = None
     trace_context: Mapping[str, object] = field(default_factory=dict)
+    source_agent: AgentId = AgentId.AG_01
+    delegation_depth: int = 1
 
     def __post_init__(self) -> None:
         require_non_empty(self.delegation_id, "delegation_id")
@@ -44,6 +46,12 @@ class DelegationEnvelope:
             raise ValueError("source_step.executor must match target_agent")
         if self.source_step.capability_id is None:
             raise ValueError("source_step.capability_id is required")
+        if self.source_agent is not AgentId.AG_01:
+            raise ValueError("source_agent must be AG-01")
+        if type(self.delegation_depth) is not int:
+            raise TypeError("delegation_depth must be an integer")
+        if self.delegation_depth != 1:
+            raise ValueError("specialist delegation depth must be exactly 1")
         evidence_refs = tuple(self.evidence_refs)
         for evidence_ref in evidence_refs:
             require_contract_ref(evidence_ref, "evidence_ref")
@@ -53,6 +61,10 @@ class DelegationEnvelope:
             raise ValueError("permission_scope.principal must be an agent")
         if self.permission_scope.principal.actor_id != self.target_agent.value:
             raise ValueError("permission_scope.principal must match target_agent")
+        if self.permission_scope.capability_ids != (self.source_step.capability_id,):
+            raise ValueError("permission_scope must contain exactly the delegated capability")
+        if self.permission_scope.delegable:
+            raise ValueError("delegated permission_scope must not be redelegable")
         if self.deadline is not None and not isinstance(self.deadline, Instant):
             raise TypeError("deadline must be an Instant")
         object.__setattr__(

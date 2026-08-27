@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from backend.agent_runtime.contracts.common import (
+    ActorKind,
+    AgentId,
     ContractMeta,
     ContractRef,
     freeze_agent_safe_mapping,
@@ -41,6 +43,12 @@ class AgentResult[TPayload]:
             raise TypeError("meta must be a ContractMeta")
         if not isinstance(self.meta.status, AgentResultStatus):
             raise TypeError("meta.status must be an AgentResultStatus")
+        if self.meta.actor.kind is not ActorKind.AGENT:
+            raise ValueError("agent result producer must be an agent")
+        try:
+            AgentId(self.meta.actor.actor_id)
+        except ValueError as error:
+            raise ValueError("agent result producer must be a canonical agent") from error
         require_non_empty(self.invocation_id, "invocation_id")
         artifact_refs = tuple(self.artifact_refs)
         for artifact_ref in artifact_refs:
@@ -68,3 +76,9 @@ class AgentResult[TPayload]:
         object.__setattr__(self, "evidence_refs", evidence_refs)
         object.__setattr__(self, "warnings", warnings)
         object.__setattr__(self, "metrics", freeze_agent_safe_mapping(self.metrics))
+
+    @property
+    def producer_agent(self) -> AgentId:
+        """Canonical producer derived from immutable contract metadata."""
+
+        return AgentId(self.meta.actor.actor_id)

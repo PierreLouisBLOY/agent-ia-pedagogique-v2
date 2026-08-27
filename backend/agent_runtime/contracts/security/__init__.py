@@ -1,5 +1,8 @@
 """Provider-neutral security provenance and event contracts."""
 
+from backend.agent_runtime.contracts.security.agent_handoff import (
+    ValidatedAgentHandoff,
+)
 from backend.agent_runtime.contracts.security.boundary_content import (
     StructuredContentSecurityAssessment,
 )
@@ -40,4 +43,5 @@ __all__ = [
     "SecurityReasonCode",
     "SecuritySeverity",
     "StructuredContentSecurityAssessment",
+    "ValidatedAgentHandoff",
 ]

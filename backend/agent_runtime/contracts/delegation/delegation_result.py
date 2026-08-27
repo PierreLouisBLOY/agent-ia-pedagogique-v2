@@ -25,6 +25,8 @@ class DelegationResult[TPayload]:
             raise ValueError("source_agent must be AG-02, AG-03, or AG-04")
         if not isinstance(self.agent_result, AgentResult):
             raise TypeError("agent_result must be an AgentResult")
+        if self.agent_result.producer_agent is not self.source_agent:
+            raise ValueError("agent_result producer must match source_agent")
         if self.delegation is not None:
             if not isinstance(self.delegation, DelegationEnvelope):
                 raise TypeError("delegation must be a DelegationEnvelope")
@@ -34,3 +36,9 @@ class DelegationResult[TPayload]:
                 raise ValueError("source_agent must match delegation.target_agent")
             if self.agent_result.meta.step_id != self.delegation.source_step.step_id:
                 raise ValueError("agent_result step must match delegation source step")
+
+    @property
+    def is_delegated(self) -> bool:
+        """Distinguish a correlated delegated result from a legitimate direct result."""
+
+        return self.delegation is not None

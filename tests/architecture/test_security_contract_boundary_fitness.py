@@ -134,6 +134,7 @@ def test_security_contracts_are_integrated_only_into_approved_boundaries() -> No
 
     allowed_exports = {
         SECURITY_CONTRACTS / "__init__.py",
+        SECURITY_CONTRACTS / "agent_handoff.py",
         SECURITY_CONTRACTS / "boundary_content.py",
         SECURITY_CONTRACTS / "content.py",
         SECURITY_CONTRACTS / "security_event.py",
@@ -166,6 +167,7 @@ def test_security_contracts_are_integrated_only_into_approved_boundaries() -> No
         / "use_case_result.py",
         BACKEND / "agent_runtime" / "contracts" / "tools" / "tool_call_result.py",
         BACKEND / "agent_runtime" / "security" / "tool_application.py",
+        BACKEND / "agent_runtime" / "security" / "multi_agent.py",
         BACKEND / "agent_runtime" / "tools" / "model.py",
         BACKEND / "agent_runtime" / "tools" / "router.py",
     }

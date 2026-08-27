@@ -42,13 +42,14 @@ from backend.shared_kernel.time import Instant
 
 
 def _actor() -> ActorRef:
-    return ActorRef(kind=ActorKind.AGENT, actor_id="agent-runtime")
+    return ActorRef(kind=ActorKind.AGENT, actor_id=AgentId.AG_02.value)
 
 
 def _meta(
     status: InvocationStatus | AgentResultStatus,
     *,
     step_id: str = "step-1",
+    actor_id: AgentId = AgentId.AG_02,
 ) -> ContractMeta[object]:
     return ContractMeta(
         schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
@@ -57,7 +58,7 @@ def _meta(
         parent_step_id=None,
         correlation_id=CorrelationId("corr-1"),
         created_at=Instant(datetime(2026, 8, 24, 12, 0, tzinfo=UTC)),
-        actor=_actor(),
+        actor=ActorRef(ActorKind.AGENT, actor_id.value),
         status=status,
         trace_flags={"sampled": True},
     )
@@ -479,7 +480,7 @@ def test_delegation_envelope_requires_permission_scope_matching_target_agent() -
 def test_agent_invocation_composes_same_step_and_delegation() -> None:
     delegation = _delegation()
     invocation = AgentInvocation(
-        meta=_meta(InvocationStatus.PLANNED),
+        meta=_meta(InvocationStatus.PLANNED, actor_id=AgentId.AG_01),
         invocation_id="invocation-1",
         source_step=delegation.source_step,
         delegation=delegation,
@@ -492,7 +493,7 @@ def test_agent_invocation_composes_same_step_and_delegation() -> None:
     assert invocation.source_step is delegation.source_step
     with pytest.raises(ValueError):
         AgentInvocation(
-            meta=_meta(InvocationStatus.PLANNED),
+            meta=_meta(InvocationStatus.PLANNED, actor_id=AgentId.AG_01),
             invocation_id="invocation-2",
             source_step=_agent_step(AgentId.AG_03),
             delegation=delegation,

@@ -89,6 +89,7 @@ from backend.agent_runtime.contracts.security import (
     SecurityReasonCode,
     SecuritySeverity,
     StructuredContentSecurityAssessment,
+    ValidatedAgentHandoff,
 )
 from backend.agent_runtime.contracts.tools import ToolCallRequest, ToolCallResult
 
@@ -161,6 +162,7 @@ __all__ = [
     "ToolCallResult",
     "UseCaseRequest",
     "UseCaseResult",
+    "ValidatedAgentHandoff",
     "WorkflowEvent",
     "WorkflowEventType",
     "WorkflowStatus",

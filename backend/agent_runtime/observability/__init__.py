@@ -1,5 +1,24 @@
 """Provider-neutral observability mappings and ports without backends."""
 
+from backend.agent_runtime.observability.delivery_model import (
+    DeliveryAttempt,
+    DeliveryBufferSnapshot,
+    DeliveryDisposition,
+    DeliveryDropReason,
+    DeliveryFlushResult,
+    DeliveryHealthSnapshot,
+    DeliveryHealthStatus,
+    DeliveryOverflowPolicy,
+    DeliveryStatsSnapshot,
+    ObservationChannel,
+)
+from backend.agent_runtime.observability.delivery_policy import (
+    BASELINE_OBSERVABILITY_DELIVERY_POLICY,
+    MAX_BUFFER_BYTES,
+    MAX_BUFFER_ITEMS,
+    MAX_FLUSH_ITEMS,
+    ObservabilityDeliveryPolicy,
+)
 from backend.agent_runtime.observability.log_catalog import (
     StructuredLogCode,
     directive_log_level,
@@ -58,14 +77,29 @@ from backend.agent_runtime.observability.span_factory import completed_span
 from backend.agent_runtime.observability.trace_policy import TraceContextPolicy
 
 __all__ = [
+    "BASELINE_OBSERVABILITY_DELIVERY_POLICY",
+    "DeliveryAttempt",
+    "DeliveryBufferSnapshot",
+    "DeliveryDisposition",
+    "DeliveryDropReason",
+    "DeliveryFlushResult",
+    "DeliveryHealthSnapshot",
+    "DeliveryHealthStatus",
+    "DeliveryOverflowPolicy",
+    "DeliveryStatsSnapshot",
     "LogSinkPort",
+    "MAX_BUFFER_BYTES",
+    "MAX_BUFFER_ITEMS",
     "MAX_CATALOG_SERIES",
     "MAX_SERIES_PER_DESCRIPTOR",
+    "MAX_FLUSH_ITEMS",
     "METRIC_CATALOG",
     "MetricCode",
     "MetricPointError",
     "MetricPointErrorCode",
     "MetricSinkPort",
+    "ObservationChannel",
+    "ObservabilityDeliveryPolicy",
     "SpanCode",
     "StructuredLogCode",
     "TraceContextPolicy",

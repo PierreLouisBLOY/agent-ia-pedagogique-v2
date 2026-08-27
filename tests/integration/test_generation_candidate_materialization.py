@@ -295,7 +295,11 @@ def test_d6_forged_result_fails_closed_before_candidate_construction() -> None:
     canonical = _canonical()
     technical = _result(GenerationOperation.GENERATE)
     agent, prepared, _, _ = _execute(canonical, "CAP-G01", technical)
-    forged_result = replace(technical, source_step_id="step-forged")
+    forged_result = replace(
+        technical,
+        source_step_id="step-forged",
+        content_label=None,
+    )
     forged = _forged_build(
         canonical,
         prepared,

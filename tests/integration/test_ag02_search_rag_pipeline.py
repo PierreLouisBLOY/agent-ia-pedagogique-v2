@@ -34,6 +34,7 @@ from backend.agent_runtime.contracts import (
     ActorRef,
     AgentId,
     AgentResultStatus,
+    ContentThreatSignalCode,
     ContractMeta,
     EvidenceRequest,
     InvocationStatus,
@@ -357,11 +358,11 @@ def test_a5_hostile_document_remains_data_and_cannot_trigger_authority() -> None
     security = EvidenceSecurityScanner().assess(evidence_set=evidence_set)
     codes = {signal.code for signal in security.signals}
 
-    assert EvidenceSecuritySignalCode.INSTRUCTION_LIKE_CONTENT in codes
-    assert EvidenceSecuritySignalCode.PRIVILEGE_ESCALATION_TEXT in codes
-    assert EvidenceSecuritySignalCode.EXFILTRATION_TEXT in codes
-    assert EvidenceSecuritySignalCode.TOOL_OR_FILE_ACTION_TEXT in codes
-    assert EvidenceSecuritySignalCode.URL_PRESENT in codes
+    assert ContentThreatSignalCode.INSTRUCTION_LIKE_CONTENT in codes
+    assert ContentThreatSignalCode.PRIVILEGE_ESCALATION_TEXT in codes
+    assert ContentThreatSignalCode.EXFILTRATION_TEXT in codes
+    assert ContentThreatSignalCode.TOOL_OR_FILE_ACTION_TEXT in codes
+    assert ContentThreatSignalCode.URL_PRESENT in codes
     assert security.document_instructions_authoritative is False
     assert security.external_actions_allowed is False
     assert security.links_followed is False

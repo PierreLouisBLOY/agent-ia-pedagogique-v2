@@ -32,6 +32,10 @@ from backend.agent_runtime.contracts import (
     ActorKind,
     ActorRef,
     AgentId,
+    ContentOrigin,
+    ContentRole,
+    ContentTrustClass,
+    ContentTrustLabel,
     ContractMeta,
     InvocationStatus,
     ProductionRequest,
@@ -445,7 +449,16 @@ def test_guard_request_rejects_technical_result_lineage_mismatch() -> None:
     with pytest.raises(GenerationGuardError) as raised:
         GenerationGuardRequest(
             _prepared(),
-            replace(_technical(), source_step_id="foreign-step"),
+            replace(
+                _technical(),
+                source_step_id="foreign-step",
+                content_label=ContentTrustLabel(
+                    origin=ContentOrigin.AGENT_OUTPUT,
+                    role=ContentRole.RESULT,
+                    trust_class=ContentTrustClass.UNTRUSTED,
+                    source_ref="generation-output:foreign-step",
+                ),
+            ),
             GenerationGuardPolicy(),
         )
     assert raised.value.issue_code is (
@@ -489,7 +502,10 @@ def test_closed_security_patterns_are_signaled(
     assessment = _assess(technical=_technical(content=content))
     assert assessment.disposition is GenerationGuardDisposition.ALLOW_WITH_WARNINGS
     assert expected_code in {signal.code for signal in assessment.security_signals}
-    assert all(signal.location == "content" for signal in assessment.security_signals)
+    assert all(
+        signal.logical_location == "content"
+        for signal in assessment.security_signals
+    )
 
 
 def test_nested_payload_string_is_scanned() -> None:
@@ -501,7 +517,7 @@ def test_nested_payload_string_is_scanned() -> None:
     assert assessment.security_signals[0].code is (
         GenerationSecuritySignalCode.TOOL_OR_FILE_ACTION_TEXT
     )
-    assert assessment.security_signals[0].location == (
+    assert assessment.security_signals[0].logical_location == (
         "structured_payload.sections.0.body"
     )
 
@@ -511,9 +527,12 @@ def test_security_signal_never_stores_detected_raw_text() -> None:
     assessment = _assess(technical=_technical(content=raw))
     assert tuple(item.name for item in fields(assessment.security_signals[0])) == (
         "code",
-        "location",
+        "content_ref",
+        "logical_location",
     )
-    assert all(raw not in signal.location for signal in assessment.security_signals)
+    assert all(
+        raw not in signal.logical_location for signal in assessment.security_signals
+    )
 
 
 @pytest.mark.parametrize(
@@ -580,7 +599,7 @@ def test_assessment_ordering_and_equality_are_deterministic() -> None:
             first.security_signals,
             key=lambda item: (
                 tuple(GenerationSecuritySignalCode).index(item.code),
-                item.location,
+                item.logical_location,
             ),
         )
     )

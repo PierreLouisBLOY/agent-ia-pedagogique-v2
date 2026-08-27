@@ -20,7 +20,6 @@ from backend.agent_runtime.agents.evidence import (
     EvidenceRoundRecord,
     EvidenceSecurityAssessment,
     EvidenceSecurityScanner,
-    EvidenceSecuritySignalCode,
     FusedRetrievalCandidate,
     RetrievalCandidate,
     RetrievalChannel,
@@ -37,6 +36,7 @@ from backend.agent_runtime.contracts import (
     ActorRef,
     AgentId,
     AgentResultStatus,
+    ContentThreatSignalCode,
     ContractMeta,
     EvidenceItem,
     EvidenceRequest,
@@ -605,8 +605,8 @@ def test_security_codes_propagate_without_changing_scope_or_limit() -> None:
     )
     assert decision.proposal is not None
     assert decision.proposal.security_signal_codes == (
-        EvidenceSecuritySignalCode.INSTRUCTION_LIKE_CONTENT,
-        EvidenceSecuritySignalCode.URL_PRESENT,
+        ContentThreatSignalCode.INSTRUCTION_LIKE_CONTENT,
+        ContentThreatSignalCode.URL_PRESENT,
     )
     assert decision.proposal.scope == request.scope
     assert decision.proposal.max_items == 10

@@ -64,12 +64,12 @@ def test_f_adds_one_pure_review_security_guard_and_keeps_core_surfaces_unique() 
     assert _class_sites("ReviewPort") == (REVIEW / "review_ports.py",)
 
 
-def test_review_security_reuses_evidence_models_but_not_evidence_scanner() -> None:
+def test_review_security_reuses_evidence_assessment_and_common_threat_codes() -> None:
     source = "\n".join(path.read_text(encoding="utf-8") for path in F_FILES)
     assert "EvidenceSecurityAssessment" in source
-    assert "EvidenceSecuritySignalCode" in source
+    assert "ContentThreatSignalCode" in source
     assert "class EvidenceSecurityAssessment" not in source
-    assert "class EvidenceSecuritySignalCode" not in source
+    assert "class ContentThreatSignalCode" not in source
     assert "EvidenceSecurityScanner" not in source
 
 

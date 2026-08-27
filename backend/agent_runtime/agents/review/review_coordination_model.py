@@ -8,8 +8,14 @@ from backend.agent_runtime.agents.review.review_model import (
     ReviewOperation,
     ReviewPortRequest,
 )
-from backend.agent_runtime.contracts import ReviewRequest
+from backend.agent_runtime.contracts import LabeledEvidenceItem, ReviewRequest
 from backend.agent_runtime.contracts.common import freeze_agent_safe_mapping
+from backend.agent_runtime.contracts.security import (
+    ContentOrigin,
+    ContentRole,
+    ContentTrustClass,
+    ContentTrustLabel,
+)
 from backend.core_contracts.capability import CapabilityId
 from backend.shared_kernel.references import ObjectVersionRef
 
@@ -74,6 +80,7 @@ class ResolvedReviewTarget:
     target_production_ref: ObjectVersionRef
     content: str | None = None
     structured_payload: Mapping[str, object] = field(default_factory=dict)
+    content_label: ContentTrustLabel | None = None
 
     def __post_init__(self) -> None:
         if type(self.target_production_ref) is not ObjectVersionRef:
@@ -86,7 +93,29 @@ class ResolvedReviewTarget:
         structured_payload = freeze_agent_safe_mapping(self.structured_payload)
         if self.content is None and not structured_payload:
             raise ValueError("content or structured_payload is required")
+        content_label = self.content_label
+        if content_label is None:
+            content_label = ContentTrustLabel(
+                origin=ContentOrigin.AGENT_OUTPUT,
+                role=ContentRole.RESULT,
+                trust_class=ContentTrustClass.UNTRUSTED,
+                source_ref=self.target_production_ref,
+            )
+        if type(content_label) is not ContentTrustLabel:
+            raise TypeError("content_label must be a ContentTrustLabel")
+        if (
+            content_label.origin
+            not in {
+                ContentOrigin.AGENT_OUTPUT,
+                ContentOrigin.REVIEW_OUTPUT,
+                ContentOrigin.CORRECTION_OUTPUT,
+            }
+            or content_label.role is not ContentRole.RESULT
+            or content_label.source_ref != self.target_production_ref
+        ):
+            raise ValueError("content_label must preserve review target provenance")
         object.__setattr__(self, "structured_payload", structured_payload)
+        object.__setattr__(self, "content_label", content_label)
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,6 +125,7 @@ class ReviewPreparationRequest:
     target: ResolvedReviewTarget
     resolved_inputs: Mapping[str, object] = field(default_factory=dict)
     output_contract: Mapping[str, object] = field(default_factory=dict)
+    labeled_evidence: tuple[LabeledEvidenceItem, ...] = ()
 
     def __post_init__(self) -> None:
         if type(self.capability_id) is not CapabilityId:
@@ -114,6 +144,7 @@ class ReviewPreparationRequest:
             "output_contract",
             freeze_agent_safe_mapping(self.output_contract),
         )
+        _validate_labeled_evidence(self.labeled_evidence, self.request.evidence_refs)
 
 
 @dataclass(frozen=True, slots=True)
@@ -163,6 +194,7 @@ def _validate_prepared_review_call(prepared: PreparedReviewCall) -> None:
     target = prepared.target
     technical = prepared.port_request
     expected_operation = _operation_for_capability(prepared.capability_id)
+    _validate_labeled_evidence(snapshot.labeled_evidence, canonical.evidence_refs)
 
     if snapshot.capability_id != prepared.capability_id:
         _raise_coordination(ReviewCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH)
@@ -192,6 +224,21 @@ def _validate_prepared_review_call(prepared: PreparedReviewCall) -> None:
     )
     if any(actual != expected for actual, expected in exact_pairs):
         _raise_coordination(ReviewCoordinationErrorCode.PREPARATION_MISMATCH)
+
+
+def _validate_labeled_evidence(
+    values: tuple[LabeledEvidenceItem, ...],
+    evidence_refs: tuple[object, ...],
+) -> None:
+    if type(values) is not tuple or any(
+        type(value) is not LabeledEvidenceItem for value in values
+    ):
+        raise TypeError("labeled_evidence must contain LabeledEvidenceItem values")
+    content_refs = tuple(value.content.content_ref for value in values)
+    if len(content_refs) != len(set(content_refs)):
+        raise ValueError("labeled_evidence content references must be unique")
+    if not set(content_refs).issubset(evidence_refs):
+        raise ValueError("labeled_evidence must remain inside canonical evidence scope")
 
 
 def _raise_coordination(code: ReviewCoordinationErrorCode) -> None:

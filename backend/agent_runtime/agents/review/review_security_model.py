@@ -12,16 +12,11 @@ from backend.agent_runtime.contracts.common import (
     freeze_agent_safe_mapping,
     require_contract_ref,
 )
+from backend.agent_runtime.contracts.security import ContentThreatSignalCode
 from backend.shared_kernel.references import ObjectVersionRef
 
 
 class ReviewSecuritySignalCode(StrEnum):
-    TARGET_INSTRUCTION_LIKE_CONTENT = "TARGET_INSTRUCTION_LIKE_CONTENT"
-    TARGET_PRIVILEGE_ESCALATION_TEXT = "TARGET_PRIVILEGE_ESCALATION_TEXT"
-    TARGET_EXFILTRATION_TEXT = "TARGET_EXFILTRATION_TEXT"
-    TARGET_TOOL_OR_FILE_ACTION_TEXT = "TARGET_TOOL_OR_FILE_ACTION_TEXT"
-    TARGET_URL_PRESENT = "TARGET_URL_PRESENT"
-    TARGET_AUTHORITY_CLAIM = "TARGET_AUTHORITY_CLAIM"
     LOCATOR_INVALID = "LOCATOR_INVALID"
     LOCATOR_OUT_OF_TARGET = "LOCATOR_OUT_OF_TARGET"
     LOCATOR_AMBIGUOUS = "LOCATOR_AMBIGUOUS"
@@ -32,6 +27,9 @@ class ReviewSecuritySignalCode(StrEnum):
     AUTHORITY_METADATA_FORBIDDEN = "AUTHORITY_METADATA_FORBIDDEN"
 
 
+type ReviewSignalCode = ReviewSecuritySignalCode | ContentThreatSignalCode
+
+
 class ReviewSecurityDisposition(StrEnum):
     ALLOW = "ALLOW"
     ALLOW_WITH_WARNINGS = "ALLOW_WITH_WARNINGS"
@@ -39,24 +37,30 @@ class ReviewSecurityDisposition(StrEnum):
     REJECT = "REJECT"
 
 
-_SAFE_REASONS: Mapping[ReviewSecuritySignalCode, str] = {
-    ReviewSecuritySignalCode.TARGET_INSTRUCTION_LIKE_CONTENT: (
+_SAFE_REASONS: Mapping[ReviewSignalCode, str] = {
+    ContentThreatSignalCode.INSTRUCTION_LIKE_CONTENT: (
         "review target contains instruction-like data disallowed by policy"
     ),
-    ReviewSecuritySignalCode.TARGET_PRIVILEGE_ESCALATION_TEXT: (
+    ContentThreatSignalCode.PRIVILEGE_ESCALATION_TEXT: (
         "review target contains privilege-escalation data"
     ),
-    ReviewSecuritySignalCode.TARGET_EXFILTRATION_TEXT: (
+    ContentThreatSignalCode.EXFILTRATION_TEXT: (
         "review target contains exfiltration-like data"
     ),
-    ReviewSecuritySignalCode.TARGET_TOOL_OR_FILE_ACTION_TEXT: (
+    ContentThreatSignalCode.TOOL_OR_FILE_ACTION_TEXT: (
         "review target contains tool or file action data"
     ),
-    ReviewSecuritySignalCode.TARGET_URL_PRESENT: (
+    ContentThreatSignalCode.URL_PRESENT: (
         "review target contains URL data disallowed by policy"
     ),
-    ReviewSecuritySignalCode.TARGET_AUTHORITY_CLAIM: (
+    ContentThreatSignalCode.AUTHORITY_CLAIM_TEXT: (
         "review target contains a non-authoritative authority claim"
+    ),
+    ContentThreatSignalCode.UPSTREAM_SECURITY_WARNING: (
+        "review target carries an upstream security warning"
+    ),
+    ContentThreatSignalCode.ROLE_CONFUSION: (
+        "review target role conflicts with its content boundary"
     ),
     ReviewSecuritySignalCode.LOCATOR_INVALID: (
         "finding locator does not match the closed review locator schema"
@@ -86,12 +90,12 @@ _SAFE_REASONS: Mapping[ReviewSecuritySignalCode, str] = {
 
 
 class ReviewSecurityError(ValueError):
-    code: ReviewSecuritySignalCode
+    code: ReviewSignalCode
     safe_reason: str
 
-    def __init__(self, code: ReviewSecuritySignalCode) -> None:
-        if type(code) is not ReviewSecuritySignalCode:
-            raise TypeError("code must be a ReviewSecuritySignalCode")
+    def __init__(self, code: ReviewSignalCode) -> None:
+        if type(code) not in {ReviewSecuritySignalCode, ContentThreatSignalCode}:
+            raise TypeError("code must be a review or common content signal code")
         self.code = code
         self.safe_reason = _SAFE_REASONS[code]
         super().__init__(self.safe_reason)
@@ -102,9 +106,9 @@ class ReviewSecurityPolicy:
     require_locator_validation: bool = True
     require_evidence_security_assessment: bool = False
     block_on_target_instruction: bool = False
-    block_on_privilege_escalation: bool = True
-    block_on_exfiltration: bool = True
-    block_on_tool_file_action: bool = True
+    block_on_privilege_escalation: bool = False
+    block_on_exfiltration: bool = False
+    block_on_tool_file_action: bool = False
     allow_urls_as_data: bool = True
     block_on_evidence_security_warning: bool = False
     allow_whole_target_locator: bool = False
@@ -141,13 +145,13 @@ class LocatorValidationResult:
 
 @dataclass(frozen=True, slots=True)
 class ReviewSecuritySignal:
-    code: ReviewSecuritySignalCode
+    code: ReviewSignalCode
     evidence_refs: tuple[ContractRef, ...] = ()
     location_kind: str | None = None
 
     def __post_init__(self) -> None:
-        if type(self.code) is not ReviewSecuritySignalCode:
-            raise TypeError("code must be a ReviewSecuritySignalCode")
+        if type(self.code) not in {ReviewSecuritySignalCode, ContentThreatSignalCode}:
+            raise TypeError("code must be a review or common content signal code")
         if type(self.evidence_refs) is not tuple:
             raise TypeError("evidence_refs must be a tuple")
         for evidence_ref in self.evidence_refs:

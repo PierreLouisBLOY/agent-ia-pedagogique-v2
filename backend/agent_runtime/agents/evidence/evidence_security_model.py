@@ -3,31 +3,29 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
+from backend.agent_runtime.contracts.security import ContentThreatSignalCode
 from backend.shared_kernel._strings import require_non_empty
 
 
 class EvidenceSecuritySignalCode(StrEnum):
-    INSTRUCTION_LIKE_CONTENT = "INSTRUCTION_LIKE_CONTENT"
-    PRIVILEGE_ESCALATION_TEXT = "PRIVILEGE_ESCALATION_TEXT"
-    EXFILTRATION_TEXT = "EXFILTRATION_TEXT"
-    TOOL_OR_FILE_ACTION_TEXT = "TOOL_OR_FILE_ACTION_TEXT"
-    URL_PRESENT = "URL_PRESENT"
-    UPSTREAM_SECURITY_WARNING = "UPSTREAM_SECURITY_WARNING"
     DUPLICATE_CORROBORATION = "DUPLICATE_CORROBORATION"
     CROSS_SOURCE_DUPLICATE_CONTENT = "CROSS_SOURCE_DUPLICATE_CONTENT"
     VERSION_DIVERGENCE = "VERSION_DIVERGENCE"
     SOURCE_REPORTED_STALE = "SOURCE_REPORTED_STALE"
 
 
+type EvidenceSignalCode = EvidenceSecuritySignalCode | ContentThreatSignalCode
+
+
 @dataclass(frozen=True, slots=True)
 class EvidenceSecuritySignal:
-    code: EvidenceSecuritySignalCode
+    code: EvidenceSignalCode
     evidence_ids: tuple[str, ...]
     reason_code: str
 
     def __post_init__(self) -> None:
-        if not isinstance(self.code, EvidenceSecuritySignalCode):
-            raise TypeError("code must be an EvidenceSecuritySignalCode")
+        if type(self.code) not in {EvidenceSecuritySignalCode, ContentThreatSignalCode}:
+            raise TypeError("code must be an evidence or common content signal code")
         _validate_string_tuple(
             self.evidence_ids,
             "evidence_ids",

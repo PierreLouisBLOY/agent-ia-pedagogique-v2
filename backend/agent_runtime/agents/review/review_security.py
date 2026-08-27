@@ -8,7 +8,6 @@ from typing import NoReturn
 
 from backend.agent_runtime.agents.evidence.evidence_security_model import (
     EvidenceSecurityAssessment,
-    EvidenceSecuritySignalCode,
 )
 from backend.agent_runtime.agents.review.review_coordination_model import (
     ResolvedReviewTarget,
@@ -23,6 +22,7 @@ from backend.agent_runtime.agents.review.review_security_model import (
     ReviewSecurityPolicy,
     ReviewSecuritySignal,
     ReviewSecuritySignalCode,
+    ReviewSignalCode,
 )
 from backend.agent_runtime.contracts import Finding
 from backend.agent_runtime.contracts.common import (
@@ -30,75 +30,11 @@ from backend.agent_runtime.contracts.common import (
     freeze_agent_safe_mapping,
     require_contract_ref,
 )
-
-_TARGET_PATTERNS: tuple[
-    tuple[ReviewSecuritySignalCode, tuple[str, ...]], ...
-] = (
-    (
-        ReviewSecuritySignalCode.TARGET_INSTRUCTION_LIKE_CONTENT,
-        (
-            "ignore previous instructions",
-            "ignore all instructions",
-            "ignore les consignes",
-            "ignore les règles",
-            "system prompt",
-            "developer message",
-        ),
-    ),
-    (
-        ReviewSecuritySignalCode.TARGET_PRIVILEGE_ESCALATION_TEXT,
-        (
-            "you are admin",
-            "je suis administrateur",
-            "authorize cap-",
-            "autorise cap-",
-            "grant permission",
-            "accorde la permission",
-        ),
-    ),
-    (
-        ReviewSecuritySignalCode.TARGET_EXFILTRATION_TEXT,
-        (
-            "reveal secret",
-            "show api key",
-            "send secrets",
-            "envoie les secrets",
-            "révèle le secret",
-        ),
-    ),
-    (
-        ReviewSecuritySignalCode.TARGET_TOOL_OR_FILE_ACTION_TEXT,
-        (
-            "call this tool",
-            "appelle cet outil",
-            "read this file",
-            "lis ce fichier",
-            "open this path",
-            "ouvre ce chemin",
-        ),
-    ),
-    (
-        ReviewSecuritySignalCode.TARGET_AUTHORITY_CLAIM,
-        (
-            "already validated",
-            "already approved",
-            "is canonical",
-            "is promoted",
-            "validated",
-            "approved",
-            "promoted",
-            "promotion allowed",
-            "gate approved",
-            "permission granted",
-            "review passed",
-            "validator passed",
-            "déjà validé",
-            "déjà approuvé",
-        ),
-    ),
+from backend.agent_runtime.contracts.security import ContentThreatSignalCode
+from backend.agent_runtime.security import (
+    scan_content_threats,
+    structural_authority_locations,
 )
-
-_EVIDENCE_WARNING_CODES = frozenset(EvidenceSecuritySignalCode)
 
 
 @dataclass(frozen=True, slots=True)
@@ -218,12 +154,17 @@ def target_snapshot_fingerprint(target: ResolvedReviewTarget) -> str:
             target.target_production_ref,
             content=target.content,
             structured_payload=target.structured_payload,
+            content_label=target.content_label,
         )
     except (TypeError, ValueError):
         _raise_security(ReviewSecuritySignalCode.ASSESSMENT_LINEAGE_MISMATCH)
     if rebuilt_target != target:
         _raise_security(ReviewSecuritySignalCode.ASSESSMENT_LINEAGE_MISMATCH)
-    canonical = (target.content, _canonical_value(target.structured_payload))
+    canonical = (
+        target.content,
+        _canonical_value(target.structured_payload),
+        target.content_label,
+    )
     return sha256(repr(canonical).encode("utf-8")).hexdigest()
 
 
@@ -255,9 +196,12 @@ def reject_review_authority(value: object) -> None:
 def reject_activatable_review_metadata(value: object) -> None:
     reject_review_authority(value)
     strings = _string_values(value)
-    if any(_contains_url(text) for text in strings) or any(
-        _contains_pattern(text, patterns)
-        for _, patterns in _TARGET_PATTERNS
+    if any(
+        scan_content_threats(
+            text,
+            content_ref="review-metadata",
+            logical_location="metadata",
+        )
         for text in strings
     ):
         _raise_security(ReviewSecuritySignalCode.AUTHORITY_METADATA_FORBIDDEN)
@@ -341,25 +285,29 @@ def _valid_path_segment(segment: object) -> bool:
 
 
 def _target_signals(target: ResolvedReviewTarget) -> tuple[ReviewSecuritySignal, ...]:
-    text_values = (() if target.content is None else (target.content,))
-    payload_values = _string_values(target.structured_payload)
     signals: list[ReviewSecuritySignal] = []
-    for code, patterns in _TARGET_PATTERNS:
-        if any(_contains_pattern(value, patterns) for value in text_values):
-            signals.append(ReviewSecuritySignal(code, location_kind="text"))
-        if any(_contains_pattern(value, patterns) for value in payload_values):
-            signals.append(ReviewSecuritySignal(code, location_kind="payload"))
-    if any(_contains_url(value) for value in text_values):
-        signals.append(
-            ReviewSecuritySignal(
-                ReviewSecuritySignalCode.TARGET_URL_PRESENT,
-                location_kind="text",
+    if target.content is not None:
+        signals.extend(
+            ReviewSecuritySignal(signal.code, location_kind="text")
+            for signal in scan_content_threats(
+                target.content,
+                content_ref=target.target_production_ref,
+                logical_location="review_target.content",
             )
         )
-    if any(_contains_url(value) for value in payload_values):
+    for value in _string_values(target.structured_payload):
+        signals.extend(
+            ReviewSecuritySignal(signal.code, location_kind="payload")
+            for signal in scan_content_threats(
+                value,
+                content_ref=target.target_production_ref,
+                logical_location="review_target.payload",
+            )
+        )
+    if structural_authority_locations(target.structured_payload):
         signals.append(
             ReviewSecuritySignal(
-                ReviewSecuritySignalCode.TARGET_URL_PRESENT,
+                ContentThreatSignalCode.AUTHORITY_CLAIM_TEXT,
                 location_kind="payload",
             )
         )
@@ -368,7 +316,7 @@ def _target_signals(target: ResolvedReviewTarget) -> tuple[ReviewSecuritySignal,
     except (TypeError, ValueError):
         signals.append(
             ReviewSecuritySignal(
-                ReviewSecuritySignalCode.TARGET_AUTHORITY_CLAIM,
+                ContentThreatSignalCode.AUTHORITY_CLAIM_TEXT,
                 location_kind="payload",
             )
         )
@@ -400,9 +348,7 @@ def _validated_evidence_security(
         }
         if not assessed_ids.issubset(known) or evidence_ref not in assessed_ids:
             _raise_security(ReviewSecuritySignalCode.EVIDENCE_SECURITY_SCOPE_MISMATCH)
-        if evidence_ref in required_refs and any(
-            signal.code in _EVIDENCE_WARNING_CODES for signal in assessment.signals
-        ):
+        if evidence_ref in required_refs and assessment.signals:
             warning_refs.append(evidence_ref)
     if not warning_refs:
         return ()
@@ -496,31 +442,31 @@ def _signal_disposition(
     policy: ReviewSecurityPolicy,
 ) -> ReviewSecurityDisposition:
     code = signal.code
-    if code is ReviewSecuritySignalCode.TARGET_PRIVILEGE_ESCALATION_TEXT:
+    if code is ContentThreatSignalCode.PRIVILEGE_ESCALATION_TEXT:
         return (
             ReviewSecurityDisposition.REJECT
             if policy.block_on_privilege_escalation
             else ReviewSecurityDisposition.ALLOW_WITH_WARNINGS
         )
-    if code is ReviewSecuritySignalCode.TARGET_EXFILTRATION_TEXT:
+    if code is ContentThreatSignalCode.EXFILTRATION_TEXT:
         return (
             ReviewSecurityDisposition.REJECT
             if policy.block_on_exfiltration
             else ReviewSecurityDisposition.ALLOW_WITH_WARNINGS
         )
-    if code is ReviewSecuritySignalCode.TARGET_TOOL_OR_FILE_ACTION_TEXT:
+    if code is ContentThreatSignalCode.TOOL_OR_FILE_ACTION_TEXT:
         return (
             ReviewSecurityDisposition.REJECT
             if policy.block_on_tool_file_action
             else ReviewSecurityDisposition.ALLOW_WITH_WARNINGS
         )
-    if code is ReviewSecuritySignalCode.TARGET_INSTRUCTION_LIKE_CONTENT:
+    if code is ContentThreatSignalCode.INSTRUCTION_LIKE_CONTENT:
         return (
             ReviewSecurityDisposition.REPAIR_REQUIRED
             if policy.block_on_target_instruction
             else ReviewSecurityDisposition.ALLOW_WITH_WARNINGS
         )
-    if code is ReviewSecuritySignalCode.TARGET_URL_PRESENT:
+    if code is ContentThreatSignalCode.URL_PRESENT:
         return (
             ReviewSecurityDisposition.ALLOW_WITH_WARNINGS
             if policy.allow_urls_as_data
@@ -532,7 +478,11 @@ def _signal_disposition(
             if policy.block_on_evidence_security_warning
             else ReviewSecurityDisposition.ALLOW_WITH_WARNINGS
         )
-    if code is ReviewSecuritySignalCode.TARGET_AUTHORITY_CLAIM:
+    if code is ContentThreatSignalCode.AUTHORITY_CLAIM_TEXT:
+        return ReviewSecurityDisposition.REPAIR_REQUIRED
+    if code is ContentThreatSignalCode.UPSTREAM_SECURITY_WARNING:
+        return ReviewSecurityDisposition.ALLOW_WITH_WARNINGS
+    if code is ContentThreatSignalCode.ROLE_CONFUSION:
         return ReviewSecurityDisposition.REPAIR_REQUIRED
     return ReviewSecurityDisposition.REJECT
 
@@ -570,16 +520,6 @@ def _string_values(value: object) -> tuple[str, ...]:
     return (value,) if type(value) is str else ()
 
 
-def _contains_pattern(text: str, patterns: tuple[str, ...]) -> bool:
-    normalized = text.casefold()
-    return any(pattern in normalized for pattern in patterns)
-
-
-def _contains_url(text: str) -> bool:
-    normalized = text.casefold()
-    return "http://" in normalized or "https://" in normalized
-
-
 def _canonical_value(value: object) -> object:
     if isinstance(value, Mapping):
         return tuple(
@@ -591,5 +531,5 @@ def _canonical_value(value: object) -> object:
     return value
 
 
-def _raise_security(code: ReviewSecuritySignalCode) -> NoReturn:
+def _raise_security(code: ReviewSignalCode) -> NoReturn:
     raise ReviewSecurityError(code) from None

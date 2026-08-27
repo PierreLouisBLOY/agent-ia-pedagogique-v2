@@ -23,6 +23,10 @@ from backend.agent_runtime.agents.generation.generation_model import (
     GenerationPortResult,
 )
 from backend.agent_runtime.contracts.common import ContractRef, require_contract_ref
+from backend.agent_runtime.contracts.security import (
+    ContentThreatSignal,
+    ContentThreatSignalCode,
+)
 from backend.shared_kernel._strings import require_non_empty
 
 
@@ -92,30 +96,8 @@ class GenerationGuardPolicy:
             require_non_empty(self.section_container_key, "section_container_key")
 
 
-class GenerationSecuritySignalCode(StrEnum):
-    INSTRUCTION_LIKE_CONTENT = "INSTRUCTION_LIKE_CONTENT"
-    PRIVILEGE_ESCALATION_TEXT = "PRIVILEGE_ESCALATION_TEXT"
-    EXFILTRATION_TEXT = "EXFILTRATION_TEXT"
-    TOOL_OR_FILE_ACTION_TEXT = "TOOL_OR_FILE_ACTION_TEXT"
-    URL_PRESENT = "URL_PRESENT"
-    AUTHORITY_CLAIM_TEXT = "AUTHORITY_CLAIM_TEXT"
-
-
-@dataclass(frozen=True, slots=True)
-class GenerationSecuritySignal:
-    code: GenerationSecuritySignalCode
-    location: str
-
-    def __post_init__(self) -> None:
-        if type(self.code) is not GenerationSecuritySignalCode:
-            raise TypeError("code must be a GenerationSecuritySignalCode")
-        require_non_empty(self.location, "location")
-        if len(self.location) > 512:
-            raise ValueError("location must be a bounded logical path")
-        if self.location != "content" and not self.location.startswith(
-            "structured_payload."
-        ):
-            raise ValueError("location must identify content or structured_payload")
+GenerationSecuritySignalCode = ContentThreatSignalCode
+GenerationSecuritySignal = ContentThreatSignal
 
 
 class GenerationGuardIssueCode(StrEnum):
@@ -192,7 +174,7 @@ class GenerationGuardAssessment:
     request: GenerationGuardRequest
     disposition: GenerationGuardDisposition
     issue_codes: tuple[GenerationGuardIssueCode, ...]
-    security_signals: tuple[GenerationSecuritySignal, ...]
+    security_signals: tuple[ContentThreatSignal, ...]
     repair_proposal: GenerationRepairProposal | None = None
 
     def __post_init__(self) -> None:
@@ -204,10 +186,10 @@ class GenerationGuardAssessment:
         if not isinstance(self.security_signals, tuple):
             raise TypeError("security_signals must be a tuple")
         if any(
-            type(signal) is not GenerationSecuritySignal
+            type(signal) is not ContentThreatSignal
             for signal in self.security_signals
         ):
-            raise TypeError("security_signals must contain GenerationSecuritySignal")
+            raise TypeError("security_signals must contain ContentThreatSignal")
         if len(self.security_signals) != len(set(self.security_signals)):
             raise ValueError("security_signals must contain unique signals")
         if self.disposition is GenerationGuardDisposition.REPAIR_REQUIRED:

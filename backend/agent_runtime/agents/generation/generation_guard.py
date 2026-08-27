@@ -14,77 +14,17 @@ from backend.agent_runtime.agents.generation.generation_guard_model import (
     GenerationGuardRequest,
     GenerationRepairKind,
     GenerationRepairProposal,
-    GenerationSecuritySignal,
-    GenerationSecuritySignalCode,
     validate_generation_guard_request,
 )
 from backend.agent_runtime.agents.generation.generation_model import (
     GenerationPortResultStatus,
 )
+from backend.agent_runtime.contracts.security import (
+    ContentThreatSignal,
+    ContentThreatSignalCode,
+)
+from backend.agent_runtime.security import scan_content_threats
 
-_SECURITY_PATTERNS: Mapping[GenerationSecuritySignalCode, tuple[str, ...]] = {
-    GenerationSecuritySignalCode.INSTRUCTION_LIKE_CONTENT: (
-        "ignore previous instructions",
-        "ignore all instructions",
-        "disregard prior instructions",
-        "system prompt",
-        "ignore les instructions",
-        "instructions précédentes",
-        "ne tiens pas compte des instructions",
-    ),
-    GenerationSecuritySignalCode.PRIVILEGE_ESCALATION_TEXT: (
-        "administrator privileges",
-        "admin privileges",
-        "elevated privileges",
-        "root access",
-        "droits administrateur",
-        "privilèges élevés",
-        "contourne les permissions",
-        "bypass permissions",
-        "sudo ",
-    ),
-    GenerationSecuritySignalCode.EXFILTRATION_TEXT: (
-        "exfiltrate",
-        "send secrets",
-        "steal data",
-        "upload credentials",
-        "send data to",
-        "exfiltrer",
-        "envoyer les secrets",
-        "extraire les données",
-    ),
-    GenerationSecuritySignalCode.TOOL_OR_FILE_ACTION_TEXT: (
-        "delete file",
-        "execute command",
-        "read file",
-        "open file",
-        "run command",
-        "tool call",
-        "write file",
-        "exécute la commande",
-        "lire le fichier",
-        "supprimer le fichier",
-    ),
-    GenerationSecuritySignalCode.AUTHORITY_CLAIM_TEXT: (
-        "approved output",
-        "canonical output",
-        "safe output",
-        "trusted output",
-        "validated output",
-        "authoritative",
-        "officially approved",
-        "this content is safe",
-        "this is validated",
-        "sortie approuvée",
-        "sortie canonique",
-        "sortie sûre",
-        "sortie validée",
-        "contenu validé",
-        "fait autorité",
-        "source officielle",
-    ),
-}
-_URL_PATTERN = re.compile(r"(?:https?://|www\.)", re.IGNORECASE)
 _SAFE_LOCATION_SEGMENT = re.compile(r"[A-Za-z0-9_-]{1,64}")
 _REJECT_ISSUES = frozenset(
     {
@@ -105,7 +45,7 @@ _REPAIR_ISSUES = frozenset(
 )
 _ISSUE_ORDER = {value: index for index, value in enumerate(GenerationGuardIssueCode)}
 _SIGNAL_ORDER = {
-    value: index for index, value in enumerate(GenerationSecuritySignalCode)
+    value: index for index, value in enumerate(ContentThreatSignalCode)
 }
 
 
@@ -145,7 +85,7 @@ def generation_guard_security_warnings(
         {
             "code": signal.code.value,
             "origin": "AG03_OUTPUT_GUARD",
-            "location": signal.location,
+            "location": signal.logical_location,
         }
         for signal in assessment.security_signals
     )
@@ -196,7 +136,11 @@ def _build_generation_guard_assessment(
         ):
             issues.add(GenerationGuardIssueCode.EXPECTED_SECTION_MISSING)
 
-    security_signals = _scan_security_signals(technical.content, payload)
+    security_signals = _scan_security_signals(
+        technical.source_step_id,
+        technical.content,
+        payload,
+    )
     disposition = _disposition_for(
         issues,
         technical.status,
@@ -245,30 +189,31 @@ def _disposition_for(
 
 
 def _scan_security_signals(
+    source_step_id: str,
     content: str | None,
     structured_payload: Mapping[str, object],
-) -> tuple[GenerationSecuritySignal, ...]:
-    signals: set[GenerationSecuritySignal] = set()
+) -> tuple[ContentThreatSignal, ...]:
+    signals: set[ContentThreatSignal] = set()
     leaves: list[tuple[str, str]] = []
     if content is not None:
         leaves.append(("content", content))
     leaves.extend(_string_leaves(structured_payload, ("structured_payload",)))
+    content_ref = f"generation-output:{source_step_id}"
     for location, value in leaves:
-        folded = value.casefold()
-        for code, patterns in _SECURITY_PATTERNS.items():
-            if any(pattern in folded for pattern in patterns):
-                signals.add(GenerationSecuritySignal(code, location))
-        if _URL_PATTERN.findall(value):
-            signals.add(
-                GenerationSecuritySignal(
-                    GenerationSecuritySignalCode.URL_PRESENT,
-                    location,
-                )
+        signals.update(
+            scan_content_threats(
+                value,
+                content_ref=content_ref,
+                logical_location=location,
             )
+        )
     return tuple(
         sorted(
             signals,
-            key=lambda signal: (_SIGNAL_ORDER[signal.code], signal.location),
+            key=lambda signal: (
+                _SIGNAL_ORDER[signal.code],
+                signal.logical_location,
+            ),
         )
     )
 

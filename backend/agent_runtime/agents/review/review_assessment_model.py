@@ -23,6 +23,7 @@ from backend.agent_runtime.agents.review.review_security_model import (
     ReviewSecurityAssessment,
     ReviewSecurityPolicy,
     ReviewSecuritySignalCode,
+    ReviewSignalCode,
 )
 from backend.agent_runtime.contracts import (
     ActorKind,
@@ -41,6 +42,7 @@ from backend.agent_runtime.contracts.common import (
     freeze_agent_safe_mapping,
     require_contract_ref,
 )
+from backend.agent_runtime.contracts.security import ContentThreatSignalCode
 from backend.core_contracts.capability import CapabilityId
 from backend.shared_kernel._strings import require_non_empty
 from backend.shared_kernel.references import ObjectVersionRef
@@ -213,7 +215,7 @@ class ReviewAssessmentSignal:
     technical_status: ReviewPortResultStatus
     target_snapshot_fingerprint: str
     finding_lineage_fingerprints: tuple[tuple[str, str], ...]
-    security_signal_codes: tuple[ReviewSecuritySignalCode, ...]
+    security_signal_codes: tuple[ReviewSignalCode, ...]
 
     def __post_init__(self) -> None:
         _require_contract_ref(self.review_ref)
@@ -254,7 +256,7 @@ class ReviewAssessmentSignal:
         ):
             raise ValueError("finding lineage fingerprints must match assessed findings")
         if type(self.security_signal_codes) is not tuple or any(
-            type(code) is not ReviewSecuritySignalCode
+            type(code) not in {ReviewSecuritySignalCode, ContentThreatSignalCode}
             for code in self.security_signal_codes
         ):
             raise TypeError("security_signal_codes must contain review security codes")
@@ -275,7 +277,7 @@ class CorrectionHandoffSignal:
     suggested_actions: tuple[Mapping[str, object], ...]
     limitations: tuple[Mapping[str, object], ...]
     warnings: tuple[Mapping[str, object], ...]
-    security_signal_codes: tuple[ReviewSecuritySignalCode, ...]
+    security_signal_codes: tuple[ReviewSignalCode, ...]
 
     def __post_init__(self) -> None:
         if self.destination_agent_id is not AgentId.AG_01:
@@ -299,7 +301,7 @@ class CorrectionHandoffSignal:
         object.__setattr__(self, "limitations", _freeze_mapping_tuple(self.limitations))
         object.__setattr__(self, "warnings", _freeze_mapping_tuple(self.warnings))
         if type(self.security_signal_codes) is not tuple or any(
-            type(code) is not ReviewSecuritySignalCode
+            type(code) not in {ReviewSecuritySignalCode, ContentThreatSignalCode}
             for code in self.security_signal_codes
         ):
             raise TypeError("security_signal_codes must contain review security codes")

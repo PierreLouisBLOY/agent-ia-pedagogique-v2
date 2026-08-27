@@ -41,6 +41,7 @@ from backend.agent_runtime.agents.evidence.evidence_security_model import (
     EvidenceSecurityAssessment,
     EvidenceSecuritySignal,
     EvidenceSecuritySignalCode,
+    EvidenceSignalCode,
 )
 from backend.agent_runtime.agents.evidence.retrieval_coordination_model import (
     BASELINE_RETRIEVAL_COORDINATION_POLICY,
@@ -101,6 +102,7 @@ __all__ = [
     "EvidenceSecurityScanner",
     "EvidenceSecuritySignal",
     "EvidenceSecuritySignalCode",
+    "EvidenceSignalCode",
     "EvidenceSetBuildRequest",
     "EvidenceVersionConflict",
     "FusedRetrievalCandidate",

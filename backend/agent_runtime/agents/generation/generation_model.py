@@ -9,6 +9,12 @@ from backend.agent_runtime.contracts.common import (
     freeze_agent_safe_mapping,
     require_contract_ref,
 )
+from backend.agent_runtime.contracts.security import (
+    ContentOrigin,
+    ContentRole,
+    ContentTrustClass,
+    ContentTrustLabel,
+)
 from backend.shared_kernel._strings import require_non_empty
 from backend.shared_kernel.references import ObjectVersionRef
 
@@ -105,6 +111,7 @@ class GenerationPortResult:
     uncertainties: tuple[Mapping[str, object], ...] = ()
     execution_metadata: Mapping[str, object] = field(default_factory=dict)
     operation_details: Mapping[str, object] = field(default_factory=dict)
+    content_label: ContentTrustLabel | None = None
 
     def __post_init__(self) -> None:
         require_non_empty(self.source_step_id, "source_step_id")
@@ -147,12 +154,39 @@ class GenerationPortResult:
                     f"{self.status.value} requires a warning or uncertainty"
                 )
 
+        content_label = self.content_label
+        if has_output:
+            expected_origin = (
+                ContentOrigin.CORRECTION_OUTPUT
+                if self.operation is GenerationOperation.CORRECT
+                else ContentOrigin.AGENT_OUTPUT
+            )
+            expected_ref = f"generation-output:{self.source_step_id}"
+            if content_label is None:
+                content_label = ContentTrustLabel(
+                    origin=expected_origin,
+                    role=ContentRole.RESULT,
+                    trust_class=ContentTrustClass.UNTRUSTED,
+                    source_ref=expected_ref,
+                )
+            if type(content_label) is not ContentTrustLabel:
+                raise TypeError("content_label must be a ContentTrustLabel")
+            if (
+                content_label.origin is not expected_origin
+                or content_label.role is not ContentRole.RESULT
+                or content_label.source_ref != expected_ref
+            ):
+                raise ValueError("content_label must preserve generated output provenance")
+        elif content_label is not None:
+            raise ValueError("content_label requires generated output")
+
         object.__setattr__(self, "structured_payload", structured_payload)
         object.__setattr__(self, "evidence_refs_used", evidence_refs_used)
         object.__setattr__(self, "warnings", warnings)
         object.__setattr__(self, "uncertainties", uncertainties)
         object.__setattr__(self, "execution_metadata", execution_metadata)
         object.__setattr__(self, "operation_details", operation_details)
+        object.__setattr__(self, "content_label", content_label)
 
 
 class GenerationPortErrorCode(StrEnum):

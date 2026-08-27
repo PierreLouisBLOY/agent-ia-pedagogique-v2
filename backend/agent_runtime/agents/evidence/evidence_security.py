@@ -7,55 +7,13 @@ from backend.agent_runtime.agents.evidence.evidence_security_model import (
     EvidenceSecurityAssessment,
     EvidenceSecuritySignal,
     EvidenceSecuritySignalCode,
+    EvidenceSignalCode,
 )
 from backend.agent_runtime.contracts.evidence import EvidenceItem, EvidenceSet
-
-_CONTENT_PATTERNS: tuple[
-    tuple[EvidenceSecuritySignalCode, tuple[str, ...]], ...
-] = (
-    (
-        EvidenceSecuritySignalCode.INSTRUCTION_LIKE_CONTENT,
-        (
-            "ignore previous instructions",
-            "ignore all instructions",
-            "ignore les consignes",
-            "ignore les règles",
-            "system prompt",
-            "developer message",
-        ),
-    ),
-    (
-        EvidenceSecuritySignalCode.PRIVILEGE_ESCALATION_TEXT,
-        (
-            "you are admin",
-            "je suis administrateur",
-            "authorize cap-",
-            "autorise cap-",
-            "grant permission",
-            "accorde la permission",
-        ),
-    ),
-    (
-        EvidenceSecuritySignalCode.EXFILTRATION_TEXT,
-        (
-            "reveal secret",
-            "show api key",
-            "send secrets",
-            "envoie les secrets",
-            "révèle le secret",
-        ),
-    ),
-    (
-        EvidenceSecuritySignalCode.TOOL_OR_FILE_ACTION_TEXT,
-        (
-            "call this tool",
-            "appelle cet outil",
-            "read this file",
-            "lis ce fichier",
-            "open this path",
-            "ouvre ce chemin",
-        ),
-    ),
+from backend.agent_runtime.contracts.security import ContentThreatSignalCode
+from backend.agent_runtime.security import (
+    scan_content_threats,
+    structural_authority_locations,
 )
 
 
@@ -68,11 +26,34 @@ class EvidenceSecurityScanner:
         evidence_ids = tuple(item.evidence_id for item in items)
         signals: list[EvidenceSecuritySignal] = []
 
-        for code, patterns in _CONTENT_PATTERNS:
+        common_codes_by_id = {
+            item.evidence_id: {
+                signal.code
+                for signal in scan_content_threats(
+                    item.excerpt_or_summary or "",
+                    content_ref=item.evidence_id,
+                    logical_location="evidence.excerpt",
+                )
+            }
+            for item in items
+        }
+        for item in items:
+            if structural_authority_locations(
+                {"relevance": item.relevance, "source_authority": item.authority}
+            ):
+                common_codes_by_id[item.evidence_id].add(
+                    ContentThreatSignalCode.AUTHORITY_CLAIM_TEXT
+                )
+        for code in ContentThreatSignalCode:
+            if code in {
+                ContentThreatSignalCode.ROLE_CONFUSION,
+                ContentThreatSignalCode.UPSTREAM_SECURITY_WARNING,
+            }:
+                continue
             matching_ids = tuple(
                 item.evidence_id
                 for item in items
-                if _contains_pattern(item.excerpt_or_summary, patterns)
+                if code in common_codes_by_id[item.evidence_id]
             )
             _append_signal(
                 signals,
@@ -80,19 +61,6 @@ class EvidenceSecurityScanner:
                 evidence_ids=matching_ids,
                 reason_code="CLOSED_PATTERN_MATCH",
             )
-
-        url_ids = tuple(
-            item.evidence_id
-            for item in items
-            if _contains_url_marker(item.excerpt_or_summary)
-        )
-        _append_signal(
-            signals,
-            code=EvidenceSecuritySignalCode.URL_PRESENT,
-            evidence_ids=url_ids,
-            reason_code="HTTP_URL_MARKER_PRESENT",
-        )
-
         unattributed_warning_limitations = _append_upstream_warning_signals(
             signals,
             evidence_set.limitations,
@@ -145,24 +113,10 @@ class EvidenceSecurityScanner:
         )
 
 
-def _contains_pattern(text: str | None, patterns: tuple[str, ...]) -> bool:
-    if text is None:
-        return False
-    normalized = text.casefold()
-    return any(pattern in normalized for pattern in patterns)
-
-
-def _contains_url_marker(text: str | None) -> bool:
-    if text is None:
-        return False
-    normalized = text.casefold()
-    return "http://" in normalized or "https://" in normalized
-
-
 def _append_signal(
     signals: list[EvidenceSecuritySignal],
     *,
-    code: EvidenceSecuritySignalCode,
+    code: EvidenceSignalCode,
     evidence_ids: tuple[str, ...],
     reason_code: str,
 ) -> None:
@@ -215,7 +169,7 @@ def _append_upstream_warning_signals(
         if attributed:
             _append_signal(
                 signals,
-                code=EvidenceSecuritySignalCode.UPSTREAM_SECURITY_WARNING,
+                code=ContentThreatSignalCode.UPSTREAM_SECURITY_WARNING,
                 evidence_ids=attributed,
                 reason_code=warning_code,
             )

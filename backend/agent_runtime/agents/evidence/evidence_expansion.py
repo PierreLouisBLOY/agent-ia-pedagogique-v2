@@ -16,7 +16,7 @@ from backend.agent_runtime.agents.evidence.evidence_expansion_model import (
 )
 from backend.agent_runtime.agents.evidence.evidence_security_model import (
     EvidenceSecurityAssessment,
-    EvidenceSecuritySignalCode,
+    EvidenceSignalCode,
 )
 
 
@@ -119,8 +119,8 @@ class EvidenceExpansionAdvisor:
 
 def _stable_security_codes(
     security: EvidenceSecurityAssessment,
-) -> tuple[EvidenceSecuritySignalCode, ...]:
-    codes: list[EvidenceSecuritySignalCode] = []
+) -> tuple[EvidenceSignalCode, ...]:
+    codes: list[EvidenceSignalCode] = []
     for signal in security.signals:
         if signal.code not in codes:
             codes.append(signal.code)

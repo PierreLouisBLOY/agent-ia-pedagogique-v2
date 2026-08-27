@@ -11,12 +11,14 @@ from backend.agent_runtime.agents.evidence.evidence_agent_model import (
 from backend.agent_runtime.agents.evidence.evidence_security_model import (
     EvidenceSecurityAssessment,
     EvidenceSecuritySignalCode,
+    EvidenceSignalCode,
 )
 from backend.agent_runtime.agents.evidence.retrieval_coordination_model import (
     RetrievalCoordinationResult,
 )
 from backend.agent_runtime.contracts.common import freeze_agent_safe_mapping
 from backend.agent_runtime.contracts.evidence import EvidenceRequest, EvidenceSet
+from backend.agent_runtime.contracts.security import ContentThreatSignalCode
 from backend.agent_runtime.policy import BASELINE_AGENT_RUNTIME_POLICY
 from backend.shared_kernel._strings import require_non_empty
 
@@ -66,7 +68,7 @@ class EvidenceRoundRecord:
     retrieval_identity_keys: tuple[tuple[str, ...], ...]
     evidence_ids: tuple[str, ...]
     coverage_status: str
-    security_signal_codes: tuple[EvidenceSecuritySignalCode, ...]
+    security_signal_codes: tuple[EvidenceSignalCode, ...]
 
     def __post_init__(self) -> None:
         _require_positive_integer(self.round_number, "round_number")
@@ -226,7 +228,7 @@ class EvidenceExpansionProposal:
     required_authority: Mapping[str, object] | None
     max_items: int
     reason_codes: tuple[str, ...]
-    security_signal_codes: tuple[EvidenceSecuritySignalCode, ...]
+    security_signal_codes: tuple[EvidenceSignalCode, ...]
 
     def __post_init__(self) -> None:
         _require_positive_integer(self.next_round_number, "next_round_number")
@@ -325,10 +327,11 @@ def _validate_identity_keys(keys: tuple[tuple[str, ...], ...]) -> None:
 
 
 def _validate_security_codes(
-    codes: tuple[EvidenceSecuritySignalCode, ...],
+    codes: tuple[EvidenceSignalCode, ...],
 ) -> None:
     if not isinstance(codes, tuple) or any(
-        not isinstance(code, EvidenceSecuritySignalCode) for code in codes
+        type(code) not in {EvidenceSecuritySignalCode, ContentThreatSignalCode}
+        for code in codes
     ):
         raise TypeError("security_signal_codes must contain signal codes")
     if len(codes) != len(set(codes)):
@@ -336,9 +339,9 @@ def _validate_security_codes(
 
 
 def _stable_unique_security_codes(
-    codes: tuple[EvidenceSecuritySignalCode, ...],
-) -> tuple[EvidenceSecuritySignalCode, ...]:
-    unique: list[EvidenceSecuritySignalCode] = []
+    codes: tuple[EvidenceSignalCode, ...],
+) -> tuple[EvidenceSignalCode, ...]:
+    unique: list[EvidenceSignalCode] = []
     for code in codes:
         if code not in unique:
             unique.append(code)

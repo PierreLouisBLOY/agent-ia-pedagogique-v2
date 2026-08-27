@@ -122,7 +122,7 @@ def test_security_contracts_define_no_policy_guard_engine_or_authority_decision(
     assert enum_values.isdisjoint({"ALLOW", "REQUEST", "DELEGATE", "APPROVED", "PROMOTE"})
 
 
-def test_security_contracts_are_not_integrated_into_runtime_authority_boundaries() -> None:
+def test_security_contracts_are_integrated_only_into_content_boundaries() -> None:
     protected_roots = (
         BACKEND / "agent_runtime" / "gates",
         BACKEND / "agent_runtime" / "recovery",
@@ -135,12 +135,27 @@ def test_security_contracts_are_not_integrated_into_runtime_authority_boundaries
 
     allowed_exports = {
         SECURITY_CONTRACTS / "__init__.py",
+        SECURITY_CONTRACTS / "content.py",
         SECURITY_CONTRACTS / "security_event.py",
         SECURITY_CONTRACTS / "trust.py",
         BACKEND / "agent_runtime" / "contracts" / "__init__.py",
     }
+    content_boundary_integrations = {
+        BACKEND / "agent_runtime" / "contracts" / "evidence" / "labeled_evidence.py",
+        BACKEND / "agent_runtime" / "security" / "content_isolation.py",
+        BACKEND / "agent_runtime" / "agents" / "evidence" / "evidence_expansion_model.py",
+        BACKEND / "agent_runtime" / "agents" / "evidence" / "evidence_security.py",
+        BACKEND / "agent_runtime" / "agents" / "evidence" / "evidence_security_model.py",
+        BACKEND / "agent_runtime" / "agents" / "generation" / "generation_guard.py",
+        BACKEND / "agent_runtime" / "agents" / "generation" / "generation_guard_model.py",
+        BACKEND / "agent_runtime" / "agents" / "generation" / "generation_model.py",
+        BACKEND / "agent_runtime" / "agents" / "review" / "review_assessment_model.py",
+        BACKEND / "agent_runtime" / "agents" / "review" / "review_coordination_model.py",
+        BACKEND / "agent_runtime" / "agents" / "review" / "review_security.py",
+        BACKEND / "agent_runtime" / "agents" / "review" / "review_security_model.py",
+    }
     for path in _python_files(BACKEND):
-        if path in allowed_exports:
+        if path in allowed_exports | content_boundary_integrations:
             continue
         assert all("contracts.security" not in module for module in _imports(path))
 

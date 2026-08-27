@@ -8,7 +8,7 @@ from backend.agent_runtime.agents.generation.generation_model import (
     GenerationOperation,
     GenerationPortRequest,
 )
-from backend.agent_runtime.contracts import ProductionRequest
+from backend.agent_runtime.contracts import LabeledEvidenceItem, ProductionRequest
 from backend.agent_runtime.contracts.common import freeze_agent_safe_mapping
 from backend.core_contracts.capability import CapabilityId
 from backend.shared_kernel._strings import require_non_empty
@@ -49,6 +49,7 @@ class GenerationPreparationRequest:
     request: ProductionRequest
     resolved_inputs: Mapping[str, object] = field(default_factory=dict)
     output_contract: Mapping[str, object] = field(default_factory=dict)
+    labeled_evidence: tuple[LabeledEvidenceItem, ...] = ()
 
     def __post_init__(self) -> None:
         if type(self.capability_id) is not CapabilityId:
@@ -65,6 +66,7 @@ class GenerationPreparationRequest:
             "output_contract",
             freeze_agent_safe_mapping(self.output_contract),
         )
+        _validate_labeled_evidence(self.labeled_evidence, self.request.evidence_refs)
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,6 +114,7 @@ def _validate_prepared_call(prepared: PreparedGenerationCall) -> None:
     snapshot = prepared.preparation_request
     canonical = prepared.canonical_request
     technical = prepared.port_request
+    _validate_labeled_evidence(snapshot.labeled_evidence, canonical.evidence_refs)
     if (
         snapshot.capability_id != prepared.capability_id
         or snapshot.request != canonical
@@ -184,6 +187,21 @@ def _validate_prepared_call(prepared: PreparedGenerationCall) -> None:
                 GenerationCoordinationErrorCode.CAPABILITY_OPERATION_MISMATCH,
                 f"prepared {field_name} does not match the canonical request",
             )
+
+
+def _validate_labeled_evidence(
+    values: tuple[LabeledEvidenceItem, ...],
+    evidence_refs: tuple[object, ...],
+) -> None:
+    if type(values) is not tuple or any(
+        type(value) is not LabeledEvidenceItem for value in values
+    ):
+        raise TypeError("labeled_evidence must contain LabeledEvidenceItem values")
+    content_refs = tuple(value.content.content_ref for value in values)
+    if len(content_refs) != len(set(content_refs)):
+        raise ValueError("labeled_evidence content references must be unique")
+    if not set(content_refs).issubset(evidence_refs):
+        raise ValueError("labeled_evidence must remain inside canonical evidence scope")
 
 
 def _raise_mismatch(

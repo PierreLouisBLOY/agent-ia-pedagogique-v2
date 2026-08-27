@@ -130,16 +130,24 @@ def test_content_security_has_no_io_provider_observability_or_secret_scanner() -
     )
 
 
-def test_tool_application_delegation_and_recovery_do_not_depend_on_c() -> None:
+def test_d_integrates_content_security_without_touching_recovery_or_delegation() -> None:
     protected_roots = (
-        BACKEND / "agent_runtime" / "application_routing",
         BACKEND / "agent_runtime" / "recovery",
-        BACKEND / "agent_runtime" / "tools",
         BACKEND / "agent_runtime" / "contracts" / "delegation",
     )
     for root in protected_roots:
         for path in _python_files(root):
             assert all("agent_runtime.security" not in module for module in _imports(path))
+    integrated_roots = (
+        BACKEND / "agent_runtime" / "application_routing",
+        BACKEND / "agent_runtime" / "tools",
+    )
+    assert any(
+        "agent_runtime.security" in module
+        for root in integrated_roots
+        for path in _python_files(root)
+        for module in _imports(path)
+    )
 
 
 def test_project_dependencies_remain_empty() -> None:

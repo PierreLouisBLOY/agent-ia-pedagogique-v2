@@ -12,7 +12,7 @@ from backend.agent_runtime.tools.ports import (
     ToolExecutorPort,
     UnknownToolExecutorBindingError,
 )
-from backend.agent_runtime.tools.router import ToolRouter
+from backend.agent_runtime.tools.router import ToolRouter, assess_tool_arguments_security
 
 __all__ = [
     "PreparedToolExecution",
@@ -25,5 +25,6 @@ __all__ = [
     "ToolRoutingContext",
     "ToolRoutingError",
     "ToolRoutingErrorCode",
+    "assess_tool_arguments_security",
     "UnknownToolExecutorBindingError",
 ]

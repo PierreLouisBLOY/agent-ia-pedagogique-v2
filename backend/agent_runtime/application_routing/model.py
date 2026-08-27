@@ -62,12 +62,14 @@ class UseCaseRoutingErrorCode(StrEnum):
     REQUEST_NOT_ROUTABLE = "REQUEST_NOT_ROUTABLE"
     IDEMPOTENCY_REQUIRED = "IDEMPOTENCY_REQUIRED"
     AUTHORITY_METADATA_FORBIDDEN = "AUTHORITY_METADATA_FORBIDDEN"
+    REQUEST_CONTRACT_MISMATCH = "REQUEST_CONTRACT_MISMATCH"
     INBOUND_FAILED = "INBOUND_FAILED"
     RESULT_USE_CASE_MISMATCH = "RESULT_USE_CASE_MISMATCH"
     RESULT_RUN_MISMATCH = "RESULT_RUN_MISMATCH"
     RESULT_STEP_MISMATCH = "RESULT_STEP_MISMATCH"
     RESULT_CORRELATION_MISMATCH = "RESULT_CORRELATION_MISMATCH"
     INVALID_USE_CASE_RESULT = "INVALID_USE_CASE_RESULT"
+    RESULT_CONTRACT_MISMATCH = "RESULT_CONTRACT_MISMATCH"
 
 
 _SAFE_REASONS = {
@@ -89,6 +91,9 @@ _SAFE_REASONS = {
     UseCaseRoutingErrorCode.AUTHORITY_METADATA_FORBIDDEN: (
         "request data contains forbidden authority metadata"
     ),
+    UseCaseRoutingErrorCode.REQUEST_CONTRACT_MISMATCH: (
+        "use-case request contract does not match its descriptor"
+    ),
     UseCaseRoutingErrorCode.INBOUND_FAILED: "Application inbound invocation failed",
     UseCaseRoutingErrorCode.RESULT_USE_CASE_MISMATCH: "use-case result identity mismatch",
     UseCaseRoutingErrorCode.RESULT_RUN_MISMATCH: "use-case result run mismatch",
@@ -97,6 +102,9 @@ _SAFE_REASONS = {
         "use-case result correlation mismatch"
     ),
     UseCaseRoutingErrorCode.INVALID_USE_CASE_RESULT: "Application returned an invalid result",
+    UseCaseRoutingErrorCode.RESULT_CONTRACT_MISMATCH: (
+        "use-case result contract does not match its descriptor"
+    ),
 }
 
 

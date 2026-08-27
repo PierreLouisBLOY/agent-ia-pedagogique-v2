@@ -17,7 +17,10 @@ from backend.agent_runtime.application_routing.registry import (
     UnknownUseCaseError,
     UseCaseRegistry,
 )
-from backend.agent_runtime.application_routing.router import UseCaseRouter
+from backend.agent_runtime.application_routing.router import (
+    UseCaseRouter,
+    assess_use_case_request_security,
+)
 
 __all__ = [
     "BASELINE_USE_CASE_REGISTRY",
@@ -32,4 +35,5 @@ __all__ = [
     "UseCaseRoutingContext",
     "UseCaseRoutingError",
     "UseCaseRoutingErrorCode",
+    "assess_use_case_request_security",
 ]

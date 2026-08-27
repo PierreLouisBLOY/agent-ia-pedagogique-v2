@@ -77,7 +77,12 @@ def test_each_baseline_application_use_case_routes_to_its_exact_inbound_once(
 
     assert len(inbound.calls) == 1
     assert inbound.calls[0] is request
-    assert result == expected
+    assert result.meta == expected.meta
+    assert result.use_case_id == expected.use_case_id
+    assert result.outcome == expected.outcome
+    assert result.domain_events == expected.domain_events
+    assert result.content_label is not None
+    assert result.security_assessments
     assert result is not expected
     assert result.use_case_id == use_case_id
     assert result.meta.correlation_id == request.meta.correlation_id

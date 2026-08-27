@@ -21,6 +21,7 @@ from backend.agent_runtime.gates.model import (
     GateResolutionDisposition,
 )
 from backend.agent_runtime.gates.ports import GateDecisionSourcePort
+from backend.agent_runtime.security.structural_keys import contains_structural_keys
 from backend.shared_kernel.time import Instant
 
 _DISPOSITION_BY_DECISION = {
@@ -43,9 +44,6 @@ _FORBIDDEN_AUTHORITY_KEYS = frozenset(
         "promotion_allowed",
         "required_actor",
     }
-)
-_FORBIDDEN_AUTHORITY_KEYS_COMPACT = frozenset(
-    key.replace("_", "") for key in _FORBIDDEN_AUTHORITY_KEYS
 )
 
 
@@ -120,8 +118,12 @@ def _reconstruct_request(candidate: object) -> GateRequest:
             context_summary=candidate.context_summary,
             expires_at=candidate.expires_at,
         )
-        if _contains_authority_metadata(request.options) or _contains_authority_metadata(
-            request.context_summary
+        if contains_structural_keys(
+            request.options,
+            forbidden_keys=_FORBIDDEN_AUTHORITY_KEYS,
+        ) or contains_structural_keys(
+            request.context_summary,
+            forbidden_keys=_FORBIDDEN_AUTHORITY_KEYS,
         ):
             raise ValueError("authority metadata")
         return request
@@ -259,28 +261,3 @@ def _resolution(
         decided_at=(decision.decided_at if decision is not None else None),
         selected_option=(decision.selected_option if decision is not None else None),
     )
-
-
-def _contains_authority_metadata(value: object) -> bool:
-    if isinstance(value, Mapping):
-        for key, nested in value.items():
-            normalized = _normalize_key(key)
-            if (
-                normalized in _FORBIDDEN_AUTHORITY_KEYS
-                or normalized.replace("_", "") in _FORBIDDEN_AUTHORITY_KEYS_COMPACT
-                or _contains_authority_metadata(nested)
-            ):
-                return True
-        return False
-    if isinstance(value, tuple):
-        return any(_contains_authority_metadata(item) for item in value)
-    return False
-
-
-def _normalize_key(key: str) -> str:
-    characters: list[str] = []
-    for character in key:
-        if character.isupper() and characters and characters[-1] != "_":
-            characters.append("_")
-        characters.append(character.casefold() if character.isalnum() else "_")
-    return "_".join(part for part in "".join(characters).split("_") if part)

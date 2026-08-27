@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 
 from backend.agent_runtime.application_routing.model import (
+    UseCaseDescriptor,
     UseCaseRoutingContext,
     UseCaseRoutingError,
     UseCaseRoutingErrorCode,
@@ -32,6 +33,15 @@ from backend.agent_runtime.contracts.common import (
     require_contract_ref,
 )
 from backend.agent_runtime.contracts.errors import ErrorEnvelope
+from backend.agent_runtime.contracts.security import (
+    ContentOrigin,
+    ContentRole,
+    ContentTrustClass,
+    ContentTrustLabel,
+    LabeledContent,
+    SecurityBoundary,
+    StructuredContentSecurityAssessment,
+)
 from backend.agent_runtime.policy import (
     CapabilityAuthorizationPolicy,
     CapabilityPolicyDecision,
@@ -44,6 +54,10 @@ from backend.agent_runtime.registry import (
     CapabilityClass,
     CapabilityExecutionRoute,
     UnknownCapabilityError,
+)
+from backend.agent_runtime.security import (
+    assess_structured_boundary_content,
+    contains_structural_keys,
 )
 from backend.core_contracts.capability import CapabilityId
 from backend.core_contracts.invocation import UseCaseContext
@@ -64,9 +78,14 @@ _PERMISSION_OPERATION_BY_CAPABILITY = {
     "CAP-A02": PermissionOperation.REQUEST,
     "CAP-A03": PermissionOperation.REQUEST,
 }
-_FORBIDDEN_AUTHORITY_KEYS = frozenset(
+APPLICATION_PAYLOAD_FORBIDDEN_KEYS = frozenset(
     {
+        "binding",
+        "capability",
         "capability_id",
+        "circuit_binding",
+        "effect_state",
+        "gate",
         "permission_scope",
         "permission",
         "gate_decision",
@@ -75,18 +94,49 @@ _FORBIDDEN_AUTHORITY_KEYS = frozenset(
         "validated",
         "approved",
         "handler",
+        "handler_id",
         "handler_path",
         "import_path",
         "provider",
+        "provider_id",
         "credentials",
         "runtime_override",
         "executor",
         "use_case_override",
+        "use_case_id",
+        "use_case",
+        "owner",
+        "policy_facts",
+        "reconciliation_status",
+        "record_id",
+        "retry_facts",
+        "route",
+        "snapshot_ref",
+        "snapshot_refs",
+        "target",
     }
 )
-_FORBIDDEN_AUTHORITY_KEYS_COMPACT = frozenset(
-    key.replace("_", "") for key in _FORBIDDEN_AUTHORITY_KEYS
+APPLICATION_REQUESTED_EFFECT_FORBIDDEN_KEYS = frozenset(
+    {
+        *APPLICATION_PAYLOAD_FORBIDDEN_KEYS,
+        "committed",
+        "effect_committed",
+        "effect_succeeded",
+        "proof_of_effect",
+        "success",
+        "succeeded",
+    }
 )
+_APPLICATION_RESULT_FORBIDDEN_KEYS = frozenset(
+    {
+        *APPLICATION_PAYLOAD_FORBIDDEN_KEYS,
+        "gate_approval",
+        "gate_approved",
+        "promotion_allowed",
+    }
+)
+_APPLICATION_REQUEST_CONTRACT_ID = "C-12"
+_APPLICATION_RESULT_CONTRACT_ID = "C-13"
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,6 +176,14 @@ class UseCaseRouter:
             descriptor = self.use_case_registry.get(request.use_case_id)
         except UnknownUseCaseError:
             raise UseCaseRoutingError(UseCaseRoutingErrorCode.UNKNOWN_USE_CASE) from None
+        if descriptor.request_contract_id != _APPLICATION_REQUEST_CONTRACT_ID:
+            raise UseCaseRoutingError(
+                UseCaseRoutingErrorCode.REQUEST_CONTRACT_MISMATCH
+            )
+        if descriptor.result_contract_id != _APPLICATION_RESULT_CONTRACT_ID:
+            raise UseCaseRoutingError(
+                UseCaseRoutingErrorCode.RESULT_CONTRACT_MISMATCH
+            )
 
         capability_id = context.step.capability_id
         if capability_id is None:
@@ -153,8 +211,12 @@ class UseCaseRouter:
             )
         if descriptor.idempotency_required and request.idempotency_key is None:
             raise UseCaseRoutingError(UseCaseRoutingErrorCode.IDEMPOTENCY_REQUIRED)
-        if _contains_authority_metadata(request.payload) or _contains_authority_metadata(
-            request.requested_effect
+        payload_security, requested_effect_security = (
+            assess_use_case_request_security(request)
+        )
+        if (
+            payload_security.structural_locations
+            or requested_effect_security.structural_locations
         ):
             raise UseCaseRoutingError(
                 UseCaseRoutingErrorCode.AUTHORITY_METADATA_FORBIDDEN
@@ -197,7 +259,7 @@ class UseCaseRouter:
             result = inbound.invoke(request=request)
         except Exception:
             raise UseCaseRoutingError(UseCaseRoutingErrorCode.INBOUND_FAILED) from None
-        return _validate_result(request, result)
+        return _validate_result(request, descriptor, result)
 
 
 def _validate_request_and_context(
@@ -282,6 +344,7 @@ def _validate_request_and_context(
         raise UseCaseRoutingError(
             UseCaseRoutingErrorCode.INVALID_ROUTING_CONTEXT
         ) from None
+
     step = context.step
     if step.kind is not StepKind.USE_CASE:
         raise UseCaseRoutingError(UseCaseRoutingErrorCode.STEP_KIND_MISMATCH)
@@ -313,6 +376,40 @@ def _validate_request_and_context(
         ) from None
 
 
+def assess_use_case_request_security(
+    request: UseCaseRequest,
+) -> tuple[
+    StructuredContentSecurityAssessment,
+    StructuredContentSecurityAssessment,
+]:
+    if type(request) is not UseCaseRequest:
+        raise TypeError("request must be a UseCaseRequest")
+    request_ref = f"application-request:{request.use_case_id}:{request.meta.step_id}"
+    request_label = ContentTrustLabel(
+        origin=ContentOrigin.AGENT_OUTPUT,
+        role=ContentRole.RESULT,
+        trust_class=ContentTrustClass.UNTRUSTED,
+        source_ref=request_ref,
+    )
+    payload_security = assess_structured_boundary_content(
+        request.payload,
+        content_ref=f"{request_ref}:payload",
+        label=request_label,
+        boundary=SecurityBoundary.APPLICATION,
+        forbidden_keys=APPLICATION_PAYLOAD_FORBIDDEN_KEYS,
+        root_location="application_payload",
+    )[1]
+    requested_effect_security = assess_structured_boundary_content(
+        request.requested_effect,
+        content_ref=f"{request_ref}:requested_effect",
+        label=request_label,
+        boundary=SecurityBoundary.APPLICATION,
+        forbidden_keys=APPLICATION_REQUESTED_EFFECT_FORBIDDEN_KEYS,
+        root_location="requested_effect",
+    )[1]
+    return payload_security, requested_effect_security
+
+
 def _is_routable_application_request(
     decision: object,
     capability_id: CapabilityId,
@@ -327,6 +424,7 @@ def _is_routable_application_request(
 
 def _validate_result(
     request: UseCaseRequest,
+    descriptor: UseCaseDescriptor,
     candidate: object,
 ) -> UseCaseResult[object, object]:
     if type(candidate) is not UseCaseResult:
@@ -391,6 +489,7 @@ def _validate_result(
             or candidate.error is not None
         ):
             raise ValueError("successful result masks an error")
+        _validate_application_result_data(candidate)
 
         validated_outcome: ApplicationOutcome[object, object] = ApplicationOutcome(
             outcome_status=outcome.outcome_status,
@@ -427,14 +526,18 @@ def _validate_result(
                 freeze_agent_safe_mapping(event)
             else:
                 require_contract_ref(event, "domain_event")
-        return UseCaseResult(
+        validated_result: UseCaseResult[object, object] = UseCaseResult(
             meta=validated_meta,
             use_case_id=candidate.use_case_id,
             outcome=validated_outcome,
             result_ref=candidate.result_ref,
             domain_events=candidate.domain_events,
             error=validated_error,
+            content_label=candidate.content_label,
+            labeled_content=candidate.labeled_content,
+            security_assessments=candidate.security_assessments,
         )
+        return _secure_application_result_content(validated_result)
     except UseCaseRoutingError:
         raise
     except (AttributeError, TypeError, ValueError):
@@ -464,26 +567,92 @@ def _validate_error(error: object, step_id: str) -> ErrorEnvelope | None:
     )
 
 
-def _contains_authority_metadata(value: object) -> bool:
-    if isinstance(value, Mapping):
-        for key, nested in value.items():
-            normalized = _normalize_key(key)
-            if (
-                normalized in _FORBIDDEN_AUTHORITY_KEYS
-                or normalized.replace("_", "") in _FORBIDDEN_AUTHORITY_KEYS_COMPACT
-                or _contains_authority_metadata(nested)
-            ):
-                return True
-        return False
-    if isinstance(value, (list, tuple)):
-        return any(_contains_authority_metadata(item) for item in value)
-    return False
+def _validate_application_result_data(candidate: UseCaseResult[object, object]) -> None:
+    outcome = candidate.outcome
+    values = (
+        outcome.data,
+        outcome.validation_result,
+        outcome.side_effects,
+        candidate.domain_events,
+        (
+            outcome.application_failure.details
+            if outcome.application_failure is not None
+            else None
+        ),
+        candidate.error.details if candidate.error is not None else None,
+        tuple(
+            error.details
+            for error in (*outcome.business_errors, *outcome.warnings)
+            if error.details is not None
+        ),
+    )
+    if any(
+        contains_structural_keys(
+            value,
+            forbidden_keys=_APPLICATION_RESULT_FORBIDDEN_KEYS,
+        )
+        for value in values
+    ):
+        raise ValueError("Application result contains authority metadata")
+    for value in (outcome.data, outcome.validation_result):
+        if isinstance(value, Mapping):
+            freeze_agent_safe_mapping(value)
 
 
-def _normalize_key(key: str) -> str:
-    characters: list[str] = []
-    for character in key:
-        if character.isupper() and characters and characters[-1] != "_":
-            characters.append("_")
-        characters.append(character.casefold() if character.isalnum() else "_")
-    return "_".join(part for part in "".join(characters).split("_") if part)
+def _secure_application_result_content(
+    result: UseCaseResult[object, object],
+) -> UseCaseResult[object, object]:
+    label = result.content_label
+    if label is None:
+        raise UseCaseRoutingError(UseCaseRoutingErrorCode.INVALID_USE_CASE_RESULT)
+    roots = (
+        ("data", result.outcome.data),
+        ("validation_result", result.outcome.validation_result),
+        ("side_effects", result.outcome.side_effects),
+        ("domain_events", result.domain_events),
+        (
+            "application_failure_details",
+            (
+                result.outcome.application_failure.details
+                if result.outcome.application_failure is not None
+                else None
+            ),
+        ),
+        (
+            "business_error_details",
+            tuple(
+                error.details
+                for error in (
+                    *result.outcome.business_errors,
+                    *result.outcome.warnings,
+                )
+                if error.details is not None
+            ),
+        ),
+        ("error_message", result.error.message if result.error is not None else None),
+        ("error_details", result.error.details if result.error is not None else None),
+    )
+    labeled_content: list[LabeledContent] = []
+    assessments: list[StructuredContentSecurityAssessment] = []
+    for root, value in roots:
+        labeled, assessment = assess_structured_boundary_content(
+            value,
+            content_ref=f"{label.source_ref}:{root}",
+            label=label,
+            boundary=SecurityBoundary.APPLICATION,
+            forbidden_keys=_APPLICATION_RESULT_FORBIDDEN_KEYS,
+            root_location=root,
+        )
+        labeled_content.extend(labeled)
+        assessments.append(assessment)
+    return UseCaseResult(
+        meta=result.meta,
+        use_case_id=result.use_case_id,
+        outcome=result.outcome,
+        result_ref=result.result_ref,
+        domain_events=result.domain_events,
+        error=result.error,
+        content_label=label,
+        labeled_content=tuple(labeled_content),
+        security_assessments=tuple(assessments),
+    )

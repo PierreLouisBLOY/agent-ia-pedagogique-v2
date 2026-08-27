@@ -8,8 +8,19 @@ from backend.agent_runtime.agents.generation.generation_model import (
     GenerationOperation,
     GenerationPortRequest,
 )
-from backend.agent_runtime.contracts import LabeledEvidenceItem, ProductionRequest
+from backend.agent_runtime.contracts import (
+    LabeledContent,
+    LabeledEvidenceItem,
+    ProductionRequest,
+)
 from backend.agent_runtime.contracts.common import freeze_agent_safe_mapping
+from backend.agent_runtime.contracts.security import (
+    ContentOrigin,
+    ContentRole,
+    ContentTrustClass,
+    SecurityBoundary,
+    StructuredContentSecurityAssessment,
+)
 from backend.core_contracts.capability import CapabilityId
 from backend.shared_kernel._strings import require_non_empty
 
@@ -50,6 +61,8 @@ class GenerationPreparationRequest:
     resolved_inputs: Mapping[str, object] = field(default_factory=dict)
     output_contract: Mapping[str, object] = field(default_factory=dict)
     labeled_evidence: tuple[LabeledEvidenceItem, ...] = ()
+    labeled_inputs: tuple[LabeledContent, ...] = ()
+    input_security_assessments: tuple[StructuredContentSecurityAssessment, ...] = ()
 
     def __post_init__(self) -> None:
         if type(self.capability_id) is not CapabilityId:
@@ -67,6 +80,10 @@ class GenerationPreparationRequest:
             freeze_agent_safe_mapping(self.output_contract),
         )
         _validate_labeled_evidence(self.labeled_evidence, self.request.evidence_refs)
+        _validate_labeled_inputs(
+            self.labeled_inputs,
+            self.input_security_assessments,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,6 +132,10 @@ def _validate_prepared_call(prepared: PreparedGenerationCall) -> None:
     canonical = prepared.canonical_request
     technical = prepared.port_request
     _validate_labeled_evidence(snapshot.labeled_evidence, canonical.evidence_refs)
+    _validate_labeled_inputs(
+        snapshot.labeled_inputs,
+        snapshot.input_security_assessments,
+    )
     if (
         snapshot.capability_id != prepared.capability_id
         or snapshot.request != canonical
@@ -202,6 +223,53 @@ def _validate_labeled_evidence(
         raise ValueError("labeled_evidence content references must be unique")
     if not set(content_refs).issubset(evidence_refs):
         raise ValueError("labeled_evidence must remain inside canonical evidence scope")
+
+
+def _validate_labeled_inputs(
+    values: tuple[LabeledContent, ...],
+    assessments: tuple[StructuredContentSecurityAssessment, ...],
+) -> None:
+    if type(values) is not tuple or any(
+        type(value) is not LabeledContent for value in values
+    ):
+        raise TypeError("labeled_inputs must contain LabeledContent values")
+    refs = tuple(value.content_ref for value in values)
+    if len(refs) != len(set(refs)):
+        raise ValueError("labeled_inputs content references must be unique")
+    if any(
+        value.label.origin
+        not in {ContentOrigin.TOOL_OUTPUT, ContentOrigin.APPLICATION_OUTPUT}
+        or value.label.role is not ContentRole.RESULT
+        or value.label.trust_class is not ContentTrustClass.UNTRUSTED
+        for value in values
+    ):
+        raise ValueError("labeled_inputs must preserve untrusted boundary provenance")
+    if type(assessments) is not tuple or any(
+        type(item) is not StructuredContentSecurityAssessment for item in assessments
+    ):
+        raise TypeError(
+            "input_security_assessments must contain structured assessments"
+        )
+    if any(
+        item.label.origin
+        not in {ContentOrigin.TOOL_OUTPUT, ContentOrigin.APPLICATION_OUTPUT}
+        or item.label.trust_class is not ContentTrustClass.UNTRUSTED
+        or item.boundary
+        is not (
+            SecurityBoundary.TOOL
+            if item.label.origin is ContentOrigin.TOOL_OUTPUT
+            else SecurityBoundary.APPLICATION
+        )
+        for item in assessments
+    ):
+        raise ValueError("input assessments must preserve boundary provenance")
+    assessed_refs = {
+        nested.content_ref
+        for assessment in assessments
+        for nested in assessment.content_assessments
+    }
+    if assessed_refs != set(refs):
+        raise ValueError("input assessments must exactly cover labeled_inputs")
 
 
 def _raise_mismatch(

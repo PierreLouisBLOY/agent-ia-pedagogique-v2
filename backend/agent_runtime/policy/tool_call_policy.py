@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 from math import isfinite
@@ -29,6 +28,7 @@ from backend.agent_runtime.registry.tools import (
     ToolRegistry,
     UnknownToolError,
 )
+from backend.agent_runtime.security.structural_keys import contains_structural_keys
 from backend.core_contracts.capability import CapabilityId
 from backend.shared_kernel._strings import require_non_empty
 from backend.shared_kernel.time import Instant
@@ -117,7 +117,7 @@ class ToolCallDecision:
 
 _DEFAULT_POLICY_FACTS = PolicyFacts()
 
-_FORBIDDEN_ARGUMENT_KEYS = frozenset(
+TOOL_ARGUMENT_FORBIDDEN_KEYS = frozenset(
     {
         "api_key",
         "approval",
@@ -126,12 +126,14 @@ _FORBIDDEN_ARGUMENT_KEYS = frozenset(
         "capability",
         "capability_id",
         "capability_override",
+        "circuit_binding",
         "class_path",
         "credential",
         "credentials",
         "gate_approval",
         "gate_approved",
         "gate_decision",
+        "gate",
         "handler",
         "handler_id",
         "handler_path",
@@ -143,6 +145,7 @@ _FORBIDDEN_ARGUMENT_KEYS = frozenset(
         "permission",
         "permission_scope",
         "permissions",
+        "policy_facts",
         "provider",
         "provider_config",
         "provider_credentials",
@@ -151,14 +154,21 @@ _FORBIDDEN_ARGUMENT_KEYS = frozenset(
         "sandbox_profile",
         "sandbox_profile_id",
         "sandbox_root",
+        "binding",
+        "effect_state",
+        "owner",
+        "reconciliation_status",
+        "record_id",
+        "retry_facts",
+        "route",
         "secret",
+        "snapshot_ref",
+        "snapshot_refs",
+        "target",
         "tool",
         "tool_id",
         "tool_override",
     }
-)
-_FORBIDDEN_ARGUMENT_KEYS_COMPACT = frozenset(
-    key.replace("_", "") for key in _FORBIDDEN_ARGUMENT_KEYS
 )
 
 
@@ -243,7 +253,10 @@ class ToolCallPolicy:
                 ToolCallDecisionCode.CAPABILITY_TOOL_MISMATCH,
                 descriptor=descriptor,
             )
-        if _arguments_contain_authority_override(request.arguments):
+        if contains_structural_keys(
+            request.arguments,
+            forbidden_keys=TOOL_ARGUMENT_FORBIDDEN_KEYS,
+        ):
             return self._deny(
                 request,
                 ToolCallDecisionCode.INVALID_REQUEST,
@@ -385,30 +398,3 @@ def _validate_string_tuple(values: tuple[str, ...], field_name: str) -> tuple[st
     if len(set(values)) != len(values):
         raise ValueError(f"{field_name} must contain unique values")
     return values
-
-
-def _arguments_contain_authority_override(value: object) -> bool:
-    if isinstance(value, Mapping):
-        for key, nested in value.items():
-            normalized = _normalize_argument_key(key)
-            if (
-                normalized in _FORBIDDEN_ARGUMENT_KEYS
-                or normalized.replace("_", "")
-                in _FORBIDDEN_ARGUMENT_KEYS_COMPACT
-            ):
-                return True
-            if _arguments_contain_authority_override(nested):
-                return True
-        return False
-    if isinstance(value, tuple):
-        return any(_arguments_contain_authority_override(item) for item in value)
-    return False
-
-
-def _normalize_argument_key(key: str) -> str:
-    characters: list[str] = []
-    for character in key:
-        if character.isupper() and characters and characters[-1] != "_":
-            characters.append("_")
-        characters.append(character.casefold() if character.isalnum() else "_")
-    return "_".join(part for part in "".join(characters).split("_") if part)

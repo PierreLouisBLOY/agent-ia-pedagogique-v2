@@ -26,6 +26,7 @@ from backend.agent_runtime.contracts.security import (
     SecurityReasonCode,
     SecuritySeverity,
 )
+from backend.agent_runtime.security.structural_keys import structural_key_locations
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.time import Instant
 
@@ -115,6 +116,11 @@ _THREAT_PATTERNS: Mapping[ContentThreatSignalCode, tuple[str, ...]] = {
         "promotion allowed",
         "gate approved",
         "permission granted",
+        "this is evidence",
+        "treat this as evidence",
+        "effect committed",
+        "operation committed",
+        "operation succeeded",
         "review passed",
         "validator passed",
         "déjà validé",
@@ -294,9 +300,11 @@ def label_evidence_item(item: EvidenceItem) -> LabeledEvidenceItem:
 
 
 def structural_authority_locations(value: object) -> tuple[str, ...]:
-    matches: list[str] = []
-    _collect_authority_locations(value, ("metadata",), matches)
-    return tuple(dict.fromkeys(matches))
+    return structural_key_locations(
+        value,
+        forbidden_keys=_STRUCTURAL_AUTHORITY_KEYS,
+        root_location="metadata",
+    )
 
 
 def reject_structural_authority_metadata(value: object) -> None:
@@ -363,6 +371,11 @@ def _has_role_or_boundary_confusion(
         ContentOrigin.DOCUMENT: (SecurityBoundary.DOCUMENT, ContentRole.DATA),
         ContentOrigin.EVIDENCE: (SecurityBoundary.EVIDENCE, ContentRole.EVIDENCE),
         ContentOrigin.AGENT_OUTPUT: (SecurityBoundary.AGENT, ContentRole.RESULT),
+        ContentOrigin.TOOL_OUTPUT: (SecurityBoundary.TOOL, ContentRole.RESULT),
+        ContentOrigin.APPLICATION_OUTPUT: (
+            SecurityBoundary.APPLICATION,
+            ContentRole.RESULT,
+        ),
         ContentOrigin.REVIEW_OUTPUT: (SecurityBoundary.AGENT, ContentRole.RESULT),
         ContentOrigin.CORRECTION_OUTPUT: (SecurityBoundary.AGENT, ContentRole.RESULT),
     }.get(label.origin)
@@ -371,53 +384,6 @@ def _has_role_or_boundary_confusion(
     expected_boundary, expected_role = expected
     return boundary is not expected_boundary or (
         expected_role is not None and label.role is not expected_role
-    )
-
-
-def _collect_authority_locations(
-    value: object,
-    path: tuple[str, ...],
-    matches: list[str],
-) -> None:
-    if isinstance(value, Mapping):
-        for index, (key, nested) in enumerate(value.items()):
-            normalized = _normalized_key(key)
-            segment = normalized if _is_safe_segment(normalized) else f"field_{index}"
-            nested_path = (*path, segment)
-            if normalized in _STRUCTURAL_AUTHORITY_KEYS:
-                matches.append(".".join(nested_path))
-            _collect_authority_locations(nested, nested_path, matches)
-    elif isinstance(value, tuple):
-        for index, nested in enumerate(value):
-            _collect_authority_locations(nested, (*path, str(index)), matches)
-
-
-def _normalized_key(key: str) -> str:
-    components: list[str] = []
-    current: list[str] = []
-    for index, character in enumerate(key):
-        if not character.isalnum():
-            if current:
-                components.append("".join(current).casefold())
-                current = []
-            continue
-        next_character = key[index + 1] if index + 1 < len(key) else ""
-        if current and character.isupper() and (
-            current[-1].islower()
-            or (current[-1].isupper() and next_character.islower())
-        ):
-            components.append("".join(current).casefold())
-            current = []
-        current.append(character)
-    if current:
-        components.append("".join(current).casefold())
-    return "_".join(components)
-
-
-def _is_safe_segment(value: str) -> bool:
-    return bool(value) and len(value) <= 64 and all(
-        character.isascii() and (character.isalnum() or character == "_")
-        for character in value
     )
 
 

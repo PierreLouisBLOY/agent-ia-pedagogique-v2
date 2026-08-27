@@ -88,6 +88,7 @@ from backend.agent_runtime.contracts.security import (
     SecurityEventType,
     SecurityReasonCode,
     SecuritySeverity,
+    StructuredContentSecurityAssessment,
 )
 from backend.agent_runtime.contracts.tools import ToolCallRequest, ToolCallResult
 
@@ -155,6 +156,7 @@ __all__ = [
     "SecuritySeverity",
     "StepKind",
     "StepSpec",
+    "StructuredContentSecurityAssessment",
     "ToolCallRequest",
     "ToolCallResult",
     "UseCaseRequest",

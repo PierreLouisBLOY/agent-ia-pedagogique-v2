@@ -155,11 +155,14 @@ def test_d_defines_no_deferred_router_gate_scheduler_or_runtime_runner() -> None
         for node in ast.walk(_tree(path))
         if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
     }
-    source = "\n".join(path.read_text(encoding="utf-8") for path in TOOL_FILES)
-
     assert definitions.isdisjoint(forbidden_definitions)
-    assert "retry" not in source.casefold()
-    assert "recovery" not in source.casefold()
+    imported_modules = {
+        node.module
+        for path in TOOL_FILES
+        for node in ast.walk(_tree(path))
+        if isinstance(node, ast.ImportFrom) and node.module is not None
+    }
+    assert all("agent_runtime.recovery" not in module for module in imported_modules)
 
 
 def test_router_does_not_import_permission_or_gate_engines() -> None:

@@ -5,6 +5,13 @@ from enum import StrEnum
 from math import isfinite
 
 from backend.agent_runtime.contracts import ToolCallRequest, ToolCallResult
+from backend.agent_runtime.contracts.security import (
+    ContentOrigin,
+    ContentRole,
+    ContentTrustClass,
+    SecurityBoundary,
+    StructuredContentSecurityAssessment,
+)
 from backend.agent_runtime.policy import (
     ToolCallDecision,
     ToolCallDisposition,
@@ -36,6 +43,8 @@ class ToolRoutingErrorCode(StrEnum):
     OUTPUT_PATH_MISMATCH = "OUTPUT_PATH_MISMATCH"
     OUTPUT_SANDBOX_DENIED = "OUTPUT_SANDBOX_DENIED"
     INVALID_EXECUTION_OUTCOME = "INVALID_EXECUTION_OUTCOME"
+    INPUT_CONTRACT_MISMATCH = "INPUT_CONTRACT_MISMATCH"
+    OUTPUT_CONTRACT_MISMATCH = "OUTPUT_CONTRACT_MISMATCH"
 
 
 _SAFE_REASONS = {
@@ -52,6 +61,12 @@ _SAFE_REASONS = {
     ToolRoutingErrorCode.OUTPUT_PATH_MISMATCH: "produced output paths are not authorized",
     ToolRoutingErrorCode.OUTPUT_SANDBOX_DENIED: "sandbox rejected a produced output",
     ToolRoutingErrorCode.INVALID_EXECUTION_OUTCOME: "executor returned an invalid outcome",
+    ToolRoutingErrorCode.INPUT_CONTRACT_MISMATCH: (
+        "tool input contract does not match its canonical descriptor"
+    ),
+    ToolRoutingErrorCode.OUTPUT_CONTRACT_MISMATCH: (
+        "tool output contract does not match its canonical descriptor"
+    ),
 }
 
 
@@ -137,6 +152,7 @@ class PreparedToolExecution:
     correlation_id: CorrelationId
     input_contract_id: str
     output_contract_id: str
+    argument_security_assessment: StructuredContentSecurityAssessment | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.request, ToolCallRequest):
@@ -189,6 +205,20 @@ class PreparedToolExecution:
             raise TypeError("correlation_id must be a CorrelationId")
         require_non_empty(self.input_contract_id, "input_contract_id")
         require_non_empty(self.output_contract_id, "output_contract_id")
+        if self.argument_security_assessment is not None:
+            assessment = self.argument_security_assessment
+            if type(assessment) is not StructuredContentSecurityAssessment:
+                raise TypeError("argument_security_assessment has an invalid type")
+            label = assessment.label
+            if (
+                assessment.boundary is not SecurityBoundary.TOOL
+                or label.origin is not ContentOrigin.AGENT_OUTPUT
+                or label.role is not ContentRole.RESULT
+                or label.trust_class is not ContentTrustClass.UNTRUSTED
+                or label.source_ref
+                != f"tool-request:{self.request.tool_id}:{self.request.meta.step_id}"
+            ):
+                raise ValueError("argument assessment must preserve Tool input lineage")
         self._validate_exact_bindings()
 
     def _validate_exact_bindings(self) -> None:

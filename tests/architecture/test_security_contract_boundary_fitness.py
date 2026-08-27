@@ -122,12 +122,11 @@ def test_security_contracts_define_no_policy_guard_engine_or_authority_decision(
     assert enum_values.isdisjoint({"ALLOW", "REQUEST", "DELEGATE", "APPROVED", "PROMOTE"})
 
 
-def test_security_contracts_are_integrated_only_into_content_boundaries() -> None:
+def test_security_contracts_are_integrated_only_into_approved_boundaries() -> None:
     protected_roots = (
         BACKEND / "agent_runtime" / "gates",
         BACKEND / "agent_runtime" / "recovery",
         BACKEND / "agent_runtime" / "sandbox",
-        BACKEND / "agent_runtime" / "tools",
     )
     for root in protected_roots:
         for path in _python_files(root):
@@ -135,6 +134,7 @@ def test_security_contracts_are_integrated_only_into_content_boundaries() -> Non
 
     allowed_exports = {
         SECURITY_CONTRACTS / "__init__.py",
+        SECURITY_CONTRACTS / "boundary_content.py",
         SECURITY_CONTRACTS / "content.py",
         SECURITY_CONTRACTS / "security_event.py",
         SECURITY_CONTRACTS / "trust.py",
@@ -149,10 +149,25 @@ def test_security_contracts_are_integrated_only_into_content_boundaries() -> Non
         BACKEND / "agent_runtime" / "agents" / "generation" / "generation_guard.py",
         BACKEND / "agent_runtime" / "agents" / "generation" / "generation_guard_model.py",
         BACKEND / "agent_runtime" / "agents" / "generation" / "generation_model.py",
+        BACKEND
+        / "agent_runtime"
+        / "agents"
+        / "generation"
+        / "generation_coordination_model.py",
         BACKEND / "agent_runtime" / "agents" / "review" / "review_assessment_model.py",
         BACKEND / "agent_runtime" / "agents" / "review" / "review_coordination_model.py",
         BACKEND / "agent_runtime" / "agents" / "review" / "review_security.py",
         BACKEND / "agent_runtime" / "agents" / "review" / "review_security_model.py",
+        BACKEND / "agent_runtime" / "application_routing" / "router.py",
+        BACKEND
+        / "agent_runtime"
+        / "contracts"
+        / "application"
+        / "use_case_result.py",
+        BACKEND / "agent_runtime" / "contracts" / "tools" / "tool_call_result.py",
+        BACKEND / "agent_runtime" / "security" / "tool_application.py",
+        BACKEND / "agent_runtime" / "tools" / "model.py",
+        BACKEND / "agent_runtime" / "tools" / "router.py",
     }
     for path in _python_files(BACKEND):
         if path in allowed_exports | content_boundary_integrations:

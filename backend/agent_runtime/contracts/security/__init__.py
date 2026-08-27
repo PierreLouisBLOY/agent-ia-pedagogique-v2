@@ -1,5 +1,8 @@
 """Provider-neutral security provenance and event contracts."""
 
+from backend.agent_runtime.contracts.security.boundary_content import (
+    StructuredContentSecurityAssessment,
+)
 from backend.agent_runtime.contracts.security.content import (
     ContentSecurityAssessment,
     ContentSecurityDisposition,
@@ -36,4 +39,5 @@ __all__ = [
     "SecurityEventType",
     "SecurityReasonCode",
     "SecuritySeverity",
+    "StructuredContentSecurityAssessment",
 ]

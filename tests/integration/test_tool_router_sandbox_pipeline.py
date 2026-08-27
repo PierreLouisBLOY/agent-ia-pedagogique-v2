@@ -207,7 +207,13 @@ def test_t02_t03_follow_the_complete_authorized_sandbox_pipeline(
 
     accepted = _route(router, request)
 
-    assert accepted == _result(request)
+    expected = _result(request)
+    assert accepted.meta == expected.meta
+    assert accepted.tool_id == expected.tool_id
+    assert accepted.output == expected.output
+    assert accepted.artifacts == expected.artifacts
+    assert accepted.content_label is not None
+    assert accepted.security_assessment is not None
     assert len(executor.calls) == 1
     prepared = executor.calls[0]
     assert prepared.request is request
@@ -217,6 +223,7 @@ def test_t02_t03_follow_the_complete_authorized_sandbox_pipeline(
     assert prepared.idempotency_key == request.idempotency_key
     assert prepared.input_contract_id == prepared.descriptor.input_contract_id
     assert prepared.output_contract_id == prepared.descriptor.output_contract_id
+    assert prepared.argument_security_assessment is not None
     assert [path.value for _, path in filesystem.resolve_calls] == [
         INPUT.value,
         OUTPUT.value,

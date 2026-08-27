@@ -174,8 +174,16 @@ def test_security_contracts_are_integrated_only_into_approved_boundaries() -> No
         BACKEND / "agent_runtime" / "tools" / "router.py",
         BACKEND / "agent_runtime" / "runtime" / "routing" / "agent_router.py",
     }
+    observability_integrations = {
+        BACKEND / "agent_runtime" / "observability" / "log_catalog.py",
+        BACKEND / "agent_runtime" / "observability" / "log_mapper.py",
+    }
     for path in _python_files(BACKEND):
-        if path in allowed_exports | content_boundary_integrations:
+        if path in (
+            allowed_exports
+            | content_boundary_integrations
+            | observability_integrations
+        ):
             continue
         assert all("contracts.security" not in module for module in _imports(path))
 

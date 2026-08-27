@@ -64,10 +64,30 @@ from backend.agent_runtime.observability.metric_policy import (
     histogram_metric_point,
     series_identity,
 )
+from backend.agent_runtime.observability.noop import (
+    NullLogSink,
+    NullMetricSink,
+    NullTraceSink,
+)
 from backend.agent_runtime.observability.ports import (
     LogSinkPort,
     MetricSinkPort,
     TraceSinkPort,
+)
+from backend.agent_runtime.observability.runtime_context import (
+    ObservationClockPort,
+    ObservationIdSourcePort,
+    PendingObservationSpan,
+    RuntimeObservabilityContext,
+)
+from backend.agent_runtime.observability.runtime_emitter import RuntimeObservationEmitter
+from backend.agent_runtime.observability.runtime_wrappers import (
+    ObservedPreLaunchGuard,
+    ObservedRecoveryCoordinator,
+    ObservedRecoveryRuntimeController,
+    ObservedStepRunner,
+    instrument_plan_executor,
+    instrument_recovery_runtime_controller,
 )
 from backend.agent_runtime.observability.span_catalog import (
     SpanCode,
@@ -98,8 +118,20 @@ __all__ = [
     "MetricPointError",
     "MetricPointErrorCode",
     "MetricSinkPort",
+    "NullLogSink",
+    "NullMetricSink",
+    "NullTraceSink",
+    "ObservationClockPort",
     "ObservationChannel",
+    "ObservationIdSourcePort",
     "ObservabilityDeliveryPolicy",
+    "ObservedPreLaunchGuard",
+    "ObservedRecoveryCoordinator",
+    "ObservedRecoveryRuntimeController",
+    "ObservedStepRunner",
+    "PendingObservationSpan",
+    "RuntimeObservabilityContext",
+    "RuntimeObservationEmitter",
     "SpanCode",
     "StructuredLogCode",
     "TraceContextPolicy",
@@ -114,6 +146,8 @@ __all__ = [
     "error_observation_code",
     "gauge_metric_point",
     "histogram_metric_point",
+    "instrument_plan_executor",
+    "instrument_recovery_runtime_controller",
     "metric_descriptor",
     "metric_points_from_budget_state",
     "metric_points_from_error_envelope",

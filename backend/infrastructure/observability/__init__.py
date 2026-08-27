@@ -4,6 +4,10 @@ from backend.infrastructure.observability.buffering import (
     BoundedDeliveryBuffer,
     BufferEnqueueResult,
 )
+from backend.infrastructure.observability.providers import (
+    UtcObservationClock,
+    UuidObservationIdProvider,
+)
 from backend.infrastructure.observability.serialization import (
     MAX_SERIALIZED_RECORD_BYTES,
     ObservabilitySerializationError,
@@ -35,6 +39,8 @@ __all__ = [
     "SerializedObservation",
     "StreamTextRecordWriter",
     "TextRecordWriter",
+    "UtcObservationClock",
+    "UuidObservationIdProvider",
     "serialize_log_record",
     "serialize_metric_point",
     "serialize_span_record",

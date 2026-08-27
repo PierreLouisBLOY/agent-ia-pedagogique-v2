@@ -145,6 +145,21 @@ class EvaluationInvariantCode(_EvaluationIdentifier):
 
 
 @dataclass(frozen=True, slots=True)
+class EvaluationScorerRef(_EvaluationIdentifier):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class EvaluationRubricRef(_EvaluationIdentifier):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class EvaluationCriterionRef(_EvaluationIdentifier):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
 class EvaluationReasonCode:
     value: str
 

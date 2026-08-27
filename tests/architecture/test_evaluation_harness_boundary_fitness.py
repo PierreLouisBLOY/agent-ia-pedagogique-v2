@@ -8,6 +8,8 @@ ROOT = Path(__file__).resolve().parents[2]
 BACKEND = ROOT / "backend"
 HARNESS = ROOT / "evaluation_harness"
 QUALITY_EVALUATION = BACKEND / "modules" / "quality_evaluation"
+SCORING = HARNESS / "scoring"
+SCORING_CONTRACTS = HARNESS / "contracts" / "scoring.py"
 
 
 def _python_files(root: Path) -> tuple[Path, ...]:
@@ -52,6 +54,21 @@ def _assertion_spec_classes() -> tuple[ast.ClassDef, ...]:
         for path in _python_files(HARNESS)
         for node in ast.walk(_tree(path))
         if isinstance(node, ast.ClassDef) and node.name.endswith("AssertionSpec")
+    )
+
+
+def _scoring_contract_classes() -> tuple[ast.ClassDef, ...]:
+    protected = {
+        "EvaluationRubric",
+        "EvaluationScoringCriterionSpec",
+        "RubricScoreResult",
+        "ScoreResult",
+        "ScorerOutcome",
+    }
+    return tuple(
+        node
+        for node in ast.walk(_tree(SCORING_CONTRACTS))
+        if isinstance(node, ast.ClassDef) and node.name in protected
     )
 
 
@@ -132,14 +149,14 @@ def test_contract_fields_expose_no_authority_or_arbitrary_data_channel() -> None
     assert _annotated_fields(HARNESS).isdisjoint(forbidden_fields)
 
 
-def test_harness_contains_no_runner_scoring_or_reporting_semantics() -> None:
+def test_harness_contains_no_runner_reporting_or_provider_semantics() -> None:
     forbidden_classes = {
         "EvaluationRunner",
         "EvaluationScorer",
         "JsonEvaluationReporter",
+        "JudgeModel",
         "MarkdownEvaluationReporter",
-        "Rubric",
-        "ScoreResult",
+        "ProviderScorer",
         "WeightedScore",
     }
     assert _defined_classes(HARNESS).isdisjoint(forbidden_classes)
@@ -172,6 +189,58 @@ def test_assertion_specs_expose_only_bounded_data_fields() -> None:
             )
             for node in fields
         )
+
+
+def test_scoring_contracts_have_no_float_callable_mapping_or_arbitrary_config() -> None:
+    forbidden_field_names = {
+        "actual",
+        "config",
+        "expected",
+        "import_path",
+        "metadata",
+        "model_name",
+        "payload",
+        "prompt",
+        "provider_params",
+        "threshold",
+        "verdict",
+    }
+    forbidden_annotation_names = {"Any", "Callable", "Mapping", "float"}
+    for class_node in _scoring_contract_classes():
+        fields = tuple(
+            node
+            for node in class_node.body
+            if isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+        )
+        assert {node.target.id for node in fields}.isdisjoint(forbidden_field_names)
+        assert all(
+            not forbidden_annotation_names.intersection(
+                child.id
+                for child in ast.walk(node.annotation)
+                if isinstance(child, ast.Name)
+            )
+            for node in fields
+        )
+
+
+def test_scoring_never_imports_or_mutates_evaluation_verdict() -> None:
+    paths = (*_python_files(SCORING), SCORING_CONTRACTS)
+    assert all(
+        "EvaluationVerdict"
+        not in {
+            node.id
+            for node in ast.walk(_tree(path))
+            if isinstance(node, ast.Name)
+        }
+        for path in paths
+    )
+
+
+def test_no_binary_or_speculative_ordinal_score_contract_exists() -> None:
+    assert _defined_classes(HARNESS).isdisjoint(
+        {"BinaryScore", "OrdinalScale", "OrdinalScore"}
+    )
 
 
 def test_harness_has_no_dynamic_loading_or_arbitrary_code_execution() -> None:
@@ -224,6 +293,8 @@ def test_harness_contract_names_are_unique_outside_tests() -> None:
         "CaseExecutionResult",
         "CaseEvaluationResult",
         "AssertionResult",
+        "ScoreResult",
+        "RubricScoreResult",
         "SuiteEvaluationResult",
     }
     definitions = {

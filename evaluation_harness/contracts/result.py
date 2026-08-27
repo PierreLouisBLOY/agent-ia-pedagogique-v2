@@ -18,6 +18,12 @@ from evaluation_harness.contracts.identity import (
     EvaluationSuiteId,
     require_supported_schema_version,
 )
+from evaluation_harness.contracts.scoring import (
+    MAX_RUBRIC_RESULTS_PER_CASE,
+    MAX_SCORE_RESULTS_PER_CASE,
+    RubricScoreResult,
+    ScoreResult,
+)
 from evaluation_harness.contracts.verdict import EvaluationVerdict
 
 
@@ -96,6 +102,8 @@ class CaseEvaluationResult:
     execution_results: tuple[CaseExecutionResult, ...]
     reason_codes: tuple[EvaluationReasonCode, ...] = ()
     assertion_results: tuple[AssertionResult, ...] = ()
+    score_results: tuple[ScoreResult, ...] = ()
+    rubric_results: tuple[RubricScoreResult, ...] = ()
 
     def __post_init__(self) -> None:
         require_supported_schema_version(self.schema_version)
@@ -106,6 +114,8 @@ class CaseEvaluationResult:
         self._validate_execution_results()
         _validate_reason_codes(self.reason_codes)
         self._validate_assertion_results()
+        self._validate_score_results()
+        self._validate_rubric_results()
         if self.verdict is EvaluationVerdict.PASS and self.reason_codes:
             raise ValueError("a PASS verdict does not require reason codes")
         if self.verdict is not EvaluationVerdict.PASS and not self.reason_codes:
@@ -129,6 +139,10 @@ class CaseEvaluationResult:
             raise ValueError("a non-PASS assertion result cannot aggregate to PASS")
         if self.verdict is EvaluationVerdict.SKIPPED and self.assertion_results:
             raise ValueError("a SKIPPED case has no assertion results")
+        if self.verdict is EvaluationVerdict.SKIPPED and (
+            self.score_results or self.rubric_results
+        ):
+            raise ValueError("a SKIPPED case has no score results")
 
     def _validate_execution_results(self) -> None:
         if type(self.execution_results) is not tuple:
@@ -162,6 +176,30 @@ class CaseEvaluationResult:
         )
         if len(assertion_refs) != len(set(assertion_refs)):
             raise ValueError("assertion result refs must be unique")
+
+    def _validate_score_results(self) -> None:
+        if type(self.score_results) is not tuple:
+            raise TypeError("score_results must be a tuple")
+        if len(self.score_results) > MAX_SCORE_RESULTS_PER_CASE:
+            raise ValueError("too many score results for one case evaluation")
+        if any(type(result) is not ScoreResult for result in self.score_results):
+            raise TypeError("score_results must contain ScoreResult values")
+        criterion_refs = tuple(result.criterion_ref for result in self.score_results)
+        if len(criterion_refs) != len(set(criterion_refs)):
+            raise ValueError("case score criterion refs must be unique")
+
+    def _validate_rubric_results(self) -> None:
+        if type(self.rubric_results) is not tuple:
+            raise TypeError("rubric_results must be a tuple")
+        if len(self.rubric_results) > MAX_RUBRIC_RESULTS_PER_CASE:
+            raise ValueError("too many rubric results for one case evaluation")
+        if any(
+            type(result) is not RubricScoreResult for result in self.rubric_results
+        ):
+            raise TypeError("rubric_results must contain RubricScoreResult values")
+        rubric_refs = tuple(result.rubric_ref for result in self.rubric_results)
+        if len(rubric_refs) != len(set(rubric_refs)):
+            raise ValueError("case rubric result refs must be unique")
 
 
 @dataclass(frozen=True, slots=True)

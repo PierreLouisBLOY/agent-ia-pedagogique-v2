@@ -6,6 +6,7 @@ from enum import StrEnum
 
 from backend.shared_kernel._safe_data import freeze_safe_mapping
 from backend.shared_kernel._strings import require_non_empty
+from backend.shared_kernel._value_safety import require_safe_structured_value
 
 
 class ApplicationFailureKind(StrEnum):
@@ -42,6 +43,10 @@ class ApplicationFailure:
             require_non_empty(self.message_key, "message_key")
         if self.cause_ref is not None:
             require_non_empty(self.cause_ref, "cause_ref")
+            require_safe_structured_value(
+                self.cause_ref,
+                root_location="application_failure_cause_ref",
+            )
         if self.details is not None:
             object.__setattr__(self, "details", freeze_safe_mapping(self.details))
 

@@ -8,6 +8,8 @@ from backend.agent_runtime.contracts.common import (
     AgentId,
     ContractRef,
     freeze_agent_safe_mapping,
+    require_agent_safe_ref,
+    require_agent_safe_text,
     require_contract_ref,
 )
 from backend.agent_runtime.contracts.planning.step_spec import StepKind, StepSpec
@@ -36,6 +38,11 @@ class DelegationEnvelope:
 
     def __post_init__(self) -> None:
         require_non_empty(self.delegation_id, "delegation_id")
+        require_agent_safe_text(
+            self.delegation_id,
+            field_name="delegation_id",
+            max_length=128,
+        )
         if not isinstance(self.source_step, StepSpec):
             raise TypeError("source_step must be a StepSpec")
         if self.target_agent not in _DELEGABLE_AGENT_IDS:
@@ -53,8 +60,11 @@ class DelegationEnvelope:
         if self.delegation_depth != 1:
             raise ValueError("specialist delegation depth must be exactly 1")
         evidence_refs = tuple(self.evidence_refs)
+        if len(evidence_refs) > 64:
+            raise ValueError("evidence_refs must contain at most 64 items")
         for evidence_ref in evidence_refs:
             require_contract_ref(evidence_ref, "evidence_ref")
+            require_agent_safe_ref(evidence_ref, field_name="evidence_ref")
         if not isinstance(self.permission_scope, PermissionScope):
             raise TypeError("permission_scope must be a PermissionScope")
         if self.permission_scope.principal.kind is not ActorKind.AGENT:

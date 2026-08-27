@@ -20,6 +20,7 @@ from backend.agent_runtime.security.content_isolation import (
     InstructionDataBoundaryPolicy,
     scan_content_threats,
 )
+from backend.agent_runtime.security.sensitive_values import SensitiveValuePolicy
 from backend.agent_runtime.security.structural_keys import structural_key_locations
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.time import Instant
@@ -46,6 +47,8 @@ def assess_structured_boundary_content(
         raise TypeError("label must be a ContentTrustLabel")
     if type(boundary) is not SecurityBoundary:
         raise TypeError("boundary must be a SecurityBoundary")
+
+    SensitiveValuePolicy().require_safe(value, root_location=root_location)
 
     leaves = _string_leaves(value, (root_location,))
     labeled: list[LabeledContent] = []

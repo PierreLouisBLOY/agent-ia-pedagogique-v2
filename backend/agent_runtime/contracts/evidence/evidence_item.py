@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from backend.agent_runtime.contracts.common import (
     ContractRef,
     freeze_agent_safe_mapping,
+    require_agent_safe_ref,
+    require_agent_safe_text,
     require_contract_ref,
 )
 from backend.shared_kernel._strings import require_non_empty
@@ -28,17 +30,34 @@ class EvidenceItem:
 
     def __post_init__(self) -> None:
         require_non_empty(self.evidence_id, "evidence_id")
+        require_agent_safe_text(
+            self.evidence_id,
+            field_name="evidence_id",
+            max_length=128,
+        )
         require_contract_ref(self.source_ref, "source_ref")
+        require_agent_safe_ref(self.source_ref, field_name="source_ref")
         require_non_empty(self.source_kind, "source_kind")
         if _is_manifestly_generative_source_kind(self.source_kind):
             raise ValueError("agent or model output is not evidence by default")
         require_non_empty(self.locator, "locator")
+        require_agent_safe_text(self.locator, field_name="locator", max_length=2_048)
         if not isinstance(self.retrieved_at, Instant):
             raise TypeError("retrieved_at must be an Instant")
         if self.excerpt_or_summary is not None:
             require_non_empty(self.excerpt_or_summary, "excerpt_or_summary")
+            require_agent_safe_text(
+                self.excerpt_or_summary,
+                field_name="excerpt_or_summary",
+                max_length=4_000,
+            )
         if self.checksum_or_version is not None:
             require_non_empty(self.checksum_or_version, "checksum_or_version")
+            require_agent_safe_text(
+                self.checksum_or_version,
+                field_name="checksum_or_version",
+                max_length=256,
+            )
         object.__setattr__(self, "relevance", freeze_agent_safe_mapping(self.relevance))
         object.__setattr__(self, "authority", freeze_agent_safe_mapping(self.authority))
 

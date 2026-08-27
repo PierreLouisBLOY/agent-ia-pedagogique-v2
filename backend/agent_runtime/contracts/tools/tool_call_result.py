@@ -7,6 +7,7 @@ from backend.agent_runtime.contracts.common import (
     ContractMeta,
     ContractRef,
     freeze_agent_safe_mapping,
+    require_agent_safe_ref,
     require_contract_ref,
 )
 from backend.agent_runtime.contracts.errors import ErrorEnvelope
@@ -46,8 +47,11 @@ class ToolCallResult:
         if self.output is not None:
             object.__setattr__(self, "output", freeze_agent_safe_mapping(self.output))
         artifacts = tuple(self.artifacts)
+        if len(artifacts) > 64:
+            raise ValueError("artifacts must contain at most 64 items")
         for artifact in artifacts:
             require_contract_ref(artifact, "artifact")
+            require_agent_safe_ref(artifact, field_name="artifact")
         if self.error is not None:
             if not isinstance(self.error, ErrorEnvelope):
                 raise TypeError("error must be an ErrorEnvelope")

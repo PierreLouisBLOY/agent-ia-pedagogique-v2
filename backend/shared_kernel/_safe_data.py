@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from types import MappingProxyType
 
+from backend.shared_kernel._value_safety import require_safe_structured_value
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.identifiers import TypedEntityId
 from backend.shared_kernel.references import ObjectVersionRef, TypedEntityRef, VersionRef
@@ -35,6 +36,11 @@ def freeze_safe_mapping(value: Mapping[str, object]) -> Mapping[str, object]:
     if not isinstance(value, Mapping):
         raise TypeError("structured data must be a mapping")
 
+    require_safe_structured_value(value)
+    return _freeze_safe_mapping(value)
+
+
+def _freeze_safe_mapping(value: Mapping[str, object]) -> Mapping[str, object]:
     frozen: dict[str, object] = {}
     for key, item in value.items():
         if not isinstance(key, str):
@@ -53,7 +59,7 @@ def _freeze_safe_value(value: object) -> object:
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
     if isinstance(value, Mapping):
-        return freeze_safe_mapping(value)
+        return _freeze_safe_mapping(value)
     if isinstance(value, (list, tuple)):
         return tuple(_freeze_safe_value(item) for item in value)
     raise TypeError(f"unsupported structured data value: {type(value).__name__}")

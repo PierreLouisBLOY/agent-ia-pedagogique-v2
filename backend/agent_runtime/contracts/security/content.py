@@ -3,7 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
-from backend.agent_runtime.contracts.common import ContractRef, require_contract_ref
+from backend.agent_runtime.contracts.common import (
+    ContractRef,
+    require_agent_safe_ref,
+    require_agent_safe_text,
+    require_contract_ref,
+)
 from backend.agent_runtime.contracts.security.security_event import SecurityReasonCode
 from backend.agent_runtime.contracts.security.trust import ContentTrustLabel
 from backend.shared_kernel._strings import require_non_empty
@@ -30,6 +35,7 @@ class ContentThreatSignal:
         if type(self.code) is not ContentThreatSignalCode:
             raise TypeError("code must be a ContentThreatSignalCode")
         require_contract_ref(self.content_ref, "content_ref")
+        require_agent_safe_ref(self.content_ref, field_name="content_ref")
         _require_safe_logical_location(self.logical_location)
 
 
@@ -45,9 +51,15 @@ class LabeledContent:
     def __post_init__(self) -> None:
         _require_safe_identifier(self.content_id, "content_id")
         require_non_empty(self.text, "text")
+        require_agent_safe_text(
+            self.text,
+            field_name="labeled_content_text",
+            max_length=65_536,
+        )
         if type(self.label) is not ContentTrustLabel:
             raise TypeError("label must be a ContentTrustLabel")
         require_contract_ref(self.content_ref, "content_ref")
+        require_agent_safe_ref(self.content_ref, field_name="content_ref")
 
 
 class ContentSecurityDisposition(StrEnum):
@@ -68,6 +80,7 @@ class ContentSecurityAssessment:
 
     def __post_init__(self) -> None:
         require_contract_ref(self.content_ref, "content_ref")
+        require_agent_safe_ref(self.content_ref, field_name="content_ref")
         if type(self.label) is not ContentTrustLabel:
             raise TypeError("label must be a ContentTrustLabel")
         if type(self.disposition) is not ContentSecurityDisposition:

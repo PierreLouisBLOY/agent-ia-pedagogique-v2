@@ -168,6 +168,7 @@ def test_security_contracts_are_integrated_only_into_approved_boundaries() -> No
         BACKEND / "agent_runtime" / "contracts" / "tools" / "tool_call_result.py",
         BACKEND / "agent_runtime" / "security" / "tool_application.py",
         BACKEND / "agent_runtime" / "security" / "multi_agent.py",
+        BACKEND / "agent_runtime" / "security" / "sensitive_values.py",
         BACKEND / "agent_runtime" / "tools" / "model.py",
         BACKEND / "agent_runtime" / "tools" / "router.py",
     }

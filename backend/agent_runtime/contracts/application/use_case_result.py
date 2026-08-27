@@ -7,6 +7,7 @@ from backend.agent_runtime.contracts.common import (
     ContractMeta,
     ContractRef,
     freeze_agent_safe_mapping,
+    require_agent_safe_ref,
     require_contract_ref,
 )
 from backend.agent_runtime.contracts.errors import ErrorEnvelope
@@ -51,12 +52,16 @@ class UseCaseResult[TData, TValidationResult]:
             raise ValueError("outcome correlation must match meta correlation")
         if self.result_ref is not None:
             require_contract_ref(self.result_ref, "result_ref")
+            require_agent_safe_ref(self.result_ref, field_name="result_ref")
+        if len(self.domain_events) > 64:
+            raise ValueError("domain_events must contain at most 64 items")
         domain_events: list[ContractRef | Mapping[str, object]] = []
         for event in self.domain_events:
             if isinstance(event, Mapping):
                 domain_events.append(freeze_agent_safe_mapping(event))
             else:
                 require_contract_ref(event, "domain_event")
+                require_agent_safe_ref(event, field_name="domain_event")
                 domain_events.append(event)
         if self.error is not None:
             if not isinstance(self.error, ErrorEnvelope):

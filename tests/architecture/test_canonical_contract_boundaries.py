@@ -24,6 +24,7 @@ ALLOWED_IMPORT_ROOTS = {
     "datetime",
     "decimal",
     "enum",
+    "re",
     "types",
     "typing",
 }

@@ -5,8 +5,11 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from backend.agent_runtime.contracts.common import (
+    ERROR_SAFE_DATA_LIMITS,
     ContractRef,
     freeze_agent_safe_mapping,
+    require_agent_safe_ref,
+    require_agent_safe_text,
     require_contract_ref,
 )
 from backend.shared_kernel._strings import require_non_empty
@@ -84,6 +87,11 @@ class ErrorEnvelope:
         if not isinstance(self.severity, ErrorSeverity):
             raise TypeError("severity must be an ErrorSeverity")
         require_non_empty(self.message, "message")
+        require_agent_safe_text(
+            self.message,
+            field_name="error_message",
+            max_length=1_024,
+        )
         require_non_empty(self.step_id, "step_id")
         if not isinstance(self.attempt, int) or isinstance(self.attempt, bool):
             raise TypeError("attempt must be an integer")
@@ -94,7 +102,14 @@ class ErrorEnvelope:
         if not isinstance(self.recommended_action, RecommendedAction):
             raise TypeError("recommended_action must be a RecommendedAction")
         related_refs = tuple(self.related_refs)
+        if len(related_refs) > 16:
+            raise ValueError("related_refs must contain at most 16 items")
         for related_ref in related_refs:
             require_contract_ref(related_ref, "related_ref")
+            require_agent_safe_ref(related_ref, field_name="related_ref")
         object.__setattr__(self, "related_refs", related_refs)
-        object.__setattr__(self, "details", freeze_agent_safe_mapping(self.details))
+        object.__setattr__(
+            self,
+            "details",
+            freeze_agent_safe_mapping(self.details, limits=ERROR_SAFE_DATA_LIMITS),
+        )

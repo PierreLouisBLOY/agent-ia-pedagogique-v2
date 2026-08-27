@@ -6,9 +6,12 @@ from datetime import timedelta
 from enum import StrEnum
 
 from backend.agent_runtime.contracts.common import (
+    SECURITY_EVENT_DATA_LIMITS,
     ContractRef,
     ContractSchemaVersion,
     freeze_agent_safe_mapping,
+    require_agent_safe_ref,
+    require_agent_safe_text,
     require_contract_ref,
 )
 from backend.agent_runtime.contracts.security.trust import (
@@ -134,17 +137,21 @@ class SecurityEvent:
         if len(set(self.refs)) != len(self.refs):
             raise ValueError("refs must be unique")
 
-        safe_metadata = freeze_agent_safe_mapping(self.metadata)
-        if len(safe_metadata) > _MAX_METADATA_KEYS:
+        if len(self.metadata) > _MAX_METADATA_KEYS:
             raise ValueError(
                 f"metadata must contain at most {_MAX_METADATA_KEYS} top-level keys"
             )
+        safe_metadata = freeze_agent_safe_mapping(
+            self.metadata,
+            limits=SECURITY_EVENT_DATA_LIMITS,
+        )
         _reject_raw_event_data_keys(safe_metadata)
         object.__setattr__(self, "metadata", safe_metadata)
 
 
 def _require_safe_identifier(value: str, field_name: str) -> None:
     require_non_empty(value, field_name)
+    require_agent_safe_text(value, field_name=field_name, max_length=128)
     if not _is_safe_opaque_value(value, max_length=128):
         raise ValueError(f"{field_name} must be a bounded opaque safe identifier")
 
@@ -153,6 +160,7 @@ def _require_security_ref(value: ContractRef) -> None:
     require_contract_ref(value, "ref")
     if isinstance(value, str) and not _is_safe_opaque_value(value, max_length=256):
         raise ValueError("security event string refs must be bounded opaque identifiers")
+    require_agent_safe_ref(value, field_name="security_event_ref")
 
 
 def _reject_raw_event_data_keys(value: object) -> None:

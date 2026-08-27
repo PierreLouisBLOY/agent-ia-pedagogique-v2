@@ -3,7 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
-from backend.agent_runtime.contracts.common import ContractRef, require_contract_ref
+from backend.agent_runtime.contracts.common import (
+    ContractRef,
+    require_agent_safe_ref,
+    require_contract_ref,
+)
 
 
 class SecurityBoundary(StrEnum):
@@ -67,3 +71,4 @@ class ContentTrustLabel:
             raise TypeError("trust_class must be a ContentTrustClass")
         if self.source_ref is not None:
             require_contract_ref(self.source_ref, "source_ref")
+            require_agent_safe_ref(self.source_ref, field_name="source_ref")

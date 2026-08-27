@@ -5,7 +5,10 @@ from dataclasses import dataclass, field
 from datetime import timedelta
 
 from backend.agent_runtime.contracts.common.actor import ActorRef
-from backend.agent_runtime.contracts.common.safe_data import freeze_agent_safe_mapping
+from backend.agent_runtime.contracts.common.safe_data import (
+    freeze_agent_safe_mapping,
+    require_agent_safe_text,
+)
 from backend.agent_runtime.contracts.common.schema_version import ContractSchemaVersion
 from backend.shared_kernel._strings import require_non_empty
 from backend.shared_kernel.correlation import CorrelationId
@@ -31,8 +34,15 @@ class ContractMeta[TStatus]:
             raise TypeError("schema_version must be a ContractSchemaVersion")
         require_non_empty(self.run_id, "run_id")
         require_non_empty(self.step_id, "step_id")
+        require_agent_safe_text(self.run_id, field_name="run_id", max_length=128)
+        require_agent_safe_text(self.step_id, field_name="step_id", max_length=128)
         if self.parent_step_id is not None:
             require_non_empty(self.parent_step_id, "parent_step_id")
+            require_agent_safe_text(
+                self.parent_step_id,
+                field_name="parent_step_id",
+                max_length=128,
+            )
             if self.parent_step_id == self.step_id:
                 raise ValueError("parent_step_id must not equal step_id")
         if not isinstance(self.correlation_id, CorrelationId):

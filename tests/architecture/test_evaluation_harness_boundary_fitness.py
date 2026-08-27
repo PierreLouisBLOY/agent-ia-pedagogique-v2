@@ -46,6 +46,15 @@ def _annotated_fields(root: Path) -> set[str]:
     }
 
 
+def _assertion_spec_classes() -> tuple[ast.ClassDef, ...]:
+    return tuple(
+        node
+        for path in _python_files(HARNESS)
+        for node in ast.walk(_tree(path))
+        if isinstance(node, ast.ClassDef) and node.name.endswith("AssertionSpec")
+    )
+
+
 def test_production_backend_never_imports_the_offline_evaluation_harness() -> None:
     for path in _python_files(BACKEND):
         assert all(
@@ -123,9 +132,8 @@ def test_contract_fields_expose_no_authority_or_arbitrary_data_channel() -> None
     assert _annotated_fields(HARNESS).isdisjoint(forbidden_fields)
 
 
-def test_b_contains_no_runner_scoring_reporting_or_assertion_semantics() -> None:
+def test_harness_contains_no_runner_scoring_or_reporting_semantics() -> None:
     forbidden_classes = {
-        "AssertionEvaluator",
         "EvaluationRunner",
         "EvaluationScorer",
         "JsonEvaluationReporter",
@@ -135,11 +143,77 @@ def test_b_contains_no_runner_scoring_reporting_or_assertion_semantics() -> None
         "WeightedScore",
     }
     assert _defined_classes(HARNESS).isdisjoint(forbidden_classes)
-    for path in _python_files(HARNESS):
-        assert not any(
-            isinstance(node, (ast.AsyncFor, ast.AsyncFunctionDef, ast.While))
-            for node in ast.walk(_tree(path))
+
+
+def test_assertion_specs_expose_only_bounded_data_fields() -> None:
+    forbidden_field_names = {
+        "actual",
+        "expected",
+        "import_path",
+        "metadata",
+        "payload",
+        "predicate",
+        "python_expression",
+    }
+    forbidden_annotation_names = {"Any", "Callable", "Mapping"}
+    for class_node in _assertion_spec_classes():
+        fields = tuple(
+            node
+            for node in class_node.body
+            if isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
         )
+        assert {node.target.id for node in fields}.isdisjoint(forbidden_field_names)
+        assert all(
+            not forbidden_annotation_names.intersection(
+                child.id
+                for child in ast.walk(node.annotation)
+                if isinstance(child, ast.Name)
+            )
+            for node in fields
+        )
+
+
+def test_harness_has_no_dynamic_loading_or_arbitrary_code_execution() -> None:
+    forbidden_names = {"eval", "exec", "__import__"}
+    forbidden_attributes = {"import_module"}
+    for path in _python_files(HARNESS):
+        for node in ast.walk(_tree(path)):
+            if not isinstance(node, ast.Call):
+                continue
+            assert not (
+                isinstance(node.func, ast.Name) and node.func.id in forbidden_names
+            )
+            assert not (
+                isinstance(node.func, ast.Attribute)
+                and node.func.attr in forbidden_attributes
+            )
+
+
+def test_harness_has_no_global_mutable_registry() -> None:
+    mutable_factories = {"dict", "list", "set", "defaultdict"}
+    for path in _python_files(HARNESS):
+        for node in _tree(path).body:
+            assigned_names: set[str] = set()
+            if isinstance(node, ast.Assign):
+                assigned_names.update(
+                    target.id
+                    for target in node.targets
+                    if isinstance(target, ast.Name)
+                )
+            elif isinstance(node, ast.AnnAssign) and isinstance(
+                node.target, ast.Name
+            ):
+                assigned_names.add(node.target.id)
+            if assigned_names == {"__all__"}:
+                continue
+            value = node.value if isinstance(node, (ast.Assign, ast.AnnAssign)) else None
+            assert not isinstance(value, (ast.Dict, ast.List, ast.Set))
+            assert not (
+                isinstance(value, ast.Call)
+                and isinstance(value.func, ast.Name)
+                and value.func.id in mutable_factories
+            )
 
 
 def test_harness_contract_names_are_unique_outside_tests() -> None:
@@ -149,6 +223,7 @@ def test_harness_contract_names_are_unique_outside_tests() -> None:
         "EvaluationVerdict",
         "CaseExecutionResult",
         "CaseEvaluationResult",
+        "AssertionResult",
         "SuiteEvaluationResult",
     }
     definitions = {

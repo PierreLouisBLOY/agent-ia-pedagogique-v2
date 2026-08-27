@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from evaluation_harness.contracts.assertion import AssertionResult
 from evaluation_harness.contracts.identity import (
+    MAX_ASSERTION_REFS_PER_CASE,
     MAX_CASES_PER_SUITE,
     MAX_DURATION_MILLISECONDS,
     MAX_OBSERVATION_REFS_PER_EXECUTION,
@@ -93,6 +95,7 @@ class CaseEvaluationResult:
     verdict: EvaluationVerdict
     execution_results: tuple[CaseExecutionResult, ...]
     reason_codes: tuple[EvaluationReasonCode, ...] = ()
+    assertion_results: tuple[AssertionResult, ...] = ()
 
     def __post_init__(self) -> None:
         require_supported_schema_version(self.schema_version)
@@ -102,6 +105,7 @@ class CaseEvaluationResult:
             raise TypeError("verdict must be an EvaluationVerdict")
         self._validate_execution_results()
         _validate_reason_codes(self.reason_codes)
+        self._validate_assertion_results()
         if self.verdict is EvaluationVerdict.PASS and self.reason_codes:
             raise ValueError("a PASS verdict does not require reason codes")
         if self.verdict is not EvaluationVerdict.PASS and not self.reason_codes:
@@ -118,6 +122,13 @@ class CaseEvaluationResult:
             status is not CaseExecutionStatus.SKIPPED for status in statuses
         ):
             raise ValueError("a SKIPPED case verdict requires skipped executions")
+        if self.verdict is EvaluationVerdict.PASS and any(
+            result.verdict is not EvaluationVerdict.PASS
+            for result in self.assertion_results
+        ):
+            raise ValueError("a non-PASS assertion result cannot aggregate to PASS")
+        if self.verdict is EvaluationVerdict.SKIPPED and self.assertion_results:
+            raise ValueError("a SKIPPED case has no assertion results")
 
     def _validate_execution_results(self) -> None:
         if type(self.execution_results) is not tuple:
@@ -138,6 +149,19 @@ class CaseEvaluationResult:
         )
         if actual_indexes != expected_indexes:
             raise ValueError("execution results must use contiguous ordered repetitions")
+
+    def _validate_assertion_results(self) -> None:
+        if type(self.assertion_results) is not tuple:
+            raise TypeError("assertion_results must be a tuple")
+        if len(self.assertion_results) > MAX_ASSERTION_REFS_PER_CASE:
+            raise ValueError("too many assertion results for one case evaluation")
+        if any(type(result) is not AssertionResult for result in self.assertion_results):
+            raise TypeError("assertion_results must contain AssertionResult values")
+        assertion_refs = tuple(
+            result.assertion_ref for result in self.assertion_results
+        )
+        if len(assertion_refs) != len(set(assertion_refs)):
+            raise ValueError("assertion result refs must be unique")
 
 
 @dataclass(frozen=True, slots=True)

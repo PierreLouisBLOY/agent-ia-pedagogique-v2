@@ -135,6 +135,16 @@ class EvaluationObservationRef(_EvaluationIdentifier):
 
 
 @dataclass(frozen=True, slots=True)
+class EvaluationObservationFieldCode(_EvaluationIdentifier):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class EvaluationInvariantCode(_EvaluationIdentifier):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
 class EvaluationReasonCode:
     value: str
 

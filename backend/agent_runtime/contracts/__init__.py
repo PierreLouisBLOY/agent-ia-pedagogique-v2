@@ -72,6 +72,17 @@ from backend.agent_runtime.contracts.review import (
     ReviewResult,
     ReviewStatus,
 )
+from backend.agent_runtime.contracts.security import (
+    ContentOrigin,
+    ContentRole,
+    ContentTrustClass,
+    ContentTrustLabel,
+    SecurityBoundary,
+    SecurityEvent,
+    SecurityEventType,
+    SecurityReasonCode,
+    SecuritySeverity,
+)
 from backend.agent_runtime.contracts.tools import ToolCallRequest, ToolCallResult
 
 __all__ = [
@@ -87,6 +98,10 @@ __all__ = [
     "ContractMeta",
     "ContractRef",
     "ContractSchemaVersion",
+    "ContentOrigin",
+    "ContentRole",
+    "ContentTrustClass",
+    "ContentTrustLabel",
     "CorrectionRequest",
     "CorrectionResult",
     "DelegationEnvelope",
@@ -121,6 +136,11 @@ __all__ = [
     "ReviewResult",
     "ReviewStatus",
     "RuntimeMode",
+    "SecurityBoundary",
+    "SecurityEvent",
+    "SecurityEventType",
+    "SecurityReasonCode",
+    "SecuritySeverity",
     "StepKind",
     "StepSpec",
     "ToolCallRequest",

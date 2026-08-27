@@ -12,6 +12,13 @@ IDEMPOTENCY_BOUNDARY = (
     RECOVERY / "idempotency.py",
     RECOVERY / "ports.py",
 )
+RUNTIME_INTEGRATION_FILES = {
+    RECOVERY / "runtime_integration.py",
+    RECOVERY / "runtime_ports.py",
+    RECOVERY / "checkpoint.py",
+    RECOVERY / "coordinator.py",
+    RECOVERY / "controller.py",
+}
 
 
 def _python_files(root: Path) -> tuple[Path, ...]:
@@ -71,7 +78,7 @@ def test_recovery_has_no_provider_io_database_or_concurrency_dependency() -> Non
         assert _import_roots(path).isdisjoint(forbidden_roots)
 
 
-def test_recovery_does_not_depend_on_execution_authority_boundaries() -> None:
+def test_pure_recovery_policies_do_not_depend_on_execution_authority_boundaries() -> None:
     forbidden_fragments = {
         "agent_runtime.application_routing",
         "agent_runtime.gates",
@@ -81,6 +88,8 @@ def test_recovery_does_not_depend_on_execution_authority_boundaries() -> None:
     }
     imports: set[str] = set()
     for path in _python_files(RECOVERY):
+        if path in RUNTIME_INTEGRATION_FILES:
+            continue
         for node in ast.walk(_tree(path)):
             if isinstance(node, ast.ImportFrom) and node.module:
                 imports.add(node.module)

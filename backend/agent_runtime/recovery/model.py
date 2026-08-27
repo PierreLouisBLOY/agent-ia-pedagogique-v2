@@ -7,7 +7,16 @@ from hashlib import sha256
 from types import MappingProxyType
 from typing import Self
 
-from backend.agent_runtime.contracts import ActorRef, ContractRef, EffectState
+from backend.agent_runtime.contracts import (
+    ActorRef,
+    ContractRef,
+    EffectState,
+    ErrorCategory,
+    ErrorEnvelope,
+    ErrorSeverity,
+    ErrorSource,
+    RecommendedAction,
+)
 from backend.agent_runtime.contracts.common import require_contract_ref
 from backend.agent_runtime.registry import CapabilityExecutionRoute
 from backend.core_contracts.capability import CapabilityId
@@ -34,6 +43,68 @@ class ReconciliationStatus(StrEnum):
     PENDING = "PENDING"
     RESOLVED = "RESOLVED"
     MANUAL_REQUIRED = "MANUAL_REQUIRED"
+
+
+@dataclass(frozen=True, slots=True)
+class RetryFailureFacts:
+    """Crash-safe, closed projection of the latest retry-relevant failure."""
+
+    error_code: str
+    category: ErrorCategory
+    retryable: bool
+    recommended_action: RecommendedAction
+    source: ErrorSource
+
+    def __post_init__(self) -> None:
+        if type(self.error_code) is not str or not _SAFE_ERROR_CODE.fullmatch(
+            self.error_code
+        ):
+            raise ValueError("error_code must be a safe closed code")
+        if not isinstance(self.category, ErrorCategory):
+            raise TypeError("category must be an ErrorCategory")
+        if type(self.retryable) is not bool:
+            raise TypeError("retryable must be a bool")
+        if not isinstance(self.recommended_action, RecommendedAction):
+            raise TypeError("recommended_action must be a RecommendedAction")
+        if not isinstance(self.source, ErrorSource):
+            raise TypeError("source must be an ErrorSource")
+
+    @classmethod
+    def from_error(cls, error: ErrorEnvelope) -> Self:
+        if not isinstance(error, ErrorEnvelope):
+            raise TypeError("error must be an ErrorEnvelope")
+        return cls(
+            error_code=error.error_code,
+            category=error.category,
+            retryable=error.retryable,
+            recommended_action=error.recommended_action,
+            source=error.source,
+        )
+
+    def to_error(
+        self,
+        *,
+        step_id: str,
+        attempt: int,
+        effect_state: EffectState,
+    ) -> ErrorEnvelope:
+        _require_safe_identifier(step_id, "step_id")
+        if type(attempt) is not int or attempt < 1:
+            raise ValueError("attempt must be >= 1")
+        if not isinstance(effect_state, EffectState):
+            raise TypeError("effect_state must be an EffectState")
+        return ErrorEnvelope(
+            error_code=self.error_code,
+            category=self.category,
+            source=self.source,
+            retryable=self.retryable,
+            severity=ErrorSeverity.ERROR,
+            message="persisted recovery failure",
+            step_id=step_id,
+            attempt=attempt,
+            effect_state=effect_state,
+            recommended_action=self.recommended_action,
+        )
 
 
 class EffectReservationDisposition(StrEnum):
@@ -176,6 +247,7 @@ class EffectAttemptRecord:
     ended_at: Instant | None = None
     result_refs: tuple[ContractRef, ...] = ()
     error_code: str | None = None
+    retry_failure_facts: RetryFailureFacts | None = None
 
     def __post_init__(self) -> None:
         if type(self.attempt) is not int:
@@ -197,10 +269,21 @@ class EffectAttemptRecord:
             self.error_code
         ):
             raise ValueError("error_code must be a safe closed code")
+        if self.retry_failure_facts is not None:
+            if not isinstance(self.retry_failure_facts, RetryFailureFacts):
+                raise TypeError(
+                    "retry_failure_facts must be RetryFailureFacts or None"
+                )
+            if self.error_code != self.retry_failure_facts.error_code:
+                raise ValueError("retry failure facts must match error_code")
         if self.ended_at is None:
             if self.effect_state is not EffectState.UNKNOWN:
                 raise ValueError("an active attempt must have UNKNOWN effect state")
-            if self.result_refs or self.error_code is not None:
+            if (
+                self.result_refs
+                or self.error_code is not None
+                or self.retry_failure_facts is not None
+            ):
                 raise ValueError("an active attempt cannot contain final outcome data")
 
 
@@ -265,13 +348,18 @@ class EffectLedgerRecord:
     def error_code(self) -> str | None:
         return self.attempts[-1].error_code if self.attempts else None
 
+    @property
+    def retry_failure_facts(self) -> RetryFailureFacts | None:
+        return self.attempts[-1].retry_failure_facts if self.attempts else None
+
     def _validate_lifecycle_coherence(self) -> None:
-        if self.lifecycle in {
-            EffectLedgerLifecycle.RESERVED,
-            EffectLedgerLifecycle.ABANDONED,
-        }:
-            if self.attempts:
-                raise ValueError("reserved and abandoned records cannot have attempts")
+        if self.lifecycle in {EffectLedgerLifecycle.RESERVED, EffectLedgerLifecycle.ABANDONED}:
+            if self.lifecycle is EffectLedgerLifecycle.ABANDONED and self.attempts:
+                raise ValueError("abandoned records cannot have attempts")
+            if self.attempts and any(item.ended_at is None for item in self.attempts):
+                raise ValueError(
+                    "reserved records cannot have attempts unless all are finalized"
+                )
             if self.effect_state is not EffectState.NONE:
                 raise ValueError("reserved and abandoned records require NONE effect")
             if self.reconciliation_status is not ReconciliationStatus.NOT_REQUIRED:

@@ -451,6 +451,7 @@ def _validate_attempt_progression(
         replacement.attempt != current.attempt
         or replacement.started_at != current.started_at
         or replacement.error_code != current.error_code
+        or replacement.retry_failure_facts != current.retry_failure_facts
     ):
         raise EffectReconciliationError(
             EffectReconciliationErrorCode.INVALID_RECONCILIATION_TRANSITION

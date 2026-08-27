@@ -30,6 +30,13 @@ class CircuitCheckDisposition(StrEnum):
     HALF_OPEN_BUSY = "HALF_OPEN_BUSY"
 
 
+class CircuitPreflightDisposition(StrEnum):
+    CLOSED = "CLOSED"
+    OPEN_BLOCKED = "OPEN_BLOCKED"
+    HALF_OPEN_READY = "HALF_OPEN_READY"
+    HALF_OPEN_BUSY = "HALF_OPEN_BUSY"
+
+
 class CircuitCheckReasonCode(StrEnum):
     CIRCUIT_STATE_ABSENT = "CIRCUIT_STATE_ABSENT"
     CIRCUIT_CLOSED = "CIRCUIT_CLOSED"
@@ -349,6 +356,21 @@ class CircuitCheckDecision:
                 raise ValueError("decision lease must match state version")
         elif self.lease is not None:
             raise ValueError("only a granted half-open probe can contain a lease")
+
+
+@dataclass(frozen=True, slots=True)
+class CircuitPreflightDecision:
+    """Read-only circuit observation; HALF_OPEN_READY grants no probe lease."""
+
+    disposition: CircuitPreflightDisposition
+    circuit_id: str
+    state_version: int
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.disposition, CircuitPreflightDisposition):
+            raise TypeError("disposition must be a CircuitPreflightDisposition")
+        _require_circuit_id(self.circuit_id)
+        _require_non_negative_int(self.state_version, "state_version")
 
 
 @dataclass(frozen=True, slots=True)

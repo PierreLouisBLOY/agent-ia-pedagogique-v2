@@ -19,6 +19,10 @@ from backend.agent_runtime.recovery.budget import (
     retry_count_from_attempt_count,
 )
 from backend.agent_runtime.recovery.budget_ports import BudgetStatePort
+from backend.agent_runtime.recovery.checkpoint import (
+    RecoveryCheckpoint,
+    RecoveryCheckpointAction,
+)
 from backend.agent_runtime.recovery.circuit_breaker import (
     CircuitBreakerError,
     CircuitBreakerErrorCode,
@@ -32,6 +36,8 @@ from backend.agent_runtime.recovery.circuit_breaker import (
     CircuitCheckReasonCode,
     CircuitCheckRequest,
     CircuitOutcomeRecord,
+    CircuitPreflightDecision,
+    CircuitPreflightDisposition,
     CircuitProbeLease,
     circuit_id_for,
 )
@@ -40,6 +46,15 @@ from backend.agent_runtime.recovery.circuit_breaker_engine import (
 )
 from backend.agent_runtime.recovery.circuit_breaker_ports import (
     CircuitBreakerStorePort,
+)
+from backend.agent_runtime.recovery.controller import (
+    RecoveryCycleResult,
+    RecoveryRuntimeController,
+)
+from backend.agent_runtime.recovery.coordinator import (
+    RecoveryAction,
+    RecoveryCoordinator,
+    RecoveryDecisionResult,
 )
 from backend.agent_runtime.recovery.idempotency import IdempotencyPolicy
 from backend.agent_runtime.recovery.model import (
@@ -54,6 +69,7 @@ from backend.agent_runtime.recovery.model import (
     IdempotencyKeyFingerprint,
     IntentFingerprint,
     ReconciliationStatus,
+    RetryFailureFacts,
 )
 from backend.agent_runtime.recovery.ports import EffectLedgerPort
 from backend.agent_runtime.recovery.reconciliation import (
@@ -94,6 +110,21 @@ from backend.agent_runtime.recovery.retry import (
     RetryPolicy,
     RetryPolicyRequest,
     RetryReasonCode,
+)
+from backend.agent_runtime.recovery.runtime_integration import (
+    RecoveryAwareStepRunner,
+    RecoveryExecutionContext,
+    RecoveryPreLaunchGuard,
+    RecoveryRuntimeError,
+    RecoveryRuntimeErrorCode,
+    plan_fingerprint,
+    resolve_recovery_execution_context,
+)
+from backend.agent_runtime.recovery.runtime_ports import (
+    RecoveryReferenceResolverPort,
+    RecoveryReferences,
+    RecoveryRuntimeResolverPort,
+    RecoveryTechnicalBinding,
 )
 from backend.agent_runtime.recovery.snapshot import (
     CircuitBreakerSnapshotRef,
@@ -140,6 +171,24 @@ __all__ = [
     "CircuitCheckRequest",
     "CircuitOutcomeRecord",
     "CircuitProbeLease",
+    "CircuitPreflightDecision",
+    "CircuitPreflightDisposition",
+    "RecoveryCheckpoint",
+    "RecoveryCheckpointAction",
+    "RecoveryAction",
+    "RecoveryAwareStepRunner",
+    "RecoveryCoordinator",
+    "RecoveryCycleResult",
+    "RecoveryDecisionResult",
+    "RecoveryExecutionContext",
+    "RecoveryPreLaunchGuard",
+    "RecoveryReferenceResolverPort",
+    "RecoveryReferences",
+    "RecoveryRuntimeController",
+    "RecoveryRuntimeError",
+    "RecoveryRuntimeErrorCode",
+    "RecoveryRuntimeResolverPort",
+    "RecoveryTechnicalBinding",
     "DeadlineRevalidationStatus",
     "DeterministicBackoffPolicy",
     "EffectAttemptRecord",
@@ -173,6 +222,7 @@ __all__ = [
     "ReplayGuardReasonCode",
     "ReplayPreconditions",
     "RetryDecision",
+    "RetryFailureFacts",
     "RetryDisposition",
     "RetryPolicy",
     "RetryPolicyRequest",
@@ -196,4 +246,6 @@ __all__ = [
     "retry_count_from_attempt_count",
     "snapshot_id_for",
     "tool_probe_request_for",
+    "plan_fingerprint",
+    "resolve_recovery_execution_context",
 ]

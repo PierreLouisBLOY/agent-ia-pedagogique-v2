@@ -10,6 +10,7 @@ from typing import Self
 
 from backend.agent_runtime.contracts import ContractSchemaVersion
 from backend.agent_runtime.recovery.budget import BudgetState
+from backend.agent_runtime.recovery.checkpoint import RecoveryCheckpoint
 from backend.agent_runtime.recovery.circuit_breaker import CircuitBreakerState
 from backend.agent_runtime.recovery.model import EffectLedgerRecord
 from backend.agent_runtime.runtime.state import RunState
@@ -152,6 +153,7 @@ class StateSnapshot:
     effect_ledger_refs: tuple[EffectLedgerSnapshotRef, ...]
     captured_at: Instant
     circuit_breaker_refs: tuple[CircuitBreakerSnapshotRef, ...] = ()
+    recovery_checkpoint: RecoveryCheckpoint | None = None
 
     def __post_init__(self) -> None:
         if type(self.snapshot_id) is not str:
@@ -202,6 +204,13 @@ class StateSnapshot:
             self.circuit_breaker_refs
         ):
             raise ValueError("circuit_breaker_refs must not contain duplicates")
+        if self.recovery_checkpoint is not None:
+            if not isinstance(self.recovery_checkpoint, RecoveryCheckpoint):
+                raise TypeError(
+                    "recovery_checkpoint must be a RecoveryCheckpoint or None"
+                )
+            if self.recovery_checkpoint.step_id not in self.run_state.step_states:
+                raise ValueError("recovery checkpoint step must belong to run_state")
         self._validate_cross_checks()
         expected_id = snapshot_id_for(
             run_id=self.run_id,
@@ -228,6 +237,7 @@ class StateSnapshot:
         effect_ledger_refs: tuple[EffectLedgerSnapshotRef, ...],
         captured_at: Instant,
         circuit_breaker_refs: tuple[CircuitBreakerSnapshotRef, ...] = (),
+        recovery_checkpoint: RecoveryCheckpoint | None = None,
     ) -> Self:
         return cls(
             snapshot_id=snapshot_id_for(
@@ -248,6 +258,7 @@ class StateSnapshot:
             effect_ledger_refs=effect_ledger_refs,
             captured_at=captured_at,
             circuit_breaker_refs=circuit_breaker_refs,
+            recovery_checkpoint=recovery_checkpoint,
         )
 
     def _validate_cross_checks(self) -> None:
@@ -393,10 +404,7 @@ class SnapshotSequencePolicy:
         }
         for circuit_ref in previous.circuit_breaker_refs:
             current_version = current_circuit_refs.get(circuit_ref.circuit_id)
-            if (
-                current_version is not None
-                and current_version < circuit_ref.version
-            ):
+            if current_version is None or current_version < circuit_ref.version:
                 raise SnapshotStoreError(
                     SnapshotStoreErrorCode.SNAPSHOT_VERSION_CONFLICT
                 )
@@ -436,8 +444,8 @@ def assess_snapshot_freshness(
         item.record_id: item.version for item in snapshot.effect_ledger_refs
     }
     if any(
-        record_id in snapshot_versions
-        and snapshot_versions[record_id] < record.version
+        record_id not in snapshot_versions
+        or snapshot_versions[record_id] < record.version
         for record_id, record in current_ledger_records.items()
     ):
         issues.append(SnapshotFreshnessIssue.STALE_LEDGER)
@@ -456,8 +464,8 @@ def assess_snapshot_freshness(
             item.circuit_id: item.version for item in snapshot.circuit_breaker_refs
         }
         if any(
-            circuit_id in snapshot_circuit_versions
-            and snapshot_circuit_versions[circuit_id] < state.version
+            circuit_id not in snapshot_circuit_versions
+            or snapshot_circuit_versions[circuit_id] < state.version
             for circuit_id, state in current_circuit_states.items()
         ):
             issues.append(SnapshotFreshnessIssue.STALE_CIRCUIT)

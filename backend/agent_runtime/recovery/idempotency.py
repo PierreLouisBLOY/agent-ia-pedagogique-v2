@@ -13,6 +13,7 @@ from backend.agent_runtime.recovery.model import (
     EffectReservationResult,
     IdempotencyIdentity,
     ReconciliationStatus,
+    RetryFailureFacts,
 )
 from backend.shared_kernel.time import Instant
 
@@ -20,7 +21,9 @@ _ALLOWED_TRANSITIONS = frozenset(
     {
         (EffectLedgerLifecycle.RESERVED, EffectLedgerLifecycle.IN_PROGRESS),
         (EffectLedgerLifecycle.RESERVED, EffectLedgerLifecycle.ABANDONED),
+        (EffectLedgerLifecycle.ABANDONED, EffectLedgerLifecycle.RESERVED),
         (EffectLedgerLifecycle.IN_PROGRESS, EffectLedgerLifecycle.FINALIZED),
+        (EffectLedgerLifecycle.FINALIZED, EffectLedgerLifecycle.RESERVED),
     }
 )
 
@@ -141,6 +144,7 @@ class IdempotencyPolicy:
         now: Instant,
         result_refs: tuple[ContractRef, ...] = (),
         error_code: str | None = None,
+        retry_failure_facts: RetryFailureFacts | None = None,
     ) -> EffectLedgerRecord:
         _require_record(record)
         _require_instant(now, "now")
@@ -148,6 +152,12 @@ class IdempotencyPolicy:
             raise TypeError("effect_state must be an EffectState")
         if record.lifecycle is not EffectLedgerLifecycle.IN_PROGRESS:
             raise EffectLedgerError(EffectLedgerErrorCode.RESERVATION_NOT_ACTIVE)
+        if retry_failure_facts is not None and not isinstance(
+            retry_failure_facts, RetryFailureFacts
+        ):
+            raise TypeError("retry_failure_facts must be RetryFailureFacts or None")
+        if retry_failure_facts is not None and error_code is None:
+            error_code = retry_failure_facts.error_code
         latest = record.attempts[-1]
         finalized_attempt = replace(
             latest,
@@ -155,6 +165,7 @@ class IdempotencyPolicy:
             effect_state=effect_state,
             result_refs=tuple(result_refs),
             error_code=error_code,
+            retry_failure_facts=retry_failure_facts,
         )
         reconciliation_status = (
             ReconciliationStatus.PENDING
@@ -169,6 +180,70 @@ class IdempotencyPolicy:
             reconciliation_status=reconciliation_status,
             updated_at=now,
             attempts=(*record.attempts[:-1], finalized_attempt),
+        )
+        self.validate_compare_and_set(
+            current=record,
+            expected_version=record.version,
+            replacement=replacement,
+        )
+        return replacement
+
+    def prepare_retry_reservation(
+        self,
+        *,
+        record: EffectLedgerRecord,
+        now: Instant,
+        reservation_expires_at: Instant | None = None,
+    ) -> EffectLedgerRecord:
+        """Reserve the same finalized NONE identity for its next explicit attempt."""
+        _require_record(record)
+        _require_instant(now, "now")
+        if (
+            record.lifecycle is not EffectLedgerLifecycle.FINALIZED
+            or record.effect_state is not EffectState.NONE
+            or record.reconciliation_status
+            not in {ReconciliationStatus.NOT_REQUIRED, ReconciliationStatus.RESOLVED}
+        ):
+            raise EffectLedgerError(EffectLedgerErrorCode.INVALID_TRANSITION)
+        _require_future_expiry(reservation_expires_at, now)
+        replacement = replace(
+            record,
+            version=record.version + 1,
+            lifecycle=EffectLedgerLifecycle.RESERVED,
+            reconciliation_status=ReconciliationStatus.NOT_REQUIRED,
+            updated_at=now,
+            reservation_expires_at=reservation_expires_at,
+        )
+        self.validate_compare_and_set(
+            current=record,
+            expected_version=record.version,
+            replacement=replacement,
+        )
+        return replacement
+
+    def reactivate_abandoned_reservation(
+        self,
+        *,
+        record: EffectLedgerRecord,
+        now: Instant,
+        reservation_expires_at: Instant | None = None,
+    ) -> EffectLedgerRecord:
+        """Reactivate a crash-abandoned reservation without creating an attempt."""
+        _require_record(record)
+        _require_instant(now, "now")
+        if (
+            record.lifecycle is not EffectLedgerLifecycle.ABANDONED
+            or record.effect_state is not EffectState.NONE
+            or record.attempt != 0
+        ):
+            raise EffectLedgerError(EffectLedgerErrorCode.INVALID_TRANSITION)
+        _require_future_expiry(reservation_expires_at, now)
+        replacement = replace(
+            record,
+            version=record.version + 1,
+            lifecycle=EffectLedgerLifecycle.RESERVED,
+            updated_at=now,
+            reservation_expires_at=reservation_expires_at,
         )
         self.validate_compare_and_set(
             current=record,
@@ -221,7 +296,18 @@ class IdempotencyPolicy:
             replacement.record_id != current.record_id
             or replacement.identity != current.identity
             or replacement.created_at != current.created_at
-            or replacement.reservation_expires_at != current.reservation_expires_at
+        ):
+            raise EffectLedgerError(EffectLedgerErrorCode.INVALID_RECORD)
+        expiry_change_allowed = (
+            (current.lifecycle, replacement.lifecycle)
+            in {
+                (EffectLedgerLifecycle.ABANDONED, EffectLedgerLifecycle.RESERVED),
+                (EffectLedgerLifecycle.FINALIZED, EffectLedgerLifecycle.RESERVED),
+            }
+        )
+        if (
+            replacement.reservation_expires_at != current.reservation_expires_at
+            and not expiry_change_allowed
         ):
             raise EffectLedgerError(EffectLedgerErrorCode.INVALID_RECORD)
         if (current.lifecycle, replacement.lifecycle) not in _ALLOWED_TRANSITIONS:
@@ -251,3 +337,10 @@ def _require_record(value: EffectLedgerRecord) -> None:
 def _require_instant(value: Instant, field_name: str) -> None:
     if not isinstance(value, Instant):
         raise TypeError(f"{field_name} must be an Instant")
+
+
+def _require_future_expiry(value: Instant | None, now: Instant) -> None:
+    if value is not None:
+        _require_instant(value, "reservation_expires_at")
+        if value.value <= now.value:
+            raise EffectLedgerError(EffectLedgerErrorCode.RESERVATION_EXPIRED)

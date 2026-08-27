@@ -156,6 +156,7 @@ def test_snapshot_contains_only_typed_technical_state() -> None:
         "effect_ledger_refs",
         "captured_at",
         "circuit_breaker_refs",
+        "recovery_checkpoint",
     }
     assert "payload" not in repr(_snapshot()).lower()
 
@@ -401,18 +402,20 @@ def test_sequence_policy_rejects_present_circuit_version_regression() -> None:
     assert raised.value.code is SnapshotStoreErrorCode.SNAPSHOT_VERSION_CONFLICT
 
 
-def test_sequence_policy_does_not_invent_complete_circuit_membership() -> None:
+def test_sequence_policy_preserves_known_circuit_membership() -> None:
     state = make_open_state()
     first = _snapshot(
         circuit_breaker_refs=(CircuitBreakerSnapshotRef(state.circuit_id, 1),)
     )
     successor = _snapshot(sequence=2, captured_at=LATEST)
 
-    SnapshotSequencePolicy().validate_save(
-        previous=first,
-        snapshot=successor,
-        expected_previous_sequence=1,
-    )
+    with pytest.raises(SnapshotStoreError) as raised:
+        SnapshotSequencePolicy().validate_save(
+            previous=first,
+            snapshot=successor,
+            expected_previous_sequence=1,
+        )
+    assert raised.value.code is SnapshotStoreErrorCode.SNAPSHOT_VERSION_CONFLICT
 
 
 def test_stale_circuit_is_reported_without_resetting_current_open_state() -> None:

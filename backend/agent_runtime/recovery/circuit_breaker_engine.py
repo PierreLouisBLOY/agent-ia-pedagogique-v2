@@ -13,6 +13,8 @@ from backend.agent_runtime.recovery.circuit_breaker import (
     CircuitCheckReasonCode,
     CircuitCheckRequest,
     CircuitOutcomeRecord,
+    CircuitPreflightDecision,
+    CircuitPreflightDisposition,
 )
 from backend.agent_runtime.recovery.circuit_breaker_ports import (
     CircuitBreakerStorePort,
@@ -98,6 +100,41 @@ class CircuitBreakerEngine:
             reason_codes=(CircuitCheckReasonCode.HALF_OPEN_LEASE_GRANTED,),
             lease=stored.half_open_lease,
         )
+
+    def inspect(
+        self,
+        *,
+        request: CircuitCheckRequest,
+        now: Instant,
+    ) -> CircuitPreflightDecision:
+        """Observe launchability without acquiring a half-open lease."""
+        if not isinstance(request, CircuitCheckRequest):
+            raise TypeError("request must be a CircuitCheckRequest")
+        if not isinstance(now, Instant):
+            raise TypeError("now must be an Instant")
+        circuit_id = request.key.circuit_id
+        state = self.store.get(circuit_id=circuit_id)
+        if state is None:
+            return CircuitPreflightDecision(
+                CircuitPreflightDisposition.CLOSED,
+                circuit_id,
+                0,
+            )
+        self._validate_loaded_state(state=state, request=request)
+        disposition = self.policy.classify_check(state=state, now=now)
+        mapped = {
+            CircuitCheckDisposition.CLOSED: CircuitPreflightDisposition.CLOSED,
+            CircuitCheckDisposition.OPEN_BLOCKED: (
+                CircuitPreflightDisposition.OPEN_BLOCKED
+            ),
+            CircuitCheckDisposition.HALF_OPEN_PROBE_GRANTED: (
+                CircuitPreflightDisposition.HALF_OPEN_READY
+            ),
+            CircuitCheckDisposition.HALF_OPEN_BUSY: (
+                CircuitPreflightDisposition.HALF_OPEN_BUSY
+            ),
+        }[disposition]
+        return CircuitPreflightDecision(mapped, circuit_id, state.version)
 
     def record_outcome(
         self,

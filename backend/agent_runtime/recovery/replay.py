@@ -36,6 +36,12 @@ class DeadlineRevalidationStatus(StrEnum):
     NOT_REQUIRED = "NOT_REQUIRED"
 
 
+class SecurityRevalidationStatus(StrEnum):
+    VALID = "VALID"
+    INVALID = "INVALID"
+    NOT_REQUIRED = "NOT_REQUIRED"
+
+
 class ReplayGuardDisposition(StrEnum):
     ELIGIBLE = "ELIGIBLE"
     RECONCILE_FIRST = "RECONCILE_FIRST"
@@ -61,6 +67,7 @@ class ReplayGuardReasonCode(StrEnum):
     DEADLINE_EXPIRED = "DEADLINE_EXPIRED"
     SNAPSHOT_STALE = "SNAPSHOT_STALE"
     PLAN_MISMATCH = "PLAN_MISMATCH"
+    SECURITY_INVALID = "SECURITY_INVALID"
 
 
 @dataclass(frozen=True, slots=True)
@@ -73,6 +80,9 @@ class ReplayPreconditions:
     budget_check: BudgetCheckResult
     deadline_status: DeadlineRevalidationStatus
     snapshot_status: SnapshotRevalidationStatus
+    security_status: SecurityRevalidationStatus = (
+        SecurityRevalidationStatus.NOT_REQUIRED
+    )
 
     def __post_init__(self) -> None:
         if not isinstance(self.requested_identity, IdempotencyIdentity):
@@ -92,6 +102,10 @@ class ReplayPreconditions:
         if not isinstance(self.snapshot_status, SnapshotRevalidationStatus):
             raise TypeError(
                 "snapshot_status must be a SnapshotRevalidationStatus"
+            )
+        if not isinstance(self.security_status, SecurityRevalidationStatus):
+            raise TypeError(
+                "security_status must be a SecurityRevalidationStatus"
             )
 
 
@@ -182,6 +196,8 @@ class ReplayGuard:
             reasons.append(ReplayGuardReasonCode.PERMISSION_INVALID)
         if preconditions.gate_status is AuthorityRevalidationStatus.INVALID:
             reasons.append(ReplayGuardReasonCode.GATE_INVALID)
+        if preconditions.security_status is SecurityRevalidationStatus.INVALID:
+            reasons.append(ReplayGuardReasonCode.SECURITY_INVALID)
         if (
             preconditions.budget_check.disposition
             is BudgetCheckDisposition.LIMIT_EXCEEDED

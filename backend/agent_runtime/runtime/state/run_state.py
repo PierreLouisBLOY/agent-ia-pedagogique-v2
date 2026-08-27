@@ -5,7 +5,11 @@ from dataclasses import dataclass
 from types import MappingProxyType
 
 from backend.agent_runtime.contracts import ContractRef, WorkflowStatus
-from backend.agent_runtime.contracts.common import require_contract_ref
+from backend.agent_runtime.contracts.common import (
+    require_agent_safe_ref,
+    require_agent_safe_text,
+    require_contract_ref,
+)
 from backend.agent_runtime.runtime.planning.plan import Plan
 from backend.agent_runtime.runtime.planning.validation import PlanValidator
 from backend.agent_runtime.runtime.state._workflow_statuses import (
@@ -40,10 +44,15 @@ class RunState:
 
     def __post_init__(self) -> None:
         require_non_empty(self.run_id, "run_id")
+        require_agent_safe_text(self.run_id, field_name="run_id", max_length=128)
         if not isinstance(self.correlation_id, CorrelationId):
             raise TypeError("correlation_id must be a CorrelationId")
         require_non_empty(self.workflow_kind, "workflow_kind")
+        require_agent_safe_text(
+            self.workflow_kind, field_name="workflow_kind", max_length=128
+        )
         require_non_empty(self.plan_id, "plan_id")
+        require_agent_safe_text(self.plan_id, field_name="plan_id", max_length=128)
         if type(self.plan_version) is not int:
             raise TypeError("plan_version must be an integer")
         if self.plan_version < 1:
@@ -64,12 +73,19 @@ class RunState:
             raise TypeError("artifact_refs must be a tuple")
         if not isinstance(self.error_refs, tuple):
             raise TypeError("error_refs must be a tuple")
+        if len(self.artifact_refs) > 512 or len(self.error_refs) > 512:
+            raise ValueError("run reference collections must contain at most 512 items")
         for artifact_ref in self.artifact_refs:
             require_contract_ref(artifact_ref, "artifact_ref")
+            require_agent_safe_ref(artifact_ref, field_name="artifact_ref")
         for error_ref in self.error_refs:
             require_contract_ref(error_ref, "error_ref")
+            require_agent_safe_ref(error_ref, field_name="error_ref")
         if self.context_snapshot_ref is not None:
             require_contract_ref(self.context_snapshot_ref, "context_snapshot_ref")
+            require_agent_safe_ref(
+                self.context_snapshot_ref, field_name="context_snapshot_ref"
+            )
         if self.started_at is not None and not isinstance(self.started_at, Instant):
             raise TypeError("started_at must be an Instant or None")
         if self.ended_at is not None and not isinstance(self.ended_at, Instant):
@@ -82,6 +98,9 @@ class RunState:
             raise ValueError("ended_at must be >= started_at")
         if self.stop_reason is not None:
             require_non_empty(self.stop_reason, "stop_reason")
+            require_agent_safe_text(
+                self.stop_reason, field_name="stop_reason", max_length=1_024
+            )
 
         if self.status is WorkflowStatus.PLANNED and self.started_at is not None:
             raise ValueError("planned runs must not have started_at")

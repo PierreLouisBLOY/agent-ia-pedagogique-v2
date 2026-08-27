@@ -11,6 +11,7 @@ from backend.agent_runtime.contracts.common import (
 )
 from backend.agent_runtime.contracts.delegation import DelegationResult
 from backend.agent_runtime.contracts.invocation import AgentInvocation
+from backend.agent_runtime.contracts.planning import DelegationEnvelope
 from backend.agent_runtime.contracts.policy import PermissionScope
 from backend.agent_runtime.contracts.security import (
     ContentOrigin,
@@ -19,6 +20,7 @@ from backend.agent_runtime.contracts.security import (
     ContentThreatSignalCode,
     ContentTrustClass,
     ContentTrustLabel,
+    LabeledContent,
     SecurityBoundary,
     SecurityEvent,
     SecurityEventType,
@@ -119,21 +121,19 @@ class AgentHandoffSecurityPolicy:
         evaluated_at: Instant,
         parent_revoked: bool = False,
     ) -> ValidatedAgentHandoff[TPayload]:
-        if delegator is not AgentId.AG_01:
-            _refuse(AgentHandoffSecurityErrorCode.DELEGATOR_NOT_AG01)
-        if type(parent_scope) is not PermissionScope:
-            raise TypeError("parent_scope must be a PermissionScope")
-        if type(invocation) is not AgentInvocation:
-            raise TypeError("invocation must be an AgentInvocation")
         if not isinstance(result, DelegationResult):
             raise TypeError("result must be a DelegationResult")
-        if type(evaluated_at) is not Instant:
-            raise TypeError("evaluated_at must be an Instant")
-        if type(parent_revoked) is not bool:
-            raise TypeError("parent_revoked must be a bool")
+        context_assessment = self.secure_invocation(
+            delegator=delegator,
+            parent_scope=parent_scope,
+            invocation=invocation,
+            evaluated_at=evaluated_at,
+            parent_revoked=parent_revoked,
+        )
         delegation = invocation.delegation
         if delegation is None:
             _refuse(AgentHandoffSecurityErrorCode.DELEGATION_REQUIRED)
+        context_content, _ = _handoff_context_content(delegation)
         if result.delegation is None:
             _refuse(AgentHandoffSecurityErrorCode.RESULT_DELEGATION_REQUIRED)
         if result.delegation != delegation or result.delegation_id != delegation.delegation_id:
@@ -150,35 +150,11 @@ class AgentHandoffSecurityPolicy:
         capability_id = delegation.source_step.capability_id
         if capability_id is None:
             _refuse(AgentHandoffSecurityErrorCode.DELEGATION_MISMATCH)
-        authorization = self.authorization_policy.evaluate_delegation(
-            parent_scope=parent_scope,
-            child_scope=delegation.permission_scope,
-            capability_id=capability_id,
-            target_agent=delegation.target_agent,
-            evaluated_at=evaluated_at,
-            parent_revoked=parent_revoked,
-        )
-        if authorization.code is not DelegationAuthorizationCode.ALLOW:
-            _refuse(AgentHandoffSecurityErrorCode.SCOPE_DENIED)
         if result.source_agent in {AgentId.AG_03, AgentId.AG_04} and not set(
             result.agent_result.evidence_refs
         ).issubset(delegation.evidence_refs):
             _refuse(AgentHandoffSecurityErrorCode.EVIDENCE_OUT_OF_SCOPE)
 
-        context_label = ContentTrustLabel(
-            ContentOrigin.AGENT_OUTPUT,
-            ContentRole.RESULT,
-            ContentTrustClass.STRUCTURALLY_VALIDATED,
-            f"delegation:{delegation.delegation_id}",
-        )
-        context_content, context_assessment = assess_structured_boundary_content(
-            delegation.context_slice,
-            content_ref=f"delegation-context:{delegation.delegation_id}",
-            label=context_label,
-            boundary=SecurityBoundary.AGENT,
-            forbidden_keys=_HANDOFF_AUTHORITY_KEYS,
-            root_location="delegation.context_slice",
-        )
         output_label = ContentTrustLabel(
             _output_origin(result.source_agent, capability_id.value),
             ContentRole.RESULT,
@@ -204,6 +180,68 @@ class AgentHandoffSecurityPolicy:
             context_assessment=context_assessment,
             output_assessment=output_assessment,
         )
+
+    def secure_invocation(
+        self,
+        *,
+        delegator: AgentId,
+        parent_scope: PermissionScope,
+        invocation: AgentInvocation,
+        evaluated_at: Instant,
+        parent_revoked: bool = False,
+    ) -> StructuredContentSecurityAssessment:
+        """Revalidate current lineage, child scope and context before invocation."""
+
+        if delegator is not AgentId.AG_01:
+            _refuse(AgentHandoffSecurityErrorCode.DELEGATOR_NOT_AG01)
+        if type(parent_scope) is not PermissionScope:
+            raise TypeError("parent_scope must be a PermissionScope")
+        if type(invocation) is not AgentInvocation:
+            raise TypeError("invocation must be an AgentInvocation")
+        if type(evaluated_at) is not Instant:
+            raise TypeError("evaluated_at must be an Instant")
+        if type(parent_revoked) is not bool:
+            raise TypeError("parent_revoked must be a bool")
+        delegation = invocation.delegation
+        if delegation is None:
+            _refuse(AgentHandoffSecurityErrorCode.DELEGATION_REQUIRED)
+        capability_id = delegation.source_step.capability_id
+        if capability_id is None:
+            _refuse(AgentHandoffSecurityErrorCode.DELEGATION_MISMATCH)
+        authorization = self.authorization_policy.evaluate_delegation(
+            parent_scope=parent_scope,
+            child_scope=delegation.permission_scope,
+            capability_id=capability_id,
+            target_agent=delegation.target_agent,
+            evaluated_at=evaluated_at,
+            parent_revoked=parent_revoked,
+        )
+        if authorization.code is not DelegationAuthorizationCode.ALLOW:
+            _refuse(AgentHandoffSecurityErrorCode.SCOPE_DENIED)
+        content, assessment = _handoff_context_content(delegation)
+        del content
+        if assessment.structural_locations:
+            _refuse(AgentHandoffSecurityErrorCode.AUTHORITY_METADATA_FORBIDDEN)
+        return assessment
+
+
+def _handoff_context_content(
+    delegation: DelegationEnvelope,
+) -> tuple[tuple[LabeledContent, ...], StructuredContentSecurityAssessment]:
+    context_label = ContentTrustLabel(
+        ContentOrigin.AGENT_OUTPUT,
+        ContentRole.RESULT,
+        ContentTrustClass.STRUCTURALLY_VALIDATED,
+        f"delegation:{delegation.delegation_id}",
+    )
+    return assess_structured_boundary_content(
+        delegation.context_slice,
+        content_ref=f"delegation-context:{delegation.delegation_id}",
+        label=context_label,
+        boundary=SecurityBoundary.AGENT,
+        forbidden_keys=_HANDOFF_AUTHORITY_KEYS,
+        root_location="delegation.context_slice",
+    )
 
 
 def security_event_from_agent_handoff_error(

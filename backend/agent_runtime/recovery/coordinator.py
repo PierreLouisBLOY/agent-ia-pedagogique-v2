@@ -47,6 +47,7 @@ from backend.agent_runtime.recovery.replay import (
     DeadlineRevalidationStatus,
     ReplayGuard,
     ReplayPreconditions,
+    SecurityRevalidationStatus,
     SnapshotRevalidationStatus,
 )
 from backend.agent_runtime.recovery.retry import (
@@ -418,10 +419,25 @@ class RecoveryCoordinator:
             run_state=run_state,
             now=now,
         )
+        security_assessment = canonical_authority.security_assessment
+        security_invalid = (
+            security_assessment is not None
+            and not security_assessment.launchable
+        )
         authority_status = (
             AuthorityRevalidationStatus.VALID
             if canonical_authority.disposition is PreLaunchDisposition.ALLOW
+            or security_invalid
             else AuthorityRevalidationStatus.INVALID
+        )
+        security_status = (
+            SecurityRevalidationStatus.INVALID
+            if security_invalid
+            else (
+                SecurityRevalidationStatus.VALID
+                if canonical_authority.disposition is PreLaunchDisposition.ALLOW
+                else SecurityRevalidationStatus.NOT_REQUIRED
+            )
         )
         budget_check = self.budget_policy.evaluate(state=budget_state, now=now)
         snapshot_status = self._snapshot_status(
@@ -443,6 +459,7 @@ class RecoveryCoordinator:
                 budget_check=budget_check,
                 deadline_status=deadline_status,
                 snapshot_status=snapshot_status,
+                security_status=security_status,
             ),
         )
         error = facts.to_error(

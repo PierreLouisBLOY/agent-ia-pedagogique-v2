@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
 from backend.agent_runtime.application_routing import (
     UseCaseRouter,
@@ -9,6 +9,7 @@ from backend.agent_runtime.application_routing import (
     UseCaseRoutingErrorCode,
 )
 from backend.agent_runtime.contracts import (
+    AGENT_CONTRACT_SCHEMA_V1_0,
     AgentResultStatus,
     EffectState,
     ErrorCategory,
@@ -18,6 +19,7 @@ from backend.agent_runtime.contracts import (
     RecommendedAction,
     StepKind,
     StepSpec,
+    StructuredContentSecurityAssessment,
     UseCaseResult,
 )
 from backend.agent_runtime.gates import GateEngine, GateResolutionDisposition
@@ -41,6 +43,14 @@ from backend.agent_runtime.runtime.routing.ports import (
     RuntimeRoutingResolverPort,
 )
 from backend.agent_runtime.runtime.state import RunState, StepRuntimeStatus
+from backend.agent_runtime.security import (
+    security_event_from_structured_assessment,
+)
+from backend.agent_runtime.security.runtime_composition import (
+    RuntimeSecurityFailureStage,
+    RuntimeSecurityViolation,
+    SecurityRuntimeGuard,
+)
 from backend.agent_runtime.tools import ToolRouter, ToolRoutingError, ToolRoutingErrorCode
 from backend.core_contracts.outcome import ApplicationOutcome, OutcomeStatus
 from backend.shared_kernel.time import Instant
@@ -79,6 +89,7 @@ class RoutingStepRunner:
     tool_router: ToolRouter
     gate_engine: GateEngine
     runtime_control_runner: RuntimeControlStepRunnerPort
+    security_guard: SecurityRuntimeGuard = field(default_factory=SecurityRuntimeGuard)
 
     def __post_init__(self) -> None:
         if not isinstance(self.resolver, RuntimeRoutingResolverPort):
@@ -95,6 +106,8 @@ class RoutingStepRunner:
             raise TypeError(
                 "runtime_control_runner must implement RuntimeControlStepRunnerPort"
             )
+        if not isinstance(self.security_guard, SecurityRuntimeGuard):
+            raise TypeError("security_guard must be a SecurityRuntimeGuard")
         shared_policy = self.agent_router.capability_policy
         if self.use_case_router.capability_policy is not shared_policy or (
             self.tool_router.tool_call_policy.capability_policy is not shared_policy
@@ -229,6 +242,16 @@ class RoutingStepRunner:
             result.error.step_id != step.step_id or result.error.attempt != attempt
         ):
             raise RuntimeRoutingError(RuntimeRoutingErrorCode.INVALID_BOUNDARY_RESULT)
+        if result.security_assessment is None:
+            raise RuntimeRoutingError(RuntimeRoutingErrorCode.INVALID_BOUNDARY_RESULT)
+        self._enforce_result_security(
+            (result.security_assessment,),
+            plan=plan,
+            step=step,
+            run_state=run_state,
+            attempt=attempt,
+            now=now,
+        )
         return StepExecutionResult(
             status=status,
             result_refs=result.artifacts,
@@ -324,6 +347,16 @@ class RoutingStepRunner:
                 ),
                 source=ErrorSource.APPLICATION,
             )
+        if not result.security_assessments:
+            raise RuntimeRoutingError(RuntimeRoutingErrorCode.INVALID_BOUNDARY_RESULT)
+        self._enforce_result_security(
+            result.security_assessments,
+            plan=plan,
+            step=step,
+            run_state=run_state,
+            attempt=attempt,
+            now=now,
+        )
         return _use_case_result(result, step=step, attempt=attempt)
 
     def _run_gate(
@@ -378,7 +411,13 @@ class RoutingStepRunner:
             )
             if type(resolved) is not ResolvedAgentInput:
                 raise TypeError("invalid agent resolution")
-            self.agent_router.authorize(step=step, resolved=resolved, evaluated_at=now)
+            self.agent_router.authorize(
+                plan=plan,
+                step=step,
+                run_state=run_state,
+                resolved=resolved,
+                evaluated_at=now,
+            )
         except (RuntimeRoutingError, TypeError, ValueError) as error:
             return _known_failure(
                 step=step,
@@ -394,6 +433,45 @@ class RoutingStepRunner:
             resolved=resolved,
             attempt=attempt,
             now=now,
+        )
+
+    def _enforce_result_security(
+        self,
+        source_assessments: tuple[StructuredContentSecurityAssessment, ...],
+        *,
+        plan: Plan,
+        step: StepSpec,
+        run_state: RunState,
+        attempt: int,
+        now: Instant,
+    ) -> None:
+        assessment = self.security_guard.compose(tuple(source_assessments))
+        if assessment.launchable:
+            return
+        source = next(
+            (
+                item
+                for item in source_assessments
+                if item.structural_locations
+                or item.disposition.value
+                not in {"PASS_AS_DATA", "ISOLATE_AS_DATA"}
+            ),
+            source_assessments[0],
+        )
+        event = security_event_from_structured_assessment(
+            source,
+            schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
+            event_id=f"security-result:{attempt}:{step.step_id[:72]}",
+            occurred_at=now,
+            run_id=plan.run_id,
+            correlation_id=run_state.correlation_id,
+            step_id=step.step_id,
+            hostile_propagation=True,
+        )
+        raise RuntimeSecurityViolation(
+            assessment,
+            stage=RuntimeSecurityFailureStage.POST_EFFECT,
+            event=event,
         )
 
 

@@ -8,6 +8,7 @@ from backend.agent_runtime.contracts import ErrorEnvelope, StepSpec
 from backend.agent_runtime.contracts.common import (
     ContractRef,
     freeze_agent_safe_mapping,
+    require_agent_safe_ref,
     require_contract_ref,
 )
 from backend.agent_runtime.runtime.planning import Plan
@@ -37,8 +38,11 @@ class StepExecutionResult:
         if self.status not in _RUNNER_RESULT_STATUSES:
             raise ValueError("status must be a terminal runner result status")
         result_refs = tuple(self.result_refs)
+        if len(result_refs) > 64:
+            raise ValueError("result_refs must contain at most 64 items")
         for result_ref in result_refs:
             require_contract_ref(result_ref, "result_ref")
+            require_agent_safe_ref(result_ref, field_name="result_ref")
         if self.error is not None and not isinstance(self.error, ErrorEnvelope):
             raise TypeError("error must be an ErrorEnvelope or None")
         if self.status is StepRuntimeStatus.SUCCEEDED and self.error is not None:

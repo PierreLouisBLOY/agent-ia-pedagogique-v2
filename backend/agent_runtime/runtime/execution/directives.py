@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 
+from backend.agent_runtime.contracts.common import require_agent_safe_text
 from backend.shared_kernel._strings import require_non_empty
 
 
@@ -32,6 +33,9 @@ class ExecutionDirective:
             raise TypeError("code must be an ExecutionDirectiveCode")
         if self.step_id is not None:
             require_non_empty(self.step_id, "step_id")
+            require_agent_safe_text(
+                self.step_id, field_name="step_id", max_length=128
+            )
         if self.code is not ExecutionDirectiveCode.RUN_DEADLINE_EXCEEDED:
             if self.step_id is None:
                 raise ValueError("step-scoped directives require step_id")
@@ -42,3 +46,6 @@ class ExecutionDirective:
         if self.reason_code is None:
             raise ValueError("non-CONTINUE directives require reason_code")
         require_non_empty(self.reason_code, "reason_code")
+        require_agent_safe_text(
+            self.reason_code, field_name="reason_code", max_length=256
+        )

@@ -13,11 +13,11 @@ from backend.agent_runtime.runtime.routing import (
     ResolvedUseCaseInput,
 )
 from tests.support.runtime_routing_fakes import (
+    make_agent_input,
     make_gate_input,
     make_step,
     make_tool_input,
     make_use_case_input,
-    permission_scope,
 )
 
 
@@ -29,9 +29,8 @@ def test_typed_resolution_models_are_closed_and_immutable() -> None:
     use_case = make_use_case_input(use_case_step)
     tool = make_tool_input(tool_step)
     gate = make_gate_input(gate_step)
-    agent = ResolvedAgentInput(
-        permission_scope_ref="scope-routing",
-        permission_scope=permission_scope("CAP-E01"),
+    agent = make_agent_input(
+        make_step(StepKind.AGENT, "CAP-E01", ExecutorKind.AG_02)
     )
 
     assert type(use_case) is ResolvedUseCaseInput
@@ -45,6 +44,7 @@ def test_typed_resolution_models_are_closed_and_immutable() -> None:
 def test_resolution_models_reject_generic_or_malformed_values() -> None:
     with pytest.raises(TypeError):
         ResolvedAgentInput(  # type: ignore[arg-type]
+            invocation=object(),
             permission_scope_ref="scope-routing",
             permission_scope={"capability": "CAP-E01"},
         )

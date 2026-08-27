@@ -102,6 +102,7 @@ from backend.agent_runtime.recovery.replay import (
     ReplayGuardDisposition,
     ReplayGuardReasonCode,
     ReplayPreconditions,
+    SecurityRevalidationStatus,
     SnapshotRevalidationStatus,
 )
 from backend.agent_runtime.recovery.retry import (
@@ -221,6 +222,7 @@ __all__ = [
     "ReplayGuardDisposition",
     "ReplayGuardReasonCode",
     "ReplayPreconditions",
+    "SecurityRevalidationStatus",
     "RetryDecision",
     "RetryFailureFacts",
     "RetryDisposition",

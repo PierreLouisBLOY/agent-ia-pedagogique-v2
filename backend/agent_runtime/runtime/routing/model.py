@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 
 from backend.agent_runtime.contracts import (
+    AgentInvocation,
     ContractRef,
     GateRequest,
     PermissionScope,
@@ -99,6 +100,7 @@ class ResolvedGateInput:
 
 @dataclass(frozen=True, slots=True)
 class ResolvedAgentInput:
+    invocation: AgentInvocation
     permission_scope_ref: ContractRef
     permission_scope: PermissionScope
     policy_facts: PolicyFacts = field(default_factory=PolicyFacts)
@@ -106,6 +108,8 @@ class ResolvedAgentInput:
     scope_revoked: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.invocation) is not AgentInvocation:
+            raise TypeError("invocation must be an AgentInvocation")
         require_contract_ref(self.permission_scope_ref, "permission_scope_ref")
         if type(self.permission_scope) is not PermissionScope:
             raise TypeError("permission_scope must be a PermissionScope")

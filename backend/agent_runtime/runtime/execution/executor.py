@@ -8,6 +8,7 @@ from backend.agent_runtime.contracts import (
     ErrorEnvelope,
     FailurePolicy,
     RecommendedAction,
+    SecurityEvent,
     StepSpec,
     WorkflowStatus,
 )
@@ -33,6 +34,10 @@ from backend.agent_runtime.runtime.scheduling import (
 from backend.agent_runtime.runtime.state import RunState, StepRuntimeStatus, StepState
 from backend.agent_runtime.runtime.state._workflow_statuses import (
     TERMINAL_WORKFLOW_STATUSES,
+)
+from backend.agent_runtime.security.runtime_composition import (
+    RuntimeSecurityFailureStage,
+    RuntimeSecurityViolation,
 )
 from backend.shared_kernel.time import Instant
 
@@ -65,6 +70,7 @@ class ExecutionCycleResult:
     launched_step_ids: tuple[str, ...] = ()
     completed_step_ids: tuple[str, ...] = ()
     directives: tuple[ExecutionDirective, ...] = ()
+    security_events: tuple[SecurityEvent, ...] = ()
 
     def __post_init__(self) -> None:
         if not isinstance(self.run_state, RunState):
@@ -93,6 +99,14 @@ class ExecutionCycleResult:
             for item in self.directives
         ):
             raise ValueError("directive step ids must belong to run_state")
+        if type(self.security_events) is not tuple or any(
+            type(item) is not SecurityEvent for item in self.security_events
+        ):
+            raise TypeError("security_events must contain SecurityEvent values")
+        if len({item.event_id for item in self.security_events}) != len(
+            self.security_events
+        ):
+            raise ValueError("security_events must have unique event ids")
 
 
 @dataclass(frozen=True, slots=True)
@@ -134,6 +148,7 @@ class PlanExecutor:
         launched: list[str] = []
         completed: list[str] = []
         directives: list[ExecutionDirective] = []
+        security_events: list[SecurityEvent] = []
         steps_by_id = {step.step_id: step for step in plan.steps}
 
         for step_id in scheduling.launch_candidate_ids:
@@ -146,6 +161,7 @@ class PlanExecutor:
             )
             if not isinstance(guard_decision, PreLaunchDecision):
                 raise TypeError("prelaunch_guard must return PreLaunchDecision")
+            security_events.extend(guard_decision.security_events)
 
             if guard_decision.disposition is PreLaunchDisposition.WAITING_GATE:
                 current_state = replace(
@@ -225,6 +241,49 @@ class PlanExecutor:
                     attempt=running_step.attempt_count,
                     now=now,
                 )
+            except RuntimeSecurityViolation as error:
+                if error.event is not None:
+                    security_events.append(error.event)
+                if error.stage is RuntimeSecurityFailureStage.PRE_EFFECT:
+                    launched.pop()
+                    denied_state = replace(
+                        current_state.step_states[step_id],
+                        status=StepRuntimeStatus.BLOCKED,
+                        started_at=None,
+                        ended_at=None,
+                        attempt_count=running_step.attempt_count - 1,
+                        block_reason=(
+                            "prelaunch denied: "
+                            f"{error.assessment.reason_codes[0].value}"
+                        ),
+                    )
+                    current_state = _replace_step_state(current_state, denied_state)
+                    directives.append(
+                        ExecutionDirective(
+                            code=ExecutionDirectiveCode.PRELAUNCH_DENIED,
+                            step_id=step_id,
+                            reason_code=error.assessment.reason_codes[0].value,
+                        )
+                    )
+                    current_state, policy_directive = _apply_failure_policy(
+                        run_state=current_state,
+                        step=step,
+                        error=None,
+                        now=now,
+                        reason_code="PRELAUNCH_DENIED_NO_RETRY",
+                    )
+                    directives.append(policy_directive)
+                    if policy_directive.code in _STOP_CYCLE_CODES:
+                        break
+                    continue
+                directives.append(
+                    ExecutionDirective(
+                        code=ExecutionDirectiveCode.RECONCILIATION_REQUIRED,
+                        step_id=step_id,
+                        reason_code="POST_EFFECT_SECURITY_REJECTION_EFFECT_UNKNOWN",
+                    )
+                )
+                break
             except Exception:
                 directives.append(
                     ExecutionDirective(
@@ -284,6 +343,7 @@ class PlanExecutor:
             launched_step_ids=tuple(launched),
             completed_step_ids=tuple(completed),
             directives=tuple(directives),
+            security_events=tuple(security_events),
         )
 
 

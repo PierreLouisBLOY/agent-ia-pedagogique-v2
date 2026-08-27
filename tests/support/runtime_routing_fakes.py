@@ -16,8 +16,13 @@ from backend.agent_runtime.contracts import (
     ActorKind,
     ActorRef,
     AgentId,
+    AgentInvocation,
+    AgentResult,
     AgentResultStatus,
+    AutonomyLevel,
     ContractMeta,
+    DelegationEnvelope,
+    DelegationResult,
     ExecutorKind,
     ExecutorRef,
     GateDecision,
@@ -26,6 +31,7 @@ from backend.agent_runtime.contracts import (
     GateStatus,
     InvocationStatus,
     PermissionScope,
+    RuntimeMode,
     StepKind,
     StepSpec,
     ToolCallRequest,
@@ -120,6 +126,56 @@ def permission_scope(capability_code: str) -> PermissionScope:
         valid_from=BEFORE,
         expires_at=AFTER,
         delegable=True,
+    )
+
+
+def make_agent_input(step: StepSpec, *, attempt: int = 1) -> ResolvedAgentInput:
+    capability_id = step.capability_id
+    target = step.executor.agent_id
+    if capability_id is None or target is None:
+        raise ValueError("test agent step requires capability and target")
+    parent = permission_scope(capability_id.value)
+    child = PermissionScope(
+        principal=ActorRef(ActorKind.AGENT, target.value),
+        capability_ids=(capability_id,),
+        resource_scope=parent.resource_scope,
+        operations=parent.operations,
+        valid_from=parent.valid_from,
+        expires_at=parent.expires_at,
+        delegable=False,
+    )
+    delegation = DelegationEnvelope(
+        delegation_id=f"delegation-{step.step_id}",
+        source_step=step,
+        target_agent=target,
+        context_slice={"resource_ref": "resource-1"},
+        evidence_refs=(),
+        constraints={},
+        permission_scope=child,
+    )
+    invocation = AgentInvocation(
+        meta=ContractMeta(
+            AGENT_CONTRACT_SCHEMA_V1_0,
+            "run-routing",
+            step.step_id,
+            None,
+            CORRELATION,
+            NOW,
+            ACTOR,
+            InvocationStatus.PLANNED,
+        ),
+        invocation_id=f"invocation-{step.step_id}-{attempt}",
+        source_step=step,
+        delegation=delegation,
+        agent_id=target,
+        attempt=attempt,
+        autonomy_level=AutonomyLevel.AUT_L2,
+        runtime_mode=RuntimeMode.MODE_ORCHESTRATED,
+    )
+    return ResolvedAgentInput(
+        invocation=invocation,
+        permission_scope_ref="scope-routing",
+        permission_scope=parent,
     )
 
 
@@ -335,17 +391,41 @@ class RecordingResolver:
 
 
 class RecordingAgentPort:
-    def __init__(self, result: StepExecutionResult | None = None, error: Exception | None = None) -> None:
-        self.result = result or StepExecutionResult(StepRuntimeStatus.SUCCEEDED)
+    def __init__(self, result: DelegationResult[object] | None = None, error: Exception | None = None) -> None:
+        self.result = result
         self.error = error
         self.calls: list[str] = []
 
-    def execute(self, *, plan: Plan, step: StepSpec, run_state: RunState, attempt: int, now: Instant) -> StepExecutionResult:
-        del plan, run_state, attempt, now
+    def execute(self, *, plan: Plan, step: StepSpec, run_state: RunState, invocation: AgentInvocation, attempt: int, now: Instant) -> DelegationResult[object]:
+        del plan, now
         self.calls.append(step.step_id)
         if self.error is not None:
             raise self.error
-        return self.result
+        if self.result is not None:
+            return self.result
+        delegation = invocation.delegation
+        if delegation is None:
+            raise ValueError("delegated test invocation required")
+        agent_result = AgentResult[object](
+            meta=ContractMeta(
+                AGENT_CONTRACT_SCHEMA_V1_0,
+                invocation.meta.run_id,
+                step.step_id,
+                None,
+                run_state.correlation_id,
+                NOW,
+                ActorRef(ActorKind.AGENT, invocation.agent_id.value),
+                AgentResultStatus.SUCCEEDED,
+            ),
+            invocation_id=invocation.invocation_id,
+            payload={"handled": True},
+        )
+        return DelegationResult(
+            delegation_id=delegation.delegation_id,
+            source_agent=invocation.agent_id,
+            agent_result=agent_result,
+            delegation=delegation,
+        )
 
 
 class RecordingRuntimeControlRunner:
@@ -587,10 +667,7 @@ def make_runtime_harness(
     )
     if agent_step.capability_id is None:
         raise ValueError("test agent step requires a capability")
-    resolver.agent_input = ResolvedAgentInput(
-        permission_scope_ref="scope-routing",
-        permission_scope=permission_scope(agent_step.capability_id.value),
-    )
+    resolver.agent_input = make_agent_input(agent_step)
 
     decisions = tuple(
         None if value is None else gate_decision(gate_input.request, value)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from backend.agent_runtime.contracts import StepSpec
+from backend.agent_runtime.contracts import AgentInvocation, DelegationResult, StepSpec
 from backend.agent_runtime.runtime.execution import StepExecutionResult
 from backend.agent_runtime.runtime.planning import Plan
 from backend.agent_runtime.runtime.routing.model import (
@@ -44,9 +44,10 @@ class AgentStepExecutionPort(Protocol):
         plan: Plan,
         step: StepSpec,
         run_state: RunState,
+        invocation: AgentInvocation,
         attempt: int,
         now: Instant,
-    ) -> StepExecutionResult: ...
+    ) -> DelegationResult[object]: ...
 
 
 @runtime_checkable

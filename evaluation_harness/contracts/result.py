@@ -18,11 +18,13 @@ from evaluation_harness.contracts.identity import (
     EvaluationSuiteId,
     require_supported_schema_version,
 )
+from evaluation_harness.contracts.runner import EvaluationRunnerReasonCode
 from evaluation_harness.contracts.scoring import (
     MAX_RUBRIC_RESULTS_PER_CASE,
     MAX_SCORE_RESULTS_PER_CASE,
     RubricScoreResult,
     ScoreResult,
+    ScoreStatus,
 )
 from evaluation_harness.contracts.verdict import EvaluationVerdict
 
@@ -93,6 +95,124 @@ class CaseExecutionResult:
 
 
 @dataclass(frozen=True, slots=True)
+class RepetitionEvaluationResult:
+    """Per-repetition owner for execution facts and C/D evaluation results."""
+
+    schema_version: EvaluationSchemaVersion
+    execution_result: CaseExecutionResult
+    verdict: EvaluationVerdict
+    assertion_results: tuple[AssertionResult, ...] = ()
+    score_results: tuple[ScoreResult, ...] = ()
+    rubric_results: tuple[RubricScoreResult, ...] = ()
+    reason_code: EvaluationRunnerReasonCode | None = None
+    infrastructure_error: bool = False
+
+    def __post_init__(self) -> None:
+        require_supported_schema_version(self.schema_version)
+        if type(self.execution_result) is not CaseExecutionResult:
+            raise TypeError("execution_result must be a CaseExecutionResult")
+        if self.execution_result.schema_version != self.schema_version:
+            raise ValueError("execution result schema version must match")
+        if not isinstance(self.verdict, EvaluationVerdict):
+            raise TypeError("verdict must be an EvaluationVerdict")
+        self._validate_assertion_results()
+        self._validate_score_results()
+        self._validate_rubric_results()
+        if self.reason_code is not None and not isinstance(
+            self.reason_code, EvaluationRunnerReasonCode
+        ):
+            raise TypeError("reason_code must be an EvaluationRunnerReasonCode")
+        if type(self.infrastructure_error) is not bool:
+            raise TypeError("infrastructure_error must be a boolean")
+        if self.verdict is EvaluationVerdict.PASS:
+            if self.reason_code is not None or self.infrastructure_error:
+                raise ValueError("a PASS repetition has no error reason")
+            if any(
+                result.verdict is not EvaluationVerdict.PASS
+                for result in self.assertion_results
+            ):
+                raise ValueError("a non-PASS assertion cannot yield repetition PASS")
+            if any(
+                result.status is ScoreStatus.ERROR for result in self.score_results
+            ) or any(
+                result.status is ScoreStatus.ERROR for result in self.rubric_results
+            ):
+                raise ValueError("an errored score cannot yield repetition PASS")
+        elif self.reason_code is None:
+            raise ValueError("a non-PASS repetition requires a closed reason")
+        status = self.execution_result.status
+        if status is CaseExecutionStatus.ERROR and (
+            self.verdict is not EvaluationVerdict.ERROR
+            or not self.infrastructure_error
+        ):
+            raise ValueError("an execution error requires infrastructure ERROR")
+        if status is CaseExecutionStatus.SKIPPED:
+            if (
+                self.verdict is not EvaluationVerdict.SKIPPED
+                or self.infrastructure_error
+                or self.assertion_results
+                or self.score_results
+                or self.rubric_results
+            ):
+                raise ValueError("a skipped repetition has no evaluations or error")
+        elif self.verdict is EvaluationVerdict.SKIPPED:
+            raise ValueError("only a skipped execution yields a skipped repetition")
+        if self.verdict is EvaluationVerdict.FAIL and not any(
+            result.verdict is EvaluationVerdict.FAIL
+            for result in self.assertion_results
+        ):
+            raise ValueError("a FAIL repetition requires a failed hard assertion")
+        if self.verdict is EvaluationVerdict.INCONCLUSIVE and not any(
+            result.verdict is EvaluationVerdict.INCONCLUSIVE
+            for result in self.assertion_results
+        ):
+            raise ValueError(
+                "an INCONCLUSIVE repetition requires an inconclusive assertion"
+            )
+
+    @property
+    def case_id(self) -> EvaluationCaseId:
+        return self.execution_result.case_id
+
+    @property
+    def repetition_index(self) -> int:
+        return self.execution_result.repetition_index
+
+    def _validate_assertion_results(self) -> None:
+        if type(self.assertion_results) is not tuple:
+            raise TypeError("assertion_results must be a tuple")
+        if len(self.assertion_results) > MAX_ASSERTION_REFS_PER_CASE:
+            raise ValueError("too many assertion results for one repetition")
+        if any(type(item) is not AssertionResult for item in self.assertion_results):
+            raise TypeError("assertion_results must contain AssertionResult values")
+        refs = tuple(item.assertion_ref for item in self.assertion_results)
+        if len(refs) != len(set(refs)):
+            raise ValueError("repetition assertion refs must be unique")
+
+    def _validate_score_results(self) -> None:
+        if type(self.score_results) is not tuple:
+            raise TypeError("score_results must be a tuple")
+        if len(self.score_results) > MAX_SCORE_RESULTS_PER_CASE:
+            raise ValueError("too many score results for one repetition")
+        if any(type(item) is not ScoreResult for item in self.score_results):
+            raise TypeError("score_results must contain ScoreResult values")
+        refs = tuple(item.criterion_ref for item in self.score_results)
+        if len(refs) != len(set(refs)):
+            raise ValueError("repetition score criterion refs must be unique")
+
+    def _validate_rubric_results(self) -> None:
+        if type(self.rubric_results) is not tuple:
+            raise TypeError("rubric_results must be a tuple")
+        if len(self.rubric_results) > MAX_RUBRIC_RESULTS_PER_CASE:
+            raise ValueError("too many rubric results for one repetition")
+        if any(type(item) is not RubricScoreResult for item in self.rubric_results):
+            raise TypeError("rubric_results must contain RubricScoreResult values")
+        refs = tuple(item.rubric_ref for item in self.rubric_results)
+        if len(refs) != len(set(refs)):
+            raise ValueError("repetition rubric refs must be unique")
+
+
+@dataclass(frozen=True, slots=True)
 class CaseEvaluationResult:
     """Non-authoritative verdict over ordered offline execution facts."""
 
@@ -104,6 +224,7 @@ class CaseEvaluationResult:
     assertion_results: tuple[AssertionResult, ...] = ()
     score_results: tuple[ScoreResult, ...] = ()
     rubric_results: tuple[RubricScoreResult, ...] = ()
+    repetition_results: tuple[RepetitionEvaluationResult, ...] = ()
 
     def __post_init__(self) -> None:
         require_supported_schema_version(self.schema_version)
@@ -116,6 +237,7 @@ class CaseEvaluationResult:
         self._validate_assertion_results()
         self._validate_score_results()
         self._validate_rubric_results()
+        self._validate_repetition_results()
         if self.verdict is EvaluationVerdict.PASS and self.reason_codes:
             raise ValueError("a PASS verdict does not require reason codes")
         if self.verdict is not EvaluationVerdict.PASS and not self.reason_codes:
@@ -201,6 +323,37 @@ class CaseEvaluationResult:
         if len(rubric_refs) != len(set(rubric_refs)):
             raise ValueError("case rubric result refs must be unique")
 
+    def _validate_repetition_results(self) -> None:
+        if type(self.repetition_results) is not tuple:
+            raise TypeError("repetition_results must be a tuple")
+        if len(self.repetition_results) > MAX_REPEAT_COUNT:
+            raise ValueError("too many repetition results for one case")
+        if any(
+            type(result) is not RepetitionEvaluationResult
+            for result in self.repetition_results
+        ):
+            raise TypeError(
+                "repetition_results must contain RepetitionEvaluationResult values"
+            )
+        if not self.repetition_results:
+            return
+        if self.assertion_results or self.score_results or self.rubric_results:
+            raise ValueError("per-repetition results cannot mix with legacy flat results")
+        if any(result.case_id != self.case_id for result in self.repetition_results):
+            raise ValueError("repetition case IDs must match the evaluated case")
+        if tuple(result.execution_result for result in self.repetition_results) != (
+            self.execution_results
+        ):
+            raise ValueError("execution results must match repetition results")
+        expected_indexes = tuple(range(1, len(self.repetition_results) + 1))
+        if tuple(
+            result.repetition_index for result in self.repetition_results
+        ) != expected_indexes:
+            raise ValueError("repetition results must be contiguous and ordered")
+        expected_verdict = _aggregate_repetition_verdict(self.repetition_results)
+        if self.verdict is not expected_verdict:
+            raise ValueError("case verdict must match repetition precedence")
+
 
 @dataclass(frozen=True, slots=True)
 class SuiteEvaluationResult:
@@ -273,3 +426,20 @@ def _validate_reason_codes(reason_codes: tuple[EvaluationReasonCode, ...]) -> No
         raise TypeError("reason_codes must contain EvaluationReasonCode values")
     if len(reason_codes) != len(set(reason_codes)):
         raise ValueError("reason codes must be unique")
+
+
+def _aggregate_repetition_verdict(
+    results: tuple[RepetitionEvaluationResult, ...],
+) -> EvaluationVerdict:
+    verdicts = tuple(result.verdict for result in results)
+    if EvaluationVerdict.ERROR in verdicts:
+        return EvaluationVerdict.ERROR
+    if EvaluationVerdict.FAIL in verdicts:
+        return EvaluationVerdict.FAIL
+    if EvaluationVerdict.INCONCLUSIVE in verdicts:
+        return EvaluationVerdict.INCONCLUSIVE
+    if all(verdict is EvaluationVerdict.SKIPPED for verdict in verdicts):
+        return EvaluationVerdict.SKIPPED
+    if EvaluationVerdict.SKIPPED in verdicts:
+        return EvaluationVerdict.INCONCLUSIVE
+    return EvaluationVerdict.PASS

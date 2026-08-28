@@ -10,6 +10,7 @@ HARNESS = ROOT / "evaluation_harness"
 QUALITY_EVALUATION = BACKEND / "modules" / "quality_evaluation"
 SCORING = HARNESS / "scoring"
 SCORING_CONTRACTS = HARNESS / "contracts" / "scoring.py"
+RUNNER = HARNESS / "runner"
 
 
 def _python_files(root: Path) -> tuple[Path, ...]:
@@ -149,14 +150,18 @@ def test_contract_fields_expose_no_authority_or_arbitrary_data_channel() -> None
     assert _annotated_fields(HARNESS).isdisjoint(forbidden_fields)
 
 
-def test_harness_contains_no_runner_reporting_or_provider_semantics() -> None:
+def test_harness_contains_no_duplicate_runner_reporting_or_provider_semantics() -> None:
     forbidden_classes = {
-        "EvaluationRunner",
+        "ConcurrentEvaluationRunner",
         "EvaluationScorer",
+        "EvaluationReporter",
         "JsonEvaluationReporter",
+        "JsonEvaluationSerializer",
         "JudgeModel",
         "MarkdownEvaluationReporter",
         "ProviderScorer",
+        "PytestRunner",
+        "TestCollector",
         "WeightedScore",
     }
     assert _defined_classes(HARNESS).isdisjoint(forbidden_classes)
@@ -243,6 +248,43 @@ def test_no_binary_or_speculative_ordinal_score_contract_exists() -> None:
     )
 
 
+def test_runner_has_no_retry_replay_concurrency_or_unbounded_loop() -> None:
+    forbidden_names = {
+        "RecoveryCoordinator",
+        "ReplayGuard",
+        "RetryPolicy",
+        "Thread",
+        "Process",
+    }
+    for path in _python_files(RUNNER):
+        tree = _tree(path)
+        names = {
+            node.id for node in ast.walk(tree) if isinstance(node, ast.Name)
+        }
+        assert names.isdisjoint(forbidden_names)
+        assert not any(
+            isinstance(node, (ast.AsyncFor, ast.AsyncFunctionDef, ast.While))
+            for node in ast.walk(tree)
+        )
+
+
+def test_runner_contains_no_reporter_serializer_provider_or_model_token() -> None:
+    forbidden_fragments = {
+        "anthropic",
+        "junit",
+        "markdown",
+        "model_name",
+        "openai",
+        "provider",
+        "reporter",
+        "serializer",
+        "token_price",
+    }
+    for path in _python_files(RUNNER):
+        source = path.read_text(encoding="utf-8").lower()
+        assert all(fragment not in source for fragment in forbidden_fragments)
+
+
 def test_harness_has_no_dynamic_loading_or_arbitrary_code_execution() -> None:
     forbidden_names = {"eval", "exec", "__import__"}
     forbidden_attributes = {"import_module"}
@@ -295,6 +337,8 @@ def test_harness_contract_names_are_unique_outside_tests() -> None:
         "AssertionResult",
         "ScoreResult",
         "RubricScoreResult",
+        "RepetitionEvaluationResult",
+        "EvaluationRunner",
         "SuiteEvaluationResult",
     }
     definitions = {

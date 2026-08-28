@@ -1,0 +1,357 @@
+{
+  "benchmark": "PHASE_12_16_F1_RETRIEVAL_BASELINE",
+  "corpus": {
+    "case_count": 60,
+    "sha256": "f9ebd4330c1f4b5d06021b8a29d4d12db4cfaff05b535eec0ff86da4d842f238",
+    "version": "12.16-f1-v1"
+  },
+  "decision": {
+    "exact_label_gate": "PASS",
+    "f1_status": "PASS",
+    "material_semantic_gap": true,
+    "next_step": "F2_READY",
+    "provider_or_vector_runtime_added": false,
+    "semantic_gap_affected_levels": [
+      "BTS_CG_1",
+      "BTS_CG_2",
+      "PREMIERE_STMG",
+      "TERMINALE_STMG"
+    ],
+    "semantic_gap_miss_count": 25,
+    "semantic_gap_rate_percent": 83.3333
+  },
+  "exact_label_misses": [],
+  "k_values": [
+    1,
+    3,
+    5
+  ],
+  "metrics": {
+    "by_level": {
+      "BTS_CG_1": {
+        "COMBINED": {
+          "case_count": 12,
+          "mrr_at_5": 0.333333,
+          "recall_at_1": 0.333333,
+          "recall_at_3": 0.333333,
+          "recall_at_5": 0.333333,
+          "zero_hit_rate": 0.666667
+        },
+        "LEXICAL": {
+          "case_count": 12,
+          "mrr_at_5": 0.5,
+          "recall_at_1": 0.5,
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "zero_hit_rate": 0.5
+        },
+        "STRUCTURED": {
+          "case_count": 12,
+          "mrr_at_5": 0.333333,
+          "recall_at_1": 0.333333,
+          "recall_at_3": 0.333333,
+          "recall_at_5": 0.333333,
+          "zero_hit_rate": 0.666667
+        }
+      },
+      "BTS_CG_2": {
+        "COMBINED": {
+          "case_count": 12,
+          "mrr_at_5": 0.166667,
+          "recall_at_1": 0.166667,
+          "recall_at_3": 0.166667,
+          "recall_at_5": 0.166667,
+          "zero_hit_rate": 0.833333
+        },
+        "LEXICAL": {
+          "case_count": 12,
+          "mrr_at_5": 0.583333,
+          "recall_at_1": 0.5,
+          "recall_at_3": 0.666667,
+          "recall_at_5": 0.666667,
+          "zero_hit_rate": 0.333333
+        },
+        "STRUCTURED": {
+          "case_count": 12,
+          "mrr_at_5": 0.166667,
+          "recall_at_1": 0.166667,
+          "recall_at_3": 0.166667,
+          "recall_at_5": 0.166667,
+          "zero_hit_rate": 0.833333
+        }
+      },
+      "PREMIERE_STMG": {
+        "COMBINED": {
+          "case_count": 18,
+          "mrr_at_5": 0.222222,
+          "recall_at_1": 0.222222,
+          "recall_at_3": 0.222222,
+          "recall_at_5": 0.222222,
+          "zero_hit_rate": 0.777778
+        },
+        "LEXICAL": {
+          "case_count": 18,
+          "mrr_at_5": 0.362963,
+          "recall_at_1": 0.333333,
+          "recall_at_3": 0.388889,
+          "recall_at_5": 0.444444,
+          "zero_hit_rate": 0.444444
+        },
+        "STRUCTURED": {
+          "case_count": 18,
+          "mrr_at_5": 0.222222,
+          "recall_at_1": 0.222222,
+          "recall_at_3": 0.222222,
+          "recall_at_5": 0.222222,
+          "zero_hit_rate": 0.777778
+        }
+      },
+      "TERMINALE_STMG": {
+        "COMBINED": {
+          "case_count": 18,
+          "mrr_at_5": 0.222222,
+          "recall_at_1": 0.222222,
+          "recall_at_3": 0.222222,
+          "recall_at_5": 0.222222,
+          "zero_hit_rate": 0.777778
+        },
+        "LEXICAL": {
+          "case_count": 18,
+          "mrr_at_5": 0.444444,
+          "recall_at_1": 0.444444,
+          "recall_at_3": 0.444444,
+          "recall_at_5": 0.444444,
+          "zero_hit_rate": 0.444444
+        },
+        "STRUCTURED": {
+          "case_count": 18,
+          "mrr_at_5": 0.222222,
+          "recall_at_1": 0.222222,
+          "recall_at_3": 0.222222,
+          "recall_at_5": 0.222222,
+          "zero_hit_rate": 0.777778
+        }
+      }
+    },
+    "by_query_class": {
+      "A_EXACT_LABEL": {
+        "COMBINED": {
+          "case_count": 10,
+          "mrr_at_5": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "zero_hit_rate": 0.0
+        },
+        "LEXICAL": {
+          "case_count": 10,
+          "mrr_at_5": 0.883333,
+          "recall_at_1": 0.8,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "zero_hit_rate": 0.0
+        },
+        "STRUCTURED": {
+          "case_count": 10,
+          "mrr_at_5": 1.0,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "zero_hit_rate": 0.0
+        }
+      },
+      "B_LEXICAL_VARIANT": {
+        "COMBINED": {
+          "case_count": 10,
+          "mrr_at_5": 0.0,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "zero_hit_rate": 1.0
+        },
+        "LEXICAL": {
+          "case_count": 10,
+          "mrr_at_5": 0.5,
+          "recall_at_1": 0.5,
+          "recall_at_3": 0.5,
+          "recall_at_5": 0.5,
+          "zero_hit_rate": 0.3
+        },
+        "STRUCTURED": {
+          "case_count": 10,
+          "mrr_at_5": 0.0,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "zero_hit_rate": 1.0
+        }
+      },
+      "C_NORMALIZED_SURFACE": {
+        "COMBINED": {
+          "case_count": 10,
+          "mrr_at_5": 0.4,
+          "recall_at_1": 0.4,
+          "recall_at_3": 0.4,
+          "recall_at_5": 0.4,
+          "zero_hit_rate": 0.6
+        },
+        "LEXICAL": {
+          "case_count": 10,
+          "mrr_at_5": 0.95,
+          "recall_at_1": 0.9,
+          "recall_at_3": 1.0,
+          "recall_at_5": 1.0,
+          "zero_hit_rate": 0.0
+        },
+        "STRUCTURED": {
+          "case_count": 10,
+          "mrr_at_5": 0.4,
+          "recall_at_1": 0.4,
+          "recall_at_3": 0.4,
+          "recall_at_5": 0.4,
+          "zero_hit_rate": 0.6
+        }
+      },
+      "D_SYNONYM_BUSINESS": {
+        "COMBINED": {
+          "case_count": 10,
+          "mrr_at_5": 0.0,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "zero_hit_rate": 1.0
+        },
+        "LEXICAL": {
+          "case_count": 10,
+          "mrr_at_5": 0.42,
+          "recall_at_1": 0.4,
+          "recall_at_3": 0.4,
+          "recall_at_5": 0.5,
+          "zero_hit_rate": 0.4
+        },
+        "STRUCTURED": {
+          "case_count": 10,
+          "mrr_at_5": 0.0,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "zero_hit_rate": 1.0
+        }
+      },
+      "E_PEDAGOGICAL_PARAPHRASE": {
+        "COMBINED": {
+          "case_count": 10,
+          "mrr_at_5": 0.0,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "zero_hit_rate": 1.0
+        },
+        "LEXICAL": {
+          "case_count": 10,
+          "mrr_at_5": 0.0,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "zero_hit_rate": 0.9
+        },
+        "STRUCTURED": {
+          "case_count": 10,
+          "mrr_at_5": 0.0,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "zero_hit_rate": 1.0
+        }
+      },
+      "F_CONCEPT_DESCRIPTION": {
+        "COMBINED": {
+          "case_count": 10,
+          "mrr_at_5": 0.0,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "zero_hit_rate": 1.0
+        },
+        "LEXICAL": {
+          "case_count": 10,
+          "mrr_at_5": 0.0,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "zero_hit_rate": 1.0
+        },
+        "STRUCTURED": {
+          "case_count": 10,
+          "mrr_at_5": 0.0,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "recall_at_5": 0.0,
+          "zero_hit_rate": 1.0
+        }
+      }
+    },
+    "global": {
+      "COMBINED": {
+        "case_count": 60,
+        "mrr_at_5": 0.233333,
+        "recall_at_1": 0.233333,
+        "recall_at_3": 0.233333,
+        "recall_at_5": 0.233333,
+        "zero_hit_rate": 0.766667
+      },
+      "LEXICAL": {
+        "case_count": 60,
+        "mrr_at_5": 0.458889,
+        "recall_at_1": 0.433333,
+        "recall_at_3": 0.483333,
+        "recall_at_5": 0.5,
+        "zero_hit_rate": 0.433333
+      },
+      "STRUCTURED": {
+        "case_count": 60,
+        "mrr_at_5": 0.233333,
+        "recall_at_1": 0.233333,
+        "recall_at_3": 0.233333,
+        "recall_at_5": 0.233333,
+        "zero_hit_rate": 0.766667
+      }
+    }
+  },
+  "miss_analysis": [
+    {"case_id": "RQ-ACTION-COLLECTIVE-D", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-ACTION-COLLECTIVE-A", "level": "PREMIERE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-ACTION-COLLECTIVE-E", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-ACTION-COLLECTIVE-A", "level": "PREMIERE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-ACTION-COLLECTIVE-F", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-ACTION-COLLECTIVE-A", "level": "PREMIERE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-SYSTEME-INFORMATION-D", "cause": "ALIAS_GAP", "control_ref": "RQ-SYSTEME-INFORMATION-A", "level": "PREMIERE_STMG", "lexical_rank": 5},
+    {"case_id": "RQ-SYSTEME-INFORMATION-E", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-SYSTEME-INFORMATION-A", "level": "PREMIERE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-SYSTEME-INFORMATION-F", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-SYSTEME-INFORMATION-A", "level": "PREMIERE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-DONNEES-PERSONNELLES-D", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-DONNEES-PERSONNELLES-A", "level": "PREMIERE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-DONNEES-PERSONNELLES-E", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-DONNEES-PERSONNELLES-A", "level": "PREMIERE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-DONNEES-PERSONNELLES-F", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-DONNEES-PERSONNELLES-A", "level": "PREMIERE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-DIAGNOSTIC-EXTERNE-D", "cause": "ALIAS_GAP", "control_ref": "RQ-DIAGNOSTIC-EXTERNE-A", "level": "TERMINALE_STMG", "lexical_rank": 1},
+    {"case_id": "RQ-DIAGNOSTIC-EXTERNE-E", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-DIAGNOSTIC-EXTERNE-A", "level": "TERMINALE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-DIAGNOSTIC-EXTERNE-F", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-DIAGNOSTIC-EXTERNE-A", "level": "TERMINALE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-DEMARCHE-MARKETING-D", "cause": "ALIAS_GAP", "control_ref": "RQ-DEMARCHE-MARKETING-A", "level": "TERMINALE_STMG", "lexical_rank": 1},
+    {"case_id": "RQ-DEMARCHE-MARKETING-E", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-DEMARCHE-MARKETING-A", "level": "TERMINALE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-DEMARCHE-MARKETING-F", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-DEMARCHE-MARKETING-A", "level": "TERMINALE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-MARCHE-D", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-MARCHE-A", "level": "TERMINALE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-MARCHE-E", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-MARCHE-A", "level": "TERMINALE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-MARCHE-F", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-MARCHE-A", "level": "TERMINALE_STMG", "lexical_rank": null},
+    {"case_id": "RQ-BILAN-D", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-BILAN-A", "level": "BTS_CG_1", "lexical_rank": null},
+    {"case_id": "RQ-BILAN-E", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-BILAN-A", "level": "BTS_CG_1", "lexical_rank": null},
+    {"case_id": "RQ-BILAN-F", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-BILAN-A", "level": "BTS_CG_1", "lexical_rank": null},
+    {"case_id": "RQ-AMORTISSEMENTS-D", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-AMORTISSEMENTS-A", "level": "BTS_CG_1", "lexical_rank": null},
+    {"case_id": "RQ-AMORTISSEMENTS-E", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-AMORTISSEMENTS-A", "level": "BTS_CG_1", "lexical_rank": null},
+    {"case_id": "RQ-AMORTISSEMENTS-F", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-AMORTISSEMENTS-A", "level": "BTS_CG_1", "lexical_rank": null},
+    {"case_id": "RQ-COUT-COMPLET-D", "cause": "ALIAS_GAP", "control_ref": "RQ-COUT-COMPLET-A", "level": "BTS_CG_2", "lexical_rank": 1},
+    {"case_id": "RQ-COUT-COMPLET-E", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-COUT-COMPLET-A", "level": "BTS_CG_2", "lexical_rank": null},
+    {"case_id": "RQ-COUT-COMPLET-F", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-COUT-COMPLET-A", "level": "BTS_CG_2", "lexical_rank": null},
+    {"case_id": "RQ-METHODE-ABC-D", "cause": "ALIAS_GAP", "control_ref": "RQ-METHODE-ABC-A", "level": "BTS_CG_2", "lexical_rank": 1},
+    {"case_id": "RQ-METHODE-ABC-E", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-METHODE-ABC-A", "level": "BTS_CG_2", "lexical_rank": null},
+    {"case_id": "RQ-METHODE-ABC-F", "cause": "SEMANTIC_PARAPHRASE_GAP", "control_ref": "RQ-METHODE-ABC-A", "level": "BTS_CG_2", "lexical_rank": null}
+  ],
+  "seed": {
+    "sha256": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134",
+    "size_bytes": 105553920
+  }
+}

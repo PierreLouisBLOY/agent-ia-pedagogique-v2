@@ -119,7 +119,8 @@ def test_projection_contract_fields_are_closed_facts_only() -> None:
         assert names.isdisjoint(forbidden)
 
 
-def test_pedagogical_e2e_scaffold_remains_empty() -> None:
-    assert tuple(
-        sorted(path.name for path in E2E_CORE.iterdir() if path.is_file())
-    ) == (".gitkeep",)
+def test_pedagogical_e2e_core_is_populated_by_test_only_declarations() -> None:
+    names = {path.name for path in E2E_CORE.iterdir() if path.is_file()}
+    assert {"catalog.py", "expectations.py", "fixtures.py"} <= names
+    assert ".gitkeep" not in names
+    assert "adapters.py" not in names

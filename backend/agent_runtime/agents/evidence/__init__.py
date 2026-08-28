@@ -67,6 +67,7 @@ from backend.agent_runtime.agents.evidence.retrieval_model import (
     RetrievalSignals,
 )
 from backend.agent_runtime.agents.evidence.retrieval_ports import (
+    EvidenceAdmissibilityPort,
     EvidenceDocumentContentPort,
     EvidenceSearchPort,
 )
@@ -78,6 +79,7 @@ __all__ = [
     "DocumentContentRequest",
     "DocumentContentResult",
     "EvidenceAgent",
+    "EvidenceAdmissibilityPort",
     "EvidenceContentUnavailable",
     "EvidenceCoverageAssessment",
     "EvidenceCoverageStatus",

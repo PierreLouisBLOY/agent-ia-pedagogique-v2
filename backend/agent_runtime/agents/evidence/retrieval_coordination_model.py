@@ -159,15 +159,14 @@ class FusedRetrievalCandidate:
             raise TypeError("occurrences must contain RetrievalCandidate values")
         if any(RetrievalIdentity.from_candidate(item) != self.identity for item in self.occurrences):
             raise ValueError("all occurrences must have the fused identity")
-        if not any(
-            item.channel is RetrievalChannel.STRUCTURED for item in self.occurrences
-        ):
-            raise ValueError("a STRUCTURED occurrence is required")
         if type(self.representative) is not RetrievalCandidate:
             raise TypeError("representative must be a RetrievalCandidate")
         if self.representative not in self.occurrences:
             raise ValueError("representative must belong to occurrences")
-        if self.representative.channel is not RetrievalChannel.STRUCTURED:
+        has_structured = any(
+            item.channel is RetrievalChannel.STRUCTURED for item in self.occurrences
+        )
+        if has_structured and self.representative.channel is not RetrievalChannel.STRUCTURED:
             raise ValueError("representative must prefer a STRUCTURED occurrence")
         if not isinstance(self.channel_ranks, Mapping):
             raise TypeError("channel_ranks must be a mapping")
@@ -180,8 +179,6 @@ class FusedRetrievalCandidate:
         occurrence_channels = {item.channel for item in self.occurrences}
         if set(normalized_ranks) != occurrence_channels:
             raise ValueError("channel_ranks must match occurrence channels")
-        if RetrievalChannel.STRUCTURED not in normalized_ranks:
-            raise ValueError("channel_ranks must contain STRUCTURED")
         object.__setattr__(self, "channel_ranks", MappingProxyType(normalized_ranks))
         if not isinstance(self.fusion_score, Decimal):
             raise TypeError("fusion_score must be a Decimal")

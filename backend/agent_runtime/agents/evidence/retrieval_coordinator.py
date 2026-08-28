@@ -20,7 +20,10 @@ from backend.agent_runtime.agents.evidence.retrieval_model import (
     RetrievalQuery,
     RetrievalSearchResult,
 )
-from backend.agent_runtime.agents.evidence.retrieval_ports import EvidenceSearchPort
+from backend.agent_runtime.agents.evidence.retrieval_ports import (
+    EvidenceAdmissibilityPort,
+    EvidenceSearchPort,
+)
 from backend.agent_runtime.contracts.evidence import EvidenceRequest
 
 _CHANNEL_EXECUTION_ORDER = (
@@ -35,12 +38,19 @@ _CHANNEL_EXECUTION_ORDER = (
 class RetrievalCoordinator:
     search_port: EvidenceSearchPort
     policy: RetrievalCoordinationPolicy = BASELINE_RETRIEVAL_COORDINATION_POLICY
+    admissibility_port: EvidenceAdmissibilityPort | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.search_port, EvidenceSearchPort):
             raise TypeError("search_port must implement EvidenceSearchPort")
         if not isinstance(self.policy, RetrievalCoordinationPolicy):
             raise TypeError("policy must be a RetrievalCoordinationPolicy")
+        if self.admissibility_port is not None and not isinstance(
+            self.admissibility_port, EvidenceAdmissibilityPort
+        ):
+            raise TypeError(
+                "admissibility_port must implement EvidenceAdmissibilityPort"
+            )
 
     def coordinate(self, *, request: EvidenceRequest) -> RetrievalCoordinationResult:
         if type(request) is not EvidenceRequest:
@@ -73,6 +83,7 @@ class RetrievalCoordinator:
         channel_results, unavailable_channels, limitations = self._search_channels(query)
         ranked_candidates, dropped_limitations = self._fuse_and_rank(
             request=request,
+            query=query,
             channel_results=channel_results,
         )
         limitations.extend(dropped_limitations)
@@ -153,6 +164,7 @@ class RetrievalCoordinator:
         self,
         *,
         request: EvidenceRequest,
+        query: RetrievalQuery,
         channel_results: list[RetrievalSearchResult],
     ) -> tuple[tuple[FusedRetrievalCandidate, ...], list[str]]:
         results_by_channel = {result.channel: result for result in channel_results}
@@ -165,28 +177,29 @@ class RetrievalCoordinator:
 
         occurrences_by_identity: dict[RetrievalIdentity, list[RetrievalCandidate]] = {}
         ranks_by_identity: dict[RetrievalIdentity, dict[RetrievalChannel, int]] = {}
-        for rank, candidate in enumerate(structured.candidates, start=1):
-            identity = RetrievalIdentity.from_candidate(candidate)
-            occurrences_by_identity.setdefault(identity, []).append(candidate)
-            ranks_by_identity.setdefault(identity, {}).setdefault(
-                RetrievalChannel.STRUCTURED,
-                rank,
-            )
-        admissible_identities = frozenset(occurrences_by_identity)
-
         dropped_channels: list[RetrievalChannel] = []
-        for channel in _CHANNEL_EXECUTION_ORDER[1:]:
+        admissibility_port = self._resolved_admissibility_port()
+        fallback_admissible_identities = frozenset(
+            RetrievalIdentity.from_candidate(candidate)
+            for candidate in structured.candidates
+        )
+        for channel in _CHANNEL_EXECUTION_ORDER:
             result = results_by_channel.get(channel)
             if result is None:
                 continue
             dropped = False
             for rank, candidate in enumerate(result.candidates, start=1):
-                identity = RetrievalIdentity.from_candidate(candidate)
-                if identity not in admissible_identities:
+                if not self._is_admissible(
+                    candidate=candidate,
+                    query=query,
+                    port=admissibility_port,
+                    fallback_admissible_identities=fallback_admissible_identities,
+                ):
                     dropped = True
                     continue
-                occurrences_by_identity[identity].append(candidate)
-                ranks_by_identity[identity].setdefault(channel, rank)
+                identity = RetrievalIdentity.from_candidate(candidate)
+                occurrences_by_identity.setdefault(identity, []).append(candidate)
+                ranks_by_identity.setdefault(identity, {}).setdefault(channel, rank)
             if dropped:
                 dropped_channels.append(channel)
 
@@ -259,3 +272,25 @@ class RetrievalCoordinator:
             for channel in dropped_channels
         ]
         return ranked, limitations
+
+    def _resolved_admissibility_port(self) -> EvidenceAdmissibilityPort | None:
+        if self.admissibility_port is not None:
+            return self.admissibility_port
+        if isinstance(self.search_port, EvidenceAdmissibilityPort):
+            return self.search_port
+        return None
+
+    @staticmethod
+    def _is_admissible(
+        *,
+        candidate: RetrievalCandidate,
+        query: RetrievalQuery,
+        port: EvidenceAdmissibilityPort | None,
+        fallback_admissible_identities: frozenset[RetrievalIdentity],
+    ) -> bool:
+        if port is None:
+            return (
+                RetrievalIdentity.from_candidate(candidate)
+                in fallback_admissible_identities
+            )
+        return port.is_admissible(candidate=candidate, query=query)

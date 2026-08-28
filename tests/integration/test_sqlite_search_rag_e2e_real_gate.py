@@ -116,7 +116,7 @@ def test_scn_02_runs_full_harness_over_fresh_migrated_sqlite(
             RetrievalChannel.RELATIONAL,
             RetrievalChannel.SEMANTIC,
         )
-        assert len(witness.retrieval.ranked_candidates) == 1
+        assert len(witness.retrieval.ranked_candidates) == 3
         fused = witness.retrieval.ranked_candidates[0]
         assert tuple(fused.channel_ranks) == (
             RetrievalChannel.STRUCTURED,
@@ -125,9 +125,25 @@ def test_scn_02_runs_full_harness_over_fresh_migrated_sqlite(
         assert fused.representative.source_ref == "notion:absence"
         assert fused.representative.locator.startswith("search-chunk:")
         assert fused.representative.version_or_checksum
-        assert len(witness.materialized) == 1
+        lexical_only = witness.retrieval.ranked_candidates[1:]
+        assert all(
+            tuple(candidate.channel_ranks) == (RetrievalChannel.LEXICAL,)
+            and candidate.representative.channel is RetrievalChannel.LEXICAL
+            for candidate in lexical_only
+        )
+        assert len(
+            {
+                candidate.representative.source_ref
+                for candidate in witness.retrieval.ranked_candidates
+            }
+        ) == 3
+        assert len(witness.materialized) == 3
         assert witness.materialized[0].item.locator == fused.representative.locator
-        assert witness.evidence_set.coverage["materialized_count"] == 1
+        assert tuple(item.item.locator for item in witness.materialized) == tuple(
+            candidate.representative.locator
+            for candidate in witness.retrieval.ranked_candidates
+        )
+        assert witness.evidence_set.coverage["materialized_count"] == 3
         assert witness.security.document_instructions_authoritative is False
         assert witness.security.external_actions_allowed is False
         assert witness.security.links_followed is False

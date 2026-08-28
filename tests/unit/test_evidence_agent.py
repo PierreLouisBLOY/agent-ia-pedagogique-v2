@@ -126,6 +126,7 @@ def _result_meta(
 def _fused(
     rank: int = 1,
     *,
+    channel: RetrievalChannel = RetrievalChannel.STRUCTURED,
     object_id: str = "object-1",
     version: str | None = "v1",
     candidate_id: str | None = None,
@@ -138,11 +139,15 @@ def _fused(
 ) -> FusedRetrievalCandidate:
     representative = RetrievalCandidate(
         candidate_id=candidate_id or f"candidate-{rank}",
-        channel=RetrievalChannel.STRUCTURED,
+        channel=channel,
         source_ref=f"source-{object_id}",
         source_kind="canonical_document",
         locator=f"document:{object_id}",
-        signals=RetrievalSignals(structured_rank=rank - 1),
+        signals=(
+            RetrievalSignals(structured_rank=rank - 1)
+            if channel is RetrievalChannel.STRUCTURED
+            else RetrievalSignals(lexical_score=Decimal(1) / Decimal(rank))
+        ),
         canonical_object_ref=f"canonical:{object_id}" if canonical else None,
         version_or_checksum=version,
         provenance=provenance or {},
@@ -155,7 +160,7 @@ def _fused(
         identity=identity,
         representative=representative,
         occurrences=(representative,),
-        channel_ranks={RetrievalChannel.STRUCTURED: rank},
+        channel_ranks={channel: rank},
         fusion_score=Decimal(1) / Decimal(60 + rank),
         technical_rank=rank,
     )
@@ -168,7 +173,16 @@ def _retrieval(
     unavailable: tuple[RetrievalChannel, ...] = (),
     limitations: tuple[str, ...] = (),
 ) -> RetrievalCoordinationResult:
-    structured_candidates = tuple(item.representative for item in candidates)
+    structured_candidates = tuple(
+        item.representative
+        for item in candidates
+        if item.representative.channel is RetrievalChannel.STRUCTURED
+    )
+    lexical_candidates = tuple(
+        item.representative
+        for item in candidates
+        if item.representative.channel is RetrievalChannel.LEXICAL
+    )
     return RetrievalCoordinationResult(
         query=RetrievalQuery(
             search_goal="Find evidence",
@@ -185,7 +199,10 @@ def _retrieval(
                 channel=RetrievalChannel.STRUCTURED,
                 candidates=structured_candidates,
             ),
-            RetrievalSearchResult(channel=RetrievalChannel.LEXICAL, candidates=()),
+            RetrievalSearchResult(
+                channel=RetrievalChannel.LEXICAL,
+                candidates=lexical_candidates,
+            ),
         ),
         unavailable_channels=unavailable,
         limitations=limitations,
@@ -504,6 +521,16 @@ def test_relevance_contains_only_explainable_technical_data() -> None:
         key not in item.item.relevance
         for key in ("truth_score", "validated", "sufficient", "authority_score")
     )
+
+
+def test_lexical_only_admitted_candidate_can_be_materialized() -> None:
+    candidate = _fused(channel=RetrievalChannel.LEXICAL)
+
+    item = _materialize(candidate)
+
+    assert item.channels == (RetrievalChannel.LEXICAL,)
+    assert item.item.relevance["channel_ranks"] == {"LEXICAL": 1}
+    assert item.item.relevance["channels"] == ("LEXICAL",)
 
 
 def test_prompt_injection_content_remains_verbatim_data() -> None:

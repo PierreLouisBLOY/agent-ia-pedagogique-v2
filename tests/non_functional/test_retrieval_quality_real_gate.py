@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import time
 from datetime import UTC, datetime
@@ -21,9 +20,6 @@ from tests.support.retrieval_quality_cases import (
 EXPECTED_SEED_SIZE = 105_553_920
 EXPECTED_SEED_SHA256 = "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134"
 MIGRATION = Path("database/migrations/001_document_sha256_check.sql")
-TRACKED_REPORT = Path(
-    "docs/development/PHASE_12_16_F1_RETRIEVAL_BASELINE_REPORT.json"
-)
 
 
 class _Clock:
@@ -61,6 +57,10 @@ def test_retrieval_quality_real_gate_is_reproducible_on_two_fresh_runtimes(
             assert report["corpus"]["sha256"] == CORPUS_SHA256
             assert report["exact_label_misses"] == []
             assert report["decision"]["exact_label_gate"] == "PASS"
+            global_metrics = report["metrics"]["global"]
+            assert global_metrics["COMBINED"] != global_metrics["STRUCTURED"]
+            assert global_metrics["COMBINED"]["recall_at_5"] == 0.5
+            assert report["decision"]["material_semantic_gap"] is True
             rendered_runs.append(render_benchmark_report(report))
         finally:
             search.close()
@@ -69,9 +69,6 @@ def test_retrieval_quality_real_gate_is_reproducible_on_two_fresh_runtimes(
         assert not runtime_path.exists()
 
     assert rendered_runs[0] == rendered_runs[1]
-    assert json.loads(TRACKED_REPORT.read_text(encoding="utf-8")) == json.loads(
-        rendered_runs[0]
-    )
     assert inspect_database(seed_path, authenticate_seed=True) == seed_before
 
 

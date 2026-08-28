@@ -7,6 +7,7 @@ import pytest
 
 from backend.agent_runtime.agents.evidence import (
     BASELINE_RETRIEVAL_COORDINATION_POLICY,
+    EvidenceAdmissibilityPort,
     FusedRetrievalCandidate,
     RetrievalCandidate,
     RetrievalChannel,
@@ -63,6 +64,21 @@ class FakeSearchPort:
         if isinstance(response, RetrievalChannelUnavailable):
             raise response
         return response
+
+
+class FakeAdmissibilityPort:
+    def __init__(self, admitted_refs: set[str]) -> None:
+        self.admitted_refs = admitted_refs
+        self.calls: list[tuple[RetrievalCandidate, RetrievalQuery]] = []
+
+    def is_admissible(
+        self,
+        *,
+        candidate: RetrievalCandidate,
+        query: RetrievalQuery,
+    ) -> bool:
+        self.calls.append((candidate, query))
+        return candidate.canonical_object_ref in self.admitted_refs
 
 
 def _meta() -> ContractMeta[InvocationStatus]:
@@ -336,15 +352,33 @@ def test_identity_normalizes_typed_references_deterministically() -> None:
     )
 
 
-def test_fused_candidate_requires_structured_occurrence() -> None:
+def test_fused_candidate_allows_lexical_occurrence_after_external_admission() -> None:
     lexical = _candidate(RetrievalChannel.LEXICAL)
-    with pytest.raises(ValueError):
+    fused = FusedRetrievalCandidate(
+        identity=RetrievalIdentity.from_candidate(lexical),
+        representative=lexical,
+        occurrences=(lexical,),
+        channel_ranks={RetrievalChannel.LEXICAL: 1},
+        fusion_score=Decimal("0.1"),
+        technical_rank=1,
+    )
+    assert fused.representative is lexical
+    assert tuple(fused.channel_ranks) == (RetrievalChannel.LEXICAL,)
+
+
+def test_fused_candidate_requires_structured_representative_when_present() -> None:
+    structured = _candidate(RetrievalChannel.STRUCTURED)
+    lexical = _candidate(RetrievalChannel.LEXICAL)
+    with pytest.raises(ValueError, match="prefer a STRUCTURED"):
         FusedRetrievalCandidate(
-            identity=RetrievalIdentity.from_candidate(lexical),
+            identity=RetrievalIdentity.from_candidate(structured),
             representative=lexical,
-            occurrences=(lexical,),
-            channel_ranks={RetrievalChannel.LEXICAL: 1},
-            fusion_score=Decimal("0.1"),
+            occurrences=(structured, lexical),
+            channel_ranks={
+                RetrievalChannel.STRUCTURED: 1,
+                RetrievalChannel.LEXICAL: 1,
+            },
+            fusion_score=Decimal("0.2"),
             technical_rank=1,
         )
 
@@ -693,3 +727,91 @@ def test_coordinator_never_synthesizes_candidates_to_fill_top_k() -> None:
         request=_request(max_items=10)
     )
     assert len(result.ranked_candidates) == 1
+
+
+def test_explicit_admission_allows_lexical_only_canonical_candidate() -> None:
+    responses = _full_responses()
+    responses[RetrievalChannel.STRUCTURED] = _result(RetrievalChannel.STRUCTURED)
+    responses[RetrievalChannel.RELATIONAL] = _result(RetrievalChannel.RELATIONAL)
+    responses[RetrievalChannel.SEMANTIC] = _result(RetrievalChannel.SEMANTIC)
+    gate = FakeAdmissibilityPort({"canonical:object-1"})
+
+    result = RetrievalCoordinator(
+        FakeSearchPort(responses),
+        admissibility_port=gate,
+    ).coordinate(request=_request())
+
+    assert isinstance(gate, EvidenceAdmissibilityPort)
+    assert len(result.ranked_candidates) == 1
+    fused = result.ranked_candidates[0]
+    assert fused.representative.channel is RetrievalChannel.LEXICAL
+    assert tuple(fused.channel_ranks) == (RetrievalChannel.LEXICAL,)
+
+
+def test_explicit_admission_rejects_lexical_only_inadmissible_candidate() -> None:
+    responses = _full_responses()
+    responses[RetrievalChannel.STRUCTURED] = _result(RetrievalChannel.STRUCTURED)
+    responses[RetrievalChannel.RELATIONAL] = _result(RetrievalChannel.RELATIONAL)
+    responses[RetrievalChannel.SEMANTIC] = _result(RetrievalChannel.SEMANTIC)
+
+    result = RetrievalCoordinator(
+        FakeSearchPort(responses),
+        admissibility_port=FakeAdmissibilityPort(set()),
+    ).coordinate(request=_request())
+
+    assert result.ranked_candidates == ()
+    assert result.limitations == ("INADMISSIBLE_CANDIDATES_DROPPED:LEXICAL",)
+
+
+def test_explicit_admission_preserves_structured_representative_preference() -> None:
+    responses = _full_responses()
+    gate = FakeAdmissibilityPort({"canonical:object-1"})
+
+    fused = RetrievalCoordinator(
+        FakeSearchPort(responses),
+        admissibility_port=gate,
+    ).coordinate(request=_request()).ranked_candidates[0]
+
+    assert fused.representative.channel is RetrievalChannel.STRUCTURED
+    assert tuple(fused.channel_ranks) == (
+        RetrievalChannel.STRUCTURED,
+        RetrievalChannel.LEXICAL,
+        RetrievalChannel.RELATIONAL,
+        RetrievalChannel.SEMANTIC,
+    )
+
+
+def test_admission_receives_unwidened_scope_filters_and_source_policy() -> None:
+    responses = _full_responses()
+    gate = FakeAdmissibilityPort({"canonical:object-1"})
+    request = _request()
+
+    RetrievalCoordinator(
+        FakeSearchPort(responses),
+        admissibility_port=gate,
+    ).coordinate(request=request)
+
+    assert gate.calls
+    for _, query in gate.calls:
+        assert dict(query.scope) == dict(request.scope)
+        assert dict(query.filters) == dict(request.filters)
+        assert dict(query.source_policy) == dict(request.source_policy)
+        assert dict(query.required_authority or {}) == dict(
+            request.required_authority or {}
+        )
+
+
+def test_future_semantic_only_candidate_uses_same_admission_gate() -> None:
+    responses = _full_responses()
+    responses[RetrievalChannel.STRUCTURED] = _result(RetrievalChannel.STRUCTURED)
+    responses[RetrievalChannel.LEXICAL] = _result(RetrievalChannel.LEXICAL)
+    responses[RetrievalChannel.RELATIONAL] = _result(RetrievalChannel.RELATIONAL)
+    gate = FakeAdmissibilityPort({"canonical:object-1"})
+
+    result = RetrievalCoordinator(
+        FakeSearchPort(responses),
+        admissibility_port=gate,
+    ).coordinate(request=_request())
+
+    assert len(result.ranked_candidates) == 1
+    assert result.ranked_candidates[0].representative.channel is RetrievalChannel.SEMANTIC

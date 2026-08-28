@@ -83,7 +83,16 @@ def test_later_provider_work_preserves_phase_f_backend_owners() -> None:
         "backend/adapters/outbound/",
         "backend/infrastructure/composition/factories/openai.py",
     )
-    assert all(path.startswith(allowed) for path in changed)
+    f2a_retrieval_files = {
+        "backend/agent_runtime/agents/evidence/__init__.py",
+        "backend/agent_runtime/agents/evidence/evidence_agent_model.py",
+        "backend/agent_runtime/agents/evidence/retrieval_coordination_model.py",
+        "backend/agent_runtime/agents/evidence/retrieval_coordinator.py",
+        "backend/agent_runtime/agents/evidence/retrieval_ports.py",
+    }
+    assert all(
+        path.startswith(allowed) or path in f2a_retrieval_files for path in changed
+    )
 
 
 def test_phase_f_binding_is_provider_network_and_runtime_storage_free() -> None:

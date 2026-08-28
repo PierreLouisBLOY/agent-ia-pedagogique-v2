@@ -56,6 +56,41 @@ class SQLiteEvidenceSearchAdapter:
             metrics={"candidate_count": len(hits), "engine": "sqlite"},
         )
 
+    def is_admissible(
+        self,
+        *,
+        candidate: RetrievalCandidate,
+        query: RetrievalQuery,
+    ) -> bool:
+        if not _query_constraints_supported(query):
+            return False
+        if (
+            candidate.source_kind != "canonical_search_chunk"
+            or not isinstance(candidate.source_ref, str)
+            or candidate.canonical_object_ref != candidate.source_ref
+            or candidate.version_or_checksum is None
+            or candidate.provenance.get("boundary") != "sqlite-op11"
+            or candidate.authority.get("basis") != "canonical-registry"
+            or candidate.authority.get("absolute") is not False
+            or candidate.metadata.get("freshness") != "CURRENT"
+        ):
+            return False
+        if not self._search.is_current_canonical_passage(
+            entity_ref=candidate.source_ref,
+            passage_ref=candidate.locator,
+            version_or_checksum=candidate.version_or_checksum,
+        ):
+            return False
+        level = query.scope.get("level")
+        if isinstance(level, str) and not self._search.canonical_object_matches_level(
+            candidate.source_ref, level
+        ):
+            return False
+        topic = query.scope.get("topic")
+        return not isinstance(topic, str) or self._search.canonical_object_matches_topic(
+            candidate.source_ref, topic
+        )
+
     def close(self) -> None:
         self._search.close()
 
@@ -109,8 +144,31 @@ def _candidate(
         version_or_checksum=hit.version_or_checksum,
         provenance={
             "boundary": "sqlite-op11",
-            "object_kind": hit.entity_kind,
+            "chunk_type": hit.entity_kind,
+            "object_kind": hit.registry_object_type,
         },
         authority={"basis": "canonical-registry", "absolute": False},
         metadata={"freshness": "CURRENT"},
     )
+
+
+def _query_constraints_supported(query: RetrievalQuery) -> bool:
+    scope_keys = set(query.scope)
+    if not scope_keys.issubset({"level", "topic"}):
+        return False
+    for field_name in ("level", "topic"):
+        value = query.scope.get(field_name)
+        if value is not None and (not isinstance(value, str) or not value.strip()):
+            return False
+    if set(query.source_policy) != {"kinds"}:
+        return False
+    kinds = query.source_policy.get("kinds")
+    if not isinstance(kinds, tuple) or kinds != ("canonical",):
+        return False
+    if dict(query.filters) != {"active": True}:
+        return False
+    if query.required_authority is not None and dict(query.required_authority) != {
+        "basis": "canonical-registry"
+    }:
+        return False
+    return True

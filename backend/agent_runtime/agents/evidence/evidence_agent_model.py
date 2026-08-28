@@ -115,8 +115,6 @@ class MaterializedEvidence:
         _validate_channel_tuple(self.channels, "channels")
         if not self.channels:
             raise ValueError("channels must not be empty")
-        if RetrievalChannel.STRUCTURED not in self.channels:
-            raise ValueError("channels must contain STRUCTURED")
         if not isinstance(self.freshness, EvidenceFreshnessStatus):
             raise TypeError("freshness must be an EvidenceFreshnessStatus")
         _validate_string_tuple(self.limitations, "limitations")

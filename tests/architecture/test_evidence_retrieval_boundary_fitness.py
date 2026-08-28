@@ -7,6 +7,7 @@ from dataclasses import fields
 from pathlib import Path
 
 from backend.agent_runtime.agents.evidence import (
+    EvidenceAdmissibilityPort,
     EvidenceDocumentContentPort,
     EvidenceSearchPort,
     RetrievalCandidate,
@@ -170,6 +171,8 @@ def test_retrieval_models_expose_no_combined_truth_or_authority_score() -> None:
 
 
 def test_ports_are_runtime_checkable_protocols_with_exact_operations() -> None:
+    assert getattr(EvidenceAdmissibilityPort, "_is_protocol", False)
+    assert getattr(EvidenceAdmissibilityPort, "_is_runtime_protocol", False)
     assert getattr(EvidenceSearchPort, "_is_protocol", False)
     assert getattr(EvidenceSearchPort, "_is_runtime_protocol", False)
     assert getattr(EvidenceDocumentContentPort, "_is_protocol", False)
@@ -178,6 +181,11 @@ def test_ports_are_runtime_checkable_protocols_with_exact_operations() -> None:
         "self",
         "query",
         "channel",
+    )
+    assert tuple(inspect.signature(EvidenceAdmissibilityPort.is_admissible).parameters) == (
+        "self",
+        "candidate",
+        "query",
     )
     assert tuple(inspect.signature(EvidenceDocumentContentPort.fetch).parameters) == (
         "self",
@@ -193,12 +201,20 @@ def test_no_production_port_implementation_or_separate_semantic_port_exists() ->
         if isinstance(node, ast.ClassDef)
     }
     assert classes["EvidenceSearchPort"] == ("Protocol",)
+    assert classes["EvidenceAdmissibilityPort"] == ("Protocol",)
     assert classes["EvidenceDocumentContentPort"] == ("Protocol",)
     assert "SemanticPort" not in classes
     assert all(
-        "EvidenceSearchPort" not in bases and "EvidenceDocumentContentPort" not in bases
+        "EvidenceSearchPort" not in bases
+        and "EvidenceAdmissibilityPort" not in bases
+        and "EvidenceDocumentContentPort" not in bases
         for name, bases in classes.items()
-        if name not in {"EvidenceSearchPort", "EvidenceDocumentContentPort"}
+        if name
+        not in {
+            "EvidenceAdmissibilityPort",
+            "EvidenceSearchPort",
+            "EvidenceDocumentContentPort",
+        }
     )
 
 

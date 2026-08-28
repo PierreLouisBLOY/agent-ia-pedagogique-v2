@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+from dataclasses import replace
 from datetime import UTC, datetime
 from decimal import Decimal
 
@@ -52,12 +53,44 @@ def _connection() -> sqlite3.Connection:
             text TEXT NOT NULL,
             status TEXT NOT NULL
         );
+        CREATE TABLE level(
+            id TEXT PRIMARY KEY,
+            code TEXT,
+            label TEXT NOT NULL
+        );
+        CREATE TABLE pedagogical_context(
+            id TEXT PRIMARY KEY,
+            level_id TEXT
+        );
+        CREATE TABLE notion_context(
+            notion_id TEXT NOT NULL,
+            context_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            status TEXT NOT NULL
+        );
         CREATE VIRTUAL TABLE search_chunk_fts USING fts5(text);
         INSERT INTO notion VALUES ('notion:absence', 'absence', 'CANONICAL');
+        INSERT INTO notion VALUES ('notion:deprecated', 'deprecated', 'MERGED');
         INSERT INTO object_registry VALUES ('notion:absence', 'NOTION');
+        INSERT INTO object_registry VALUES ('notion:deprecated', 'NOTION');
         INSERT INTO search_chunk VALUES (
             'search-chunk:absence', 'notion:absence', 'NOTION_LABEL',
             'sha256:absence-v1', 'Absence', 'CURRENT'
+        );
+        INSERT INTO search_chunk VALUES (
+            'search-chunk:absence-stale', 'notion:absence', 'NOTION_ALIAS',
+            'sha256:absence-stale', 'Archived absence', 'STALE'
+        );
+        INSERT INTO search_chunk VALUES (
+            'search-chunk:deprecated', 'notion:deprecated', 'NOTION_LABEL',
+            'sha256:deprecated', 'Deprecated', 'CURRENT'
+        );
+        INSERT INTO level VALUES ('level:terminale-stmg', 'terminale-stmg', 'Terminale STMG');
+        INSERT INTO pedagogical_context VALUES (
+            'context:terminale-stmg', 'level:terminale-stmg'
+        );
+        INSERT INTO notion_context VALUES (
+            'notion:absence', 'context:terminale-stmg', 'RELEVANT', 'ACTIVE'
         );
         INSERT INTO search_chunk_fts(rowid, text)
         SELECT rowid, text FROM search_chunk;
@@ -66,10 +99,23 @@ def _connection() -> sqlite3.Connection:
     return connection
 
 
-def _query() -> RetrievalQuery:
+def _query(
+    *,
+    level: str = "terminale-stmg",
+    topic: str | None = None,
+    source_policy: dict[str, object] | None = None,
+    filters: dict[str, object] | None = None,
+) -> RetrievalQuery:
+    scope = {"level": level}
+    if topic is not None:
+        scope["topic"] = topic
     return RetrievalQuery(
-        "absence", {"level": "terminale-stmg"}, {"kinds": ("canonical",)},
-        {"active": True}, None, 3
+        "absence",
+        scope,
+        source_policy or {"kinds": ("canonical",)},
+        filters or {"active": True},
+        None,
+        3,
     )
 
 
@@ -92,6 +138,71 @@ def test_structured_and_lexical_channels_share_one_canonical_identity() -> None:
     assert structured_candidate.locator == "search-chunk:absence"
     assert structured_candidate.version_or_checksum == "sha256:absence-v1"
     assert structured_candidate.authority["absolute"] is False
+
+
+def test_sqlite_admission_requires_current_canonical_link_and_matching_scope() -> None:
+    adapter = SQLiteEvidenceSearchAdapter(BusinessSearchAdapter(_connection()))
+    lexical = adapter.search(query=_query(), channel=RetrievalChannel.LEXICAL)
+    candidate = lexical.candidates[0]
+
+    assert adapter.is_admissible(candidate=candidate, query=_query()) is True
+    assert (
+        adapter.is_admissible(
+            candidate=candidate,
+            query=_query(level="premiere-stmg"),
+        )
+        is False
+    )
+    assert adapter.is_admissible(
+        candidate=candidate,
+        query=_query(topic="Absence"),
+    )
+    assert not adapter.is_admissible(
+        candidate=candidate,
+        query=_query(topic="TVA"),
+    )
+    stale = replace(
+        candidate,
+        locator="search-chunk:absence-stale",
+        version_or_checksum="sha256:absence-stale",
+    )
+    assert adapter.is_admissible(candidate=stale, query=_query()) is False
+    noncanonical = replace(
+        candidate,
+        source_ref="notion:deprecated",
+        canonical_object_ref="notion:deprecated",
+        locator="search-chunk:deprecated",
+        version_or_checksum="sha256:deprecated",
+    )
+    assert adapter.is_admissible(candidate=noncanonical, query=_query()) is False
+
+
+def test_sqlite_admission_fails_closed_on_widened_query_constraints() -> None:
+    adapter = SQLiteEvidenceSearchAdapter(BusinessSearchAdapter(_connection()))
+    candidate = adapter.search(
+        query=_query(), channel=RetrievalChannel.LEXICAL
+    ).candidates[0]
+
+    assert (
+        adapter.is_admissible(
+            candidate=candidate,
+            query=_query(source_policy={"kinds": ("canonical", "external")}),
+        )
+        is False
+    )
+    assert (
+        adapter.is_admissible(
+            candidate=candidate,
+            query=_query(filters={"active": False}),
+        )
+        is False
+    )
+
+
+def test_lexical_search_rejects_stale_and_noncanonical_rows_before_admission() -> None:
+    search = BusinessSearchAdapter(_connection())
+    assert search.search("Archived", limit=3) == ()
+    assert search.search("Deprecated", limit=3) == ()
 
 
 @pytest.mark.parametrize(

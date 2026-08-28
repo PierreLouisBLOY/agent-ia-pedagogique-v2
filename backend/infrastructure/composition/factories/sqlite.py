@@ -6,6 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from backend.adapters.outbound.document_content.sqlite import DocumentContentAccessAdapter
+from backend.adapters.outbound.evidence.sqlite import (
+    EvidenceClockPort,
+    SQLiteEvidenceDocumentContentAdapter,
+    SQLiteEvidenceSearchAdapter,
+)
 from backend.adapters.outbound.persistence.migrations import (
     RuntimeProvisioningReport,
     provision_runtime,
@@ -36,6 +41,14 @@ class SQLiteRuntimeComposition:
         return DocumentContentAccessAdapter(
             connect_sqlite(self.paths.runtime_database_path, readonly=True)
         )
+
+    def evidence_search(self) -> SQLiteEvidenceSearchAdapter:
+        return SQLiteEvidenceSearchAdapter(self.business_search())
+
+    def evidence_document_content(
+        self, clock: EvidenceClockPort
+    ) -> SQLiteEvidenceDocumentContentAdapter:
+        return SQLiteEvidenceDocumentContentAdapter(self.document_content(), clock)
 
 
 def build_sqlite_runtime(

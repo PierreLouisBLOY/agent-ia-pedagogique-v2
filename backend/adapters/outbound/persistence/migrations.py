@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import shutil
 import sqlite3
+from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -80,7 +81,7 @@ def _sha256(path: Path) -> str:
 def inspect_database(path: Path, *, authenticate_seed: bool = False) -> DatabaseEvidence:
     size = path.stat().st_size
     digest = _sha256(path)
-    with connect_sqlite(path, readonly=True) as connection:
+    with closing(connect_sqlite(path, readonly=True)) as connection:
         evidence = DatabaseEvidence(
             size,
             digest,
@@ -203,7 +204,7 @@ def provision_runtime(
     shutil.copy2(seed_path, runtime_path)
     artifact = MigrationArtifact.load(migration_path)
     try:
-        with connect_sqlite(runtime_path) as connection:
+        with closing(connect_sqlite(runtime_path)) as connection:
             documents_before = int(connection.execute("SELECT count(*) FROM document").fetchone()[0])
             applied = apply_migration(connection, artifact)
             documents_after = int(connection.execute("SELECT count(*) FROM document").fetchone()[0])

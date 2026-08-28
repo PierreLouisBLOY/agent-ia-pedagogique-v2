@@ -11,6 +11,7 @@ class SearchHit:
     entity_ref: str
     entity_kind: str
     passage_ref: str
+    version_or_checksum: str
     snippet: str
     rank: float
 
@@ -23,7 +24,8 @@ class BusinessSearchAdapter:
         if not 1 <= limit <= 100:
             raise ValueError("search limit must be between 1 and 100")
         rows = self._connection.execute(
-            """SELECT sc.object_id, sc.chunk_type, sc.id, sc.text, bm25(search_chunk_fts)
+            """SELECT sc.object_id, sc.chunk_type, sc.id, sc.chunk_hash,
+                      sc.text, bm25(search_chunk_fts)
                FROM search_chunk_fts AS f
                JOIN search_chunk AS sc ON sc.rowid = f.rowid
                WHERE search_chunk_fts MATCH ?
@@ -32,8 +34,35 @@ class BusinessSearchAdapter:
             (text, limit),
         ).fetchall()
         return tuple(
-            SearchHit(str(row[0]), str(row[1]), str(row[2]), str(row[3]), float(row[4]))
+            SearchHit(
+                str(row[0]), str(row[1]), str(row[2]), str(row[3]),
+                str(row[4]), float(row[5])
+            )
             for row in rows
+        )
+
+    def structured_search(self, text: str, *, limit: int = 5) -> tuple[SearchHit, ...]:
+        """Admit exact canonical notions independently from FTS text authority."""
+        if not 1 <= limit <= 100:
+            raise ValueError("search limit must be between 1 and 100")
+        rows = self._connection.execute(
+            """SELECT sc.object_id, sc.chunk_type, sc.id, sc.chunk_hash, sc.text
+               FROM notion AS n
+               JOIN object_registry AS registry
+                 ON registry.object_id = n.id AND registry.object_type = 'NOTION'
+               JOIN search_chunk AS sc
+                 ON sc.object_id = n.id AND sc.status = 'CURRENT'
+               WHERE n.identity_status = 'CANONICAL'
+                 AND lower(n.canonical_label) = lower(?)
+               ORDER BY sc.id LIMIT ?""",
+            (text, limit),
+        ).fetchall()
+        return tuple(
+            SearchHit(
+                str(row[0]), str(row[1]), str(row[2]), str(row[3]),
+                str(row[4]), float(index)
+            )
+            for index, row in enumerate(rows, start=1)
         )
 
     def close(self) -> None:

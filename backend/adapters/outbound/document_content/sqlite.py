@@ -11,6 +11,7 @@ class ContentFragment:
     source_ref: str
     document_ref: str | None
     passage_ref: str
+    version_or_checksum: str | None
     text: str
     evidence_ref: str
 
@@ -29,20 +30,31 @@ class DocumentContentAccessAdapter:
         ).fetchall()
         return tuple(
             ContentFragment(
-                document_ref, document_ref, str(row[0]), str(row[1]), f"evidence:{row[0]}"
+                document_ref,
+                document_ref,
+                str(row[0]),
+                None,
+                str(row[1]),
+                f"evidence:{row[0]}",
             )
             for row in rows
         )
 
     def read_passage(self, passage_ref: str) -> ContentFragment | None:
         row = self._connection.execute(
-            "SELECT object_id, text FROM search_chunk WHERE id = ? AND status = ?",
+            """SELECT object_id, chunk_hash, text
+               FROM search_chunk WHERE id = ? AND status = ?""",
             (passage_ref, "CURRENT"),
         ).fetchone()
         if row is None:
             return None
         return ContentFragment(
-            str(row[0]), None, passage_ref, str(row[1]), f"evidence:{passage_ref}"
+            str(row[0]),
+            None,
+            passage_ref,
+            str(row[1]),
+            str(row[2]),
+            f"evidence:{passage_ref}",
         )
 
     def close(self) -> None:

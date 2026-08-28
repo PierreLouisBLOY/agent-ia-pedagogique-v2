@@ -17,6 +17,7 @@ from backend.adapters.outbound.persistence.migrations import (
 )
 from backend.adapters.outbound.persistence.sqlite import connect_sqlite
 from backend.adapters.outbound.read_models.sqlite import ReadModelAdapter
+from backend.adapters.outbound.resource_library.sqlite import SQLiteResourceStoreAdapter
 from backend.adapters.outbound.search.sqlite import BusinessSearchAdapter
 from backend.adapters.outbound.transaction.sqlite import SQLiteUnitOfWork
 from backend.infrastructure.config.schemas.sqlite import SQLiteDatabasePaths
@@ -49,6 +50,11 @@ class SQLiteRuntimeComposition:
         self, clock: EvidenceClockPort
     ) -> SQLiteEvidenceDocumentContentAdapter:
         return SQLiteEvidenceDocumentContentAdapter(self.document_content(), clock)
+
+    def resource_store(self) -> SQLiteResourceStoreAdapter:
+        return SQLiteResourceStoreAdapter(
+            connect_sqlite(self.paths.runtime_database_path, readonly=True)
+        )
 
 
 def build_sqlite_runtime(

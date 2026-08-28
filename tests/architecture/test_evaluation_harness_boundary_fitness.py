@@ -11,6 +11,7 @@ QUALITY_EVALUATION = BACKEND / "modules" / "quality_evaluation"
 SCORING = HARNESS / "scoring"
 SCORING_CONTRACTS = HARNESS / "contracts" / "scoring.py"
 RUNNER = HARNESS / "runner"
+REPORTING = HARNESS / "reporting"
 
 
 def _python_files(root: Path) -> tuple[Path, ...]:
@@ -285,6 +286,75 @@ def test_runner_contains_no_reporter_serializer_provider_or_model_token() -> Non
         assert all(fragment not in source for fragment in forbidden_fragments)
 
 
+def test_reporting_has_no_filesystem_network_runtime_or_template_engine() -> None:
+    forbidden_import_roots = {
+        "jinja2",
+        "os",
+        "pathlib",
+        "requests",
+        "socket",
+        "subprocess",
+        "urllib",
+    }
+    imports = {
+        module for path in _python_files(REPORTING) for module in _imports(path)
+    }
+    assert {module.split(".")[0] for module in imports}.isdisjoint(
+        forbidden_import_roots
+    )
+    for path in _python_files(REPORTING):
+        tree = _tree(path)
+        assert not any(
+            isinstance(node, ast.Call)
+            and (
+                isinstance(node.func, ast.Name)
+                and node.func.id == "open"
+                or isinstance(node.func, ast.Attribute)
+                and node.func.attr in {"write_text", "write_bytes"}
+            )
+            for node in ast.walk(tree)
+        )
+
+
+def test_reporting_contracts_exclude_raw_values_and_acceptance_policy() -> None:
+    forbidden_fields = {
+        "accepted",
+        "actual",
+        "exception",
+        "expected",
+        "message",
+        "metadata",
+        "observation_refs",
+        "observation_values",
+        "output",
+        "payload",
+        "prompt",
+        "provider_response",
+        "reasoning",
+        "release_gate",
+        "threshold",
+    }
+    assert _annotated_fields(REPORTING).isdisjoint(forbidden_fields)
+    for path in _python_files(REPORTING):
+        tree = _tree(path)
+        assert not any(
+            isinstance(node, ast.Name) and node.id == "float"
+            for node in ast.walk(tree)
+        )
+
+
+def test_reporting_uses_explicit_serialization_and_defers_junit() -> None:
+    source = "\n".join(
+        path.read_text(encoding="utf-8").lower()
+        for path in _python_files(REPORTING)
+    )
+    assert "asdict" not in source
+    assert "default=str" not in source
+    assert "junit" not in source
+    assert "calibration" not in source
+    assert "provider" not in source
+
+
 def test_harness_has_no_dynamic_loading_or_arbitrary_code_execution() -> None:
     forbidden_names = {"eval", "exec", "__import__"}
     forbidden_attributes = {"import_module"}
@@ -339,6 +409,10 @@ def test_harness_contract_names_are_unique_outside_tests() -> None:
         "RubricScoreResult",
         "RepetitionEvaluationResult",
         "EvaluationRunner",
+        "EvaluationSuiteReport",
+        "EvaluationReportProjector",
+        "EvaluationReportComparator",
+        "EvaluationArtifact",
         "SuiteEvaluationResult",
     }
     definitions = {

@@ -1,4 +1,4 @@
-"""Private, provider-specific transport contracts for the OpenAI adapter."""
+"""Private provider-specific contracts for the shared OpenAI transport."""
 
 from __future__ import annotations
 
@@ -42,6 +42,7 @@ class OpenAIResponsesRequest:
     input_json: str
     output_schema: dict[str, object]
     max_output_tokens: int
+    schema_name: str
 
 
 @dataclass(frozen=True, slots=True)

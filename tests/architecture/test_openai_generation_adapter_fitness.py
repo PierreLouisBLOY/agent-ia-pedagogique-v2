@@ -41,13 +41,17 @@ def test_openai_sdk_import_is_confined_to_the_concrete_transport() -> None:
         )
     ]
     assert sdk_importers == [
-        "backend/adapters/outbound/generation/openai/transport.py",
+        "backend/adapters/outbound/openai/transport.py",
         "tests/unit/test_openai_responses_transport.py",
     ]
 
 
 def test_provider_sdk_and_dtos_do_not_leak_into_agent_or_domain_owners() -> None:
-    forbidden = ("openai", "backend.adapters.outbound.generation.openai")
+    forbidden = (
+        "openai",
+        "backend.adapters.outbound.generation.openai",
+        "backend.adapters.outbound.openai",
+    )
     owners = (
         BACKEND / "agent_runtime",
         BACKEND / "modules",

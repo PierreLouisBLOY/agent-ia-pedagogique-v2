@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from backend.adapters.outbound.generation.openai.contracts import (
+from backend.adapters.outbound.openai.contracts import (
     OpenAIResponsesRequest,
     OpenAIResponsesResponse,
     OpenAIResponsesTransport,

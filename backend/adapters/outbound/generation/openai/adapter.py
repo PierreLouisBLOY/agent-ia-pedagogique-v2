@@ -6,13 +6,13 @@ import json
 from collections.abc import Mapping
 from typing import NoReturn, cast
 
-from backend.adapters.outbound.generation.openai.contracts import (
+from backend.adapters.outbound.generation.openai.mapping import build_openai_request
+from backend.adapters.outbound.openai.contracts import (
     OpenAIResponsesResponse,
     OpenAIResponseStatus,
     OpenAIResponsesTransportFactory,
     OpenAITransportError,
 )
-from backend.adapters.outbound.generation.openai.mapping import build_openai_request
 from backend.agent_runtime.agents.generation import (
     GenerationOperation,
     GenerationPortError,

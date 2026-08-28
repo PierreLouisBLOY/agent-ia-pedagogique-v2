@@ -9,7 +9,7 @@ from openai import OpenAI
 from openai.types.responses.response import Response
 from openai.types.responses.response_create_params import ResponseCreateParamsNonStreaming
 
-from backend.adapters.outbound.generation.openai.contracts import (
+from backend.adapters.outbound.openai.contracts import (
     OpenAIResponsesRequest,
     OpenAIResponsesResponse,
     OpenAIResponseStatus,
@@ -53,7 +53,7 @@ class OpenAISDKResponsesTransport:
                 "stream": False,
                 "text": {
                     "format": {
-                        "name": "pedagogical_generation",
+                        "name": request.schema_name,
                         "schema": request.output_schema,
                         "strict": True,
                         "type": "json_schema",
@@ -87,14 +87,10 @@ class OpenAISDKResponsesTransportFactory:
         secret: ProviderSecretValue,
         timeout_seconds: float,
     ) -> OpenAIResponsesTransport:
-        return OpenAISDKResponsesTransport(
-            secret=secret,
-            timeout_seconds=timeout_seconds,
-        )
+        return OpenAISDKResponsesTransport(secret=secret, timeout_seconds=timeout_seconds)
 
 
 def _normalized_response(response: Response) -> OpenAIResponsesResponse:
-    status = _response_status(response)
     usage = response.usage
     normalized_usage = OpenAIResponseUsage()
     if usage is not None:
@@ -105,7 +101,7 @@ def _normalized_response(response: Response) -> OpenAIResponsesResponse:
             total_tokens=usage.total_tokens,
         )
     return OpenAIResponsesResponse(
-        status=status,
+        status=_response_status(response),
         output_text=response.output_text or None,
         usage=normalized_usage,
     )
@@ -122,9 +118,8 @@ def _response_status(response: Response) -> OpenAIResponseStatus:
 
 
 def _contains_refusal(response: Response) -> bool:
-    for item in response.output:
-        content_items = getattr(item, "content", ())
-        for content in content_items:
-            if getattr(content, "type", None) == "refusal":
-                return True
-    return False
+    return any(
+        getattr(content, "type", None) == "refusal"
+        for item in response.output
+        for content in getattr(item, "content", ())
+    )

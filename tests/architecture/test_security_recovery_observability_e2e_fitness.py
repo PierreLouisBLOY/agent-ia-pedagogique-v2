@@ -70,7 +70,7 @@ def test_recovery_package_has_no_permission_or_gate_decision_constructors() -> N
     assert offenders == ()
 
 
-def test_phase_f_adds_no_backend_production_delta() -> None:
+def test_later_provider_work_preserves_phase_f_backend_owners() -> None:
     result = subprocess.run(
         ["git", "diff", "--name-only", "HEAD", "--", "backend"],
         cwd=ROOT,
@@ -78,7 +78,12 @@ def test_phase_f_adds_no_backend_production_delta() -> None:
         capture_output=True,
         text=True,
     )
-    assert result.stdout.strip() == ""
+    changed = tuple(line for line in result.stdout.splitlines() if line)
+    allowed = (
+        "backend/adapters/outbound/",
+        "backend/infrastructure/composition/factories/openai.py",
+    )
+    assert all(path.startswith(allowed) for path in changed)
 
 
 def test_phase_f_binding_is_provider_network_and_runtime_storage_free() -> None:

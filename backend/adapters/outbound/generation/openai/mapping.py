@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 
-from backend.adapters.outbound.generation.openai.contracts import OpenAIResponsesRequest
+from backend.adapters.outbound.openai.contracts import OpenAIResponsesRequest
 from backend.agent_runtime.agents.generation import GenerationPortError
 from backend.agent_runtime.agents.generation.generation_model import (
     GenerationOperation,
@@ -81,6 +81,7 @@ def build_openai_request(
         input_json=input_json,
         output_schema=_output_schema(request.expected_sections),
         max_output_tokens=max_output_tokens,
+        schema_name="pedagogical_generation",
     )
 
 

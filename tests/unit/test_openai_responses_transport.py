@@ -37,6 +37,7 @@ def _request() -> OpenAIResponsesRequest:
         input_json='{"objective":"test"}',
         output_schema={"type": "object"},
         max_output_tokens=1_000,
+        schema_name="pedagogical_generation",
     )
 
 
@@ -62,7 +63,7 @@ def test_sdk_transport_uses_one_non_stored_tool_free_non_streaming_call(
         return SimpleNamespace(responses=responses)
 
     monkeypatch.setattr(
-        "backend.adapters.outbound.generation.openai.transport.OpenAI",
+        "backend.adapters.outbound.openai.transport.OpenAI",
         fake_openai,
     )
     transport = OpenAISDKResponsesTransport(
@@ -109,7 +110,7 @@ def test_sdk_timeout_is_mapped_without_raw_exception_text(
     )
     responses = _FakeResponses(error=error)
     monkeypatch.setattr(
-        "backend.adapters.outbound.generation.openai.transport.OpenAI",
+        "backend.adapters.outbound.openai.transport.OpenAI",
         lambda **_: SimpleNamespace(responses=responses),
     )
     transport = OpenAISDKResponsesTransport(

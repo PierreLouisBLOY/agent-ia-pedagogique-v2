@@ -171,8 +171,10 @@ def test_catalog_exposes_test_metadata_without_new_runtime_authority() -> None:
     assert not hasattr(CanonicalPedagogicalScenario, "capability_id")
 
 
-def test_provider_scaffold_remains_outside_b() -> None:
+def test_provider_owner_remains_outside_e2e_core() -> None:
     assert tuple(sorted(path.name for path in PROVIDERS.iterdir() if path.is_file())) == (
         ".gitkeep",
+        "__init__.py",
     )
+    assert (PROVIDERS / "anthropic").is_dir()
     assert not (E2E_CORE / "__init__.py").exists()

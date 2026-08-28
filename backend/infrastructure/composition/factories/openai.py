@@ -6,9 +6,12 @@ from typing import NoReturn
 
 from backend.adapters.outbound.generation.openai import (
     OpenAIGenerationAdapter,
+)
+from backend.adapters.outbound.openai import (
     OpenAIResponsesTransportFactory,
     OpenAISDKResponsesTransportFactory,
 )
+from backend.adapters.outbound.review.openai import OpenAIReviewAdapter
 from backend.infrastructure.config.effective_config.provider import (
     EffectiveProviderConfiguration,
 )
@@ -47,6 +50,40 @@ def build_openai_generation_adapter(
     model = _model_by_id(configuration, route.primary_model_profile_id.value)
     provider = _provider_by_id(configuration, model.provider_profile_id.value)
     return OpenAIGenerationAdapter(
+        provider_profile=provider,
+        model_profile=model,
+        secret_resolver=secret_resolver,
+        transport_factory=(
+            transport_factory
+            if transport_factory is not None
+            else OpenAISDKResponsesTransportFactory()
+        ),
+    )
+
+
+def build_openai_review_adapter(
+    *,
+    configuration: EffectiveProviderConfiguration,
+    secret_resolver: ProviderSecretResolver,
+    transport_factory: OpenAIResponsesTransportFactory | None = None,
+) -> OpenAIReviewAdapter:
+    """Compose only the configured Review primary; never execute fallbacks."""
+
+    if type(configuration) is not EffectiveProviderConfiguration:
+        raise TypeError("configuration must be an EffectiveProviderConfiguration")
+    route = next(
+        (
+            item
+            for item in configuration.routes
+            if item.workload_kind is ProviderWorkloadKind.REVIEW
+        ),
+        None,
+    )
+    if route is None:
+        _configuration_error()
+    model = _model_by_id(configuration, route.primary_model_profile_id.value)
+    provider = _provider_by_id(configuration, model.provider_profile_id.value)
+    return OpenAIReviewAdapter(
         provider_profile=provider,
         model_profile=model,
         secret_resolver=secret_resolver,

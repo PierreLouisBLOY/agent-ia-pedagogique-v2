@@ -108,4 +108,4 @@ def test_boundaries_are_unique_typed_and_runtime_checkable() -> None:
 def test_runtime_dependencies_remain_empty() -> None:
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
-    assert project["project"]["dependencies"] == []
+    assert project["project"]["dependencies"] == ["openai>=3.5,<4"]

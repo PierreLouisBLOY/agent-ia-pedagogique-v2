@@ -37,6 +37,6 @@ python -m ruff check .
 python -m mypy backend
 ```
 
-Les seules dependances directes de developpement sont `pytest`, `ruff` et `mypy`, epinglees dans `requirements-dev.txt`. Aucune dependance runtime n'est declaree a cette phase.
+Les seules dependances directes de developpement sont `pytest`, `ruff` et `mypy`, epinglees dans `requirements-dev.txt`. La seule dependance runtime directe est le SDK Python officiel `openai`, borne a la version majeure calibree dans `pyproject.toml`.
 
 Ne placer aucun secret dans un fichier suivi par Git. Les fichiers `.env*`, bases runtime, logs, exports et artefacts d'execution sont ignores et doivent rester hors du source tree.

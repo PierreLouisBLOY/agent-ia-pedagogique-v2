@@ -247,4 +247,4 @@ def test_registry_access_matrix_and_dependencies_remain_unchanged() -> None:
         for code in ("CAP-G01", "CAP-G02", "CAP-G03")
     )
     with (ROOT / "pyproject.toml").open("rb") as pyproject_file:
-        assert tomllib.load(pyproject_file)["project"]["dependencies"] == []
+        assert tomllib.load(pyproject_file)["project"]["dependencies"] == ["openai>=3.5,<4"]

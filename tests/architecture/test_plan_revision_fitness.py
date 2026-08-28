@@ -241,4 +241,4 @@ def test_plan_remains_frozen_and_runtime_dependencies_remain_empty() -> None:
     assert "plan_version" in {item.name for item in fields(Plan)}
     with (ROOT / "pyproject.toml").open("rb") as pyproject_file:
         project = tomllib.load(pyproject_file)["project"]
-    assert project["dependencies"] == []
+    assert project["dependencies"] == ["openai>=3.5,<4"]

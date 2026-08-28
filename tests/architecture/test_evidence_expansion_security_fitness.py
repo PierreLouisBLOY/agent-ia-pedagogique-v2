@@ -229,4 +229,4 @@ def test_expansion_baseline_is_linked_to_runtime_policy_and_three_rounds() -> No
 
 def test_project_runtime_dependencies_remain_empty() -> None:
     with (ROOT / "pyproject.toml").open("rb") as pyproject_file:
-        assert tomllib.load(pyproject_file)["project"]["dependencies"] == []
+        assert tomllib.load(pyproject_file)["project"]["dependencies"] == ["openai>=3.5,<4"]

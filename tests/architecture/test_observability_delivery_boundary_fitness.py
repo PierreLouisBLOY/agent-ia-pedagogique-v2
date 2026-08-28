@@ -179,4 +179,4 @@ def test_failure_path_has_no_recursive_observation_or_raw_exception_storage() ->
 def test_project_dependencies_remain_empty() -> None:
     with (ROOT / "pyproject.toml").open("rb") as stream:
         project = tomllib.load(stream)["project"]
-    assert project["dependencies"] == []
+    assert project["dependencies"] == ["openai>=3.5,<4"]

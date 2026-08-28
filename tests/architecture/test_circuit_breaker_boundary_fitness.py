@@ -165,4 +165,4 @@ def test_f_exposes_no_manual_reset_or_force_api() -> None:
 def test_project_dependencies_remain_empty() -> None:
     with (ROOT / "pyproject.toml").open("rb") as stream:
         project = tomllib.load(stream)["project"]
-    assert project["dependencies"] == []
+    assert project["dependencies"] == ["openai>=3.5,<4"]

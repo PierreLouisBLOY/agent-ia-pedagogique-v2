@@ -84,7 +84,7 @@ def test_no_provider_network_database_or_yaml_dependency_exists() -> None:
     imports = {module for path in DECLARATION_MODULES for module in _imports(path)}
     assert {module.split(".")[0] for module in imports}.isdisjoint(forbidden_roots)
     with (ROOT / "pyproject.toml").open("rb") as stream:
-        assert tomllib.load(stream)["project"]["dependencies"] == []
+        assert tomllib.load(stream)["project"]["dependencies"] == ["openai>=3.5,<4"]
 
 
 def test_no_raw_golden_snapshot_or_business_fixture_file_exists() -> None:

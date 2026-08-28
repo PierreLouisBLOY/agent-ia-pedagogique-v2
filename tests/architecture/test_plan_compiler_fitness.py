@@ -176,4 +176,4 @@ def test_runtime_does_not_import_compilation_or_embed_composed_workflows() -> No
 
 def test_project_runtime_dependencies_remain_empty() -> None:
     with (ROOT / "pyproject.toml").open("rb") as pyproject_file:
-        assert tomllib.load(pyproject_file)["project"]["dependencies"] == []
+        assert tomllib.load(pyproject_file)["project"]["dependencies"] == ["openai>=3.5,<4"]

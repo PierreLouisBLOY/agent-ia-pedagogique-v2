@@ -158,4 +158,4 @@ def test_runtime_does_not_import_or_embed_selection_rules() -> None:
 
 def test_project_runtime_dependencies_remain_empty() -> None:
     with (ROOT / "pyproject.toml").open("rb") as pyproject_file:
-        assert tomllib.load(pyproject_file)["project"]["dependencies"] == []
+        assert tomllib.load(pyproject_file)["project"]["dependencies"] == ["openai>=3.5,<4"]

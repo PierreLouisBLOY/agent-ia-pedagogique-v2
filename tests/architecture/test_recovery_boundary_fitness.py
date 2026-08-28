@@ -158,4 +158,4 @@ def test_effect_ledger_is_only_a_protocol_in_production() -> None:
 def test_project_dependencies_remain_empty() -> None:
     with (ROOT / "pyproject.toml").open("rb") as stream:
         project = tomllib.load(stream)["project"]
-    assert project["dependencies"] == []
+    assert project["dependencies"] == ["openai>=3.5,<4"]

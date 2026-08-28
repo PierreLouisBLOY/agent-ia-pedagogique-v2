@@ -203,4 +203,4 @@ def test_review_security_is_stateless_and_has_no_mutating_public_authority_metho
 
 def test_project_runtime_dependencies_remain_empty() -> None:
     with (ROOT / "pyproject.toml").open("rb") as pyproject_file:
-        assert tomllib.load(pyproject_file)["project"]["dependencies"] == []
+        assert tomllib.load(pyproject_file)["project"]["dependencies"] == ["openai>=3.5,<4"]

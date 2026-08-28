@@ -324,4 +324,4 @@ def test_contract_registry_runtime_and_orchestration_do_not_import_coordination(
 
 def test_project_runtime_dependencies_remain_empty() -> None:
     with (ROOT / "pyproject.toml").open("rb") as pyproject_file:
-        assert tomllib.load(pyproject_file)["project"]["dependencies"] == []
+        assert tomllib.load(pyproject_file)["project"]["dependencies"] == ["openai>=3.5,<4"]

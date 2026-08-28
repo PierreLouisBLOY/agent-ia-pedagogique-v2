@@ -4,7 +4,7 @@ version = "0.0.0"
 description = "Clean-room implementation of the Projet V2 pedagogical AI agent."
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = ["openai>=3.5,<4"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

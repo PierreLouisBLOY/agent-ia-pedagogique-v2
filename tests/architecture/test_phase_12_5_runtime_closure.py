@@ -289,7 +289,7 @@ def test_runtime_structure_boundaries_and_dependencies_are_closed() -> None:
     assert not (AGENT_RUNTIME / "planning").exists()
     assert all(not module.startswith(forbidden_prefixes) for module in imports)
     with (ROOT / "pyproject.toml").open("rb") as pyproject_file:
-        assert tomllib.load(pyproject_file)["project"]["dependencies"] == []
+        assert tomllib.load(pyproject_file)["project"]["dependencies"] == ["openai>=3.5,<4"]
 
 
 def test_runtime_contracts_keep_one_state_vocabulary_and_derived_current_ids() -> None:

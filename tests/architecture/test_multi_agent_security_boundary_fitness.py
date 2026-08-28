@@ -101,4 +101,4 @@ def test_e_adds_no_secret_scanner_event_sink_or_runtime_dependency() -> None:
     assert definitions("SecretScanner") == ()
     assert definitions("SecurityEventSink") == ()
     with (ROOT / "pyproject.toml").open("rb") as stream:
-        assert tomllib.load(stream)["project"]["dependencies"] == []
+        assert tomllib.load(stream)["project"]["dependencies"] == ["openai>=3.5,<4"]

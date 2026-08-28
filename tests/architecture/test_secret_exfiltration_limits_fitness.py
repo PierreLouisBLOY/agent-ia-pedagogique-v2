@@ -106,4 +106,4 @@ def test_security_events_and_error_envelopes_use_agent_safe_value_boundaries() -
 
 def test_project_keeps_zero_runtime_dependencies() -> None:
     with (ROOT / "pyproject.toml").open("rb") as stream:
-        assert tomllib.load(stream)["project"]["dependencies"] == []
+        assert tomllib.load(stream)["project"]["dependencies"] == ["openai>=3.5,<4"]

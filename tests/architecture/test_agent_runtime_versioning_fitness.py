@@ -168,7 +168,7 @@ def test_nested_contracts_do_not_duplicate_contract_meta() -> None:
     assert "meta" not in get_type_hints(ErrorEnvelope)
 
 
-def test_runtime_dependencies_remain_empty() -> None:
+def test_runtime_dependencies_allow_only_the_calibrated_openai_sdk() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
-    assert "dependencies = []" in pyproject
+    assert 'dependencies = ["openai>=3.5,<4"]' in pyproject

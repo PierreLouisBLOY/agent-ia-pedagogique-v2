@@ -101,7 +101,7 @@ def test_e_does_not_modify_runtime_executor_or_add_runtime_dependency() -> None:
         assert _imported_modules(path).isdisjoint(forbidden_imports)
     with (ROOT / "pyproject.toml").open("rb") as stream:
         project = tomllib.load(stream)["project"]
-    assert project["dependencies"] == []
+    assert project["dependencies"] == ["openai>=3.5,<4"]
 
 
 def test_backoff_contains_no_waiting_or_retry_loop_calls() -> None:

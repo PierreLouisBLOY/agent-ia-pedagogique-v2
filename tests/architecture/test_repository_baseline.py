@@ -211,4 +211,4 @@ def test_no_production_dependency_is_declared() -> None:
         project = tomllib.load(pyproject_file)["project"]
 
     assert project["requires-python"] == ">=3.12,<3.13"
-    assert project["dependencies"] == []
+    assert project["dependencies"] == ["openai>=3.5,<4"]

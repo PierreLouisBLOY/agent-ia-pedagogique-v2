@@ -137,4 +137,4 @@ def test_project_runtime_dependencies_remain_empty_for_final_policy() -> None:
     with (ROOT / "pyproject.toml").open("rb") as pyproject_file:
         project = tomllib.load(pyproject_file)["project"]
 
-    assert project["dependencies"] == []
+    assert project["dependencies"] == ["openai>=3.5,<4"]

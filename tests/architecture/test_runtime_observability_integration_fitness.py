@@ -173,4 +173,4 @@ def test_delivery_remains_submit_only_and_dependencies_stay_empty() -> None:
     assert ".flush(" not in WRAPPERS.read_text(encoding="utf-8")
     with (ROOT / "pyproject.toml").open("rb") as stream:
         project = tomllib.load(stream)["project"]
-    assert project["dependencies"] == []
+    assert project["dependencies"] == ["openai>=3.5,<4"]

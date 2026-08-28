@@ -189,4 +189,4 @@ def test_span_record_remains_completed_data_only_and_metrics_forbid_trace_labels
 def test_d_adds_no_external_dependency() -> None:
     with (ROOT / "pyproject.toml").open("rb") as stream:
         project = tomllib.load(stream)["project"]
-    assert project["dependencies"] == []
+    assert project["dependencies"] == ["openai>=3.5,<4"]

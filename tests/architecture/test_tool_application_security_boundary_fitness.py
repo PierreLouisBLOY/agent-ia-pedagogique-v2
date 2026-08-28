@@ -119,4 +119,4 @@ def test_d_adds_no_secret_scanner_provider_or_runtime_dependency() -> None:
 
 def test_project_runtime_dependencies_remain_empty() -> None:
     with (ROOT / "pyproject.toml").open("rb") as stream:
-        assert tomllib.load(stream)["project"]["dependencies"] == []
+        assert tomllib.load(stream)["project"]["dependencies"] == ["openai>=3.5,<4"]

@@ -200,6 +200,6 @@ def test_agent_domain_and_application_do_not_import_provider_secrets() -> None:
     assert violations == []
 
 
-def test_runtime_dependencies_remain_empty() -> None:
+def test_openai_is_the_only_direct_runtime_dependency() -> None:
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    assert pyproject["project"]["dependencies"] == []
+    assert pyproject["project"]["dependencies"] == ["openai>=3.5,<4"]

@@ -30,12 +30,15 @@ from evaluation_harness import (
     ObservationScalarKind,
     ObservationSequence,
     ScorerNotFoundError,
+    ScorerOutcome,
     ScoreStatus,
 )
 from tests.providers.anthropic import (
     AnthropicEvaluationScorer,
+    AnthropicProviderErrorType,
     AnthropicScorerError,
     AnthropicScoringResponse,
+    AnthropicStopReason,
     AnthropicTransportError,
     AnthropicTransportErrorCode,
 )
@@ -254,3 +257,32 @@ def test_provider_failures_and_refusal_are_closed(
         scorer.score(_SCORER_REF, (_criterion_observation(),))
     assert str(raised.value) == "PROVIDER_UNAVAILABLE"
     assert _SECRET not in str(raised.value)
+
+
+def test_safe_transport_diagnostics_do_not_change_public_scorer_contracts() -> None:
+    transport_error = AnthropicTransportError(
+        AnthropicTransportErrorCode.EMPTY_RESPONSE,
+        provider_error_type=AnthropicProviderErrorType.EMPTY_RESPONSE,
+        response_received=True,
+        stop_reason=AnthropicStopReason.END_TURN,
+        text_block_count=0,
+        input_tokens=11,
+        cached_input_tokens=2,
+        output_tokens=3,
+        total_tokens=16,
+    )
+    scorer, _, _ = _scorer(error=transport_error)
+
+    with pytest.raises(AnthropicScorerError) as raised:
+        scorer.score(_SCORER_REF, (_criterion_observation(),))
+
+    error = raised.value
+    assert str(error) == "PROVIDER_UNAVAILABLE"
+    assert error.transport_code is AnthropicTransportErrorCode.EMPTY_RESPONSE
+    assert error.provider_error_type is AnthropicProviderErrorType.EMPTY_RESPONSE
+    assert error.response_received is True
+    assert error.stop_reason is AnthropicStopReason.END_TURN
+    assert error.text_block_count == 0
+    assert (error.input_tokens, error.cached_input_tokens, error.output_tokens) == (11, 2, 3)
+    assert error.total_tokens == 16
+    assert ScorerOutcome.__module__ == "evaluation_harness.contracts.scoring"

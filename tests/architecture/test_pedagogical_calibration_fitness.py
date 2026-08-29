@@ -16,7 +16,7 @@ _FROZEN_OWNER_HASHES = {
     "tests/e2e/core/expectations.py": "191c1d8c33353258dd959f5154efd8befa6c857cbddfd476c4cf2e6a1f56179d",
     "evaluation_harness/contracts/scoring.py": "706eaecd81f7fcbe2d7a851f00db4012f8932b9439e12386ba6688339d516bc1",
     "tests/providers/anthropic/mapping.py": "74f473ab60764978aa26b53309c89cf6588058d7ce3480f881798b5279057be7",
-    "tests/providers/anthropic/scorer.py": "829ff42c44a15775d27b69028d78afeed254799272be15f5474ac2eba742df24",
+    "tests/providers/anthropic/scorer.py": "a604da2e6c1ca20850c87328046c9d9985e9b1a79442875b6e2a4c657086fbcf",
     "backend/adapters/outbound/generation/openai/adapter.py": "9357224fa7b4c77e4dd0cd7184491597138dd4247bbb5ad75f346c22fbb66be1",
     "backend/adapters/outbound/review/openai/adapter.py": "588111262f21075f8731e9d7513e5a93d4f1ed1bf37009f197922c5ccfabda9e",
     "backend/agent_runtime/registry/capabilities.py": "4467bc96d8e8df81ee8a5a66b24853d43b3ca569972fc55a3552c9dfea8bb5bf",

@@ -28,8 +28,11 @@ from evaluation_harness.contracts.scoring import (
 )
 from evaluation_harness.scoring.ports import ScorerNotFoundError
 from tests.providers.anthropic.contracts import (
+    AnthropicProviderErrorType,
     AnthropicScoringTransportFactory,
+    AnthropicStopReason,
     AnthropicTransportError,
+    AnthropicTransportErrorCode,
 )
 from tests.providers.anthropic.mapping import build_anthropic_scoring_request
 from tests.providers.anthropic.transport import AnthropicSDKScoringTransportFactory
@@ -48,9 +51,58 @@ class AnthropicScorerError(RuntimeError):
     """Raw-free private calibration failure contained by ScoreEvaluator."""
 
     code: AnthropicScorerErrorCode
+    transport_code: AnthropicTransportErrorCode | None
+    http_status: int | None
+    provider_error_type: AnthropicProviderErrorType | None
+    response_received: bool
+    stop_reason: AnthropicStopReason | None
+    text_block_count: int | None
+    input_tokens: int | None
+    cached_input_tokens: int | None
+    output_tokens: int | None
+    total_tokens: int | None
 
-    def __init__(self, code: AnthropicScorerErrorCode) -> None:
+    def __init__(
+        self,
+        code: AnthropicScorerErrorCode,
+        *,
+        transport_error: AnthropicTransportError | None = None,
+    ) -> None:
         self.code = code
+        self.transport_code = (
+            transport_error.code if transport_error is not None else None
+        )
+        self.http_status = (
+            transport_error.http_status if transport_error is not None else None
+        )
+        self.provider_error_type = (
+            transport_error.provider_error_type
+            if transport_error is not None
+            else None
+        )
+        self.response_received = (
+            transport_error.response_received if transport_error is not None else False
+        )
+        self.stop_reason = (
+            transport_error.stop_reason if transport_error is not None else None
+        )
+        self.text_block_count = (
+            transport_error.text_block_count if transport_error is not None else None
+        )
+        self.input_tokens = (
+            transport_error.input_tokens if transport_error is not None else None
+        )
+        self.cached_input_tokens = (
+            transport_error.cached_input_tokens
+            if transport_error is not None
+            else None
+        )
+        self.output_tokens = (
+            transport_error.output_tokens if transport_error is not None else None
+        )
+        self.total_tokens = (
+            transport_error.total_tokens if transport_error is not None else None
+        )
         super().__init__(code.value)
 
 
@@ -120,9 +172,10 @@ class AnthropicEvaluationScorer:
             raise AnthropicScorerError(
                 AnthropicScorerErrorCode.CREDENTIAL_UNAVAILABLE
             ) from None
-        except AnthropicTransportError:
+        except AnthropicTransportError as error:
             raise AnthropicScorerError(
-                AnthropicScorerErrorCode.PROVIDER_UNAVAILABLE
+                AnthropicScorerErrorCode.PROVIDER_UNAVAILABLE,
+                transport_error=error,
             ) from None
         return _parse_outcome(response.output_text)
 

@@ -27,11 +27,22 @@ from tests.calibration.pedagogical.live_runner import (
     LiveCalibrationStopCode,
     ProviderCallResult,
     RawOutputStore,
+    _anthropic_result,
     build_safe_aggregate,
     render_safe_reports,
     validate_call_identity,
 )
 from tests.calibration.pedagogical.metrics import CalibrationResponseStatus
+from tests.providers.anthropic import (
+    AnthropicProviderErrorType,
+    AnthropicStopReason,
+    AnthropicTransportError,
+    AnthropicTransportErrorCode,
+)
+from tests.providers.anthropic.scorer import (
+    AnthropicScorerError,
+    AnthropicScorerErrorCode,
+)
 
 
 class _FakeExecutor:
@@ -121,6 +132,42 @@ def _environment() -> dict[str, str]:
         LIVE_OUTPUT_PATH_ENV: RAW_OUTPUT_DIRECTORY,
         APPROVED_CEILING_ENV: str(APPROVED_HARD_CEILING_USD),
     }
+
+
+def test_anthropic_runner_result_exposes_only_safe_closed_diagnostics() -> None:
+    transport_error = AnthropicTransportError(
+        AnthropicTransportErrorCode.REQUEST_TOO_LARGE,
+        http_status=413,
+        provider_error_type=AnthropicProviderErrorType.API_STATUS_ERROR,
+        response_received=True,
+        stop_reason=AnthropicStopReason.END_TURN,
+        text_block_count=0,
+        input_tokens=23,
+        output_tokens=0,
+        total_tokens=23,
+    )
+    scorer_error = AnthropicScorerError(
+        AnthropicScorerErrorCode.PROVIDER_UNAVAILABLE,
+        transport_error=transport_error,
+    )
+
+    result = _anthropic_result(
+        None,
+        CalibrationResponseStatus.ERROR,
+        17,
+        "ANTHROPIC_SCORER_TRANSPORT_REQUEST_TOO_LARGE",
+        scorer_error=scorer_error,
+    )
+
+    assert result.transport_http_status == 413
+    assert result.provider_error_type is AnthropicProviderErrorType.API_STATUS_ERROR
+    assert result.response_received is True
+    assert result.stop_reason is AnthropicStopReason.END_TURN
+    assert result.text_block_count == 0
+    assert (result.input_tokens, result.output_tokens, result.total_tokens) == (23, 0, 23)
+    assert "request-id" not in repr(result)
+    assert "header" not in repr(result)
+    assert "body" not in repr(result)
 
 
 def test_atomic_ledger_and_raw_output_hash_round_trip(live_root: Path) -> None:

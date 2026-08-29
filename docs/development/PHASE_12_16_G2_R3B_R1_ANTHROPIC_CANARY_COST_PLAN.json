@@ -1,0 +1,57 @@
+{
+  "approval_required": true,
+  "approval_text": "J'approuve exclusivement l'exécution de la matrice\n12.16-g2-r3b-r2-anthropic-canary-v1,\nchecksum 60ffe8fd1d99cf60c53d3ea0644624fe09f820d6a59552e7cd2fec3597c334a4,\n1 appel maximum (Anthropic Scorer claude-sonnet-5, max_output_tokens 512),\nplafond 0.026400 USD,\naucun retry et arrêt immédiat après ce canary quel que soit le résultat.",
+  "calls": [
+    {
+      "automatic_retry_count": 0,
+      "call_id": "remediation.r3.anthropic-scorer.scn-01.c.clarity.canary.r1",
+      "criterion_ref": "scn-01.quality.clarity",
+      "input_ref": "anchor:cal.scn-01.c",
+      "input_token_upper_bound": 8000,
+      "logical_schema_sha256": "968312b8f7f4059cfb47b4c70bff98ec14f61089b2b72fa78821368d62bc4dc1",
+      "logical_slot_id": "cal.score.anchor.scn-01.c.clarity.r1",
+      "max_output_tokens": 512,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "observation_sha256": "ca1906fafb88814565125c344f31e051fd154d4bd17ca267517d991f70dabd79",
+      "provider": "anthropic",
+      "provider_schema_sha256": "607a6736853b8ab5ab3e95926a51ebef12191ffa8b2f43b5ef9826fca19d54f7",
+      "serialized_input_bytes": 971,
+      "serialized_input_sha256": "b6cc367de3229a83ac3af9cdf717db21b00aad6a9dc23b490dd2fb35343b914f",
+      "source_failed_call_id": "r3.cal.score.anchor.scn-01.c.clarity.r1",
+      "system_sha256": "fcbefdcfa849619f27637c581475b2d2bbfd45063e7e4f476bee802bf3eb69ea",
+      "workload": "scoring"
+    }
+  ],
+  "decision": "OFFLINE_DIAGNOSTIC_COMPLETE_R2_APPROVAL_REQUIRED",
+  "execution_policy": {
+    "automatic_rerun_count": 0,
+    "automatic_retry_count": 0,
+    "provider_call_count_max": 1,
+    "started_is_ambiguous": true,
+    "stop_after_canary_regardless_of_result": true,
+    "terminal_is_never_recalled": true
+  },
+  "ledger_relative_path": "artifacts/calibration/12.16-g2-r3b-r2/ledger.json",
+  "matrix_sha256": "60ffe8fd1d99cf60c53d3ea0644624fe09f820d6a59552e7cd2fec3597c334a4",
+  "original_r3_ledger_mutated": false,
+  "phase": "12.16-G2-R3B-R1",
+  "plan_version": "12.16-g2-r3b-r2-anthropic-canary-v1",
+  "pricing": {
+    "base_maximum_usd": "0.021120",
+    "cached_input_usd_per_million_tokens": "0.20",
+    "input_maximum_usd": "0.016000",
+    "input_token_upper_bound": 8000,
+    "input_usd_per_million_tokens": "2.00",
+    "model": "claude-sonnet-5",
+    "output_maximum_usd": "0.005120",
+    "output_token_upper_bound": 512,
+    "output_usd_per_million_tokens": "10.00",
+    "requested_hard_ceiling_usd": "0.026400",
+    "safety_margin_multiplier": "1.25",
+    "safety_margin_usd": "0.005280",
+    "source": "https://platform.claude.com/docs/en/about-claude/pricing"
+  },
+  "r1_provider_call_count": 0,
+  "r1_provider_cost_usd": "0.000000"
+}

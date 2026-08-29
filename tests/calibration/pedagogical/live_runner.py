@@ -106,12 +106,14 @@ from tests.calibration.pedagogical.protocol import (
 )
 from tests.providers.anthropic import (
     AnthropicEvaluationScorer,
+    AnthropicProviderErrorType,
     AnthropicScorerError,
     AnthropicScoringRequest,
     AnthropicScoringResponse,
     AnthropicScoringTransport,
     AnthropicScoringTransportFactory,
     AnthropicSDKScoringTransportFactory,
+    AnthropicStopReason,
     AnthropicTransportError,
 )
 
@@ -303,6 +305,11 @@ class ProviderCallResult:
     reasoning_tokens: int | None = None
     public_error_code: str | None = None
     private_diagnostic_code: str | None = None
+    transport_http_status: int | None = None
+    provider_error_type: AnthropicProviderErrorType | None = None
+    response_received: bool = False
+    stop_reason: AnthropicStopReason | None = None
+    text_block_count: int | None = None
 
 
 class CalibrationExecutor(Protocol):
@@ -625,12 +632,14 @@ class _RecordingAnthropicTransport:
         self._inner = inner
         self.response: AnthropicScoringResponse | None = None
         self.error_code: str | None = None
+        self.error: AnthropicTransportError | None = None
 
     def create(self, *, request: AnthropicScoringRequest) -> AnthropicScoringResponse:
         try:
             self.response = self._inner.create(request=request)
             return self.response
         except AnthropicTransportError as error:
+            self.error = error
             self.error_code = error.code.value
             raise
 
@@ -654,6 +663,10 @@ class _RecordingAnthropicFactory:
     @property
     def error_code(self) -> str | None:
         return self.transport.error_code if self.transport is not None else None
+
+    @property
+    def error(self) -> AnthropicTransportError | None:
+        return self.transport.error if self.transport is not None else None
 
 
 class RealCalibrationExecutor:
@@ -770,6 +783,7 @@ class RealCalibrationExecutor:
         started = time.perf_counter_ns()
         status = CalibrationResponseStatus.ERROR
         error_code: str | None = None
+        scorer_error: AnthropicScorerError | None = None
         try:
             outcome = scorer.score(
                 EvaluationScorerRef("pedagogical-quality-fixture-scorer"),
@@ -783,6 +797,7 @@ class RealCalibrationExecutor:
             if status is CalibrationResponseStatus.INCONCLUSIVE:
                 error_code = "ANTHROPIC_SCORER_INCONCLUSIVE"
         except AnthropicScorerError as error:
+            scorer_error = error
             error_code = (
                 f"ANTHROPIC_SCORER_TRANSPORT_{factory.error_code}"
                 if factory.error_code is not None
@@ -791,7 +806,13 @@ class RealCalibrationExecutor:
         except Exception:
             error_code = "ANTHROPIC_CLOSED_UNEXPECTED_ERROR"
         latency = max(0, (time.perf_counter_ns() - started) // 1_000_000)
-        return _anthropic_result(factory.response, status, latency, error_code)
+        return _anthropic_result(
+            factory.response,
+            status,
+            latency,
+            error_code,
+            scorer_error=scorer_error,
+        )
 
 
 def _openai_result(
@@ -829,18 +850,59 @@ def _anthropic_result(
     status: CalibrationResponseStatus,
     latency: int,
     error_code: str | None,
+    *,
+    scorer_error: AnthropicScorerError | None = None,
 ) -> ProviderCallResult:
+    input_tokens = (
+        response.input_tokens
+        if response is not None
+        else (scorer_error.input_tokens if scorer_error is not None else None)
+    )
+    cached_input_tokens = (
+        response.cached_input_tokens
+        if response is not None
+        else (scorer_error.cached_input_tokens if scorer_error is not None else None)
+    )
+    output_tokens = (
+        response.output_tokens
+        if response is not None
+        else (scorer_error.output_tokens if scorer_error is not None else None)
+    )
+    total_tokens = (
+        response.total_tokens
+        if response is not None
+        else (scorer_error.total_tokens if scorer_error is not None else None)
+    )
     return ProviderCallResult(
         response_status=status,
         raw_output_text=response.output_text if response is not None else None,
-        input_tokens=response.input_tokens if response is not None else None,
-        cached_input_tokens=(
-            response.cached_input_tokens if response is not None else None
-        ),
-        output_tokens=response.output_tokens if response is not None else None,
-        total_tokens=response.total_tokens if response is not None else None,
+        input_tokens=input_tokens,
+        cached_input_tokens=cached_input_tokens,
+        output_tokens=output_tokens,
+        total_tokens=total_tokens,
         latency_milliseconds=latency,
         closed_error_code=error_code,
+        transport_http_status=(
+            scorer_error.http_status if scorer_error is not None else None
+        ),
+        provider_error_type=(
+            scorer_error.provider_error_type if scorer_error is not None else None
+        ),
+        response_received=(
+            scorer_error.response_received
+            if scorer_error is not None
+            else response is not None
+        ),
+        stop_reason=(
+            response.stop_reason
+            if response is not None
+            else (scorer_error.stop_reason if scorer_error is not None else None)
+        ),
+        text_block_count=(
+            response.text_block_count
+            if response is not None
+            else (scorer_error.text_block_count if scorer_error is not None else None)
+        ),
     )
 
 

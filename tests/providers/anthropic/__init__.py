@@ -1,10 +1,12 @@
 """Anthropic cross-provider scorer for offline calibration."""
 
 from tests.providers.anthropic.contracts import (
+    AnthropicProviderErrorType,
     AnthropicScoringRequest,
     AnthropicScoringResponse,
     AnthropicScoringTransport,
     AnthropicScoringTransportFactory,
+    AnthropicStopReason,
     AnthropicTransportError,
     AnthropicTransportErrorCode,
 )
@@ -20,11 +22,13 @@ from tests.providers.anthropic.transport import (
 
 __all__ = [
     "AnthropicEvaluationScorer",
+    "AnthropicProviderErrorType",
     "AnthropicScorerError",
     "AnthropicScoringRequest",
     "AnthropicScoringResponse",
     "AnthropicScoringTransport",
     "AnthropicScoringTransportFactory",
+    "AnthropicStopReason",
     "AnthropicSDKScoringTransport",
     "AnthropicSDKScoringTransportFactory",
     "AnthropicTransportError",

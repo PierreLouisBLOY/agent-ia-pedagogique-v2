@@ -10,9 +10,11 @@ from anthropic import Anthropic
 
 from backend.infrastructure.config.secrets.provider import ProviderSecretValue
 from tests.providers.anthropic.contracts import (
+    AnthropicProviderErrorType,
     AnthropicScoringRequest,
     AnthropicScoringResponse,
     AnthropicScoringTransport,
+    AnthropicStopReason,
     AnthropicTransportError,
     AnthropicTransportErrorCode,
 )
@@ -54,16 +56,19 @@ class AnthropicSDKScoringTransport:
                 stream=False,
             )
         except anthropic.AnthropicError as error:
-            raise AnthropicTransportError(_anthropic_error_code(error)) from None
-        if getattr(response, "stop_reason", None) == "refusal":
-            raise AnthropicTransportError(AnthropicTransportErrorCode.REFUSED)
-        text = "".join(
-            cast(str, block.text)
-            for block in response.content
-            if getattr(block, "type", None) == "text"
+            raise _closed_anthropic_error(error) from None
+        stop_reason = _anthropic_stop_reason(getattr(response, "stop_reason", None))
+        raw_content = getattr(response, "content", ())
+        content = raw_content if type(raw_content) in {list, tuple} else ()
+        text_blocks = tuple(
+            block for block in content if getattr(block, "type", None) == "text"
         )
-        if not text:
-            raise AnthropicTransportError(AnthropicTransportErrorCode.UNAVAILABLE)
+        text = "".join(
+            cast(str, block_text)
+            for block in text_blocks
+            if type(block_text := getattr(block, "text", None)) is str
+        )
+        text_block_count = min(len(text_blocks), 100)
         usage = getattr(response, "usage", None)
         input_tokens = _optional_non_negative_int(
             getattr(usage, "input_tokens", None)
@@ -77,12 +82,38 @@ class AnthropicSDKScoringTransport:
         total_tokens = None
         if input_tokens is not None and output_tokens is not None:
             total_tokens = input_tokens + (cached_input_tokens or 0) + output_tokens
+        if stop_reason is AnthropicStopReason.REFUSAL:
+            raise AnthropicTransportError(
+                AnthropicTransportErrorCode.REFUSED,
+                provider_error_type=AnthropicProviderErrorType.REFUSAL,
+                response_received=True,
+                stop_reason=stop_reason,
+                text_block_count=text_block_count,
+                input_tokens=input_tokens,
+                cached_input_tokens=cached_input_tokens,
+                output_tokens=output_tokens,
+                total_tokens=total_tokens,
+            )
+        if not text:
+            raise AnthropicTransportError(
+                AnthropicTransportErrorCode.EMPTY_RESPONSE,
+                provider_error_type=AnthropicProviderErrorType.EMPTY_RESPONSE,
+                response_received=True,
+                stop_reason=stop_reason,
+                text_block_count=text_block_count,
+                input_tokens=input_tokens,
+                cached_input_tokens=cached_input_tokens,
+                output_tokens=output_tokens,
+                total_tokens=total_tokens,
+            )
         return AnthropicScoringResponse(
             output_text=text,
             input_tokens=input_tokens,
             cached_input_tokens=cached_input_tokens,
             output_tokens=output_tokens,
             total_tokens=total_tokens,
+            stop_reason=stop_reason,
+            text_block_count=text_block_count,
         )
 
 
@@ -117,6 +148,16 @@ def transform_anthropic_provider_schema(
     return cast(dict[str, object], transformed)
 
 
+def _closed_anthropic_error(error: anthropic.AnthropicError) -> AnthropicTransportError:
+    http_status = _optional_http_status(getattr(error, "status_code", None))
+    return AnthropicTransportError(
+        _anthropic_error_code(error),
+        http_status=http_status,
+        provider_error_type=_anthropic_provider_error_type(error),
+        response_received=http_status is not None,
+    )
+
+
 def _anthropic_error_code(error: anthropic.AnthropicError) -> AnthropicTransportErrorCode:
     if isinstance(error, (anthropic.APITimeoutError, anthropic.DeadlineExceededError)):
         return AnthropicTransportErrorCode.TIMEOUT
@@ -132,11 +173,12 @@ def _anthropic_error_code(error: anthropic.AnthropicError) -> AnthropicTransport
         return AnthropicTransportErrorCode.NOT_FOUND
     if isinstance(error, anthropic.RateLimitError):
         return AnthropicTransportErrorCode.RATE_LIMIT
+    if isinstance(error, anthropic.OverloadedError):
+        return AnthropicTransportErrorCode.OVERLOADED
     if isinstance(
         error,
         (
             anthropic.InternalServerError,
-            anthropic.OverloadedError,
             anthropic.ServiceUnavailableError,
         ),
     ):
@@ -146,6 +188,43 @@ def _anthropic_error_code(error: anthropic.AnthropicError) -> AnthropicTransport
     return AnthropicTransportErrorCode.UNAVAILABLE
 
 
+def _anthropic_provider_error_type(
+    error: anthropic.AnthropicError,
+) -> AnthropicProviderErrorType:
+    typed = (
+        (
+            (anthropic.APITimeoutError, anthropic.DeadlineExceededError),
+            AnthropicProviderErrorType.TIMEOUT_ERROR,
+        ),
+        ((anthropic.APIConnectionError,), AnthropicProviderErrorType.CONNECTION_ERROR),
+        ((anthropic.BadRequestError,), AnthropicProviderErrorType.BAD_REQUEST_ERROR),
+        (
+            (anthropic.AuthenticationError,),
+            AnthropicProviderErrorType.AUTHENTICATION_ERROR,
+        ),
+        (
+            (anthropic.PermissionDeniedError,),
+            AnthropicProviderErrorType.PERMISSION_DENIED_ERROR,
+        ),
+        ((anthropic.NotFoundError,), AnthropicProviderErrorType.NOT_FOUND_ERROR),
+        ((anthropic.RateLimitError,), AnthropicProviderErrorType.RATE_LIMIT_ERROR),
+        ((anthropic.OverloadedError,), AnthropicProviderErrorType.OVERLOADED_ERROR),
+        (
+            (anthropic.InternalServerError,),
+            AnthropicProviderErrorType.INTERNAL_SERVER_ERROR,
+        ),
+        (
+            (anthropic.ServiceUnavailableError,),
+            AnthropicProviderErrorType.SERVICE_UNAVAILABLE_ERROR,
+        ),
+        ((anthropic.APIStatusError,), AnthropicProviderErrorType.API_STATUS_ERROR),
+    )
+    for error_types, closed_type in typed:
+        if isinstance(error, error_types):
+            return closed_type
+    return AnthropicProviderErrorType.UNMAPPED_SDK_ERROR
+
+
 def _anthropic_status_code(status_code: int) -> AnthropicTransportErrorCode:
     mapping = {
         400: AnthropicTransportErrorCode.INVALID_REQUEST,
@@ -153,8 +232,26 @@ def _anthropic_status_code(status_code: int) -> AnthropicTransportErrorCode:
         402: AnthropicTransportErrorCode.BILLING,
         403: AnthropicTransportErrorCode.PERMISSION,
         404: AnthropicTransportErrorCode.NOT_FOUND,
+        409: AnthropicTransportErrorCode.CONFLICT,
+        413: AnthropicTransportErrorCode.REQUEST_TOO_LARGE,
         429: AnthropicTransportErrorCode.RATE_LIMIT,
+        529: AnthropicTransportErrorCode.OVERLOADED,
     }
+    if status_code in mapping:
+        return mapping[status_code]
     if status_code >= 500:
         return AnthropicTransportErrorCode.SERVER
-    return mapping.get(status_code, AnthropicTransportErrorCode.UNAVAILABLE)
+    return AnthropicTransportErrorCode.UNAVAILABLE
+
+
+def _optional_http_status(value: object) -> int | None:
+    return value if type(value) is int and 100 <= value <= 599 else None
+
+
+def _anthropic_stop_reason(value: object) -> AnthropicStopReason | None:
+    if type(value) is not str:
+        return None
+    try:
+        return AnthropicStopReason(value)
+    except ValueError:
+        return AnthropicStopReason.UNKNOWN

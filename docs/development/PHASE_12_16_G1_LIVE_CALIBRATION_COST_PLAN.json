@@ -1,0 +1,126 @@
+{
+  "phase": "12.16-G1",
+  "plan_version": "12.16-g2-plan-v1",
+  "call_matrix_sha256": "997e814f65ac7c5fc25da990cf286800fa6ca4edd761d821a6f6f59f5e2550ed",
+  "pricing_snapshot_id": "official-2026-08-29",
+  "OPENAI_CALL_COUNT": 20,
+  "ANTHROPIC_CALL_COUNT": 76,
+  "TOTAL_CALL_COUNT": 96,
+  "ESTIMATED_BASE_COST_USD": "1.087576",
+  "ESTIMATED_MAXIMUM_BEFORE_MARGIN_USD": "3.277152",
+  "ESTIMATED_MAX_COST_USD": "4.096440",
+  "SAFETY_MARGIN_MULTIPLIER": "1.25",
+  "APPROVAL_REQUIRED": true,
+  "LIVE_PROVIDER_CALL_COUNT": 0,
+  "LIVE_PROVIDER_COST_USD": "0.000000",
+  "input_estimation": {
+    "base": "ceil(utf8_upper_bound_bytes / 4)",
+    "maximum": "utf8_upper_bound_bytes",
+    "cached_tokens_assumed": 0
+  },
+  "token_totals": {
+    "estimated_input": 183250,
+    "estimated_output": 35072,
+    "maximum_input": 733000,
+    "maximum_output": 70144
+  },
+  "providers": {
+    "openai": {
+      "calls": 20,
+      "maximum_input_tokens": 125000,
+      "maximum_output_tokens": 31232,
+      "maximum_cost_usd": "0.869472",
+      "models": {
+        "gpt-5.6-terra": 10,
+        "gpt-5.6-sol": 10
+      }
+    },
+    "anthropic": {
+      "calls": 76,
+      "maximum_input_tokens": 608000,
+      "maximum_output_tokens": 38912,
+      "maximum_cost_usd": "2.407680",
+      "models": {
+        "claude-sonnet-5": 76
+      }
+    }
+  },
+  "workloads": {
+    "generation": {
+      "provider": "openai",
+      "calls": 8,
+      "maximum_input_tokens": 48000,
+      "maximum_output_tokens": 16384,
+      "maximum_cost_usd": "0.377760"
+    },
+    "transformation": {
+      "provider": "openai",
+      "calls": 2,
+      "maximum_input_tokens": 10000,
+      "maximum_output_tokens": 3072,
+      "maximum_cost_usd": "0.056864"
+    },
+    "correction": {
+      "provider": "openai",
+      "calls": 3,
+      "maximum_input_tokens": 18000,
+      "maximum_output_tokens": 4608,
+      "maximum_cost_usd": "0.139872"
+    },
+    "review": {
+      "provider": "openai",
+      "calls": 7,
+      "maximum_input_tokens": 49000,
+      "maximum_output_tokens": 7168,
+      "maximum_cost_usd": "0.294976"
+    },
+    "scoring": {
+      "provider": "anthropic",
+      "calls": 76,
+      "maximum_input_tokens": 608000,
+      "maximum_output_tokens": 38912,
+      "maximum_cost_usd": "2.407680"
+    }
+  },
+  "prices_usd_per_million_tokens": [
+    {
+      "provider": "openai",
+      "model": "gpt-5.6-terra",
+      "input": "2.00",
+      "cached_input": "0.20",
+      "output": "12.00",
+      "unit": "USD per 1M tokens",
+      "source": "https://developers.openai.com/api/docs/models/compare",
+      "verified_on": "2026-08-29"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-5.6-sol",
+      "input": "4.00",
+      "cached_input": "0.40",
+      "output": "20.00",
+      "unit": "USD per 1M tokens",
+      "source": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+      "verified_on": "2026-08-29"
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5",
+      "input": "3.00",
+      "cached_input": "0.30",
+      "output": "15.00",
+      "unit": "USD per 1M tokens",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "verified_on": "2026-08-29",
+      "effective_from": "2026-09-01",
+      "conservative_snapshot": true
+    }
+  ],
+  "raw_output_directory": "artifacts/calibration/12.16-g2/raw",
+  "raw_output_committable": false,
+  "raw_output_identity": ["call_id", "content_sha256"],
+  "raw_output_retention_days": 7,
+  "raw_output_cleanup": "delete after aggregate report verification",
+  "credential_state": "NOT_INSPECTED",
+  "next_gate": "12.16-G2_READY_AFTER_EXPLICIT_APPROVAL"
+}

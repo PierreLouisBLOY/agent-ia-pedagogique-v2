@@ -50,9 +50,7 @@ REQUIRES_R3B_EVIDENCE = pytest.mark.skipif(
     not (ROOT / R3_LEDGER_RELATIVE_PATH).exists(),
     reason="local R3B evidence is intentionally outside Git",
 )
-EXPECTED_R2_MATRIX_SHA256 = (
-    "60ffe8fd1d99cf60c53d3ea0644624fe09f820d6a59552e7cd2fec3597c334a4"
-)
+EXPECTED_R2_MATRIX_SHA256 = "60ffe8fd1d99cf60c53d3ea0644624fe09f820d6a59552e7cd2fec3597c334a4"
 
 
 def _sha256(path: Path) -> str:
@@ -294,17 +292,12 @@ def test_r1_report_generation_never_resolves_credentials_or_builds_transport(
     assert "UNKNOWN_WITH_INSUFFICIENT_EVIDENCE" in rendered
 
     diagnostic_path = (
-        ROOT
-        / "docs/development/PHASE_12_16_G2_R3B_R1_ANTHROPIC_FAILURE_DIAGNOSTIC.md"
+        ROOT / "docs/development/PHASE_12_16_G2_R3B_R1_ANTHROPIC_FAILURE_DIAGNOSTIC.md"
     )
     cost_markdown_path = (
-        ROOT
-        / "docs/development/PHASE_12_16_G2_R3B_R1_ANTHROPIC_CANARY_COST_PLAN.md"
+        ROOT / "docs/development/PHASE_12_16_G2_R3B_R1_ANTHROPIC_CANARY_COST_PLAN.md"
     )
-    cost_json_path = (
-        ROOT
-        / "docs/development/PHASE_12_16_G2_R3B_R1_ANTHROPIC_CANARY_COST_PLAN.json"
-    )
+    cost_json_path = ROOT / "docs/development/PHASE_12_16_G2_R3B_R1_ANTHROPIC_CANARY_COST_PLAN.json"
     assert diagnostic_path.read_text(encoding="utf-8").rstrip("\n") == (
         render_diagnostic_markdown(ROOT).rstrip("\n")
     )
@@ -314,4 +307,15 @@ def test_r1_report_generation_never_resolves_credentials_or_builds_transport(
     assert cost_json_path.read_text(encoding="utf-8") == render_cost_plan_json(ROOT)
 
     local_ledger = json.loads((ROOT / R2_LEDGER_RELATIVE_PATH).read_text(encoding="utf-8"))
-    assert local_ledger == build_r2_ledger_template()
+    if local_ledger != build_r2_ledger_template():
+        assert local_ledger["plan_version"] == R2_PLAN_VERSION
+        assert local_ledger["matrix_sha256"] == EXPECTED_R2_MATRIX_SHA256
+        assert local_ledger["automatic_retry_count"] == 0
+        assert local_ledger["automatic_rerun_count"] == 0
+        assert local_ledger["provider_calls_attempted"] == 1
+        assert local_ledger["calls"][0]["call_id"] == R2_REMEDIATION_CALL_ID
+        assert local_ledger["calls"][0]["status"] in {
+            R2LedgerStatus.COMPLETED.value,
+            R2LedgerStatus.FAILED.value,
+        }
+        assert next_r2_call_id(local_ledger) is None

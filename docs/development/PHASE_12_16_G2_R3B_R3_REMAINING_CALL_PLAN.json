@@ -1,0 +1,2188 @@
+{
+  "adr_required": false,
+  "approval_text": "J'approuve exclusivement l'exécution de la matrice\n12.16-g2-r3b-r4-completion-v1,\nchecksum 0298e4672f03def781bf7217b37567a456d6865aa35c157c4d956111962c7d8d,\n71 appels maximum (71 Anthropic Scorer claude-sonnet-5, max_output_tokens 512),\nplafond 1.874400 USD,\naucun retry et arrêt immédiat de la séquence au premier échec technique avant tout appel suivant.",
+  "live_provider_calls_r3": 0,
+  "live_provider_cost_r3_usd": "0.000000",
+  "next_gate": "12.16-G2-R3B-R4_READY_AFTER_EXPLICIT_APPROVAL",
+  "ordinal_preliminary_signal": {
+    "a": "1/1",
+    "b": "1/1",
+    "c": "0/1",
+    "criterion": "clarity",
+    "final_calibration_available": false,
+    "scenario": "SCN-01",
+    "strict_monotonicity": "FAIL",
+    "weak_monotonicity": "PASS"
+  },
+  "original_failed_record": {
+    "logical_slot_id": "cal.score.anchor.scn-01.c.clarity.r1",
+    "preserved": true,
+    "r3_call_id": "r3.cal.score.anchor.scn-01.c.clarity.r1",
+    "status": "FAILED"
+  },
+  "phase": "12.16-G2-R3B-R3",
+  "plan": {
+    "approval_required": true,
+    "automatic_rerun_count": 0,
+    "automatic_retry_count": 0,
+    "calls": [
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-01.quality.organization-utility"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-01.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-01.c.organization-utility.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-01.c.organization-utility.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-01",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-01.c.organization-utility.r1",
+        "task_kind": "resource-organization",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-02.quality.relevance"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-02.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-02.a.relevance.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-02.a.relevance.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-02",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-02.a.relevance.r1",
+        "task_kind": "resource-search",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-02.quality.coverage"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-02.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-02.a.coverage.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-02.a.coverage.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-02",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-02.a.coverage.r1",
+        "task_kind": "resource-search",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-02.quality.relevance"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-02.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-02.b.relevance.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-02.b.relevance.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-02",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-02.b.relevance.r1",
+        "task_kind": "resource-search",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-02.quality.coverage"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-02.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-02.b.coverage.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-02.b.coverage.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-02",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-02.b.coverage.r1",
+        "task_kind": "resource-search",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-02.quality.relevance"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-02.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-02.c.relevance.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-02.c.relevance.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-02",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-02.c.relevance.r1",
+        "task_kind": "resource-search",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-02.quality.coverage"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-02.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-02.c.coverage.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-02.c.coverage.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-02",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-02.c.coverage.r1",
+        "task_kind": "resource-search",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-03.quality.clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-03.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-03.a.clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-03.a.clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-03.a.clarity.r1",
+        "task_kind": "course-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-03.quality.level-adaptation"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-03.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-03.a.level-adaptation.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-03.a.level-adaptation.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-03.a.level-adaptation.r1",
+        "task_kind": "course-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-03.quality.clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-03.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-03.b.clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-03.b.clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-03.b.clarity.r1",
+        "task_kind": "course-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-03.quality.level-adaptation"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-03.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-03.b.level-adaptation.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-03.b.level-adaptation.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-03.b.level-adaptation.r1",
+        "task_kind": "course-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-03.quality.clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-03.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-03.c.clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-03.c.clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-03.c.clarity.r1",
+        "task_kind": "course-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-03.quality.level-adaptation"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-03.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-03.c.level-adaptation.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-03.c.level-adaptation.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-03.c.level-adaptation.r1",
+        "task_kind": "course-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-04.quality.fidelity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-04.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-04.a.fidelity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-04.a.fidelity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-04.a.fidelity.r1",
+        "task_kind": "resource-transformation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-04.quality.level-adaptation"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-04.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-04.a.level-adaptation.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-04.a.level-adaptation.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-04.a.level-adaptation.r1",
+        "task_kind": "resource-transformation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-04.quality.fidelity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-04.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-04.b.fidelity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-04.b.fidelity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-04.b.fidelity.r1",
+        "task_kind": "resource-transformation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-04.quality.level-adaptation"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-04.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-04.b.level-adaptation.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-04.b.level-adaptation.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-04.b.level-adaptation.r1",
+        "task_kind": "resource-transformation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-04.quality.fidelity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-04.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-04.c.fidelity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-04.c.fidelity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-04.c.fidelity.r1",
+        "task_kind": "resource-transformation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-04.quality.level-adaptation"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-04.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-04.c.level-adaptation.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-04.c.level-adaptation.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-04.c.level-adaptation.r1",
+        "task_kind": "resource-transformation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-05.quality.difficulty-appropriateness"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-05.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-05.a.difficulty-appropriateness.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-05.a.difficulty-appropriateness.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-05.a.difficulty-appropriateness.r1",
+        "task_kind": "exercise-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-05.quality.instruction-clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-05.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-05.a.instruction-clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-05.a.instruction-clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-05.a.instruction-clarity.r1",
+        "task_kind": "exercise-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-05.quality.difficulty-appropriateness"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-05.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-05.b.difficulty-appropriateness.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-05.b.difficulty-appropriateness.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-05.b.difficulty-appropriateness.r1",
+        "task_kind": "exercise-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-05.quality.instruction-clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-05.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-05.b.instruction-clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-05.b.instruction-clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-05.b.instruction-clarity.r1",
+        "task_kind": "exercise-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-05.quality.difficulty-appropriateness"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-05.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-05.c.difficulty-appropriateness.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-05.c.difficulty-appropriateness.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-05.c.difficulty-appropriateness.r1",
+        "task_kind": "exercise-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-05.quality.instruction-clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-05.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-05.c.instruction-clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-05.c.instruction-clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-05.c.instruction-clarity.r1",
+        "task_kind": "exercise-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-06.quality.assessment-clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-06.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-06.a.assessment-clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-06.a.assessment-clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-06.a.assessment-clarity.r1",
+        "task_kind": "assessment-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-06.quality.marking-scheme-coherence"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-06.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-06.a.marking-scheme-coherence.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-06.a.marking-scheme-coherence.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-06.a.marking-scheme-coherence.r1",
+        "task_kind": "assessment-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-06.quality.assessment-clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-06.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-06.b.assessment-clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-06.b.assessment-clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-06.b.assessment-clarity.r1",
+        "task_kind": "assessment-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-06.quality.marking-scheme-coherence"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-06.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-06.b.marking-scheme-coherence.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-06.b.marking-scheme-coherence.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-06.b.marking-scheme-coherence.r1",
+        "task_kind": "assessment-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-06.quality.assessment-clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-06.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-06.c.assessment-clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-06.c.assessment-clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-06.c.assessment-clarity.r1",
+        "task_kind": "assessment-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-06.quality.marking-scheme-coherence"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-06.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-06.c.marking-scheme-coherence.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-06.c.marking-scheme-coherence.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-06.c.marking-scheme-coherence.r1",
+        "task_kind": "assessment-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-07.quality.correction-quality"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-07.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.a.correction-quality.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-07.a.correction-quality.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-07.a.correction-quality.r1",
+        "task_kind": "correction-remediation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-07.quality.remediation-clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-07.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.a.remediation-clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-07.a.remediation-clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-07.a.remediation-clarity.r1",
+        "task_kind": "correction-remediation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-07.quality.correction-quality"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-07.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.b.correction-quality.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-07.b.correction-quality.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-07.b.correction-quality.r1",
+        "task_kind": "correction-remediation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-07.quality.remediation-clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-07.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.b.remediation-clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-07.b.remediation-clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-07.b.remediation-clarity.r1",
+        "task_kind": "correction-remediation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-07.quality.correction-quality"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-07.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.c.correction-quality.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-07.c.correction-quality.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-07.c.correction-quality.r1",
+        "task_kind": "correction-remediation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-07.quality.remediation-clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-07.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.c.remediation-clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-07.c.remediation-clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-07.c.remediation-clarity.r1",
+        "task_kind": "correction-remediation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-08.quality.distractor-quality"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-08.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.a.distractor-quality.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-08.a.distractor-quality.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-08.a.distractor-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-08.quality.feedback-quality"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-08.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.a.feedback-quality.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-08.a.feedback-quality.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-08.a.feedback-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-08.quality.distractor-quality"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-08.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.b.distractor-quality.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-08.b.distractor-quality.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-08.b.distractor-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-08.quality.feedback-quality"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-08.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.b.feedback-quality.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-08.b.feedback-quality.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-08.b.feedback-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-08.quality.distractor-quality"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-08.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.c.distractor-quality.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-08.c.distractor-quality.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-08.c.distractor-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-08.quality.feedback-quality"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-08.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.c.feedback-quality.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-08.c.feedback-quality.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-08.c.feedback-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-01.quality.clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-01.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-01.a.clarity.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-01.a.clarity.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-01",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-01.a.clarity.r2",
+        "task_kind": "resource-organization",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-01.quality.organization-utility"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-01.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-01.a.organization-utility.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-01.a.organization-utility.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-01",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-01.a.organization-utility.r2",
+        "task_kind": "resource-organization",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-02.quality.relevance"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-02.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-02.a.relevance.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-02.a.relevance.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-02",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-02.a.relevance.r2",
+        "task_kind": "resource-search",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-02.quality.coverage"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-02.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-02.a.coverage.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-02.a.coverage.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-02",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-02.a.coverage.r2",
+        "task_kind": "resource-search",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-03.quality.clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-03.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-03.a.clarity.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-03.a.clarity.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-03.a.clarity.r2",
+        "task_kind": "course-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-03.quality.level-adaptation"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-03.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-03.a.level-adaptation.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-03.a.level-adaptation.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-03.a.level-adaptation.r2",
+        "task_kind": "course-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-04.quality.fidelity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-04.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-04.a.fidelity.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-04.a.fidelity.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-04.a.fidelity.r2",
+        "task_kind": "resource-transformation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-04.quality.level-adaptation"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-04.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-04.a.level-adaptation.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-04.a.level-adaptation.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-04.a.level-adaptation.r2",
+        "task_kind": "resource-transformation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-05.quality.difficulty-appropriateness"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-05.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-05.a.difficulty-appropriateness.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-05.a.difficulty-appropriateness.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-05.a.difficulty-appropriateness.r2",
+        "task_kind": "exercise-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-05.quality.instruction-clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-05.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-05.a.instruction-clarity.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-05.a.instruction-clarity.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-05.a.instruction-clarity.r2",
+        "task_kind": "exercise-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-06.quality.assessment-clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-06.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-06.a.assessment-clarity.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-06.a.assessment-clarity.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-06.a.assessment-clarity.r2",
+        "task_kind": "assessment-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-06.quality.marking-scheme-coherence"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-06.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-06.a.marking-scheme-coherence.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-06.a.marking-scheme-coherence.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-06.a.marking-scheme-coherence.r2",
+        "task_kind": "assessment-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-07.quality.correction-quality"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-07.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.a.correction-quality.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-07.a.correction-quality.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-07.a.correction-quality.r2",
+        "task_kind": "correction-remediation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-07.quality.remediation-clarity"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-07.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.a.remediation-clarity.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-07.a.remediation-clarity.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-07.a.remediation-clarity.r2",
+        "task_kind": "correction-remediation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-08.quality.distractor-quality"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-08.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.a.distractor-quality.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-08.a.distractor-quality.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-08.a.distractor-quality.r2",
+        "task_kind": "qcm-quiz-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-08.quality.feedback-quality"
+        ],
+        "input_refs": [
+          "anchor:cal.scn-08.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.a.feedback-quality.r2",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.anchor.scn-08.a.feedback-quality.r2",
+        "repetition": 2,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "r3.cal.score.anchor.scn-08.a.feedback-quality.r2",
+        "task_kind": "qcm-quiz-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-03.quality.clarity"
+        ],
+        "input_refs": [
+          "output:cal.generation.course.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-03.clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.output.scn-03.clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "r3.cal.score.output.scn-03.clarity.r1",
+        "task_kind": "course-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-03.quality.level-adaptation"
+        ],
+        "input_refs": [
+          "output:cal.generation.course.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-03.level-adaptation.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.output.scn-03.level-adaptation.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "r3.cal.score.output.scn-03.level-adaptation.r1",
+        "task_kind": "course-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-04.quality.fidelity"
+        ],
+        "input_refs": [
+          "output:cal.transformation.resource.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-04.fidelity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.output.scn-04.fidelity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "r3.cal.score.output.scn-04.fidelity.r1",
+        "task_kind": "resource-transformation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-04.quality.level-adaptation"
+        ],
+        "input_refs": [
+          "output:cal.transformation.resource.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-04.level-adaptation.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.output.scn-04.level-adaptation.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "r3.cal.score.output.scn-04.level-adaptation.r1",
+        "task_kind": "resource-transformation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-05.quality.difficulty-appropriateness"
+        ],
+        "input_refs": [
+          "output:cal.generation.exercise.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-05.difficulty-appropriateness.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.output.scn-05.difficulty-appropriateness.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "r3.cal.score.output.scn-05.difficulty-appropriateness.r1",
+        "task_kind": "exercise-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-05.quality.instruction-clarity"
+        ],
+        "input_refs": [
+          "output:cal.generation.exercise.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-05.instruction-clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.output.scn-05.instruction-clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "r3.cal.score.output.scn-05.instruction-clarity.r1",
+        "task_kind": "exercise-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-06.quality.assessment-clarity"
+        ],
+        "input_refs": [
+          "output:cal.generation.assessment.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-06.assessment-clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.output.scn-06.assessment-clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "r3.cal.score.output.scn-06.assessment-clarity.r1",
+        "task_kind": "assessment-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-06.quality.marking-scheme-coherence"
+        ],
+        "input_refs": [
+          "output:cal.generation.assessment.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-06.marking-scheme-coherence.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.output.scn-06.marking-scheme-coherence.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "r3.cal.score.output.scn-06.marking-scheme-coherence.r1",
+        "task_kind": "assessment-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-07.quality.correction-quality"
+        ],
+        "input_refs": [
+          "output:cal.correction.remediation.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-07.correction-quality.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.output.scn-07.correction-quality.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "r3.cal.score.output.scn-07.correction-quality.r1",
+        "task_kind": "correction-remediation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-07.quality.remediation-clarity"
+        ],
+        "input_refs": [
+          "output:cal.correction.remediation.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-07.remediation-clarity.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.output.scn-07.remediation-clarity.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "r3.cal.score.output.scn-07.remediation-clarity.r1",
+        "task_kind": "correction-remediation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-08.quality.distractor-quality"
+        ],
+        "input_refs": [
+          "output:cal.generation.qcm.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-08.distractor-quality.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.output.scn-08.distractor-quality.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "r3.cal.score.output.scn-08.distractor-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "workload": "scoring"
+      },
+      {
+        "automatic_retry_count": 0,
+        "criterion_refs": [
+          "scn-08.quality.feedback-quality"
+        ],
+        "input_refs": [
+          "output:cal.generation.qcm.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "max_output_tokens": 512,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-08.feedback-quality.r1",
+        "provider": "anthropic",
+        "r4_call_id": "r4.cal.score.output.scn-08.feedback-quality.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "r3.cal.score.output.scn-08.feedback-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "workload": "scoring"
+      }
+    ],
+    "future_calls_remain_pending_on_systemic_failure": true,
+    "ledger_relative_path": "artifacts/calibration/12.16-g2-r3b-r4/ledger.json",
+    "ledger_states": [
+      "PENDING",
+      "STARTED",
+      "COMPLETED",
+      "FAILED",
+      "SKIPPED_DEPENDENCY_FAILED"
+    ],
+    "matrix_sha256": "0298e4672f03def781bf7217b37567a456d6865aa35c157c4d956111962c7d8d",
+    "stop_on_first_systemic_failure": true,
+    "systemic_failure_codes": [
+      "INVALID_REQUEST",
+      "AUTHENTICATION",
+      "PERMISSION",
+      "BILLING",
+      "NOT_FOUND",
+      "RATE_LIMIT",
+      "TIMEOUT",
+      "CONNECTION",
+      "SERVER",
+      "OVERLOADED",
+      "UNAVAILABLE",
+      "EMPTY_RESPONSE",
+      "CONFLICT",
+      "REQUEST_TOO_LARGE"
+    ],
+    "version": "12.16-g2-r3b-r4-completion-v1"
+  },
+  "pricing": {
+    "cached_input_usd_per_million_tokens": "0.20",
+    "call_count": 71,
+    "input_usd_per_million_tokens": "2.00",
+    "maximum_before_margin_usd": "1.499520",
+    "model": "claude-sonnet-5",
+    "output_usd_per_million_tokens": "10.00",
+    "per_call_maximum_usd": "0.021120",
+    "requested_hard_ceiling_usd": "1.874400",
+    "safety_margin_amount_usd": "0.374880",
+    "safety_margin_multiplier": "1.25",
+    "snapshot_id": "official-2026-08-30-r3",
+    "source": "https://platform.claude.com/docs/en/about-claude/pricing"
+  },
+  "proof_sets": {
+    "artifacts/calibration/12.16-g2-r2/ledger.json": "45316f4e72f3d634cb31117e6f9cc690b68da43891b035558ed9a2aa46b33eb9",
+    "artifacts/calibration/12.16-g2-r2/summary.json": "bf8aa0277c04dbceec63d2c8dff004bf9fb2849cfc069449b159d428025c67b7",
+    "artifacts/calibration/12.16-g2-r2b/ledger.json": "c37e2587e6d408233c716d7ce4c27c3364baec50e0c1ab180b9f344f23a509c8",
+    "artifacts/calibration/12.16-g2-r2b/summary.json": "accab7309c4a3c5a25e8bbb40c8b494218da498c2808f26b4774eb3f7299ea2e",
+    "artifacts/calibration/12.16-g2-r3/ledger.json": "5722c7e4ba80a40d169997c34de9d764fe63781bc804b74ed2d3d19d1f46175f",
+    "artifacts/calibration/12.16-g2-r3/summary.json": "44b71e0d6e0da0828235af15a26bb66a6e6d5ff923264c413cc454420c3b79b7",
+    "artifacts/calibration/12.16-g2-r3b-r2/ledger.json": "aa254f931f417f5be267f1dd5e65dd1c667ab65bb0e2510b3cd586079ea16ae9",
+    "artifacts/calibration/12.16-g2-r3b-r2/raw/remediation.r3.anthropic-scorer.scn-01.c.clarity.canary.r1.3d2e4cb76ed3d5f10eabd369f19933404a5900df95674eaa2bc96c67b815ba3d.json": "3d2e4cb76ed3d5f10eabd369f19933404a5900df95674eaa2bc96c67b815ba3d",
+    "artifacts/calibration/12.16-g2-r3b-r2/summary.json": "e3aed0e2e49a10a64096fdc6765ae6222f2fff1c142c00d8081780726b8ad18d",
+    "artifacts/calibration/12.16-g2/ledger.json": "909a973d6532570ce95a65018d6016ed8ecaeb6af45ff4216ec568a21fecf0d7"
+  },
+  "r2_result": {
+    "cost_usd": "0.005786",
+    "equivalence_dimensions": {
+      "criterion": true,
+      "input_ref": true,
+      "logical_schema_sha256": true,
+      "logical_slot": true,
+      "max_output_tokens": true,
+      "model": true,
+      "observation_sha256": true,
+      "profile": true,
+      "provider_schema_sha256": true,
+      "scenario": true,
+      "serialized_input_bytes": true,
+      "serialized_input_sha256": true,
+      "source_failed_call": true,
+      "system_sha256": true
+    },
+    "latency_milliseconds": 7302,
+    "mapping_class": "EXACT_REMEDIATION_EQUIVALENT",
+    "raw_sha256": "3d2e4cb76ed3d5f10eabd369f19933404a5900df95674eaa2bc96c67b815ba3d",
+    "score": "0/1",
+    "status": "SCORED",
+    "usage": "938/0/391/1329"
+  },
+  "r3b_reusable_completed_results": {
+    "anthropic_scorer": 3,
+    "count": 9,
+    "openai_review": 6
+  },
+  "readiness": {
+    "additional_canary_required": false,
+    "anthropic": "PASSED",
+    "evidence_sha256": {
+      "r2_initial_anthropic_raw": "be29addb485255f4ed3903747562fe27f9d26a5a2a90846aa31d2b34056fa70b",
+      "r2_initial_ledger": "45316f4e72f3d634cb31117e6f9cc690b68da43891b035558ed9a2aa46b33eb9",
+      "r3b_ledger": "5722c7e4ba80a40d169997c34de9d764fe63781bc804b74ed2d3d19d1f46175f",
+      "r3b_r2_ledger": "aa254f931f417f5be267f1dd5e65dd1c667ab65bb0e2510b3cd586079ea16ae9",
+      "r3b_r2_raw": "3d2e4cb76ed3d5f10eabd369f19933404a5900df95674eaa2bc96c67b815ba3d",
+      "r3b_r2_summary": "e3aed0e2e49a10a64096fdc6765ae6222f2fff1c142c00d8081780726b8ad18d",
+      "r3b_success:r3.cal.score.anchor.scn-01.a.organization-utility.r1": "be29addb485255f4ed3903747562fe27f9d26a5a2a90846aa31d2b34056fa70b",
+      "r3b_success:r3.cal.score.anchor.scn-01.b.clarity.r1": "be29addb485255f4ed3903747562fe27f9d26a5a2a90846aa31d2b34056fa70b",
+      "r3b_success:r3.cal.score.anchor.scn-01.b.organization-utility.r1": "be29addb485255f4ed3903747562fe27f9d26a5a2a90846aa31d2b34056fa70b"
+    }
+  },
+  "refs": {
+    "branch": "phase12/12-16-provider-model-calibration",
+    "entry_head": "186c388772e66a99bb402c6e03ec6e469757ea1b",
+    "entry_main": "7ae02ee109bcc6399ec0f71616da6aef07abda81",
+    "entry_parent": "8ebdfb01309922332c4287e58d20e68da68310cb"
+  },
+  "reused_evidence_manifest": {
+    "logical_slot_count": 25,
+    "mapping_count": 25,
+    "mappings": [
+      {
+        "cost_usd": "0.003010",
+        "input_sha256": "e992146ad686e2835e08f7951bd2823fb73308c804ab69f0c7eac9296fd3ce28",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "original_logical_slot_id": "cal.generation.course.primary.r1",
+        "output_sha256": "4c224e7b85af14a1f9a33cbd292c4567a45aef7fcbda02fde7d64ff6cf8d3fcb",
+        "proof_set": "G2",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "38119a91a7a8f8a26cbd7d3397092b35ba9103d0336b89b6c7b349ffbc75cb97",
+        "status": "COMPLETED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 551,
+          "output_tokens": 159,
+          "reasoning_tokens": null,
+          "total_tokens": 710
+        }
+      },
+      {
+        "cost_usd": "0.003334",
+        "input_sha256": "01534c3cca946c94b8b9e72c43cd48833e83123ac2eba312f243d6b52a60bb75",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "original_logical_slot_id": "cal.generation.course.primary.r2",
+        "output_sha256": "53d4b056c16cc1212a4b9f7995f1d01bb2c8333793aaeca5ed77abdba8baf1a5",
+        "proof_set": "G2",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "38119a91a7a8f8a26cbd7d3397092b35ba9103d0336b89b6c7b349ffbc75cb97",
+        "status": "COMPLETED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 551,
+          "output_tokens": 186,
+          "reasoning_tokens": null,
+          "total_tokens": 737
+        }
+      },
+      {
+        "cost_usd": "0.005288",
+        "input_sha256": "fc729ee231f8c5e21683162c09c60acf9a22a24d51521c26dd2f2b5e81ff1bb1",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.generation-fallback",
+        "original_logical_slot_id": "cal.generation.course.fallback.r1",
+        "output_sha256": "e264b018ede1f08f38540e5142f73f1f655fea664887c8c64217a1c5ce87d249",
+        "proof_set": "G2",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "38119a91a7a8f8a26cbd7d3397092b35ba9103d0336b89b6c7b349ffbc75cb97",
+        "status": "COMPLETED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 552,
+          "output_tokens": 154,
+          "reasoning_tokens": null,
+          "total_tokens": 706
+        }
+      },
+      {
+        "cost_usd": "0.003546",
+        "input_sha256": "e36cd6f9e81e579f2c314fac6f8adf7da8ebbb0d76161aa7d1f9802a04c79101",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "original_logical_slot_id": "cal.generation.exercise.primary.r1",
+        "output_sha256": "aded5d6dd52e3250670954803445ac4dddc9ae81843af62eaab85bcd2335f01b",
+        "proof_set": "G2",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "84d081b46ca537d8a5ba44ab68e308eedd3ab516e27403f651b1949f3aa84958",
+        "status": "COMPLETED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 531,
+          "output_tokens": 207,
+          "reasoning_tokens": null,
+          "total_tokens": 738
+        }
+      },
+      {
+        "cost_usd": "0.003914",
+        "input_sha256": "37addb2cd37969d0d1c636f1d567b8a928db26ce34ca3af0abd0080064fe0781",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "original_logical_slot_id": "cal.generation.assessment.primary.r1",
+        "output_sha256": "6f1436688c314bc3e900c6d77747d7e5eb12f60c107cfc1a3d9772072876d059",
+        "proof_set": "G2",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "ef6ced46cea0eded0b8452a4e927f591b5359d165ea8cd02619cf1a083732491",
+        "status": "COMPLETED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 559,
+          "output_tokens": 233,
+          "reasoning_tokens": null,
+          "total_tokens": 792
+        }
+      },
+      {
+        "cost_usd": "0.008160",
+        "input_sha256": "b5efddae7128f701181ee6aef3cffc88a7c366d1a23db8522dee82c38d55e317",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.generation-fallback",
+        "original_logical_slot_id": "cal.generation.assessment.fallback.r1",
+        "output_sha256": "e88365bc63f7f40774e3c44df19ad61e6ab0290035e9b19b3a64c305451f6955",
+        "proof_set": "G2",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "ef6ced46cea0eded0b8452a4e927f591b5359d165ea8cd02619cf1a083732491",
+        "status": "COMPLETED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 560,
+          "output_tokens": 296,
+          "reasoning_tokens": null,
+          "total_tokens": 856
+        }
+      },
+      {
+        "cost_usd": "0.002928",
+        "input_sha256": "7039bdd223e727f113a9fccd05782b14ab7a867eb958b40aa4f0b16cd8ef91f9",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "original_logical_slot_id": "cal.generation.qcm.primary.r1",
+        "output_sha256": "a4567ef0f93d856799cc1df88924a2ecd95ce0273c6a1aefdb2f23831bba1036",
+        "proof_set": "G2",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "ad45276fd7157873ffd8e7e554d34ac2e8440becac9f9ab179213829cbc0e316",
+        "status": "COMPLETED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 558,
+          "output_tokens": 151,
+          "reasoning_tokens": null,
+          "total_tokens": 709
+        }
+      },
+      {
+        "cost_usd": "0.005196",
+        "input_sha256": "d56a41015eb4a5ed7c262fb609a4a3e1573491934a5121d68cdac8ba6dfc75cf",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.generation-fallback",
+        "original_logical_slot_id": "cal.generation.qcm.fallback.r1",
+        "output_sha256": "6884150bf6a88db77fd0d2e0afdd623d6a30f2f2ba4be8efca09f77fef1a7306",
+        "proof_set": "G2",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "ad45276fd7157873ffd8e7e554d34ac2e8440becac9f9ab179213829cbc0e316",
+        "status": "COMPLETED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 559,
+          "output_tokens": 148,
+          "reasoning_tokens": null,
+          "total_tokens": 707
+        }
+      },
+      {
+        "cost_usd": "0.003174",
+        "input_sha256": "e4d2698d6d204fac0490b4fc0f14cebcfc251b74064f462960624cc7fa78a523",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "original_logical_slot_id": "cal.transformation.resource.primary.r1",
+        "output_sha256": "965d11d36db35d200c1616930e0357d2089e18a3878d44e4f71a981714c94975",
+        "proof_set": "G2",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "bbb1434db8699c03e27c587265ffd777c571d8e1b908fe436b74f58ecab22fc0",
+        "status": "COMPLETED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 585,
+          "output_tokens": 167,
+          "reasoning_tokens": null,
+          "total_tokens": 752
+        }
+      },
+      {
+        "cost_usd": "0.003246",
+        "input_sha256": "97f6f00f84de340c011139d6696d05e159e657e6f86241d7883937a8139c6e1c",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "original_logical_slot_id": "cal.transformation.resource.primary.r2",
+        "output_sha256": "b7e67be59faf25133033eabdcccd6048dd2359bea7c9c5e6592ae41ef1887590",
+        "proof_set": "G2",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "bbb1434db8699c03e27c587265ffd777c571d8e1b908fe436b74f58ecab22fc0",
+        "status": "COMPLETED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 585,
+          "output_tokens": 173,
+          "reasoning_tokens": null,
+          "total_tokens": 758
+        }
+      },
+      {
+        "cost_usd": "0.006324",
+        "input_sha256": "4c4a8a49c8ca71b490e69f016f49c2a018ae3a4acdaa49e8e59cebb789f8bcea",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.correction",
+        "original_logical_slot_id": "cal.correction.remediation.primary.r1",
+        "output_sha256": "9966a3cc5773a25db17c370a749cb20e691907d42e1413f75f96e938c93c3122",
+        "proof_set": "G2",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "0f296374247427a04bc2118acf146ee2bb9d1be4f112c2e7811a3e66ccdc827f",
+        "status": "COMPLETED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 586,
+          "output_tokens": 199,
+          "reasoning_tokens": null,
+          "total_tokens": 785
+        }
+      },
+      {
+        "cost_usd": "0.006224",
+        "input_sha256": "5ae5d7c6c273f82810be1e6457bcfd0ae71fc04bea3f3ac71cd2c197ed0b5ecc",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.correction",
+        "original_logical_slot_id": "cal.correction.remediation.primary.r2",
+        "output_sha256": "02b5f41ec210c535dd5eef249ee9d2ff4b7c5cc03d9536eaeda4bf49f7beb07f",
+        "proof_set": "G2",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "0f296374247427a04bc2118acf146ee2bb9d1be4f112c2e7811a3e66ccdc827f",
+        "status": "COMPLETED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 586,
+          "output_tokens": 194,
+          "reasoning_tokens": null,
+          "total_tokens": 780
+        }
+      },
+      {
+        "cost_usd": "0.003610",
+        "input_sha256": "9e6796744031339ad28609ce09040358d09d86caeb95ccaabe63de846d770dec",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.correction-fallback",
+        "original_logical_slot_id": "cal.correction.remediation.fallback.r1",
+        "output_sha256": "04b29a9193b71cc596ed61586fbfef9f1c600d6a17126c2e62bdd68a66170bf1",
+        "proof_set": "G2",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "0f296374247427a04bc2118acf146ee2bb9d1be4f112c2e7811a3e66ccdc827f",
+        "status": "COMPLETED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 587,
+          "output_tokens": 203,
+          "reasoning_tokens": null,
+          "total_tokens": 790
+        }
+      },
+      {
+        "cost_usd": "0.034712",
+        "input_sha256": "4200833083b1709e581c3c6fa374acdcfc064f95b9fec0507fff4c7609ec117a",
+        "mapping_class": "AUTHORIZED_PARAMETER_REMEDIATION",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.review",
+        "original_logical_slot_id": "cal.review.exercise.primary.r1",
+        "output_sha256": "8430b6ae90a17451a94f69557de3aef1bca45e3e78ca6dff743ac161a4aac65b",
+        "proof_set": "R2B",
+        "provider": "openai",
+        "remediation_call_id": "remediation.openai-review.scn-05.canary.r2b.r1",
+        "schema_sha256": "844a0a76f9dc828c9e7dc89ed3ea724e209fb8abbb5f1d688683aa04ea20851f",
+        "status": "PARTIAL",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 873,
+          "output_tokens": 1561,
+          "reasoning_tokens": 708,
+          "total_tokens": 2434
+        }
+      },
+      {
+        "cost_usd": "0.024412",
+        "input_sha256": "7e26cfd1b7b06920cabe88fd06c54929945305c15ac895e68682e17f22d3e9c9",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.review",
+        "original_logical_slot_id": "cal.review.exercise.primary.r2",
+        "output_sha256": "5b5fc80fad92fd39eca3e279729a4a7d7512856a9de7389f5e41e33b310e17e1",
+        "proof_set": "R3B",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "844a0a76f9dc828c9e7dc89ed3ea724e209fb8abbb5f1d688683aa04ea20851f",
+        "status": "PARTIAL",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 863,
+          "output_tokens": 1048,
+          "reasoning_tokens": 219,
+          "total_tokens": 1911
+        }
+      },
+      {
+        "cost_usd": "0.009180",
+        "input_sha256": "ecb8b4b62742285a627dd4bfd886d045ef813e22acb411073feea94b576a4c91",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.review-fallback",
+        "original_logical_slot_id": "cal.review.exercise.fallback.r1",
+        "output_sha256": "bfecd1259be3de50cd6aa89dc5921eb7c4c98096a736330fa3c5cd2a221261ad",
+        "proof_set": "R3B",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "844a0a76f9dc828c9e7dc89ed3ea724e209fb8abbb5f1d688683aa04ea20851f",
+        "status": "SUCCEEDED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 864,
+          "output_tokens": 621,
+          "reasoning_tokens": 126,
+          "total_tokens": 1485
+        }
+      },
+      {
+        "cost_usd": "0.034340",
+        "input_sha256": "bfdf4681e0972f58158ade9a89ba52f9e8af55ff8b41fdfaeef1ae65580e5d55",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.review",
+        "original_logical_slot_id": "cal.review.assessment.primary.r1",
+        "output_sha256": "06958c577191ffde838c5e7b9e6aa47859ccf74e88fcaee3c7ca82b7dac1d703",
+        "proof_set": "R3B",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "844a0a76f9dc828c9e7dc89ed3ea724e209fb8abbb5f1d688683aa04ea20851f",
+        "status": "PARTIAL",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 885,
+          "output_tokens": 1540,
+          "reasoning_tokens": 392,
+          "total_tokens": 2425
+        }
+      },
+      {
+        "cost_usd": "0.026220",
+        "input_sha256": "478a1aaabb6b926e9ab34c16027a860d644f87ea9a87a5f6695166d3da6dab5f",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.review",
+        "original_logical_slot_id": "cal.review.correction.primary.r1",
+        "output_sha256": "4ee34727d9c5feb7c4570ed84e7949d7fe5f71fb40fdf7b221db454b92fc9771",
+        "proof_set": "R3B",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "844a0a76f9dc828c9e7dc89ed3ea724e209fb8abbb5f1d688683aa04ea20851f",
+        "status": "PARTIAL",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 875,
+          "output_tokens": 1136,
+          "reasoning_tokens": 329,
+          "total_tokens": 2011
+        }
+      },
+      {
+        "cost_usd": "0.020780",
+        "input_sha256": "e61ed818fca856569d45a04f91231aa03cf02af4f9b1371fc103a99783154a82",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.review",
+        "original_logical_slot_id": "cal.review.qcm.primary.r1",
+        "output_sha256": "e54af12c650691ea53e5327dfb7c465fe54ffddd120bb6169f7a095db6fc26c3",
+        "proof_set": "R3B",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "844a0a76f9dc828c9e7dc89ed3ea724e209fb8abbb5f1d688683aa04ea20851f",
+        "status": "PARTIAL",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 875,
+          "output_tokens": 864,
+          "reasoning_tokens": 186,
+          "total_tokens": 1739
+        }
+      },
+      {
+        "cost_usd": "0.004140",
+        "input_sha256": "238e63658030d2e166ff36f25291999790461656eedc45364779ed8e2ecb0870",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.review-fallback",
+        "original_logical_slot_id": "cal.review.qcm.fallback.r1",
+        "output_sha256": "384cfcd39c69fcfdc385bdc5794310a9769d96a5fc1db393011bdcdfee8637a3",
+        "proof_set": "R3B",
+        "provider": "openai",
+        "remediation_call_id": null,
+        "schema_sha256": "844a0a76f9dc828c9e7dc89ed3ea724e209fb8abbb5f1d688683aa04ea20851f",
+        "status": "SUCCEEDED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 876,
+          "output_tokens": 199,
+          "reasoning_tokens": 96,
+          "total_tokens": 1075
+        }
+      },
+      {
+        "cost_usd": "0.003638",
+        "input_sha256": "6c6ff1c3b4d4b3687b4e3c8230559577a7e5d3582d53b44157e4e6ee9fe39e68",
+        "mapping_class": "EXACT_REMEDIATION_EQUIVALENT",
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-01.a.clarity.r1",
+        "output_sha256": "be29addb485255f4ed3903747562fe27f9d26a5a2a90846aa31d2b34056fa70b",
+        "proof_set": "R2",
+        "provider": "anthropic",
+        "remediation_call_id": "remediation.anthropic-scorer.scn-01.clarity.canary.r1",
+        "schema_sha256": "968312b8f7f4059cfb47b4c70bff98ec14f61089b2b72fa78821368d62bc4dc1",
+        "status": "PASSED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 979,
+          "output_tokens": 168,
+          "reasoning_tokens": null,
+          "total_tokens": 1147
+        }
+      },
+      {
+        "cost_usd": "0.005112",
+        "input_sha256": "83d6a522c35bdf7dce432214a7c862a2ca6baf8d2095351a34ba466a6ec62c74",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-01.a.organization-utility.r1",
+        "output_sha256": "be29addb485255f4ed3903747562fe27f9d26a5a2a90846aa31d2b34056fa70b",
+        "proof_set": "R3B",
+        "provider": "anthropic",
+        "remediation_call_id": null,
+        "schema_sha256": "607a6736853b8ab5ab3e95926a51ebef12191ffa8b2f43b5ef9826fca19d54f7",
+        "status": "SCORED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 981,
+          "output_tokens": 315,
+          "reasoning_tokens": null,
+          "total_tokens": 1296
+        }
+      },
+      {
+        "cost_usd": "0.004130",
+        "input_sha256": "4e84e18d5b6d8a38b1835610392066e8e22d55d9ae028b347dbedd0f52c5aefa",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-01.b.clarity.r1",
+        "output_sha256": "be29addb485255f4ed3903747562fe27f9d26a5a2a90846aa31d2b34056fa70b",
+        "proof_set": "R3B",
+        "provider": "anthropic",
+        "remediation_call_id": null,
+        "schema_sha256": "607a6736853b8ab5ab3e95926a51ebef12191ffa8b2f43b5ef9826fca19d54f7",
+        "status": "SCORED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 950,
+          "output_tokens": 223,
+          "reasoning_tokens": null,
+          "total_tokens": 1173
+        }
+      },
+      {
+        "cost_usd": "0.005174",
+        "input_sha256": "78386202089728bbb88616a6163168a759be488fa663b3421406e631827a216f",
+        "mapping_class": "EXACT_ORIGINAL_RESULT",
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-01.b.organization-utility.r1",
+        "output_sha256": "be29addb485255f4ed3903747562fe27f9d26a5a2a90846aa31d2b34056fa70b",
+        "proof_set": "R3B",
+        "provider": "anthropic",
+        "remediation_call_id": null,
+        "schema_sha256": "607a6736853b8ab5ab3e95926a51ebef12191ffa8b2f43b5ef9826fca19d54f7",
+        "status": "SCORED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 952,
+          "output_tokens": 327,
+          "reasoning_tokens": null,
+          "total_tokens": 1279
+        }
+      },
+      {
+        "cost_usd": "0.005786",
+        "input_sha256": "b6cc367de3229a83ac3af9cdf717db21b00aad6a9dc23b490dd2fb35343b914f",
+        "mapping_class": "EXACT_REMEDIATION_EQUIVALENT",
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-01.c.clarity.r1",
+        "output_sha256": "3d2e4cb76ed3d5f10eabd369f19933404a5900df95674eaa2bc96c67b815ba3d",
+        "proof_set": "R3B-R2",
+        "provider": "anthropic",
+        "remediation_call_id": "remediation.r3.anthropic-scorer.scn-01.c.clarity.canary.r1",
+        "schema_sha256": "607a6736853b8ab5ab3e95926a51ebef12191ffa8b2f43b5ef9826fca19d54f7",
+        "status": "SCORED",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 938,
+          "output_tokens": 391,
+          "reasoning_tokens": null,
+          "total_tokens": 1329
+        }
+      }
+    ],
+    "original_failed_record_preserved": true,
+    "proof_set_sha256": {
+      "artifacts/calibration/12.16-g2-r2/ledger.json": "45316f4e72f3d634cb31117e6f9cc690b68da43891b035558ed9a2aa46b33eb9",
+      "artifacts/calibration/12.16-g2-r2/summary.json": "bf8aa0277c04dbceec63d2c8dff004bf9fb2849cfc069449b159d428025c67b7",
+      "artifacts/calibration/12.16-g2-r2b/ledger.json": "c37e2587e6d408233c716d7ce4c27c3364baec50e0c1ab180b9f344f23a509c8",
+      "artifacts/calibration/12.16-g2-r2b/summary.json": "accab7309c4a3c5a25e8bbb40c8b494218da498c2808f26b4774eb3f7299ea2e",
+      "artifacts/calibration/12.16-g2-r3/ledger.json": "5722c7e4ba80a40d169997c34de9d764fe63781bc804b74ed2d3d19d1f46175f",
+      "artifacts/calibration/12.16-g2-r3/summary.json": "44b71e0d6e0da0828235af15a26bb66a6e6d5ff923264c413cc454420c3b79b7",
+      "artifacts/calibration/12.16-g2-r3b-r2/ledger.json": "aa254f931f417f5be267f1dd5e65dd1c667ab65bb0e2510b3cd586079ea16ae9",
+      "artifacts/calibration/12.16-g2-r3b-r2/raw/remediation.r3.anthropic-scorer.scn-01.c.clarity.canary.r1.3d2e4cb76ed3d5f10eabd369f19933404a5900df95674eaa2bc96c67b815ba3d.json": "3d2e4cb76ed3d5f10eabd369f19933404a5900df95674eaa2bc96c67b815ba3d",
+      "artifacts/calibration/12.16-g2-r3b-r2/summary.json": "e3aed0e2e49a10a64096fdc6765ae6222f2fff1c142c00d8081780726b8ad18d",
+      "artifacts/calibration/12.16-g2/ledger.json": "909a973d6532570ce95a65018d6016ed8ecaeb6af45ff4216ec568a21fecf0d7"
+    }
+  },
+  "reused_evidence_manifest_sha256": "b9eb583ccf5c6fcbc6b7b5d4491dd74a53889ffd92521b3270f9984f61d12aa9",
+  "slot_accounting": {
+    "original_logical_slots": 96,
+    "pre_r3b_reused_logical_slots": 15,
+    "r3b_completed_logical_slots": 9,
+    "r3b_r2_remediated_logical_slots": 1,
+    "remaining_anthropic": 71,
+    "remaining_anthropic_breakdown": {
+      "initial_anchor_scores": 43,
+      "repeatability_scores": 16,
+      "selected_output_scores": 12
+    },
+    "remaining_logical_slots": 71,
+    "remaining_openai": 0,
+    "reused_logical_slots": 25
+  },
+  "status": "PASS_CLOSED"
+}

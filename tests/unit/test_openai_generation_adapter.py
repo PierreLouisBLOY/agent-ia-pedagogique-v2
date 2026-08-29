@@ -175,6 +175,7 @@ def test_generate_maps_bounded_request_and_valid_structured_response() -> None:
             "Activités": "Manipuler puis expliquer.",
         }
     }
+    assert transport.calls[0].reasoning_effort is None
     assert result.execution_metadata == {
         "provider_code": "openai",
         "provider_profile_id": "openai-provider",

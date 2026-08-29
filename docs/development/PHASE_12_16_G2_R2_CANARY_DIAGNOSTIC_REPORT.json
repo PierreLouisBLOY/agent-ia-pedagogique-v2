@@ -1,0 +1,155 @@
+{
+  "adr_required": false,
+  "anthropic_reuse": {
+    "anchor_bytes": 278,
+    "anchor_id": "cal.scn-01.a",
+    "anchor_sha256": "5468fd843013bbd89f2bea9f2c0fe35a73323303f9a3a5059d96dc1c703035eb",
+    "anthropic_canary_reusable_as_g2_score": true,
+    "anthropic_family_readiness": "PASSED",
+    "canary_observation_bytes": 1089,
+    "canary_observation_sha256": "6c6ff1c3b4d4b3687b4e3c8230559577a7e5d3582d53b44157e4e6ee9fe39e68",
+    "criterion_ref": "scn-01.quality.clarity",
+    "logical_g2_call_id": "cal.score.anchor.scn-01.a.clarity.r1",
+    "logical_observation_bytes": 1089,
+    "logical_observation_sha256": "6c6ff1c3b4d4b3687b4e3c8230559577a7e5d3582d53b44157e4e6ee9fe39e68",
+    "max_output_tokens": 512,
+    "model_code": "claude-sonnet-5",
+    "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+    "r2_canary_call_id": "remediation.anthropic-scorer.scn-01.clarity.canary.r1",
+    "scenario_code": "SCN-01",
+    "schema_sha256": "968312b8f7f4059cfb47b4c70bff98ec14f61089b2b72fa78821368d62bc4dc1"
+  },
+  "decision": "PASS",
+  "documentation": {
+    "openai_responses": "https://developers.openai.com/api/reference/cli/resources/responses/methods/create",
+    "openai_sol_model": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+    "verified_on": "2026-08-29"
+  },
+  "git_baseline": {
+    "branch": "phase12/12-16-provider-model-calibration",
+    "head": "4d3b93be82bbda1e1600ba5a17c0c7906fcb4d50",
+    "main": "7ae02ee109bcc6399ec0f71616da6aef07abda81",
+    "origin_main": "7ae02ee109bcc6399ec0f71616da6aef07abda81",
+    "parent": "005cf33dc84917f3f3d06b755e3ae93988d69a53",
+    "upstream": "4d3b93be82bbda1e1600ba5a17c0c7906fcb4d50"
+  },
+  "implementation": {
+    "generation_correction_reasoning_effort_delta": "NONE",
+    "incomplete_reason_values": [
+      "none",
+      "max_output_tokens",
+      "content_filter",
+      "other"
+    ],
+    "openai_reasoning_effort_values": [
+      "none",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max"
+    ],
+    "public_port_delta_count": 0,
+    "reasoning_tokens_normalized": true,
+    "review_incomplete_parseable_behavior": "PARTIAL_WITH_OPENAI_RESPONSE_INCOMPLETE",
+    "review_incomplete_truncated_behavior": "INVALID_RESPONSE_WITH_PRIVATE_DIAGNOSTIC",
+    "unknown_incomplete_reason_behavior": "OTHER"
+  },
+  "openai_failure": {
+    "classification": "NO_OUTPUT_TEXT",
+    "closed_error_code": "OPENAI_REVIEW_INVALID_RESPONSE",
+    "incomplete_reason_in_r2_evidence": "UNAVAILABLE",
+    "json_parse_status": "NOT_APPLICABLE",
+    "last_expected_syntax_type": null,
+    "post_validation_status": "NOT_APPLICABLE",
+    "reasoning_tokens_in_r2_evidence": "UNAVAILABLE",
+    "safe_conclusion": "OUTPUT_BUDGET_SATURATED_BUT_TRUNCATION_NOT_PROVEN",
+    "sha256": null,
+    "utf8_bytes": 0
+  },
+  "phase": "12.16-G2-R2A",
+  "r2_evidence": {
+    "approved_ceiling_usd": "0.100200",
+    "automatic_rerun_count": 0,
+    "automatic_retry_count": 0,
+    "calls": [
+      {
+        "cached_input_tokens": 0,
+        "call_id": "remediation.openai-review.scn-05.canary.r1",
+        "closed_error_code": "OPENAI_REVIEW_INVALID_RESPONSE",
+        "cost_usd": "0.023960",
+        "input_tokens": 870,
+        "model": "gpt-5.6-sol",
+        "output_tokens": 1024,
+        "provider": "openai",
+        "raw_output_bytes": null,
+        "raw_output_path": null,
+        "raw_output_sha256": null,
+        "response_status": "ERROR",
+        "status": "FAILED",
+        "total_tokens": 1894
+      },
+      {
+        "cached_input_tokens": 0,
+        "call_id": "remediation.anthropic-scorer.scn-01.clarity.canary.r1",
+        "closed_error_code": null,
+        "cost_usd": "0.003638",
+        "input_tokens": 979,
+        "model": "claude-sonnet-5",
+        "output_tokens": 168,
+        "provider": "anthropic",
+        "raw_output_bytes": 61,
+        "raw_output_path": "artifacts/calibration/12.16-g2-r2/raw/remediation.anthropic-scorer.scn-01.clarity.canary.r1.be29addb485255f4ed3903747562fe27f9d26a5a2a90846aa31d2b34056fa70b.json",
+        "raw_output_sha256": "be29addb485255f4ed3903747562fe27f9d26a5a2a90846aa31d2b34056fa70b",
+        "response_status": "STRUCTURED",
+        "status": "PASSED",
+        "total_tokens": 1147
+      }
+    ],
+    "duplicate_call_count": 0,
+    "ledger": {
+      "bytes": 1886,
+      "relative_path": "artifacts/calibration/12.16-g2-r2/ledger.json",
+      "sha256": "45316f4e72f3d634cb31117e6f9cc690b68da43891b035558ed9a2aa46b33eb9"
+    },
+    "matrix_sha256": "d0d972312a0c9922f9a0629728e7579836dd2abbbade034b5316003bf54fee13",
+    "pending_call_count": 0,
+    "plan_version": "12.16-g2-r2-canary-v1",
+    "provider_calls_attempted": 2,
+    "started_call_count": 0,
+    "summary": {
+      "bytes": 468,
+      "relative_path": "artifacts/calibration/12.16-g2-r2/summary.json",
+      "sha256": "bf8aa0277c04dbceec63d2c8dff004bf9fb2849cfc069449b159d428025c67b7"
+    },
+    "terminal_call_count": 2,
+    "total_cost_usd": "0.027598"
+  },
+  "r2a_execution": {
+    "live_provider_calls": 0,
+    "provider_cost_usd": "0"
+  },
+  "r2b_plan": {
+    "approval_required": true,
+    "automatic_retry_count": 0,
+    "call_count": 1,
+    "call_id": "remediation.openai-review.scn-05.canary.r2b.r1",
+    "estimated_max_cost_before_margin_usd": "0.109920",
+    "failed_r2_call_id": "remediation.openai-review.scn-05.canary.r1",
+    "input_json_bytes": 1094,
+    "input_json_sha256": "4200833083b1709e581c3c6fa374acdcfc064f95b9fec0507fff4c7609ec117a",
+    "input_utf8_upper_bound_bytes": 7000,
+    "matrix_sha256": "f2f4b224299a958b1a2e0d82b61b671befb222bb244efbe18342b41823ce05d3",
+    "max_output_tokens": 4096,
+    "model": "gpt-5.6-sol",
+    "plan_version": "12.16-g2-r2b-openai-review-canary-v1",
+    "provider": "openai",
+    "reasoning_effort": "low",
+    "requested_ceiling_usd": "0.137400",
+    "schema_bytes": 3377,
+    "schema_root_property_count": 7,
+    "schema_sha256": "844a0a76f9dc828c9e7dc89ed3ea724e209fb8abbb5f1d688683aa04ea20851f",
+    "technical_findings_max_items": 32,
+    "workload": "review"
+  }
+}

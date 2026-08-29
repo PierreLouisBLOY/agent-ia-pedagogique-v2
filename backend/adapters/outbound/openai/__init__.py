@@ -1,6 +1,8 @@
 """Provider-generic OpenAI Responses transport shared by outbound adapters."""
 
 from backend.adapters.outbound.openai.contracts import (
+    OpenAIIncompleteReason,
+    OpenAIReasoningEffort,
     OpenAIResponsesRequest,
     OpenAIResponsesResponse,
     OpenAIResponseStatus,
@@ -16,6 +18,8 @@ from backend.adapters.outbound.openai.transport import (
 )
 
 __all__ = [
+    "OpenAIIncompleteReason",
+    "OpenAIReasoningEffort",
     "OpenAIResponsesRequest",
     "OpenAIResponsesResponse",
     "OpenAIResponseStatus",

@@ -16,6 +16,22 @@ class OpenAIResponseStatus(StrEnum):
     REFUSED = "refused"
 
 
+class OpenAIIncompleteReason(StrEnum):
+    NONE = "none"
+    MAX_OUTPUT_TOKENS = "max_output_tokens"
+    CONTENT_FILTER = "content_filter"
+    OTHER = "other"
+
+
+class OpenAIReasoningEffort(StrEnum):
+    NONE = "none"
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    XHIGH = "xhigh"
+    MAX = "max"
+
+
 class OpenAITransportErrorCode(StrEnum):
     INVALID_REQUEST = "INVALID_REQUEST"
     AUTHENTICATION = "AUTHENTICATION"
@@ -48,6 +64,7 @@ class OpenAIResponsesRequest:
     output_schema: dict[str, object]
     max_output_tokens: int
     schema_name: str
+    reasoning_effort: OpenAIReasoningEffort | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,6 +73,7 @@ class OpenAIResponseUsage:
     cached_input_tokens: int | None = None
     output_tokens: int | None = None
     total_tokens: int | None = None
+    reasoning_tokens: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,6 +81,7 @@ class OpenAIResponsesResponse:
     status: OpenAIResponseStatus
     output_text: str | None = None
     usage: OpenAIResponseUsage = OpenAIResponseUsage()
+    incomplete_reason: OpenAIIncompleteReason = OpenAIIncompleteReason.NONE
 
 
 class OpenAIResponsesTransport(Protocol):

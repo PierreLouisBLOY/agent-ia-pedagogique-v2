@@ -1,0 +1,31 @@
+{
+  "approval_required": true,
+  "automatic_retry_count": 0,
+  "call_count": 1,
+  "call_id": "remediation.openai-review.scn-05.canary.r2b.r1",
+  "calculation": {
+    "estimated_input_cost_usd": "0.028000",
+    "estimated_max_before_margin_usd": "0.109920",
+    "estimated_output_cost_usd": "0.081920",
+    "margin_amount_usd": "0.027480",
+    "requested_ceiling_usd": "0.137400",
+    "safety_margin": "1.25"
+  },
+  "input_utf8_upper_bound_bytes": 7000,
+  "max_output_tokens": 4096,
+  "model": "gpt-5.6-sol",
+  "plan_version": "12.16-g2-r2b-openai-review-canary-v1",
+  "pricing": {
+    "cached_input_usd_per_million_tokens": "0.40",
+    "input_usd_per_million_tokens": "4.00",
+    "output_usd_per_million_tokens": "20.00",
+    "source_url": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+    "verified_on": "2026-08-29"
+  },
+  "provider": "openai",
+  "r2a_live_calls": 0,
+  "r2a_provider_cost_usd": "0",
+  "reasoning_effort": "low",
+  "r2b_matrix_sha256": "f2f4b224299a958b1a2e0d82b61b671befb222bb244efbe18342b41823ce05d3",
+  "workload": "review"
+}

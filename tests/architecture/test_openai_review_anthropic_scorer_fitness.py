@@ -6,6 +6,13 @@ import tomllib
 from dataclasses import fields
 from pathlib import Path
 
+from backend.adapters.outbound.openai import (
+    OpenAIIncompleteReason,
+    OpenAIReasoningEffort,
+    OpenAIResponsesRequest,
+    OpenAIResponsesResponse,
+    OpenAIResponseUsage,
+)
 from backend.adapters.outbound.review.openai import OpenAIReviewAdapter
 from backend.agent_runtime.agents.review import (
     ReviewPort,
@@ -130,6 +137,32 @@ def test_existing_review_and_scoring_contracts_are_reused_exactly() -> None:
         "SCORED",
         "INCONCLUSIVE",
         "ERROR",
+    )
+
+
+def test_openai_diagnostics_remain_private_to_the_provider_transport() -> None:
+    assert tuple(item.name for item in fields(OpenAIResponsesRequest))[-1] == (
+        "reasoning_effort"
+    )
+    assert tuple(item.name for item in fields(OpenAIResponseUsage))[-1] == (
+        "reasoning_tokens"
+    )
+    assert tuple(item.name for item in fields(OpenAIResponsesResponse))[-1] == (
+        "incomplete_reason"
+    )
+    assert tuple(item.value for item in OpenAIIncompleteReason) == (
+        "none",
+        "max_output_tokens",
+        "content_filter",
+        "other",
+    )
+    assert tuple(item.value for item in OpenAIReasoningEffort) == (
+        "none",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
     )
 
 

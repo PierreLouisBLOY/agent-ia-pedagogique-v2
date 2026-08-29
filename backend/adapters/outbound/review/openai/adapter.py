@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from enum import StrEnum
 from typing import NoReturn, cast
 
 from backend.adapters.outbound.openai.contracts import (
+    OpenAIIncompleteReason,
+    OpenAIReasoningEffort,
     OpenAIResponsesResponse,
     OpenAIResponseStatus,
     OpenAIResponsesTransportFactory,
@@ -75,12 +78,26 @@ _FINDING_KEYS = {
 }
 
 
+class _OpenAIReviewDiagnosticCode(StrEnum):
+    CONTRACT_MISMATCH = "OPENAI_REVIEW_CONTRACT_MISMATCH"
+    INCOMPLETE_MAX_OUTPUT_TOKENS = "OPENAI_REVIEW_INCOMPLETE_MAX_OUTPUT_TOKENS"
+
+
+class _OpenAIReviewPortError(ReviewPortError):
+    diagnostic_code: _OpenAIReviewDiagnosticCode
+
+    def __init__(self, diagnostic_code: _OpenAIReviewDiagnosticCode) -> None:
+        self.diagnostic_code = diagnostic_code
+        super().__init__(ReviewPortErrorCode.INVALID_RESPONSE)
+
+
 class OpenAIReviewAdapter:
     """Technical reviewer with no validation, gate, retry, or fallback authority."""
 
     __slots__ = (
         "_model_profile",
         "_provider_profile",
+        "_reasoning_effort",
         "_secret_resolver",
         "_transport_factory",
     )
@@ -92,12 +109,16 @@ class OpenAIReviewAdapter:
         model_profile: ModelProfileConfig,
         secret_resolver: ProviderSecretResolver,
         transport_factory: OpenAIResponsesTransportFactory,
+        reasoning_effort: OpenAIReasoningEffort | None = None,
     ) -> None:
         _validate_configuration(provider_profile, model_profile)
         if not isinstance(secret_resolver, ProviderSecretResolver):
             raise TypeError("secret_resolver must satisfy ProviderSecretResolver")
+        if reasoning_effort is not None and type(reasoning_effort) is not OpenAIReasoningEffort:
+            raise TypeError("reasoning_effort must be an OpenAIReasoningEffort or None")
         self._provider_profile = provider_profile
         self._model_profile = model_profile
+        self._reasoning_effort = reasoning_effort
         self._secret_resolver = secret_resolver
         self._transport_factory = transport_factory
 
@@ -118,6 +139,7 @@ class OpenAIReviewAdapter:
         provider_request = build_openai_review_request(
             request=request,
             model_profile=self._model_profile,
+            reasoning_effort=self._reasoning_effort,
         )
         try:
             secret = self._secret_resolver.resolve(self._provider_profile.credential_ref)
@@ -160,7 +182,7 @@ def _map_response(
     if response.status is OpenAIResponseStatus.FAILED:
         raise ReviewPortError(ReviewPortErrorCode.UNAVAILABLE)
 
-    payload = _parse_payload(response.output_text)
+    payload = _parse_payload(response)
     if payload["outcome"] != "OUTPUT":
         _invalid_response()
     structured_payload = _structured_payload(payload["structured_payload"], request)
@@ -195,13 +217,20 @@ def _map_response(
         _invalid_response()
 
 
-def _parse_payload(output_text: str | None) -> dict[str, object]:
+def _parse_payload(response: OpenAIResponsesResponse) -> dict[str, object]:
+    output_text = response.output_text
+    diagnostic_code = _OpenAIReviewDiagnosticCode.CONTRACT_MISMATCH
+    if (
+        response.status is OpenAIResponseStatus.INCOMPLETE
+        and response.incomplete_reason is OpenAIIncompleteReason.MAX_OUTPUT_TOKENS
+    ):
+        diagnostic_code = _OpenAIReviewDiagnosticCode.INCOMPLETE_MAX_OUTPUT_TOKENS
     if output_text is None:
-        _invalid_response()
+        _invalid_response(diagnostic_code)
     try:
         payload = json.loads(output_text)
     except (json.JSONDecodeError, TypeError):
-        _invalid_response()
+        _invalid_response(diagnostic_code)
     if type(payload) is not dict or set(payload) != _EXPECTED_KEYS:
         _invalid_response()
     return cast(dict[str, object], payload)
@@ -440,5 +469,9 @@ def _validate_configuration(
         )
 
 
-def _invalid_response() -> NoReturn:
-    raise ReviewPortError(ReviewPortErrorCode.INVALID_RESPONSE) from None
+def _invalid_response(
+    diagnostic_code: _OpenAIReviewDiagnosticCode = (
+        _OpenAIReviewDiagnosticCode.CONTRACT_MISMATCH
+    ),
+) -> NoReturn:
+    raise _OpenAIReviewPortError(diagnostic_code) from None

@@ -19,6 +19,7 @@ from typing import Protocol, cast
 
 from backend.adapters.outbound.generation.openai import OpenAIGenerationAdapter
 from backend.adapters.outbound.openai import (
+    OpenAIReasoningEffort,
     OpenAIResponsesRequest,
     OpenAIResponsesResponse,
     OpenAIResponsesTransport,
@@ -297,6 +298,11 @@ class ProviderCallResult:
     total_tokens: int | None
     latency_milliseconds: int
     closed_error_code: str | None = None
+    provider_response_status: str | None = None
+    incomplete_reason: str | None = None
+    reasoning_tokens: int | None = None
+    public_error_code: str | None = None
+    private_diagnostic_code: str | None = None
 
 
 class CalibrationExecutor(Protocol):
@@ -653,9 +659,15 @@ class _RecordingAnthropicFactory:
 class RealCalibrationExecutor:
     """One-shot provider executor using only the existing V2 adapter boundaries."""
 
-    def __init__(self, environment: Mapping[str, str]) -> None:
+    def __init__(
+        self,
+        environment: Mapping[str, str],
+        *,
+        review_reasoning_effort: OpenAIReasoningEffort | None = None,
+    ) -> None:
         self._environment = dict(environment)
         self._resolver = EnvironmentProviderSecretResolver(self._environment)
+        self._review_reasoning_effort = review_reasoning_effort
 
     def execute(
         self,
@@ -676,6 +688,8 @@ class RealCalibrationExecutor:
         model = _model_profile(call)
         started = time.perf_counter_ns()
         error_code: str | None = None
+        public_error_code: str | None = None
+        private_diagnostic_code: str | None = None
         status = CalibrationResponseStatus.ERROR
         try:
             if call.workload is CalibrationWorkload.REVIEW:
@@ -684,6 +698,7 @@ class RealCalibrationExecutor:
                     model_profile=model,
                     secret_resolver=self._resolver,
                     transport_factory=factory,
+                    reasoning_effort=self._review_reasoning_effort,
                 ).review(request=_review_request(call))
                 if result.status is ReviewPortResultStatus.REFUSED:
                     status = CalibrationResponseStatus.REFUSAL
@@ -706,21 +721,34 @@ class RealCalibrationExecutor:
                 else:
                     status = CalibrationResponseStatus.STRUCTURED
         except GenerationPortError as error:
+            public_error_code = error.code.value
             error_code = (
                 f"OPENAI_GENERATION_TRANSPORT_{factory.error_code}"
                 if factory.error_code is not None
                 else f"OPENAI_GENERATION_{error.code.value}"
             )
+            private_diagnostic_code = error_code
         except ReviewPortError as error:
+            public_error_code = error.code.value
             error_code = (
                 f"OPENAI_REVIEW_TRANSPORT_{factory.error_code}"
                 if factory.error_code is not None
                 else f"OPENAI_REVIEW_{error.code.value}"
             )
+            diagnostic = getattr(error, "diagnostic_code", None)
+            private_diagnostic_code = getattr(diagnostic, "value", error_code)
         except Exception:
             error_code = "OPENAI_CLOSED_UNEXPECTED_ERROR"
+            private_diagnostic_code = error_code
         latency = max(0, (time.perf_counter_ns() - started) // 1_000_000)
-        return _openai_result(factory.response, status, latency, error_code)
+        return _openai_result(
+            factory.response,
+            status,
+            latency,
+            error_code,
+            public_error_code,
+            private_diagnostic_code,
+        )
 
     def _execute_anthropic(
         self,
@@ -771,6 +799,8 @@ def _openai_result(
     status: CalibrationResponseStatus,
     latency: int,
     error_code: str | None,
+    public_error_code: str | None,
+    private_diagnostic_code: str | None,
 ) -> ProviderCallResult:
     usage = response.usage if response is not None else None
     return ProviderCallResult(
@@ -782,6 +812,15 @@ def _openai_result(
         total_tokens=usage.total_tokens if usage is not None else None,
         latency_milliseconds=latency,
         closed_error_code=error_code,
+        provider_response_status=(
+            response.status.value if response is not None else None
+        ),
+        incomplete_reason=(
+            response.incomplete_reason.value if response is not None else None
+        ),
+        reasoning_tokens=(usage.reasoning_tokens if usage is not None else None),
+        public_error_code=public_error_code,
+        private_diagnostic_code=private_diagnostic_code,
     )
 
 

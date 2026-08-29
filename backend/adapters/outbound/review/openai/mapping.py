@@ -5,7 +5,10 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 
-from backend.adapters.outbound.openai.contracts import OpenAIResponsesRequest
+from backend.adapters.outbound.openai.contracts import (
+    OpenAIReasoningEffort,
+    OpenAIResponsesRequest,
+)
 from backend.adapters.outbound.openai.schema import (
     OpenAIProviderSchemaError,
     lower_openai_strict_schema,
@@ -36,6 +39,7 @@ def build_openai_review_request(
     *,
     request: ReviewPortRequest,
     model_profile: ModelProfileConfig,
+    reasoning_effort: OpenAIReasoningEffort | None = None,
 ) -> OpenAIResponsesRequest:
     try:
         payload = {
@@ -84,6 +88,7 @@ def build_openai_review_request(
         output_schema=provider_schema,
         max_output_tokens=max_output_tokens,
         schema_name="technical_pedagogical_review",
+        reasoning_effort=reasoning_effort,
     )
 
 

@@ -5,6 +5,8 @@ import json
 import pytest
 
 from backend.adapters.outbound.openai import (
+    OpenAIIncompleteReason,
+    OpenAIReasoningEffort,
     OpenAIResponsesResponse,
     OpenAIResponseStatus,
     OpenAIResponseUsage,
@@ -148,6 +150,7 @@ def _adapter(
     response: OpenAIResponsesResponse | None = None,
     *,
     error: OpenAITransportError | None = None,
+    reasoning_effort: OpenAIReasoningEffort | None = None,
 ) -> tuple[OpenAIReviewAdapter, RecordingOpenAIResponsesTransport]:
     transport = RecordingOpenAIResponsesTransport(response=response, error=error)
     return (
@@ -158,6 +161,7 @@ def _adapter(
                 {"OPENAI_REVIEW_API_KEY": _SECRET}
             ),
             transport_factory=RecordingOpenAITransportFactory(transport),
+            reasoning_effort=reasoning_effort,
         ),
         transport,
     )
@@ -187,6 +191,7 @@ def test_review_maps_both_operations_to_distinct_bounded_requests(
     provider_request = transport.calls[0]
     assert provider_request.model == "gpt-5.6-sol"
     assert provider_request.schema_name == "technical_pedagogical_review"
+    assert provider_request.reasoning_effort is None
     assert instruction_fragment in provider_request.instructions
     assert "approve" in provider_request.instructions
     mapped = json.loads(provider_request.input_json)
@@ -237,6 +242,60 @@ def test_review_maps_partial_refusal_and_safe_token_metadata() -> None:
     refusal = refused.review(request=_request())
     assert refusal.status is ReviewPortResultStatus.REFUSED
     assert refusal.technical_findings == ()
+
+
+def test_review_incomplete_parseable_payload_remains_partial() -> None:
+    adapter, _ = _adapter(
+        OpenAIResponsesResponse(
+            status=OpenAIResponseStatus.INCOMPLETE,
+            output_text=_semantic_payload(),
+            incomplete_reason=OpenAIIncompleteReason.MAX_OUTPUT_TOKENS,
+        )
+    )
+
+    result = adapter.review(request=_request())
+
+    assert result.status is ReviewPortResultStatus.PARTIAL
+    assert {warning["code"] for warning in result.warnings} == {
+        "OPENAI_RESPONSE_INCOMPLETE"
+    }
+
+
+@pytest.mark.parametrize("output_text", (None, '{"outcome":'))
+def test_review_incomplete_truncated_payload_keeps_public_error_and_safe_cause(
+    output_text: str | None,
+) -> None:
+    adapter, _ = _adapter(
+        OpenAIResponsesResponse(
+            status=OpenAIResponseStatus.INCOMPLETE,
+            output_text=output_text,
+            incomplete_reason=OpenAIIncompleteReason.MAX_OUTPUT_TOKENS,
+        )
+    )
+
+    with pytest.raises(ReviewPortError) as raised:
+        adapter.review(request=_request())
+
+    assert raised.value.code is ReviewPortErrorCode.INVALID_RESPONSE
+    assert (
+        raised.value.diagnostic_code.value  # type: ignore[attr-defined]
+        == "OPENAI_REVIEW_INCOMPLETE_MAX_OUTPUT_TOKENS"
+    )
+    assert output_text is None or output_text not in str(raised.value)
+
+
+def test_review_reasoning_effort_is_explicit_only_for_selected_caller() -> None:
+    adapter, transport = _adapter(
+        OpenAIResponsesResponse(
+            OpenAIResponseStatus.COMPLETED,
+            _semantic_payload(),
+        ),
+        reasoning_effort=OpenAIReasoningEffort.LOW,
+    )
+
+    adapter.review(request=_request())
+
+    assert transport.calls[0].reasoning_effort is OpenAIReasoningEffort.LOW
 
 
 @pytest.mark.parametrize(

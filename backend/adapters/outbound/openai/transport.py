@@ -10,6 +10,7 @@ from openai.types.responses.response import Response
 from openai.types.responses.response_create_params import ResponseCreateParamsNonStreaming
 
 from backend.adapters.outbound.openai.contracts import (
+    OpenAIIncompleteReason,
     OpenAIResponsesRequest,
     OpenAIResponsesResponse,
     OpenAIResponseStatus,
@@ -71,6 +72,8 @@ class OpenAISDKResponsesTransport:
                 "tools": [],
             },
         )
+        if request.reasoning_effort is not None:
+            parameters["reasoning"] = {"effort": request.reasoning_effort.value}
         try:
             raw_response = self.__client.responses.create(**parameters)
         except openai.OpenAIError as error:
@@ -92,17 +95,38 @@ def _normalized_response(response: Response) -> OpenAIResponsesResponse:
     usage = response.usage
     normalized_usage = OpenAIResponseUsage()
     if usage is not None:
+        output_details = getattr(usage, "output_tokens_details", None)
         normalized_usage = OpenAIResponseUsage(
             input_tokens=usage.input_tokens,
             cached_input_tokens=usage.input_tokens_details.cached_tokens,
             output_tokens=usage.output_tokens,
             total_tokens=usage.total_tokens,
+            reasoning_tokens=_optional_non_negative_int(
+                getattr(output_details, "reasoning_tokens", None)
+            ),
         )
     return OpenAIResponsesResponse(
         status=_response_status(response),
         output_text=response.output_text or None,
         usage=normalized_usage,
+        incomplete_reason=_incomplete_reason(response),
     )
+
+
+def _incomplete_reason(response: Response) -> OpenAIIncompleteReason:
+    details = getattr(response, "incomplete_details", None)
+    reason = getattr(details, "reason", None)
+    mapping = {
+        "max_output_tokens": OpenAIIncompleteReason.MAX_OUTPUT_TOKENS,
+        "content_filter": OpenAIIncompleteReason.CONTENT_FILTER,
+    }
+    if reason is None:
+        return OpenAIIncompleteReason.NONE
+    return mapping.get(reason, OpenAIIncompleteReason.OTHER)
+
+
+def _optional_non_negative_int(value: object) -> int | None:
+    return value if type(value) is int and value >= 0 else None
 
 
 def _response_status(response: Response) -> OpenAIResponseStatus:

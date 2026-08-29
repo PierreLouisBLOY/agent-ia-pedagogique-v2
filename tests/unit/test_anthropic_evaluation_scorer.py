@@ -229,6 +229,8 @@ def test_inconclusive_has_no_score() -> None:
         "not-json",
         json.dumps({"status": "SCORED"}),
         _output("SCORED", 1, 0),
+        _output("SCORED", -1, 1),
+        _output("SCORED", 1, -1),
         _output("SCORED", 2, 1),
         _output("SCORED", 0.5, 1),
         _output("INCONCLUSIVE", 0, 1),

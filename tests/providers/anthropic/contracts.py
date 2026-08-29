@@ -10,8 +10,12 @@ from backend.infrastructure.config.secrets.provider import ProviderSecretValue
 
 
 class AnthropicTransportErrorCode(StrEnum):
+    INVALID_REQUEST = "INVALID_REQUEST"
     AUTHENTICATION = "AUTHENTICATION"
+    PERMISSION = "PERMISSION"
+    BILLING = "BILLING"
     RATE_LIMIT = "RATE_LIMIT"
+    NOT_FOUND = "NOT_FOUND"
     TIMEOUT = "TIMEOUT"
     CONNECTION = "CONNECTION"
     SERVER = "SERVER"

@@ -6,6 +6,10 @@ import json
 from collections.abc import Mapping
 
 from backend.adapters.outbound.openai.contracts import OpenAIResponsesRequest
+from backend.adapters.outbound.openai.schema import (
+    OpenAIProviderSchemaError,
+    lower_openai_strict_schema,
+)
 from backend.agent_runtime.agents.generation import GenerationPortError
 from backend.agent_runtime.agents.generation.generation_model import (
     GenerationOperation,
@@ -75,11 +79,20 @@ def build_openai_request(
         limits.max_output_tokens or model_profile.context_limits.reserved_output_tokens,
         model_profile.context_limits.reserved_output_tokens,
     )
+    try:
+        provider_schema = lower_openai_strict_schema(
+            _output_schema(request.expected_sections)
+        )
+    except OpenAIProviderSchemaError:
+        raise GenerationPortError(
+            GenerationPortErrorCode.UNAVAILABLE,
+            "OPENAI_PROVIDER_SCHEMA_INVALID",
+        ) from None
     return OpenAIResponsesRequest(
         model=model_profile.model_code.value,
         instructions=_instructions(request.operation),
         input_json=input_json,
-        output_schema=_output_schema(request.expected_sections),
+        output_schema=provider_schema,
         max_output_tokens=max_output_tokens,
         schema_name="pedagogical_generation",
     )

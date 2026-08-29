@@ -13,6 +13,10 @@ from tests.providers.anthropic import (
     AnthropicTransportError,
     AnthropicTransportErrorCode,
 )
+from tests.providers.anthropic.transport import (
+    _anthropic_status_code,
+    transform_anthropic_provider_schema,
+)
 
 _SECRET = "synthetic-anthropic-sdk-secret"
 
@@ -75,7 +79,14 @@ def test_sdk_transport_is_one_structured_non_streaming_call_without_controls(
         "system": "Bounded scorer instruction",
         "messages": [{"role": "user", "content": '{"observations":[]}'}],
         "output_config": {
-            "format": {"type": "json_schema", "schema": {"type": "object"}}
+            "format": {
+                "type": "json_schema",
+                "schema": {
+                    "type": "object",
+                    "properties": {},
+                    "additionalProperties": False,
+                },
+            }
         },
         "stream": False,
     }
@@ -117,3 +128,73 @@ def test_sdk_timeout_and_refusal_are_closed(
     with pytest.raises(AnthropicTransportError) as refusal:
         refused.create(request=_request())
     assert refusal.value.code is AnthropicTransportErrorCode.REFUSED
+
+
+@pytest.mark.parametrize(
+    ("status_code", "expected"),
+    (
+        (400, AnthropicTransportErrorCode.INVALID_REQUEST),
+        (401, AnthropicTransportErrorCode.AUTHENTICATION),
+        (402, AnthropicTransportErrorCode.BILLING),
+        (403, AnthropicTransportErrorCode.PERMISSION),
+        (404, AnthropicTransportErrorCode.NOT_FOUND),
+        (429, AnthropicTransportErrorCode.RATE_LIMIT),
+        (529, AnthropicTransportErrorCode.SERVER),
+        (418, AnthropicTransportErrorCode.UNAVAILABLE),
+    ),
+)
+def test_sdk_status_codes_map_to_closed_categories(
+    status_code: int,
+    expected: AnthropicTransportErrorCode,
+) -> None:
+    assert _anthropic_status_code(status_code) is expected
+
+
+def test_schema_transform_is_deterministic_non_mutating_and_removes_minimum() -> None:
+    source = {
+        "type": "object",
+        "properties": {"score": {"type": "integer", "minimum": 0}},
+        "required": ["score"],
+        "additionalProperties": False,
+    }
+    snapshot = {
+        "type": "object",
+        "properties": {"score": {"type": "integer", "minimum": 0}},
+        "required": ["score"],
+        "additionalProperties": False,
+    }
+    first = transform_anthropic_provider_schema(source)
+    second = transform_anthropic_provider_schema(source)
+    assert first == second
+    assert source == snapshot
+    properties = first["properties"]
+    assert type(properties) is dict
+    assert "minimum" not in properties["score"]  # type: ignore[operator]
+    assert first["required"] == ["score"]
+    assert first["additionalProperties"] is False
+
+
+def test_schema_transform_failure_stops_before_messages_call(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages = _FakeMessages(SimpleNamespace())
+    monkeypatch.setattr(
+        "tests.providers.anthropic.transport.Anthropic",
+        lambda **_: SimpleNamespace(messages=messages),
+    )
+
+    def fail_transform(_: object) -> object:
+        raise ValueError("closed")
+
+    monkeypatch.setattr(
+        "tests.providers.anthropic.transport.anthropic.transform_schema",
+        fail_transform,
+    )
+    transport = AnthropicSDKScoringTransport(
+        secret=ProviderSecretValue(_SECRET),
+        timeout_seconds=1.0,
+    )
+    with pytest.raises(AnthropicTransportError) as raised:
+        transport.create(request=_request())
+    assert raised.value.code is AnthropicTransportErrorCode.INVALID_REQUEST
+    assert messages.calls == []

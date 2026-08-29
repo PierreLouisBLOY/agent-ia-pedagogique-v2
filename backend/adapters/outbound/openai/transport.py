@@ -18,6 +18,10 @@ from backend.adapters.outbound.openai.contracts import (
     OpenAITransportError,
     OpenAITransportErrorCode,
 )
+from backend.adapters.outbound.openai.schema import (
+    OpenAIProviderSchemaError,
+    validate_openai_strict_schema,
+)
 from backend.infrastructure.config.secrets.provider import ProviderSecretValue
 
 
@@ -41,6 +45,10 @@ class OpenAISDKResponsesTransport:
         return "OpenAISDKResponsesTransport([REDACTED])"
 
     def create(self, *, request: OpenAIResponsesRequest) -> OpenAIResponsesResponse:
+        try:
+            validate_openai_strict_schema(request.output_schema)
+        except OpenAIProviderSchemaError:
+            raise OpenAITransportError(OpenAITransportErrorCode.INVALID_REQUEST) from None
         parameters = cast(
             ResponseCreateParamsNonStreaming,
             {
@@ -65,18 +73,8 @@ class OpenAISDKResponsesTransport:
         )
         try:
             raw_response = self.__client.responses.create(**parameters)
-        except (openai.AuthenticationError, openai.PermissionDeniedError):
-            raise OpenAITransportError(OpenAITransportErrorCode.AUTHENTICATION) from None
-        except openai.RateLimitError:
-            raise OpenAITransportError(OpenAITransportErrorCode.RATE_LIMIT) from None
-        except openai.APITimeoutError:
-            raise OpenAITransportError(OpenAITransportErrorCode.TIMEOUT) from None
-        except openai.APIConnectionError:
-            raise OpenAITransportError(OpenAITransportErrorCode.CONNECTION) from None
-        except openai.InternalServerError:
-            raise OpenAITransportError(OpenAITransportErrorCode.SERVER) from None
-        except (openai.APIStatusError, openai.APIError):
-            raise OpenAITransportError(OpenAITransportErrorCode.UNAVAILABLE) from None
+        except openai.OpenAIError as error:
+            raise OpenAITransportError(_openai_error_code(error)) from None
         return _normalized_response(raw_response)
 
 
@@ -123,3 +121,39 @@ def _contains_refusal(response: Response) -> bool:
         for item in response.output
         for content in getattr(item, "content", ())
     )
+
+
+def _openai_error_code(error: openai.OpenAIError) -> OpenAITransportErrorCode:
+    if isinstance(error, openai.APITimeoutError):
+        return OpenAITransportErrorCode.TIMEOUT
+    if isinstance(error, openai.APIConnectionError):
+        return OpenAITransportErrorCode.CONNECTION
+    if isinstance(error, openai.BadRequestError):
+        return OpenAITransportErrorCode.INVALID_REQUEST
+    if isinstance(error, openai.AuthenticationError):
+        return OpenAITransportErrorCode.AUTHENTICATION
+    if isinstance(error, openai.PermissionDeniedError):
+        return OpenAITransportErrorCode.PERMISSION
+    if isinstance(error, openai.NotFoundError):
+        return OpenAITransportErrorCode.NOT_FOUND
+    if isinstance(error, openai.RateLimitError):
+        return OpenAITransportErrorCode.RATE_LIMIT
+    if isinstance(error, openai.InternalServerError):
+        return OpenAITransportErrorCode.SERVER
+    if isinstance(error, openai.APIStatusError):
+        return _openai_status_code(error.status_code)
+    return OpenAITransportErrorCode.UNAVAILABLE
+
+
+def _openai_status_code(status_code: int) -> OpenAITransportErrorCode:
+    mapping = {
+        400: OpenAITransportErrorCode.INVALID_REQUEST,
+        401: OpenAITransportErrorCode.AUTHENTICATION,
+        402: OpenAITransportErrorCode.BILLING,
+        403: OpenAITransportErrorCode.PERMISSION,
+        404: OpenAITransportErrorCode.NOT_FOUND,
+        429: OpenAITransportErrorCode.RATE_LIMIT,
+    }
+    if status_code >= 500:
+        return OpenAITransportErrorCode.SERVER
+    return mapping.get(status_code, OpenAITransportErrorCode.UNAVAILABLE)

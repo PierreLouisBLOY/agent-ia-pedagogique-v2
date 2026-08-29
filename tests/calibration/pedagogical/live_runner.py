@@ -24,6 +24,7 @@ from backend.adapters.outbound.openai import (
     OpenAIResponsesTransport,
     OpenAIResponsesTransportFactory,
     OpenAISDKResponsesTransportFactory,
+    OpenAITransportError,
 )
 from backend.adapters.outbound.review.openai import OpenAIReviewAdapter
 from backend.agent_runtime.agents.generation import (
@@ -110,6 +111,7 @@ from tests.providers.anthropic import (
     AnthropicScoringTransport,
     AnthropicScoringTransportFactory,
     AnthropicSDKScoringTransportFactory,
+    AnthropicTransportError,
 )
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -195,6 +197,9 @@ class LiveCalibrationStopCode(StrEnum):
     CALL_IDENTITY_MISMATCH = "CALL_IDENTITY_MISMATCH"
     ACTUAL_COST_UNAVAILABLE = "ACTUAL_COST_UNAVAILABLE"
     REPORT_REPRODUCIBILITY_FAILED = "REPORT_REPRODUCIBILITY_FAILED"
+    CANARY_REQUIRED = "CANARY_REQUIRED"
+    CANARY_BLOCKED = "CANARY_BLOCKED"
+    CANARY_ALREADY_TERMINAL = "CANARY_ALREADY_TERMINAL"
 
 
 class LiveCalibrationStop(RuntimeError):
@@ -203,6 +208,83 @@ class LiveCalibrationStop(RuntimeError):
     def __init__(self, code: LiveCalibrationStopCode) -> None:
         self.code = code
         super().__init__(code.value)
+
+
+class ProviderWorkloadFamily(StrEnum):
+    OPENAI_REVIEW = "OPENAI_REVIEW"
+    ANTHROPIC_SCORER = "ANTHROPIC_SCORER"
+
+
+class ProviderTransportCategory(StrEnum):
+    INVALID_REQUEST = "INVALID_REQUEST"
+    AUTHENTICATION = "AUTHENTICATION"
+    PERMISSION = "PERMISSION"
+    BILLING = "BILLING"
+    RATE_LIMIT = "RATE_LIMIT"
+    NOT_FOUND = "NOT_FOUND"
+    TIMEOUT = "TIMEOUT"
+    CONNECTION = "CONNECTION"
+    SERVER = "SERVER"
+    REFUSED = "REFUSED"
+    UNAVAILABLE = "UNAVAILABLE"
+
+
+class _CanaryState(StrEnum):
+    PENDING = "PENDING"
+    PASSED = "PASSED"
+    BLOCKED = "BLOCKED"
+
+
+class SystemicCanaryBreaker:
+    """Test-only owner that requires one successful canary before family fan-out."""
+
+    def __init__(self) -> None:
+        self._states = {
+            family: _CanaryState.PENDING for family in ProviderWorkloadFamily
+        }
+        self._failure_categories: dict[
+            ProviderWorkloadFamily, ProviderTransportCategory
+        ] = {}
+
+    def authorize(
+        self,
+        family: ProviderWorkloadFamily,
+        *,
+        is_canary: bool,
+    ) -> None:
+        state = self._states[family]
+        if state is _CanaryState.BLOCKED:
+            _stop(LiveCalibrationStopCode.CANARY_BLOCKED)
+        if is_canary:
+            if state is not _CanaryState.PENDING:
+                _stop(LiveCalibrationStopCode.CANARY_ALREADY_TERMINAL)
+            return
+        if state is not _CanaryState.PASSED:
+            _stop(LiveCalibrationStopCode.CANARY_REQUIRED)
+
+    def record_canary(
+        self,
+        family: ProviderWorkloadFamily,
+        *,
+        succeeded: bool,
+        failure_category: ProviderTransportCategory | None = None,
+    ) -> None:
+        if self._states[family] is not _CanaryState.PENDING:
+            _stop(LiveCalibrationStopCode.CANARY_ALREADY_TERMINAL)
+        if succeeded:
+            if failure_category is not None:
+                raise ValueError("a successful canary cannot have a failure category")
+            self._states[family] = _CanaryState.PASSED
+            return
+        category = failure_category or ProviderTransportCategory.UNAVAILABLE
+        self._states[family] = _CanaryState.BLOCKED
+        self._failure_categories[family] = category
+
+    def failure_category(
+        self,
+        family: ProviderWorkloadFamily,
+    ) -> ProviderTransportCategory | None:
+        return self._failure_categories.get(family)
 
 
 @dataclass(frozen=True, slots=True)
@@ -500,10 +582,15 @@ class _RecordingOpenAITransport:
     def __init__(self, inner: OpenAIResponsesTransport) -> None:
         self._inner = inner
         self.response: OpenAIResponsesResponse | None = None
+        self.error_code: str | None = None
 
     def create(self, *, request: OpenAIResponsesRequest) -> OpenAIResponsesResponse:
-        self.response = self._inner.create(request=request)
-        return self.response
+        try:
+            self.response = self._inner.create(request=request)
+            return self.response
+        except OpenAITransportError as error:
+            self.error_code = error.code.value
+            raise
 
 
 class _RecordingOpenAIFactory:
@@ -522,15 +609,24 @@ class _RecordingOpenAIFactory:
     def response(self) -> OpenAIResponsesResponse | None:
         return self.transport.response if self.transport is not None else None
 
+    @property
+    def error_code(self) -> str | None:
+        return self.transport.error_code if self.transport is not None else None
+
 
 class _RecordingAnthropicTransport:
     def __init__(self, inner: AnthropicScoringTransport) -> None:
         self._inner = inner
         self.response: AnthropicScoringResponse | None = None
+        self.error_code: str | None = None
 
     def create(self, *, request: AnthropicScoringRequest) -> AnthropicScoringResponse:
-        self.response = self._inner.create(request=request)
-        return self.response
+        try:
+            self.response = self._inner.create(request=request)
+            return self.response
+        except AnthropicTransportError as error:
+            self.error_code = error.code.value
+            raise
 
 
 class _RecordingAnthropicFactory:
@@ -548,6 +644,10 @@ class _RecordingAnthropicFactory:
     @property
     def response(self) -> AnthropicScoringResponse | None:
         return self.transport.response if self.transport is not None else None
+
+    @property
+    def error_code(self) -> str | None:
+        return self.transport.error_code if self.transport is not None else None
 
 
 class RealCalibrationExecutor:
@@ -606,9 +706,17 @@ class RealCalibrationExecutor:
                 else:
                     status = CalibrationResponseStatus.STRUCTURED
         except GenerationPortError as error:
-            error_code = f"OPENAI_GENERATION_{error.code.value}"
+            error_code = (
+                f"OPENAI_GENERATION_TRANSPORT_{factory.error_code}"
+                if factory.error_code is not None
+                else f"OPENAI_GENERATION_{error.code.value}"
+            )
         except ReviewPortError as error:
-            error_code = f"OPENAI_REVIEW_{error.code.value}"
+            error_code = (
+                f"OPENAI_REVIEW_TRANSPORT_{factory.error_code}"
+                if factory.error_code is not None
+                else f"OPENAI_REVIEW_{error.code.value}"
+            )
         except Exception:
             error_code = "OPENAI_CLOSED_UNEXPECTED_ERROR"
         latency = max(0, (time.perf_counter_ns() - started) // 1_000_000)
@@ -647,7 +755,11 @@ class RealCalibrationExecutor:
             if status is CalibrationResponseStatus.INCONCLUSIVE:
                 error_code = "ANTHROPIC_SCORER_INCONCLUSIVE"
         except AnthropicScorerError as error:
-            error_code = f"ANTHROPIC_SCORER_{error.code.value}"
+            error_code = (
+                f"ANTHROPIC_SCORER_TRANSPORT_{factory.error_code}"
+                if factory.error_code is not None
+                else f"ANTHROPIC_SCORER_{error.code.value}"
+            )
         except Exception:
             error_code = "ANTHROPIC_CLOSED_UNEXPECTED_ERROR"
         latency = max(0, (time.perf_counter_ns() - started) // 1_000_000)

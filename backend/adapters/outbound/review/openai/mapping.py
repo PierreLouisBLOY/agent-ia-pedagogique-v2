@@ -6,6 +6,10 @@ import json
 from collections.abc import Mapping
 
 from backend.adapters.outbound.openai.contracts import OpenAIResponsesRequest
+from backend.adapters.outbound.openai.schema import (
+    OpenAIProviderSchemaError,
+    lower_openai_strict_schema,
+)
 from backend.agent_runtime.agents.review import (
     ReviewOperation,
     ReviewPortError,
@@ -69,11 +73,15 @@ def build_openai_review_request(
         max_output_tokens = min(max_output_tokens, request.review_budget.max_tokens)
     if max_output_tokens <= 0:
         _request_rejected()
+    try:
+        provider_schema = lower_openai_strict_schema(_output_schema(request))
+    except OpenAIProviderSchemaError:
+        _request_rejected()
     return OpenAIResponsesRequest(
         model=model_profile.model_code.value,
         instructions=_instructions(request.operation),
         input_json=input_json,
-        output_schema=_output_schema(request),
+        output_schema=provider_schema,
         max_output_tokens=max_output_tokens,
         schema_name="technical_pedagogical_review",
     )
@@ -318,7 +326,7 @@ def _string_array_schema() -> dict[str, object]:
 
 def _evidence_ref_schema(refs: tuple[ContractRef, ...]) -> dict[str, object]:
     if not refs:
-        return {"not": {}}
+        return {"type": "string"}
     return {"enum": [_public_contract_ref(item) for item in refs]}
 
 

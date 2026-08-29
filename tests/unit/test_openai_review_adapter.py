@@ -11,7 +11,12 @@ from backend.adapters.outbound.openai import (
     OpenAITransportError,
     OpenAITransportErrorCode,
 )
+from backend.adapters.outbound.openai.schema import (
+    OpenAIProviderSchemaError,
+    OpenAIProviderSchemaErrorCode,
+)
 from backend.adapters.outbound.review.openai import OpenAIReviewAdapter
+from backend.adapters.outbound.review.openai.mapping import build_openai_review_request
 from backend.agent_runtime.agents.review import (
     ReviewOperation,
     ReviewPortError,
@@ -70,6 +75,7 @@ def _request(
     operation: ReviewOperation = ReviewOperation.SEMANTIC_REVIEW,
     *,
     budget: BudgetSpec | None = None,
+    evidence_refs: tuple[str, ...] = ("evidence:alpha", "evidence:beta"),
 ) -> ReviewPortRequest:
     return ReviewPortRequest(
         source_step_id="step-review-provider",
@@ -85,7 +91,7 @@ def _request(
         target_content="Une leçon synthétique bornée.",
         target_payload={"sections": ["intro"]},
         criteria={"required": ["exact", "adapted"]},
-        evidence_refs=("evidence:alpha", "evidence:beta"),
+        evidence_refs=evidence_refs,
         coverage_context={"scope": ["intro"]},
         resolved_inputs={"finding_ids": ["finding-1"]},
         output_contract={"type": "technical_review"},
@@ -269,5 +275,69 @@ def test_review_rejects_zero_budget_before_transport() -> None:
     )
     with pytest.raises(ReviewPortError) as raised:
         adapter.review(request=_request(budget=BudgetSpec(max_tokens=0)))
+    assert raised.value.code is ReviewPortErrorCode.REQUEST_REJECTED
+    assert transport.calls == []
+
+
+def test_review_provider_schema_lowers_unsupported_array_keywords() -> None:
+    without_refs = build_openai_review_request(
+        request=_request(evidence_refs=()),
+        model_profile=_model(),
+    ).output_schema
+    serialized = json.dumps(without_refs, sort_keys=True)
+    assert '"not"' not in serialized
+    assert '"uniqueItems"' not in serialized
+    root_properties = without_refs["properties"]
+    assert type(root_properties) is dict
+    evidence_refs_used = root_properties["evidence_refs_used"]
+    assert type(evidence_refs_used) is dict
+    assert evidence_refs_used["maxItems"] == 0
+    findings = root_properties["technical_findings"]
+    assert type(findings) is dict
+    finding_items = findings["items"]
+    assert type(finding_items) is dict
+    finding_properties = finding_items["properties"]
+    assert type(finding_properties) is dict
+    finding_refs = finding_properties["evidence_refs"]
+    assert type(finding_refs) is dict
+    assert finding_refs["maxItems"] == 0
+
+    with_refs = build_openai_review_request(
+        request=_request(),
+        model_profile=_model(),
+    ).output_schema
+    with_refs_serialized = json.dumps(with_refs, sort_keys=True)
+    assert '"not"' not in with_refs_serialized
+    assert '"uniqueItems"' not in with_refs_serialized
+
+
+def test_review_post_validation_still_rejects_duplicate_sequences() -> None:
+    payload = json.loads(_semantic_payload())
+    payload["structured_payload"]["coverage"] = ["REV-ACC", "REV-ACC"]
+    adapter, _ = _adapter(
+        OpenAIResponsesResponse(OpenAIResponseStatus.COMPLETED, json.dumps(payload))
+    )
+    with pytest.raises(ReviewPortError) as raised:
+        adapter.review(request=_request())
+    assert raised.value.code is ReviewPortErrorCode.INVALID_RESPONSE
+
+
+def test_review_schema_failure_stops_before_transport(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def reject_schema(_: dict[str, object]) -> dict[str, object]:
+        raise OpenAIProviderSchemaError(
+            OpenAIProviderSchemaErrorCode.UNSUPPORTED_KEYWORD
+        )
+
+    monkeypatch.setattr(
+        "backend.adapters.outbound.review.openai.mapping.lower_openai_strict_schema",
+        reject_schema,
+    )
+    adapter, transport = _adapter(
+        OpenAIResponsesResponse(OpenAIResponseStatus.COMPLETED, _semantic_payload())
+    )
+    with pytest.raises(ReviewPortError) as raised:
+        adapter.review(request=_request())
     assert raised.value.code is ReviewPortErrorCode.REQUEST_REJECTED
     assert transport.calls == []

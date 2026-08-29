@@ -12,6 +12,7 @@ from backend.adapters.outbound.generation.openai import (
     OpenAITransportError,
     OpenAITransportErrorCode,
 )
+from backend.adapters.outbound.openai.transport import _openai_status_code
 from backend.infrastructure.config.secrets.provider import ProviderSecretValue
 
 _SYNTHETIC_SECRET = "synthetic-sdk-boundary-secret"
@@ -35,7 +36,12 @@ def _request() -> OpenAIResponsesRequest:
         model="gpt-5.6-terra",
         instructions="Bounded instructions",
         input_json='{"objective":"test"}',
-        output_schema={"type": "object"},
+        output_schema={
+            "type": "object",
+            "properties": {"ok": {"type": "boolean"}},
+            "required": ["ok"],
+            "additionalProperties": False,
+        },
         max_output_tokens=1_000,
         schema_name="pedagogical_generation",
     )
@@ -92,7 +98,12 @@ def test_sdk_transport_uses_one_non_stored_tool_free_non_streaming_call(
     assert call["text"] == {
         "format": {
             "name": "pedagogical_generation",
-            "schema": {"type": "object"},
+            "schema": {
+                "type": "object",
+                "properties": {"ok": {"type": "boolean"}},
+                "required": ["ok"],
+                "additionalProperties": False,
+            },
             "strict": True,
             "type": "json_schema",
         }
@@ -124,3 +135,50 @@ def test_sdk_timeout_is_mapped_without_raw_exception_text(
     assert raised.value.code is OpenAITransportErrorCode.TIMEOUT
     assert str(raised.value) == "TIMEOUT"
     assert _SYNTHETIC_SECRET not in str(raised.value)
+
+
+@pytest.mark.parametrize(
+    ("status_code", "expected"),
+    (
+        (400, OpenAITransportErrorCode.INVALID_REQUEST),
+        (401, OpenAITransportErrorCode.AUTHENTICATION),
+        (402, OpenAITransportErrorCode.BILLING),
+        (403, OpenAITransportErrorCode.PERMISSION),
+        (404, OpenAITransportErrorCode.NOT_FOUND),
+        (429, OpenAITransportErrorCode.RATE_LIMIT),
+        (500, OpenAITransportErrorCode.SERVER),
+        (418, OpenAITransportErrorCode.UNAVAILABLE),
+    ),
+)
+def test_sdk_status_codes_map_to_closed_categories(
+    status_code: int,
+    expected: OpenAITransportErrorCode,
+) -> None:
+    assert _openai_status_code(status_code) is expected
+
+
+def test_invalid_provider_schema_stops_before_sdk_call(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    responses = _FakeResponses(SimpleNamespace())
+    monkeypatch.setattr(
+        "backend.adapters.outbound.openai.transport.OpenAI",
+        lambda **_: SimpleNamespace(responses=responses),
+    )
+    transport = OpenAISDKResponsesTransport(
+        secret=ProviderSecretValue(_SYNTHETIC_SECRET),
+        timeout_seconds=1.0,
+    )
+    request = _request()
+    invalid = type(request)(
+        request.model,
+        request.instructions,
+        request.input_json,
+        {"type": "object", "not": {}},
+        request.max_output_tokens,
+        request.schema_name,
+    )
+    with pytest.raises(OpenAITransportError) as raised:
+        transport.create(request=invalid)
+    assert raised.value.code is OpenAITransportErrorCode.INVALID_REQUEST
+    assert responses.calls == []

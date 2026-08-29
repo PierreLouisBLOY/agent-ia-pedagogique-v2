@@ -1,10 +1,9 @@
-"""G2 live-calibration scaffold. G1 must never invoke either provider."""
+"""Explicit opt-in gate for the approved G2 live calibration."""
 
 from __future__ import annotations
 
 import os
 from decimal import Decimal
-from typing import Protocol
 
 import pytest
 
@@ -12,21 +11,14 @@ from tests.calibration.pedagogical.call_plan import (
     LIVE_PROVIDER_CALL_COUNT,
     LIVE_PROVIDER_COST_USD,
     RAW_OUTPUT_DIRECTORY,
-    CalibrationBudgetError,
-    CalibrationBudgetErrorCode,
-    CalibrationBudgetGuard,
-    CalibrationProvider,
     call_matrix_sha256,
     estimate_call_plan_cost,
 )
+from tests.calibration.pedagogical.live_runner import run_live_calibration
 
 LIVE_FLAG = "RUN_PEDAGOGICAL_LIVE_CALIBRATION"
 LIVE_OUTPUT_PATH_ENV = "PEDAGOGICAL_CALIBRATION_OUTPUT_PATH"
 APPROVED_CEILING_ENV = "PEDAGOGICAL_CALIBRATION_APPROVED_CEILING_USD"
-
-
-class InjectableCalibrationTransport(Protocol):
-    def invoke(self, *, call_id: str) -> object: ...
 
 
 class _DenyingTransport:
@@ -50,11 +42,9 @@ def test_g1_provider_call_guard_is_zero_without_live_execution() -> None:
     os.environ.get(LIVE_FLAG) != "1",
     reason=f"explicit live gate requires {LIVE_FLAG}=1",
 )
-def test_g2_live_calibration_scaffold_remains_closed_during_g1() -> None:
-    """Even with the flag, G1 stops before transport pending explicit G2 approval."""
+def test_g2_live_calibration_executes_or_resumes_approved_matrix() -> None:
+    """Execute or safely resume the exact approved matrix when explicitly enabled."""
 
-    openai_transport: InjectableCalibrationTransport = _DenyingTransport()
-    anthropic_transport: InjectableCalibrationTransport = _DenyingTransport()
     output_path = os.environ.get(LIVE_OUTPUT_PATH_ENV)
     approved_ceiling = os.environ.get(APPROVED_CEILING_ENV)
     assert output_path == RAW_OUTPUT_DIRECTORY, (
@@ -66,18 +56,10 @@ def test_g2_live_calibration_scaffold_remains_closed_during_g1() -> None:
     estimated_maximum = estimate_call_plan_cost().estimated_maximum_with_margin_usd
     assert estimated_maximum == Decimal("4.096440")
     assert Decimal(approved_ceiling) >= estimated_maximum
-    with pytest.raises(CalibrationBudgetError) as raised:
-        CalibrationBudgetGuard().authorize_next(
-            call_id="cal.generation.course.primary.r1",
-            provider=CalibrationProvider.OPENAI,
-            model="gpt-5.6-terra",
-            model_profile_id="openai.gpt-5.6-terra.generation",
-            matrix_checksum=call_matrix_sha256(),
-            approved_ceiling_usd=Decimal(approved_ceiling),
-            credential_available=False,
-            completed_call_ids=(),
-            actual_cost_usd=Decimal("0"),
-        )
-    assert raised.value.code is CalibrationBudgetErrorCode.CREDENTIAL_UNAVAILABLE
-    assert openai_transport.calls == 0
-    assert anthropic_transport.calls == 0
+    aggregate = run_live_calibration(
+        progress=lambda message: print(message, flush=True)
+    )
+    cost = aggregate["cost"]
+    assert isinstance(cost, dict)
+    assert Decimal(cost["budget_accounted_total_usd"]) <= Decimal(approved_ceiling)
+    assert cost["ceiling_preserved"] is True

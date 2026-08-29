@@ -78,7 +78,26 @@ class AnthropicSDKScoringTransport:
         )
         if not text:
             raise AnthropicTransportError(AnthropicTransportErrorCode.UNAVAILABLE)
-        return AnthropicScoringResponse(output_text=text)
+        usage = getattr(response, "usage", None)
+        input_tokens = _optional_non_negative_int(
+            getattr(usage, "input_tokens", None)
+        )
+        cached_input_tokens = _optional_non_negative_int(
+            getattr(usage, "cache_read_input_tokens", None)
+        )
+        output_tokens = _optional_non_negative_int(
+            getattr(usage, "output_tokens", None)
+        )
+        total_tokens = None
+        if input_tokens is not None and output_tokens is not None:
+            total_tokens = input_tokens + (cached_input_tokens or 0) + output_tokens
+        return AnthropicScoringResponse(
+            output_text=text,
+            input_tokens=input_tokens,
+            cached_input_tokens=cached_input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=total_tokens,
+        )
 
 
 class AnthropicSDKScoringTransportFactory:
@@ -92,3 +111,7 @@ class AnthropicSDKScoringTransportFactory:
             secret=secret,
             timeout_seconds=timeout_seconds,
         )
+
+
+def _optional_non_negative_int(value: object) -> int | None:
+    return value if type(value) is int and value >= 0 else None

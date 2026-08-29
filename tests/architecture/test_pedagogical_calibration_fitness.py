@@ -82,12 +82,14 @@ def test_calibration_owner_has_no_provider_sdk_or_runtime_recovery_import() -> N
 def test_raw_live_outputs_are_outside_source_owners_and_git_ignored() -> None:
     assert RAW_OUTPUT_DIRECTORY.startswith("artifacts/")
     assert "/artifacts/" in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
-    assert not (ROOT / RAW_OUTPUT_DIRECTORY).exists()
+    assert (ROOT / "artifacts").resolve() in (
+        ROOT / RAW_OUTPUT_DIRECTORY
+    ).resolve().parents
 
 
-def test_g1_contains_no_quality_release_threshold_or_provider_call_runner() -> None:
+def test_calibration_contains_no_release_threshold_or_direct_provider_sdk_call() -> None:
     source = "\n".join(path.read_text(encoding="utf-8") for path in _python_files(CALIBRATION))
-    assert "release_threshold" not in source
+    assert '"release_threshold":' not in source
     assert "CAP-T04" not in source
     assert ".responses.create(" not in source
     assert ".messages.create(" not in source

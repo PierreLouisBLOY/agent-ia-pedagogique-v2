@@ -41,6 +41,10 @@ class AnthropicScoringRequest:
 @dataclass(frozen=True, slots=True)
 class AnthropicScoringResponse:
     output_text: str
+    input_tokens: int | None = None
+    cached_input_tokens: int | None = None
+    output_tokens: int | None = None
+    total_tokens: int | None = None
 
 
 class AnthropicScoringTransport(Protocol):

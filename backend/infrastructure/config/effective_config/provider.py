@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from backend.infrastructure.config.schemas.provider import (
+    EmbeddingProfileConfig,
     ModelProfileConfig,
     ProviderConfiguration,
     ProviderConfigurationVersion,
@@ -21,6 +22,7 @@ class EffectiveProviderConfiguration:
     provider_profiles: tuple[ProviderProfileConfig, ...]
     model_profiles: tuple[ModelProfileConfig, ...]
     routes: tuple[ProviderRouteConfig, ...]
+    embedding_profiles: tuple[EmbeddingProfileConfig, ...] = ()
 
     def __post_init__(self) -> None:
         normalized = ProviderConfiguration(
@@ -28,11 +30,14 @@ class EffectiveProviderConfiguration:
             provider_profiles=self.provider_profiles,
             model_profiles=self.model_profiles,
             routes=self.routes,
+            embedding_profiles=self.embedding_profiles,
         )
         if any(not profile.enabled for profile in normalized.provider_profiles):
             raise ValueError("effective provider profiles must be enabled")
         if any(not profile.enabled for profile in normalized.model_profiles):
             raise ValueError("effective model profiles must be enabled")
+        if any(not profile.enabled for profile in normalized.embedding_profiles):
+            raise ValueError("effective embedding profiles must be enabled")
 
 
 def build_effective_provider_configuration(
@@ -57,4 +62,10 @@ def build_effective_provider_configuration(
             )
         ),
         routes=tuple(sorted(source.routes, key=lambda item: item.workload_kind.value)),
+        embedding_profiles=tuple(
+            sorted(
+                (item for item in source.embedding_profiles if item.enabled),
+                key=lambda item: item.model_profile_id.value,
+            )
+        ),
     )

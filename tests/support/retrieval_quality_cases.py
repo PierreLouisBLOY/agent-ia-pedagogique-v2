@@ -462,6 +462,15 @@ def _request(case: RetrievalQualityCase, index: int) -> EvidenceRequest:
     )
 
 
+def retrieval_quality_request(
+    case: RetrievalQualityCase,
+    index: int,
+) -> EvidenceRequest:
+    """Expose the frozen request mapping to additive F2 benchmark runners."""
+
+    return _request(case, index)
+
+
 def _first_expected_rank(refs: tuple[str, ...], expected_refs: tuple[str, ...]) -> int | None:
     expected = frozenset(expected_refs)
     return next((rank for rank, ref in enumerate(refs, start=1) if ref in expected), None)

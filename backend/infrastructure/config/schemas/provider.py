@@ -78,6 +78,7 @@ class ProviderWorkloadKind(StrEnum):
     CORRECTION = "CORRECTION"
     REVIEW = "REVIEW"
     EVALUATION_SCORING = "EVALUATION_SCORING"
+    SEMANTIC_EMBEDDING = "SEMANTIC_EMBEDDING"
 
 
 @dataclass(frozen=True, slots=True)
@@ -214,10 +215,59 @@ class ModelProfileConfig:
         if type(self.invocation_limits) is not ProviderInvocationLimits:
             raise TypeError("invocation_limits must be ProviderInvocationLimits")
         _validate_workloads(self.supported_workloads, allow_empty=False)
+        if ProviderWorkloadKind.SEMANTIC_EMBEDDING in self.supported_workloads:
+            raise ValueError(
+                "semantic embeddings require an EmbeddingProfileConfig"
+            )
         if type(self.enabled) is not bool:
             raise TypeError("enabled must be a bool")
         if type(self.structured_output_required) is not bool:
             raise TypeError("structured_output_required must be a bool")
+
+
+@dataclass(frozen=True, slots=True)
+class EmbeddingProfileConfig:
+    """Embedding-specific capacity without fabricated output-token semantics."""
+
+    model_profile_id: ModelProfileId
+    provider_profile_id: ProviderProfileId
+    model_code: ModelCode
+    max_input_tokens_per_item: int
+    max_batch_input_tokens: int
+    call_timeout_milliseconds: int
+    requested_dimensions: int | None = None
+    max_attempts: int = 1
+    enabled: bool = True
+
+    def __post_init__(self) -> None:
+        if type(self.model_profile_id) is not ModelProfileId:
+            raise TypeError("model_profile_id must be a ModelProfileId")
+        if type(self.provider_profile_id) is not ProviderProfileId:
+            raise TypeError("provider_profile_id must be a ProviderProfileId")
+        if type(self.model_code) is not ModelCode:
+            raise TypeError("model_code must be a ModelCode")
+        _require_positive_int(
+            self.max_input_tokens_per_item,
+            "max_input_tokens_per_item",
+        )
+        _require_positive_int(self.max_batch_input_tokens, "max_batch_input_tokens")
+        if self.max_batch_input_tokens < self.max_input_tokens_per_item:
+            raise ValueError(
+                "max_batch_input_tokens must cover one maximum-sized input"
+            )
+        _require_bounded_positive_int(
+            self.call_timeout_milliseconds,
+            "call_timeout_milliseconds",
+            maximum=_MAX_CALL_TIMEOUT_MILLISECONDS,
+        )
+        _require_optional_positive_int(
+            self.requested_dimensions,
+            "requested_dimensions",
+        )
+        if self.max_attempts != 1:
+            raise ValueError("embedding max_attempts must remain 1")
+        if type(self.enabled) is not bool:
+            raise TypeError("enabled must be a bool")
 
 
 @dataclass(frozen=True, slots=True)
@@ -252,6 +302,7 @@ class ProviderConfiguration:
     provider_profiles: tuple[ProviderProfileConfig, ...]
     model_profiles: tuple[ModelProfileConfig, ...]
     routes: tuple[ProviderRouteConfig, ...]
+    embedding_profiles: tuple[EmbeddingProfileConfig, ...] = ()
 
     def __post_init__(self) -> None:
         if type(self.schema_version) is not ProviderConfigurationVersion:
@@ -263,16 +314,28 @@ class ProviderConfiguration:
         )
         _validate_typed_tuple(self.model_profiles, ModelProfileConfig, "model_profiles")
         _validate_typed_tuple(self.routes, ProviderRouteConfig, "routes")
+        _validate_typed_tuple(
+            self.embedding_profiles,
+            EmbeddingProfileConfig,
+            "embedding_profiles",
+        )
         _validate_provider_configuration(self)
 
 
 def _validate_provider_configuration(config: ProviderConfiguration) -> None:
+    all_profiles: tuple[ModelProfileConfig | EmbeddingProfileConfig, ...] = (
+        *config.model_profiles,
+        *config.embedding_profiles,
+    )
     provider_ids = tuple(item.profile_id for item in config.provider_profiles)
     if len(provider_ids) != len(set(provider_ids)):
         raise ProviderConfigurationError(
             ProviderConfigurationErrorCode.DUPLICATE_PROVIDER_PROFILE
         )
-    model_ids = tuple(item.model_profile_id for item in config.model_profiles)
+    model_ids = tuple(
+        item.model_profile_id
+        for item in all_profiles
+    )
     if len(model_ids) != len(set(model_ids)):
         raise ProviderConfigurationError(
             ProviderConfigurationErrorCode.DUPLICATE_MODEL_PROFILE
@@ -284,16 +347,19 @@ def _validate_provider_configuration(config: ProviderConfiguration) -> None:
         )
 
     providers = {item.profile_id: item for item in config.provider_profiles}
-    models = {item.model_profile_id: item for item in config.model_profiles}
+    models: dict[ModelProfileId, ModelProfileConfig | EmbeddingProfileConfig] = {
+        item.model_profile_id: item
+        for item in all_profiles
+    }
     active = any(item.enabled for item in config.provider_profiles) or any(
         item.enabled for item in config.model_profiles
-    )
+    ) or any(item.enabled for item in config.embedding_profiles)
     if active and not config.routes:
         raise ProviderConfigurationError(
             ProviderConfigurationErrorCode.INVALID_PROVIDER_CONFIGURATION
         )
 
-    for model in config.model_profiles:
+    for model in all_profiles:
         provider = providers.get(model.provider_profile_id)
         if provider is None:
             raise ProviderConfigurationError(
@@ -323,7 +389,15 @@ def _validate_provider_configuration(config: ProviderConfiguration) -> None:
                 raise ProviderConfigurationError(
                     ProviderConfigurationErrorCode.DISABLED_PROVIDER_PROFILE
                 )
-            if route.workload_kind not in route_model.supported_workloads:
+            compatible = (
+                isinstance(route_model, EmbeddingProfileConfig)
+                and route.workload_kind
+                is ProviderWorkloadKind.SEMANTIC_EMBEDDING
+            ) or (
+                isinstance(route_model, ModelProfileConfig)
+                and route.workload_kind in route_model.supported_workloads
+            )
+            if not compatible:
                 raise ProviderConfigurationError(
                     ProviderConfigurationErrorCode.INCOMPATIBLE_MODEL_WORKLOAD
                 )

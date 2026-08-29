@@ -42,6 +42,7 @@ def test_openai_sdk_import_is_confined_to_the_concrete_transport() -> None:
     ]
     assert sdk_importers == [
         "backend/adapters/outbound/openai/transport.py",
+        "backend/adapters/outbound/semantic/openai.py",
         "tests/unit/test_openai_responses_transport.py",
     ]
 

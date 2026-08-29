@@ -9,6 +9,11 @@ from backend.adapters.outbound.document_content.sqlite import (
     DocumentContentAccessAdapter,
 )
 from backend.adapters.outbound.search.sqlite import BusinessSearchAdapter, SearchHit
+from backend.adapters.outbound.semantic import (
+    SemanticBackendUnavailable,
+    SemanticHit,
+    SemanticSearchBackend,
+)
 from backend.agent_runtime.agents.evidence import (
     DocumentContentRequest,
     DocumentContentResult,
@@ -28,8 +33,13 @@ class EvidenceClockPort(Protocol):
 
 
 class SQLiteEvidenceSearchAdapter:
-    def __init__(self, search: BusinessSearchAdapter) -> None:
+    def __init__(
+        self,
+        search: BusinessSearchAdapter,
+        semantic_backend: SemanticSearchBackend | None = None,
+    ) -> None:
         self._search = search
+        self._semantic_backend = semantic_backend
 
     def search(
         self, *, query: RetrievalQuery, channel: RetrievalChannel
@@ -42,8 +52,29 @@ class SQLiteEvidenceSearchAdapter:
         elif channel is RetrievalChannel.RELATIONAL:
             raise RetrievalChannelUnavailable(channel, "RELATIONAL_NOT_CONFIGURED_C1")
         elif channel is RetrievalChannel.SEMANTIC:
-            raise RetrievalChannelUnavailable(
-                channel, "SEMANTIC_PROVIDER_NOT_CONFIGURED_C1"
+            if self._semantic_backend is None:
+                raise RetrievalChannelUnavailable(
+                    channel, "SEMANTIC_PROVIDER_NOT_CONFIGURED_C1"
+                )
+            try:
+                semantic_hits = self._semantic_backend.search(
+                    text=self._search.semantic_query_text(query.search_goal),
+                    limit=limit,
+                )
+            except SemanticBackendUnavailable as error:
+                raise RetrievalChannelUnavailable(
+                    channel, error.reason_code
+                ) from None
+            return RetrievalSearchResult(
+                channel,
+                tuple(
+                    _semantic_candidate(hit, index)
+                    for index, hit in enumerate(semantic_hits, start=1)
+                ),
+                metrics={
+                    "candidate_count": len(semantic_hits),
+                    "engine": "derived-sqlite-semantic",
+                },
             )
         else:
             raise RetrievalChannelUnavailable(channel, "CHANNEL_NOT_SEARCHABLE")
@@ -146,6 +177,31 @@ def _candidate(
             "boundary": "sqlite-op11",
             "chunk_type": hit.entity_kind,
             "object_kind": hit.registry_object_type,
+        },
+        authority={"basis": "canonical-registry", "absolute": False},
+        metadata={"freshness": "CURRENT"},
+    )
+
+
+def _semantic_candidate(hit: SemanticHit, rank: int) -> RetrievalCandidate:
+    return RetrievalCandidate(
+        candidate_id=f"semantic:{hit.passage_ref}",
+        channel=RetrievalChannel.SEMANTIC,
+        source_ref=hit.canonical_object_ref,
+        source_kind="canonical_search_chunk",
+        locator=hit.passage_ref,
+        signals=RetrievalSignals(
+            semantic_score=Decimal(f"{hit.score:.12f}")
+        ),
+        canonical_object_ref=hit.canonical_object_ref,
+        version_or_checksum=hit.version_or_checksum,
+        provenance={
+            "boundary": "sqlite-op11",
+            "retrieval_boundary": "derived-semantic-sidecar",
+            "chunk_type": hit.chunk_type,
+            "object_kind": hit.object_type,
+            "semantic_rank": rank,
+            "matched_passage_ref": hit.matched_passage_ref,
         },
         authority={"basis": "canonical-registry", "absolute": False},
         metadata={"freshness": "CURRENT"},

@@ -12,10 +12,16 @@ from backend.adapters.outbound.openai import (
     OpenAISDKResponsesTransportFactory,
 )
 from backend.adapters.outbound.review.openai import OpenAIReviewAdapter
+from backend.adapters.outbound.semantic import (
+    ConfiguredEmbeddingService,
+    EmbeddingTransportFactory,
+    OpenAISDKEmbeddingTransportFactory,
+)
 from backend.infrastructure.config.effective_config.provider import (
     EffectiveProviderConfiguration,
 )
 from backend.infrastructure.config.schemas.provider import (
+    EmbeddingProfileConfig,
     ModelProfileConfig,
     ProviderConfigurationError,
     ProviderConfigurationErrorCode,
@@ -95,6 +101,44 @@ def build_openai_review_adapter(
     )
 
 
+def build_openai_embedding_service(
+    *,
+    configuration: EffectiveProviderConfiguration,
+    secret_resolver: ProviderSecretResolver,
+    transport_factory: EmbeddingTransportFactory | None = None,
+) -> ConfiguredEmbeddingService:
+    if type(configuration) is not EffectiveProviderConfiguration:
+        raise TypeError("configuration must be an EffectiveProviderConfiguration")
+    route = next(
+        (
+            item
+            for item in configuration.routes
+            if item.workload_kind is ProviderWorkloadKind.SEMANTIC_EMBEDDING
+        ),
+        None,
+    )
+    if route is None:
+        _configuration_error()
+    embedding = _embedding_by_id(
+        configuration,
+        route.primary_model_profile_id.value,
+    )
+    provider = _provider_by_id(
+        configuration,
+        embedding.provider_profile_id.value,
+    )
+    return ConfiguredEmbeddingService(
+        provider_profile=provider,
+        embedding_profile=embedding,
+        secret_resolver=secret_resolver,
+        transport_factory=(
+            transport_factory
+            if transport_factory is not None
+            else OpenAISDKEmbeddingTransportFactory()
+        ),
+    )
+
+
 def _model_by_id(
     configuration: EffectiveProviderConfiguration,
     model_profile_id: str,
@@ -127,6 +171,23 @@ def _provider_by_id(
     if provider is None:
         _configuration_error()
     return provider
+
+
+def _embedding_by_id(
+    configuration: EffectiveProviderConfiguration,
+    model_profile_id: str,
+) -> EmbeddingProfileConfig:
+    embedding = next(
+        (
+            item
+            for item in configuration.embedding_profiles
+            if item.model_profile_id.value == model_profile_id
+        ),
+        None,
+    )
+    if embedding is None:
+        _configuration_error()
+    return embedding
 
 
 def _configuration_error() -> NoReturn:

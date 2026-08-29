@@ -19,6 +19,7 @@ from backend.adapters.outbound.persistence.sqlite import connect_sqlite
 from backend.adapters.outbound.read_models.sqlite import ReadModelAdapter
 from backend.adapters.outbound.resource_library.sqlite import SQLiteResourceStoreAdapter
 from backend.adapters.outbound.search.sqlite import BusinessSearchAdapter
+from backend.adapters.outbound.semantic import SemanticPassage, SemanticSearchBackend
 from backend.adapters.outbound.transaction.sqlite import SQLiteUnitOfWork
 from backend.infrastructure.config.schemas.sqlite import SQLiteDatabasePaths
 
@@ -43,8 +44,34 @@ class SQLiteRuntimeComposition:
             connect_sqlite(self.paths.runtime_database_path, readonly=True)
         )
 
-    def evidence_search(self) -> SQLiteEvidenceSearchAdapter:
-        return SQLiteEvidenceSearchAdapter(self.business_search())
+    def evidence_search(
+        self,
+        semantic_backend: SemanticSearchBackend | None = None,
+    ) -> SQLiteEvidenceSearchAdapter:
+        return SQLiteEvidenceSearchAdapter(
+            self.business_search(),
+            semantic_backend=semantic_backend,
+        )
+
+    def semantic_passages(self) -> tuple[SemanticPassage, ...]:
+        search = self.business_search()
+        try:
+            return tuple(
+                SemanticPassage(
+                    canonical_object_ref=item.canonical_object_ref,
+                    passage_ref=item.passage_ref,
+                    version_or_checksum=item.version_or_checksum,
+                    object_type=item.object_type,
+                    chunk_type=item.chunk_type,
+                    text=item.text,
+                    semantic_aliases=item.semantic_aliases,
+                    semantic_context=item.semantic_context,
+                    semantic_rollup_refs=item.semantic_rollup_refs,
+                )
+                for item in search.canonical_search_passages()
+            )
+        finally:
+            search.close()
 
     def evidence_document_content(
         self, clock: EvidenceClockPort

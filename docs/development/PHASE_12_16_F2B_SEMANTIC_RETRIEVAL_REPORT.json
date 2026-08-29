@@ -1,0 +1,307 @@
+{
+  "benchmark": "PHASE_12_16_F2B_SEMANTIC_RETRIEVAL",
+  "status": "PASS",
+  "blocker": null,
+  "preflight": {
+    "branch": "phase12/12-16-provider-model-calibration",
+    "head": "5af496494cef6de565fc8a5bf3270e0c346a4396",
+    "main": "7ae02ee109bcc6399ec0f71616da6aef07abda81",
+    "merge_base": "7ae02ee109bcc6399ec0f71616da6aef07abda81",
+    "main_ahead_branch_ahead": "0/6",
+    "parent_f2a": "5af496494cef6de565fc8a5bf3270e0c346a4396"
+  },
+  "seed": {
+    "size_bytes": 105553920,
+    "sha256": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134",
+    "integrity": "ok",
+    "quick": "ok",
+    "foreign_key_violations": 0,
+    "unchanged_after_live_runs": true
+  },
+  "corpus": {
+    "version": "12.16-f1-v1",
+    "case_count": 60,
+    "sha256": "f9ebd4330c1f4b5d06021b8a29d4d12db4cfaff05b535eec0ff86da4d842f238",
+    "mutated": false
+  },
+  "f2a_baseline": {
+    "structured_recall_at_5": 0.233333,
+    "lexical_recall_at_5": 0.5,
+    "combined_recall_at_5": 0.5,
+    "exact_label_combined_recall_at_5": 1.0,
+    "lexical_only_recovered_case_count": 16,
+    "residual_semantic_gap_case_count": 25
+  },
+  "r2_finalization": {
+    "explicit_user_approval_recorded": true,
+    "small_rebuilt_or_retested": false,
+    "live_models_executed": ["text-embedding-3-large"],
+    "r1_offline": {
+      "status": "PASS",
+      "case_count": 60,
+      "exact_label_combined_recall_at_5": 1.0,
+      "f2a_lexical_recovered_case_count": 16,
+      "f2a_lexical_recovered_preserved_count": 16,
+      "si_lexical_rank": 5,
+      "si_semantic_rank": 1,
+      "si_combined_rank": 2
+    },
+    "canonical_alias": {
+      "alias": "SI",
+      "canonical_object_ref": "notion:systeme-dinformation",
+      "canonical_label": "Système d’information",
+      "status": "ACTIVE"
+    },
+    "estimated_live_cost_ceiling_usd_before_run": 0.34825713,
+    "actual_live_cost_usd": 0.34759491
+  },
+  "provider_research": {
+    "checked_at": "2026-08-29",
+    "secondary_source_count": 0,
+    "openai": {
+      "text-embedding-3-small": {
+        "default_dimension": 1536,
+        "max_input_tokens_per_item": 8192,
+        "max_summed_input_tokens_per_request": 300000,
+        "price_usd_per_million_input_tokens": 0.02
+      },
+      "text-embedding-3-large": {
+        "default_dimension": 3072,
+        "max_input_tokens_per_item": 8192,
+        "max_summed_input_tokens_per_request": 300000,
+        "price_usd_per_million_input_tokens": 0.13,
+        "provider_positioning": "most capable OpenAI embedding model for English and non-English"
+      },
+      "dimensions_parameter_supported": true,
+      "embeddings_zero_data_retention_eligible": true,
+      "embeddings_application_state_retention": "none",
+      "default_abuse_monitoring_retention": "up to 30 days",
+      "europe_regional_processing": "eligible projects only; eu.api.openai.com required",
+      "live_run_regional_processing_asserted": false
+    },
+    "mistral_alternative": {
+      "model": "mistral-embed-2312",
+      "context_tokens": 8000,
+      "price_usd_per_million_tokens": 0.1,
+      "eu_regional_endpoint": "api.eu.mistral.ai",
+      "selected_for_live_comparison": false
+    },
+    "sources": [
+      "https://developers.openai.com/api/docs/models/text-embedding-3-small",
+      "https://developers.openai.com/api/docs/models/text-embedding-3-large",
+      "https://developers.openai.com/api/docs/guides/embeddings",
+      "https://platform.openai.com/docs/models/default-usage-policies-by-endpoint",
+      "https://docs.mistral.ai/models/mistral-embed-23-12",
+      "https://mistral.ai/pricing/api/",
+      "https://docs.mistral.ai/inference/regional-inference"
+    ]
+  },
+  "credential_gate": {
+    "status": "PASS",
+    "chain": "ProviderCredentialRef -> ProviderSecretResolver -> ProviderSecretValue -> reveal_for_transport()",
+    "credential_value_logged_or_written": false
+  },
+  "sizing": {
+    "current_canonical_searchable_chunk_count": 26848,
+    "unique_canonical_object_count": 26724,
+    "total_chars": 5218631,
+    "total_utf8_bytes": 5465536,
+    "length_chars": {"min": 2, "median": 163, "p95": 431, "max": 1422},
+    "length_utf8_bytes": {"min": 2, "median": 171, "p95": 450, "max": 1484},
+    "projection_utf8_bytes": {"min": 79, "median": 274, "p95": 621, "max": 6224},
+    "oversized_raw_chunk_count": 0,
+    "oversized_projection_count": 0,
+    "splitting_strategy": "none required",
+    "counts_by_object_type": {
+      "CORRECTION": 4197,
+      "FRAMEWORK_ELEMENT": 984,
+      "METHOD": 1399,
+      "NOTION": 752,
+      "OFFICIAL_OCCURRENCE": 762,
+      "PEDAGOGICAL_CONTENT": 11733,
+      "QUESTION": 5622,
+      "RESOURCE": 1399
+    },
+    "counts_by_chunk_type": {
+      "CORRECTION": 4197,
+      "METHOD": 1399,
+      "NOTION_ALIASES": 124,
+      "NOTION_LABEL": 628,
+      "OFFICIAL_FRAMEWORK_ELEMENT": 984,
+      "OFFICIAL_OCCURRENCE": 762,
+      "PEDAGOGICAL_CONTENT": 11733,
+      "QUESTION": 5622,
+      "RESOURCE_TITLE": 1399
+    },
+    "vector_payload_estimates_bytes": {
+      "tested_256": 27492352,
+      "small_default_1536": 164954112,
+      "large_default_3072": 329908224
+    }
+  },
+  "design": {
+    "configuration": "EmbeddingProfileConfig in existing infrastructure/config owner",
+    "workload_delta": "ProviderWorkloadKind.SEMANTIC_EMBEDDING",
+    "new_capability": false,
+    "transport": "OpenAISDKEmbeddingTransport via existing secret boundary; max_retries=0",
+    "direct_runtime_dependency_delta": 0,
+    "storage": "derived local separate SQLite sidecar",
+    "vector_representation": "little-endian float32 BLOB with explicit dimension and precomputed norm",
+    "similarity": "cosine",
+    "index_schema_version": 2,
+    "projection_version": "canonical-search-passage-v3",
+    "projection_format": "canonical_object_ref + chunk_type + current text; notion labels add all ACTIVE canonical aliases and bounded linked canonical pedagogical context",
+    "canonical_alias_projection": "182 ACTIVE aliases across 124 canonical notions, deterministic and independent of F1 expected refs",
+    "canonical_alias_query_expansion": "one exact unambiguous compact ACTIVE alias expands to its canonical label before query embedding; all other ACTIVE aliases remain represented in projection v3; SI is not hardcoded",
+    "semantic_rollup": "content_notion/method_notion/resource_notion scores may roll up to an existing CURRENT canonical notion label before the unchanged admissibility gate",
+    "semantic_rollup_edge_count": 10190,
+    "source_corpus_sha256": "2759d3a932b2a1bf407a720bdf033ab8a23ca6bb2cb3d793b72be7f844642990",
+    "atomic_build": "temporary sidecar + transaction + quick_check + manifest verification + os.replace",
+    "automatic_request_path_build": false,
+    "stale_mismatch_reason": "SEMANTIC_INDEX_STALE_OR_INCOMPATIBLE",
+    "provider_or_index_failure": "optional RetrievalChannelUnavailable degradation",
+    "evidence_search_port_reused": true,
+    "evidence_admissibility_port_reused": true,
+    "rrf_k": 60,
+    "channel_limit": 20,
+    "final_limit": 10,
+    "external_vector_database": false,
+    "dimension_policy": "256 tested on all 60 cases for both models; default payload estimates would multiply exact-scan storage and work by 6x/12x"
+  },
+  "metric_value_order": ["recall_at_1", "recall_at_3", "recall_at_5", "mrr_at_5", "zero_hit_rate"],
+  "models": {
+    "text-embedding-3-small": {
+      "benchmark_stage": "initial F2B comparison on projection v2; not rebuilt or retested in R2",
+      "tested_dimension": 256,
+      "index_size_bytes": 46133248,
+      "build_duration_milliseconds": 410180,
+      "build_provider_call_count": 34,
+      "build_provider_input_tokens": 2671835,
+      "query_provider_input_tokens": 392,
+      "memory_probe_additional_tokens": 20,
+      "total_provider_input_tokens": 2672247,
+      "estimated_experimental_cost_usd": 0.05344494,
+      "query_latency_median_milliseconds": 1800.341,
+      "query_latency_p95_milliseconds": 1918.07,
+      "memory_probe_peak_tracemalloc_bytes": 55302433,
+      "gates": {
+        "exact_label_combined_recall_at_5": 1.0,
+        "semantic_gap_recovered_semantic": 14,
+        "semantic_gap_recovered_combined": 14,
+        "f2a_lexical_recovered_preserved": 15
+      },
+      "metrics": {
+        "global": {"SEMANTIC": [0.2, 0.633333, 0.716667, 0.421944, 0.0], "COMBINED": [0.466667, 0.733333, 0.8, 0.606667, 0.0]},
+        "by_query_class": {
+          "A_EXACT_LABEL": {"SEMANTIC": [0.5, 0.9, 0.9, 0.683333, 0.0], "COMBINED": [1.0, 1.0, 1.0, 1.0, 0.0]},
+          "B_LEXICAL_VARIANT": {"SEMANTIC": [0.3, 0.6, 0.9, 0.498333, 0.0], "COMBINED": [0.5, 0.7, 1.0, 0.665, 0.0]},
+          "C_NORMALIZED_SURFACE": {"SEMANTIC": [0.4, 0.9, 1.0, 0.658333, 0.0], "COMBINED": [1.0, 1.0, 1.0, 1.0, 0.0]},
+          "D_SYNONYM_BUSINESS": {"SEMANTIC": [0.0, 0.3, 0.4, 0.158333, 0.0], "COMBINED": [0.3, 0.6, 0.7, 0.441667, 0.0]},
+          "E_PEDAGOGICAL_PARAPHRASE": {"SEMANTIC": [0.0, 0.5, 0.5, 0.233333, 0.0], "COMBINED": [0.0, 0.5, 0.5, 0.233333, 0.0]},
+          "F_CONCEPT_DESCRIPTION": {"SEMANTIC": [0.0, 0.6, 0.6, 0.3, 0.0], "COMBINED": [0.0, 0.6, 0.6, 0.3, 0.0]}
+        },
+        "by_level": {
+          "PREMIERE_STMG": {"SEMANTIC": [0.222222, 0.5, 0.666667, 0.381481, 0.0], "COMBINED": [0.388889, 0.555556, 0.666667, 0.497222, 0.0]},
+          "TERMINALE_STMG": {"SEMANTIC": [0.0, 0.555556, 0.666667, 0.302778, 0.0], "COMBINED": [0.388889, 0.722222, 0.833333, 0.571296, 0.0]},
+          "BTS_CG_1": {"SEMANTIC": [0.333333, 0.75, 0.75, 0.5, 0.0], "COMBINED": [0.5, 0.75, 0.75, 0.597222, 0.0]},
+          "BTS_CG_2": {"SEMANTIC": [0.333333, 0.833333, 0.833333, 0.583333, 0.0], "COMBINED": [0.666667, 1.0, 1.0, 0.833333, 0.0]}
+        }
+      }
+    },
+    "text-embedding-3-large": {
+      "benchmark_stage": "R2 final live gate on projection v3",
+      "tested_dimension": 256,
+      "index_size_bytes": 46133248,
+      "build_duration_milliseconds": 387161,
+      "build_provider_call_count": 34,
+      "build_provider_input_tokens": 2673375,
+      "query_provider_input_tokens": 432,
+      "query_count": 60,
+      "total_provider_input_tokens": 2673807,
+      "estimated_experimental_cost_usd": 0.34759491,
+      "query_latency_median_milliseconds": 1680.882,
+      "query_latency_p95_milliseconds": 1740.675,
+      "gates": {
+        "exact_label_combined_recall_at_5": 1.0,
+        "semantic_gap_recovered_semantic": 17,
+        "semantic_gap_recovered_combined": 16,
+        "f2a_lexical_recovered_preserved": 16
+      },
+      "metrics": {
+        "global": {"SEMANTIC": [0.066667, 0.516667, 0.666667, 0.313611, 0.0], "COMBINED": [0.466667, 0.716667, 0.833333, 0.6125, 0.0]},
+        "by_query_class": {
+          "A_EXACT_LABEL": {"SEMANTIC": [0.0, 0.3, 0.4, 0.136667, 0.0], "COMBINED": [1.0, 1.0, 1.0, 1.0, 0.0]},
+          "B_LEXICAL_VARIANT": {"SEMANTIC": [0.2, 0.7, 0.8, 0.475, 0.0], "COMBINED": [0.5, 0.6, 0.9, 0.625, 0.0]},
+          "C_NORMALIZED_SURFACE": {"SEMANTIC": [0.1, 0.6, 0.8, 0.383333, 0.0], "COMBINED": [0.8, 1.0, 1.0, 0.883333, 0.0]},
+          "D_SYNONYM_BUSINESS": {"SEMANTIC": [0.1, 0.4, 0.6, 0.295, 0.0], "COMBINED": [0.5, 0.6, 0.7, 0.575, 0.0]},
+          "E_PEDAGOGICAL_PARAPHRASE": {"SEMANTIC": [0.0, 0.5, 0.6, 0.258333, 0.0], "COMBINED": [0.0, 0.5, 0.6, 0.258333, 0.0]},
+          "F_CONCEPT_DESCRIPTION": {"SEMANTIC": [0.0, 0.6, 0.8, 0.333333, 0.0], "COMBINED": [0.0, 0.6, 0.8, 0.333333, 0.0]}
+        },
+        "by_level": {
+          "PREMIERE_STMG": {"SEMANTIC": [0.055556, 0.611111, 0.722222, 0.349074, 0.0], "COMBINED": [0.444444, 0.666667, 0.777778, 0.583333, 0.0]},
+          "TERMINALE_STMG": {"SEMANTIC": [0.055556, 0.5, 0.777778, 0.335185, 0.0], "COMBINED": [0.388889, 0.722222, 0.888889, 0.587963, 0.0]},
+          "BTS_CG_1": {"SEMANTIC": [0.083333, 0.333333, 0.5, 0.25, 0.0], "COMBINED": [0.5, 0.583333, 0.75, 0.583333, 0.0]},
+          "BTS_CG_2": {"SEMANTIC": [0.083333, 0.583333, 0.583333, 0.291667, 0.0], "COMBINED": [0.583333, 0.916667, 0.916667, 0.722222, 0.0]}
+        }
+      }
+    }
+  },
+  "decision": {
+    "selected_embedding_model": "text-embedding-3-large",
+    "candidate_reason": "the initial controlled comparison selected large because it recovered 17/25 semantic gaps versus 14/25 for small; R2 projection v3 then preserved 16/16 F2A recoveries without rebuilding small",
+    "production_promotion": "PASS",
+    "exact_label_gate": "PASS",
+    "material_semantic_value_gate": "PASS",
+    "f2a_lexical_recovery_gate": "PASS",
+    "recovered_f2a_case_id": "RQ-SYSTEME-INFORMATION-D",
+    "recovered_f2a_case_evidence": "canonical ACTIVE alias SI resolves generically to Système d’information; LEXICAL rank 5, SEMANTIC rank 1, COMBINED rank 1",
+    "rrf_tuned_on_f1": false,
+    "next_gate": "12.16-G_READY"
+  },
+  "selected_candidate_remaining_misses": [
+    {"case_id": "RQ-ACTION-COLLECTIVE-B", "classification": "semantic_model_or_ranking_miss"},
+    {"case_id": "RQ-ACTION-COLLECTIVE-E", "classification": "semantic_model_or_ranking_miss"},
+    {"case_id": "RQ-ACTION-COLLECTIVE-F", "classification": "semantic_model_or_ranking_miss"},
+    {"case_id": "RQ-SYSTEME-INFORMATION-E", "classification": "semantic_model_or_ranking_miss"},
+    {"case_id": "RQ-DEMARCHE-MARKETING-E", "classification": "semantic_model_or_ranking_miss"},
+    {"case_id": "RQ-MARCHE-D", "classification": "ranking_fusion_interaction", "semantic_rank": 5},
+    {"case_id": "RQ-BILAN-D", "classification": "semantic_model_or_ranking_miss"},
+    {"case_id": "RQ-AMORTISSEMENTS-D", "classification": "semantic_model_or_ranking_miss"},
+    {"case_id": "RQ-AMORTISSEMENTS-F", "classification": "semantic_model_or_ranking_miss"},
+    {"case_id": "RQ-METHODE-ABC-E", "classification": "semantic_model_or_ranking_miss"}
+  ],
+  "cleanup": {
+    "temporary_semantic_sidecars_removed": true,
+    "runtime_databases_removed": true,
+    "tracked_vector_files": 0,
+    "secret_or_raw_provider_log_written": false
+  },
+  "validations": {
+    "r1_offline_real_seed": "1 passed in 85.45s",
+    "r2_live_large": "1 passed in 585.08s",
+    "semantic_and_ag02_targeted_final": "172 passed",
+    "sqlite_real_gates_final": "22 passed in 533.22s",
+    "artifact_contaminated_global": "4082 passed, 2 failed, 2 skipped; failures solely from prior basetemp databases under .tmp",
+    "artifact_fitness_after_cleanup": "2 passed",
+    "global_final": "4084 passed, 2 skipped in 847.67s",
+    "ruff": "PASS",
+    "mypy_backend": "PASS (658 source files)",
+    "mypy_evaluation_harness": "PASS (30 source files)",
+    "compileall": "PASS (backend, evaluation_harness, tests)",
+    "git_diff_check": "PASS",
+    "json_validation": "PASS",
+    "secret_and_private_path_scan": "PASS",
+    "runtime_database_scan": "PASS"
+  },
+  "delivery": {
+    "adr_p12_062_created": true,
+    "adr_reason": "all R2 live quality and no-regression gates pass",
+    "commit_created": true,
+    "commit_message": "feat: add canonical semantic retrieval",
+    "single_commit_direct_on_f2a": true,
+    "push_performed": true,
+    "main_changed": false,
+    "dependency_before": ["openai>=3.5,<4"],
+    "dependency_after": ["openai>=3.5,<4"]
+  }
+}

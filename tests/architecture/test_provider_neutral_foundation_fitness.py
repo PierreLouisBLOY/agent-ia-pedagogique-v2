@@ -117,6 +117,7 @@ def test_workload_routing_is_distinct_from_capability_authority() -> None:
         "CORRECTION",
         "REVIEW",
         "EVALUATION_SCORING",
+        "SEMANTIC_EMBEDDING",
     )
     assert BASELINE_TOOL_REGISTRY.by_capability(CapabilityId("CAP-T04")) == ()
 
@@ -175,6 +176,7 @@ def test_limits_context_and_effective_secret_fields_remain_separate() -> None:
         "provider_profiles",
         "model_profiles",
         "routes",
+        "embedding_profiles",
     }
     assert not effective_fields.intersection(
         {"secret", "secret_value", "credential_value", "provider_client"}

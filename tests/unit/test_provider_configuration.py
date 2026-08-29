@@ -9,6 +9,7 @@ from backend.infrastructure.config.effective_config.provider import (
 )
 from backend.infrastructure.config.loaders.provider import load_provider_configuration
 from backend.infrastructure.config.schemas.provider import (
+    EmbeddingProfileConfig,
     ModelCode,
     ModelContextLimits,
     ModelProfileConfig,
@@ -93,6 +94,24 @@ def _route(
         workload,
         ModelProfileId(model_profile_id),
         fallbacks,
+    )
+
+
+def _embedding(
+    model_profile_id: str = "embedding-profile-a",
+    *,
+    provider_profile_id: str = "provider-profile-a",
+    code: str = "text-embedding-3-small",
+    dimensions: int | None = 256,
+) -> EmbeddingProfileConfig:
+    return EmbeddingProfileConfig(
+        ModelProfileId(model_profile_id),
+        ProviderProfileId(provider_profile_id),
+        ModelCode(code),
+        8_192,
+        300_000,
+        30_000,
+        dimensions,
     )
 
 
@@ -378,3 +397,124 @@ def test_active_configuration_requires_a_route() -> None:
         raised.value.code
         is ProviderConfigurationErrorCode.INVALID_PROVIDER_CONFIGURATION
     )
+
+
+def test_embedding_profile_routes_without_fake_generation_limits() -> None:
+    configuration = ProviderConfiguration(
+        ProviderConfigurationVersion(1, 1),
+        (_provider(),),
+        (),
+        (
+            _route(
+                "embedding-profile-a",
+                workload=ProviderWorkloadKind.SEMANTIC_EMBEDDING,
+            ),
+        ),
+        (_embedding(),),
+    )
+
+    effective = build_effective_provider_configuration(configuration)
+
+    assert effective.embedding_profiles == (_embedding(),)
+    assert not hasattr(effective.embedding_profiles[0], "reserved_output_tokens")
+    assert not hasattr(effective.embedding_profiles[0], "context_limits")
+    assert effective.routes[0].workload_kind is ProviderWorkloadKind.SEMANTIC_EMBEDDING
+
+
+def test_embedding_route_rejects_generation_profile_and_duplicate_id() -> None:
+    with pytest.raises(ProviderConfigurationError) as incompatible:
+        ProviderConfiguration(
+            ProviderConfigurationVersion(1, 1),
+            (_provider(),),
+            (_model(),),
+            (
+                _route(
+                    workload=ProviderWorkloadKind.SEMANTIC_EMBEDDING,
+                ),
+            ),
+        )
+    assert (
+        incompatible.value.code
+        is ProviderConfigurationErrorCode.INCOMPATIBLE_MODEL_WORKLOAD
+    )
+
+    with pytest.raises(ProviderConfigurationError) as duplicate:
+        ProviderConfiguration(
+            ProviderConfigurationVersion(1, 1),
+            (_provider(),),
+            (_model("shared-id"),),
+            (_route("shared-id"),),
+            (_embedding("shared-id"),),
+        )
+    assert duplicate.value.code is ProviderConfigurationErrorCode.DUPLICATE_MODEL_PROFILE
+
+
+def test_loader_parses_embedding_profile_without_credential_material() -> None:
+    source: dict[str, object] = {
+        "schema_version": {"major": 1, "minor": 1},
+        "providers": (
+            {
+                "profile_id": "provider-profile-a",
+                "provider_code": "openai",
+                "credential_ref": "OPENAI_API_KEY",
+            },
+        ),
+        "models": (),
+        "embeddings": (
+            {
+                "model_profile_id": "embedding-profile-a",
+                "provider_profile_id": "provider-profile-a",
+                "model_code": "text-embedding-3-small",
+                "max_input_tokens_per_item": 8_192,
+                "max_batch_input_tokens": 300_000,
+                "call_timeout_milliseconds": 30_000,
+                "requested_dimensions": 256,
+                "max_attempts": 1,
+            },
+        ),
+        "routes": (
+            {
+                "workload_kind": "SEMANTIC_EMBEDDING",
+                "primary_model_profile_id": "embedding-profile-a",
+            },
+        ),
+    }
+
+    loaded = load_provider_configuration(source)
+
+    assert loaded.embedding_profiles[0] == EmbeddingProfileConfig(
+        ModelProfileId("embedding-profile-a"),
+        ProviderProfileId("provider-profile-a"),
+        ModelCode("text-embedding-3-small"),
+        8_192,
+        300_000,
+        30_000,
+        256,
+    )
+    assert "credential_value" not in repr(loaded)
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"max_input_tokens_per_item": 0},
+        {"max_batch_input_tokens": 8_191},
+        {"call_timeout_milliseconds": 0},
+        {"requested_dimensions": 0},
+        {"max_attempts": 2},
+    ],
+)
+def test_embedding_profile_limits_fail_closed(overrides: dict[str, object]) -> None:
+    values: dict[str, object] = {
+        "model_profile_id": ModelProfileId("embedding"),
+        "provider_profile_id": ProviderProfileId("provider"),
+        "model_code": ModelCode("embedding-model"),
+        "max_input_tokens_per_item": 8_192,
+        "max_batch_input_tokens": 300_000,
+        "call_timeout_milliseconds": 30_000,
+        "requested_dimensions": 256,
+        "max_attempts": 1,
+    }
+    values.update(overrides)
+    with pytest.raises((TypeError, ValueError)):
+        EmbeddingProfileConfig(**values)  # type: ignore[arg-type]

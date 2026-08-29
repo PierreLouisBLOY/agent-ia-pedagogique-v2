@@ -81,7 +81,8 @@ def test_later_provider_work_preserves_phase_f_backend_owners() -> None:
     changed = tuple(line for line in result.stdout.splitlines() if line)
     allowed = (
         "backend/adapters/outbound/",
-        "backend/infrastructure/composition/factories/openai.py",
+        "backend/infrastructure/composition/factories/",
+        "backend/infrastructure/config/",
     )
     f2a_retrieval_files = {
         "backend/agent_runtime/agents/evidence/__init__.py",

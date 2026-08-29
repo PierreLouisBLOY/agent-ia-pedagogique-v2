@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 
 from backend.infrastructure.config.schemas.provider import (
+    EmbeddingProfileConfig,
     ModelCode,
     ModelContextLimits,
     ModelProfileConfig,
@@ -33,14 +34,19 @@ def load_provider_configuration(source: Mapping[str, object]) -> ProviderConfigu
         _require_keys(
             source,
             required=frozenset({"schema_version", "providers", "models", "routes"}),
+            optional=frozenset({"embeddings"}),
         )
         version = _parse_version(_mapping(source, "schema_version"))
         providers = tuple(
             _parse_provider(item) for item in _mapping_sequence(source, "providers")
         )
         models = tuple(_parse_model(item) for item in _mapping_sequence(source, "models"))
+        embeddings = tuple(
+            _parse_embedding(item)
+            for item in _optional_mapping_sequence(source, "embeddings")
+        )
         routes = tuple(_parse_route(item) for item in _mapping_sequence(source, "routes"))
-        return ProviderConfiguration(version, providers, models, routes)
+        return ProviderConfiguration(version, providers, models, routes, embeddings)
     except ProviderConfigurationError:
         raise
     except (KeyError, TypeError, ValueError):
@@ -120,6 +126,42 @@ def _parse_context_limits(source: Mapping[str, object]) -> ModelContextLimits:
         context_window_tokens=_integer(source, "context_window_tokens"),
         max_provider_input_tokens=_integer(source, "max_provider_input_tokens"),
         reserved_output_tokens=_integer(source, "reserved_output_tokens"),
+    )
+
+
+def _parse_embedding(source: Mapping[str, object]) -> EmbeddingProfileConfig:
+    _require_keys(
+        source,
+        required=frozenset(
+            {
+                "model_profile_id",
+                "provider_profile_id",
+                "model_code",
+                "max_input_tokens_per_item",
+                "max_batch_input_tokens",
+                "call_timeout_milliseconds",
+            }
+        ),
+        optional=frozenset(
+            {"requested_dimensions", "max_attempts", "enabled"}
+        ),
+    )
+    return EmbeddingProfileConfig(
+        model_profile_id=ModelProfileId(_string(source, "model_profile_id")),
+        provider_profile_id=ProviderProfileId(
+            _string(source, "provider_profile_id")
+        ),
+        model_code=ModelCode(_string(source, "model_code")),
+        max_input_tokens_per_item=_integer(
+            source, "max_input_tokens_per_item"
+        ),
+        max_batch_input_tokens=_integer(source, "max_batch_input_tokens"),
+        call_timeout_milliseconds=_integer(
+            source, "call_timeout_milliseconds"
+        ),
+        requested_dimensions=_optional_int(source, "requested_dimensions"),
+        max_attempts=_integer_default(source, "max_attempts", default=1),
+        enabled=_optional_bool(source, "enabled", default=True),
     )
 
 
@@ -215,6 +257,15 @@ def _optional_int(source: Mapping[str, object], key: str) -> int | None:
     return value
 
 
+def _integer_default(
+    source: Mapping[str, object], key: str, *, default: int
+) -> int:
+    value = source.get(key, default)
+    if type(value) is not int:
+        raise TypeError("configuration value must be an integer")
+    return value
+
+
 def _optional_bool(source: Mapping[str, object], key: str, *, default: bool) -> bool:
     value = source.get(key, default)
     if type(value) is not bool:
@@ -244,6 +295,15 @@ def _mapping_sequence(
     key: str,
 ) -> tuple[Mapping[str, object], ...]:
     return tuple(_required_mapping_value(item) for item in _sequence(source, key))
+
+
+def _optional_mapping_sequence(
+    source: Mapping[str, object],
+    key: str,
+) -> tuple[Mapping[str, object], ...]:
+    if key not in source:
+        return ()
+    return _mapping_sequence(source, key)
 
 
 def _sequence_string(value: object) -> str:

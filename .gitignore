@@ -39,6 +39,7 @@ htmlcov/
 /runtime/
 /exports/
 /artifacts/
+/.tmp/
 /tmp/
 /temp/
 

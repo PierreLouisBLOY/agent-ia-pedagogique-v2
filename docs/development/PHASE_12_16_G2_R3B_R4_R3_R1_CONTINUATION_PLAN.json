@@ -1,0 +1,1162 @@
+{
+  "adr": {
+    "applies": [
+      "ADR-P12-063",
+      "ADR-P12-064"
+    ],
+    "required": false
+  },
+  "approvals": {
+    "financial": "J'approuve exclusivement l'exécution conditionnelle de la matrice\n12.16-g2-r4-r4-anthropic-recovery-completion-v1,\nchecksum 8cdc7c5b1ed6eaeb02606b2130db43d398bdbe51d99116d97014cb014e8b3526,\n38 appels maximum (38 Anthropic Scorer claude-sonnet-5, thinking adaptive, effort low, max_output_tokens 2048),\nplafond 1.732800 USD,\naucun retry, canary en premier et arrêt immédiat au premier échec technique.",
+    "recognized": false,
+    "transfer": "J'autorise explicitement l'envoi à l'API Anthropic, exclusivement pour\nla matrice conditionnelle 12.16-g2-r4-r4-anthropic-recovery-completion-v1,\nchecksum 8cdc7c5b1ed6eaeb02606b2130db43d398bdbe51d99116d97014cb014e8b3526,\ndes anchors synthétiques strictement nécessaires et des projections pédagogiques minimisées des six outputs historiques.\nAucune base SQLite, aucun document source complet et aucun secret supplémentaire."
+  },
+  "commit": {
+    "expected_parent": "a736c707f9903ead7f5a72a1690ff9432a742f0d",
+    "message": "test: prepare Anthropic calibration continuation"
+  },
+  "continuation": {
+    "call_count": 38,
+    "calls": [
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "INITIAL_ANCHOR",
+        "criterion_refs": [
+          "scn-07.quality.correction-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "remediation.r4-r3.http503.scn-07.b.correction-quality.canary.r1",
+        "input_refs": [
+          "anchor:cal.scn-07.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "TRANSIENT_SERVER_ERROR_REMEDIATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.b.correction-quality.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.b.correction-quality.r1",
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.b.correction-quality.r1",
+        "task_kind": "correction-remediation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "INITIAL_ANCHOR",
+        "criterion_refs": [
+          "scn-07.quality.remediation-clarity"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-07.b.remediation-clarity.r1",
+        "input_refs": [
+          "anchor:cal.scn-07.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.b.remediation-clarity.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.b.remediation-clarity.r1",
+        "task_kind": "correction-remediation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "INITIAL_ANCHOR",
+        "criterion_refs": [
+          "scn-07.quality.correction-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-07.c.correction-quality.r1",
+        "input_refs": [
+          "anchor:cal.scn-07.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.c.correction-quality.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.c.correction-quality.r1",
+        "task_kind": "correction-remediation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "INITIAL_ANCHOR",
+        "criterion_refs": [
+          "scn-07.quality.remediation-clarity"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-07.c.remediation-clarity.r1",
+        "input_refs": [
+          "anchor:cal.scn-07.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.c.remediation-clarity.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.c.remediation-clarity.r1",
+        "task_kind": "correction-remediation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "INITIAL_ANCHOR",
+        "criterion_refs": [
+          "scn-08.quality.distractor-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-08.a.distractor-quality.r1",
+        "input_refs": [
+          "anchor:cal.scn-08.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.a.distractor-quality.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.a.distractor-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "INITIAL_ANCHOR",
+        "criterion_refs": [
+          "scn-08.quality.feedback-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-08.a.feedback-quality.r1",
+        "input_refs": [
+          "anchor:cal.scn-08.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.a.feedback-quality.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.a.feedback-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "INITIAL_ANCHOR",
+        "criterion_refs": [
+          "scn-08.quality.distractor-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-08.b.distractor-quality.r1",
+        "input_refs": [
+          "anchor:cal.scn-08.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.b.distractor-quality.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.b.distractor-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "INITIAL_ANCHOR",
+        "criterion_refs": [
+          "scn-08.quality.feedback-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-08.b.feedback-quality.r1",
+        "input_refs": [
+          "anchor:cal.scn-08.b"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.b.feedback-quality.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.b.feedback-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "INITIAL_ANCHOR",
+        "criterion_refs": [
+          "scn-08.quality.distractor-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-08.c.distractor-quality.r1",
+        "input_refs": [
+          "anchor:cal.scn-08.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.c.distractor-quality.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.c.distractor-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "INITIAL_ANCHOR",
+        "criterion_refs": [
+          "scn-08.quality.feedback-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-08.c.feedback-quality.r1",
+        "input_refs": [
+          "anchor:cal.scn-08.c"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.c.feedback-quality.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.c.feedback-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-01.quality.clarity"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-01.a.clarity.r2",
+        "input_refs": [
+          "anchor:cal.scn-01.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-01.a.clarity.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-01",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-01.a.clarity.r2",
+        "task_kind": "resource-organization",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-01.quality.organization-utility"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-01.a.organization-utility.r2",
+        "input_refs": [
+          "anchor:cal.scn-01.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-01.a.organization-utility.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-01",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-01.a.organization-utility.r2",
+        "task_kind": "resource-organization",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-02.quality.relevance"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-02.a.relevance.r2",
+        "input_refs": [
+          "anchor:cal.scn-02.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-02.a.relevance.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-02",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-02.a.relevance.r2",
+        "task_kind": "resource-search",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-02.quality.coverage"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-02.a.coverage.r2",
+        "input_refs": [
+          "anchor:cal.scn-02.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-02.a.coverage.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-02",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-02.a.coverage.r2",
+        "task_kind": "resource-search",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-03.quality.clarity"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-03.a.clarity.r2",
+        "input_refs": [
+          "anchor:cal.scn-03.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-03.a.clarity.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-03.a.clarity.r2",
+        "task_kind": "course-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-03.quality.level-adaptation"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-03.a.level-adaptation.r2",
+        "input_refs": [
+          "anchor:cal.scn-03.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-03.a.level-adaptation.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-03.a.level-adaptation.r2",
+        "task_kind": "course-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-04.quality.fidelity"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-04.a.fidelity.r2",
+        "input_refs": [
+          "anchor:cal.scn-04.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-04.a.fidelity.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-04.a.fidelity.r2",
+        "task_kind": "resource-transformation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-04.quality.level-adaptation"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-04.a.level-adaptation.r2",
+        "input_refs": [
+          "anchor:cal.scn-04.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-04.a.level-adaptation.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-04.a.level-adaptation.r2",
+        "task_kind": "resource-transformation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-05.quality.difficulty-appropriateness"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-05.a.difficulty-appropriateness.r2",
+        "input_refs": [
+          "anchor:cal.scn-05.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-05.a.difficulty-appropriateness.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-05.a.difficulty-appropriateness.r2",
+        "task_kind": "exercise-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-05.quality.instruction-clarity"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-05.a.instruction-clarity.r2",
+        "input_refs": [
+          "anchor:cal.scn-05.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-05.a.instruction-clarity.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-05.a.instruction-clarity.r2",
+        "task_kind": "exercise-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-06.quality.assessment-clarity"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-06.a.assessment-clarity.r2",
+        "input_refs": [
+          "anchor:cal.scn-06.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-06.a.assessment-clarity.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-06.a.assessment-clarity.r2",
+        "task_kind": "assessment-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-06.quality.marking-scheme-coherence"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-06.a.marking-scheme-coherence.r2",
+        "input_refs": [
+          "anchor:cal.scn-06.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-06.a.marking-scheme-coherence.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-06.a.marking-scheme-coherence.r2",
+        "task_kind": "assessment-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-07.quality.correction-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-07.a.correction-quality.r2",
+        "input_refs": [
+          "anchor:cal.scn-07.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.a.correction-quality.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.a.correction-quality.r2",
+        "task_kind": "correction-remediation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-07.quality.remediation-clarity"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-07.a.remediation-clarity.r2",
+        "input_refs": [
+          "anchor:cal.scn-07.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-07.a.remediation-clarity.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.a.remediation-clarity.r2",
+        "task_kind": "correction-remediation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-08.quality.distractor-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-08.a.distractor-quality.r2",
+        "input_refs": [
+          "anchor:cal.scn-08.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.a.distractor-quality.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.a.distractor-quality.r2",
+        "task_kind": "qcm-quiz-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "REPEATABILITY",
+        "criterion_refs": [
+          "scn-08.quality.feedback-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.anchor.scn-08.a.feedback-quality.r2",
+        "input_refs": [
+          "anchor:cal.scn-08.a"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.anchor.scn-08.a.feedback-quality.r2",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 2,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.a.feedback-quality.r2",
+        "task_kind": "qcm-quiz-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "SELECTED_OUTPUT",
+        "criterion_refs": [
+          "scn-03.quality.clarity"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.output.scn-03.clarity.r1",
+        "input_refs": [
+          "output:cal.generation.course.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-03.clarity.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-03.clarity.r1",
+        "task_kind": "course-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "SELECTED_OUTPUT",
+        "criterion_refs": [
+          "scn-03.quality.level-adaptation"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.output.scn-03.level-adaptation.r1",
+        "input_refs": [
+          "output:cal.generation.course.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-03.level-adaptation.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-03",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-03.level-adaptation.r1",
+        "task_kind": "course-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "SELECTED_OUTPUT",
+        "criterion_refs": [
+          "scn-04.quality.fidelity"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.output.scn-04.fidelity.r1",
+        "input_refs": [
+          "output:cal.transformation.resource.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-04.fidelity.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-04.fidelity.r1",
+        "task_kind": "resource-transformation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "SELECTED_OUTPUT",
+        "criterion_refs": [
+          "scn-04.quality.level-adaptation"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.output.scn-04.level-adaptation.r1",
+        "input_refs": [
+          "output:cal.transformation.resource.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-04.level-adaptation.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-04",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-04.level-adaptation.r1",
+        "task_kind": "resource-transformation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "SELECTED_OUTPUT",
+        "criterion_refs": [
+          "scn-05.quality.difficulty-appropriateness"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.output.scn-05.difficulty-appropriateness.r1",
+        "input_refs": [
+          "output:cal.generation.exercise.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-05.difficulty-appropriateness.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-05.difficulty-appropriateness.r1",
+        "task_kind": "exercise-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "SELECTED_OUTPUT",
+        "criterion_refs": [
+          "scn-05.quality.instruction-clarity"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.output.scn-05.instruction-clarity.r1",
+        "input_refs": [
+          "output:cal.generation.exercise.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-05.instruction-clarity.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-05",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-05.instruction-clarity.r1",
+        "task_kind": "exercise-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "SELECTED_OUTPUT",
+        "criterion_refs": [
+          "scn-06.quality.assessment-clarity"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.output.scn-06.assessment-clarity.r1",
+        "input_refs": [
+          "output:cal.generation.assessment.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-06.assessment-clarity.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-06.assessment-clarity.r1",
+        "task_kind": "assessment-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "SELECTED_OUTPUT",
+        "criterion_refs": [
+          "scn-06.quality.marking-scheme-coherence"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.output.scn-06.marking-scheme-coherence.r1",
+        "input_refs": [
+          "output:cal.generation.assessment.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-06.marking-scheme-coherence.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-06",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-06.marking-scheme-coherence.r1",
+        "task_kind": "assessment-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "SELECTED_OUTPUT",
+        "criterion_refs": [
+          "scn-07.quality.correction-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.output.scn-07.correction-quality.r1",
+        "input_refs": [
+          "output:cal.correction.remediation.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-07.correction-quality.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-07.correction-quality.r1",
+        "task_kind": "correction-remediation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "SELECTED_OUTPUT",
+        "criterion_refs": [
+          "scn-07.quality.remediation-clarity"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.output.scn-07.remediation-clarity.r1",
+        "input_refs": [
+          "output:cal.correction.remediation.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-07.remediation-clarity.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-07",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-07.remediation-clarity.r1",
+        "task_kind": "correction-remediation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "SELECTED_OUTPUT",
+        "criterion_refs": [
+          "scn-08.quality.distractor-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.output.scn-08.distractor-quality.r1",
+        "input_refs": [
+          "output:cal.generation.qcm.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-08.distractor-quality.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-08.distractor-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      },
+      {
+        "automatic_rerun_count": 0,
+        "automatic_retry_count": 0,
+        "category": "SELECTED_OUTPUT",
+        "criterion_refs": [
+          "scn-08.quality.feedback-quality"
+        ],
+        "effort": "low",
+        "execution_call_id": "continuation.r4-r4.cal.score.output.scn-08.feedback-quality.r1",
+        "input_refs": [
+          "output:cal.generation.qcm.primary.r1"
+        ],
+        "input_utf8_upper_bound_bytes": 8000,
+        "mapping_class": "R3_PENDING_CONTINUATION",
+        "max_output_tokens": 2048,
+        "model": "claude-sonnet-5",
+        "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+        "original_logical_slot_id": "cal.score.output.scn-08.feedback-quality.r1",
+        "provider": "anthropic",
+        "remediation_source_failed_call_id": null,
+        "repetition": 1,
+        "scenario_code": "SCN-08",
+        "source_r3_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-08.feedback-quality.r1",
+        "task_kind": "qcm-quiz-creation",
+        "thinking_mode": "adaptive",
+        "workload": "scoring"
+      }
+    ],
+    "canary_execution_call_id": "remediation.r4-r3.http503.scn-07.b.correction-quality.canary.r1",
+    "continuation_after_canary_count": 37,
+    "cost": {
+      "call_count": 38,
+      "input_max_per_call": 8000,
+      "margin_amount_usd": "0.346560",
+      "margin_multiplier": "1.25",
+      "maximum_before_margin_usd": "1.386240",
+      "output_max_per_call": 2048,
+      "per_call_maximum_usd": "0.036480",
+      "pricing": {
+        "cache_hit_usd_per_mtok": "0.20",
+        "input_usd_per_mtok": "2.00",
+        "official_sources": [
+          "https://platform.claude.com/docs/en/models/sonnet-5/whats-new-sonnet-5",
+          "https://platform.claude.com/docs/en/build-with-claude/effort",
+          "https://platform.claude.com/docs/en/build-with-claude/structured-outputs",
+          "https://platform.claude.com/docs/en/api/messages/create",
+          "https://platform.claude.com/docs/en/about-claude/pricing"
+        ],
+        "output_usd_per_mtok": "10.00",
+        "verified_on": "2026-08-30"
+      },
+      "requested_ceiling_usd": "1.732800"
+    },
+    "matrix_sha256": "8cdc7c5b1ed6eaeb02606b2130db43d398bdbe51d99116d97014cb014e8b3526",
+    "plan_version": "12.16-g2-r4-r4-anthropic-recovery-completion-v1",
+    "selected_output_dependencies": {
+      "cal.correction.remediation.primary.r1": "9966a3cc5773a25db17c370a749cb20e691907d42e1413f75f96e938c93c3122",
+      "cal.generation.assessment.primary.r1": "6f1436688c314bc3e900c6d77747d7e5eb12f60c107cfc1a3d9772072876d059",
+      "cal.generation.course.primary.r1": "4c224e7b85af14a1f9a33cbd292c4567a45aef7fcbda02fde7d64ff6cf8d3fcb",
+      "cal.generation.exercise.primary.r1": "aded5d6dd52e3250670954803445ac4dddc9ae81843af62eaab85bcd2335f01b",
+      "cal.generation.qcm.primary.r1": "a4567ef0f93d856799cc1df88924a2ecd95ce0273c6a1aefdb2f23831bba1036",
+      "cal.transformation.resource.primary.r1": "965d11d36db35d200c1616930e0357d2089e18a3878d44e4f71a981714c94975"
+    },
+    "split": {
+      "INITIAL_ANCHOR": 10,
+      "REPEATABILITY": 16,
+      "SELECTED_OUTPUT": 12
+    },
+    "transfer_counts": {
+      "ANCHOR_SYNTHETIC": 26,
+      "AUTHORIZED_OUTPUT_PROJECTION": 12
+    }
+  },
+  "http503_classification": {
+    "classification": "HTTP_503_SERVER_ERROR",
+    "failed_execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.b.correction-quality.r1",
+    "failed_logical_slot_id": "cal.score.anchor.scn-07.b.correction-quality.r1",
+    "historical_record_preserved": true,
+    "historical_record_reset": false
+  },
+  "ledger": {
+    "call_count": 38,
+    "provider_calls_attempted": 0,
+    "relative_path": "artifacts/calibration/12.16-g2-r4-r4/ledger.json",
+    "sha256": "1424dd5889608790a4d7f4b5f5a757db625f451777f5dc2dc8c0289034cbeb22",
+    "states": [
+      "PENDING",
+      "STARTED",
+      "COMPLETED",
+      "FAILED",
+      "SKIPPED_DEPENDENCY_FAILED",
+      "BLOCKED_BY_CANARY"
+    ]
+  },
+  "offline_execution": {
+    "anthropic_calls": 0,
+    "credentials_resolved": false,
+    "openai_calls": 0,
+    "prior_ledgers_mutated": false,
+    "provider_cost_usd": "0.000000",
+    "provider_transport_constructed": false
+  },
+  "phase": "12.16-G2-R3B-R4-R3-R1",
+  "proofs": {
+    "r2_ledger_sha256": "ef694ad8174a28079db030086d83d0ffb8d02d7aed598092961b821b3fdd2a31",
+    "r2_raw_sha256": "a16287401cc87863d23dc170b76cf2983ccae1909374d2a3b6af8226642f6053",
+    "r2_summary_sha256": "ec88b72b616793bd4d215ec1f4a5e24a03b458691e1b00ce7491b4f6486d5948",
+    "r3_ledger_sha256": "bd4f9272730c225a7e1a309137cf937bcb0b8a9603446cc76c8d94871a029c99",
+    "r3_raw_ordered_list_sha256": "f39d83334eda6b0f87b4ecf363e9f432d818b298d55defa6c1076ec766a34c52",
+    "r3_summary_sha256": "c3052b33193bf6542cd96a2ff1706c8d210e297c736d1d3ffa101676c9405729",
+    "r3_transfer_manifest_sha256": "c8742f5e4a46215a34141e93b17b36a730c6ab6136b3c92ad3eba073be1e905a"
+  },
+  "provider_health_gate": {
+    "active_api_incident_must_be_absent": true,
+    "model_api_pricing_revalidation_required": true,
+    "official_public_status_check_required": true,
+    "r1_check_performed": false,
+    "required_before_credential_and_canary": true
+  },
+  "refs": {
+    "branch": "phase12/12-16-provider-model-calibration",
+    "entry_head": "a736c707f9903ead7f5a72a1690ff9432a742f0d",
+    "entry_main": "7ae02ee109bcc6399ec0f71616da6aef07abda81",
+    "entry_origin_main": "7ae02ee109bcc6399ec0f71616da6aef07abda81",
+    "entry_upstream": "a736c707f9903ead7f5a72a1690ff9432a742f0d"
+  },
+  "reusable_results": {
+    "count": 38,
+    "manifest_sha256": "555486d2fe968d347e72ab378b4b0370dac48bb40921756993699f1fbf412566",
+    "manifest_version": "12.16-g2-r4-r3-r1-reusable-uniform-results-v1",
+    "r2_count": 1,
+    "r3_count": 37,
+    "raw_content_recorded": false
+  },
+  "slot_subtraction": {
+    "intersection_count": 0,
+    "original_count": 76,
+    "remaining_count": 38,
+    "reused_count": 38,
+    "union_count": 76
+  },
+  "status": "PASS_CLOSED"
+}

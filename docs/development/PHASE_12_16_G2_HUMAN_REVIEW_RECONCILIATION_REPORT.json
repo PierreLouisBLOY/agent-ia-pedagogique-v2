@@ -1,0 +1,726 @@
+{
+  "criterion_dispositions": [
+    {
+      "cause_class": "STRUCTURAL_ANCHOR_DEFECT",
+      "criterion_ref": "scn-01.quality.clarity",
+      "disposition": "REVISE_ANCHORS",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 2,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "SHARED_TIE",
+        "strong_vs_mixed": "SHARED_TIE"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "révision",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "aucune"
+      },
+      "scenario_code": "SCN-01",
+      "structural_invalid_tiers": [
+        "MIXED"
+      ]
+    },
+    {
+      "cause_class": "STRUCTURAL_ANCHOR_DEFECT",
+      "criterion_ref": "scn-01.quality.organization-utility",
+      "disposition": "REVISE_ANCHORS",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 2,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "GT",
+        "strong_vs_mixed": "EQ"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "MODEL_ONLY_DISTINCTION",
+        "strong_vs_mixed": "SHARED_TIE"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "révision",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "aucune"
+      },
+      "scenario_code": "SCN-01",
+      "structural_invalid_tiers": [
+        "MIXED"
+      ]
+    },
+    {
+      "cause_class": "ANCHORS_TOO_SIMILAR_FOR_HUMAN_AND_MODEL",
+      "criterion_ref": "scn-02.quality.relevance",
+      "disposition": "REVISE_ANCHORS",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 2,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "SHARED_TIE",
+        "strong_vs_mixed": "SHARED_TIE"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "révision",
+        "WEAK_BUT_STRUCTURALLY_VALID": "révision"
+      },
+      "scenario_code": "SCN-02",
+      "structural_invalid_tiers": []
+    },
+    {
+      "cause_class": "ANCHORS_TOO_SIMILAR_FOR_HUMAN_AND_MODEL",
+      "criterion_ref": "scn-02.quality.coverage",
+      "disposition": "REVISE_ANCHORS",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 2,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "SHARED_TIE",
+        "strong_vs_mixed": "SHARED_TIE"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "révision",
+        "WEAK_BUT_STRUCTURALLY_VALID": "révision"
+      },
+      "scenario_code": "SCN-02",
+      "structural_invalid_tiers": []
+    },
+    {
+      "cause_class": "MODEL_UNDER_DISCRIMINATES_HUMAN_CLEARLY_DISTINGUISHES",
+      "criterion_ref": "scn-03.quality.clarity",
+      "disposition": "REVISE_ANCHORS",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "TRES_SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 1,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "GT"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "SHARED_TIE",
+        "strong_vs_mixed": "HUMAN_ONLY_DISTINCTION"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "révision"
+      },
+      "scenario_code": "SCN-03",
+      "structural_invalid_tiers": []
+    },
+    {
+      "cause_class": "INSUFFICIENT_EVIDENCE",
+      "criterion_ref": "scn-03.quality.level-adaptation",
+      "disposition": "REVISE_ANCHORS",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "TRES_SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 1,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "GT"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "GT",
+        "strong_vs_mixed": "EQ"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "MODEL_ONLY_DISTINCTION",
+        "strong_vs_mixed": "HUMAN_ONLY_DISTINCTION"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "révision"
+      },
+      "scenario_code": "SCN-03",
+      "structural_invalid_tiers": []
+    },
+    {
+      "cause_class": "INSUFFICIENT_EVIDENCE",
+      "criterion_ref": "scn-04.quality.fidelity",
+      "disposition": "OWNER_DECISION_REQUIRED",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "TRES_SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 1,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "GT"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "GT",
+        "strong_vs_mixed": "EQ"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "MODEL_ONLY_DISTINCTION",
+        "strong_vs_mixed": "HUMAN_ONLY_DISTINCTION"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "aucune"
+      },
+      "scenario_code": "SCN-04",
+      "structural_invalid_tiers": []
+    },
+    {
+      "cause_class": "INSUFFICIENT_EVIDENCE",
+      "criterion_ref": "scn-04.quality.level-adaptation",
+      "disposition": "OWNER_DECISION_REQUIRED",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "TRES_SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 1,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "GT"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "GT",
+        "strong_vs_mixed": "EQ"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "MODEL_ONLY_DISTINCTION",
+        "strong_vs_mixed": "HUMAN_ONLY_DISTINCTION"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "aucune"
+      },
+      "scenario_code": "SCN-04",
+      "structural_invalid_tiers": []
+    },
+    {
+      "cause_class": "INSUFFICIENT_EVIDENCE",
+      "criterion_ref": "scn-05.quality.difficulty-appropriateness",
+      "disposition": "OWNER_DECISION_REQUIRED",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 2,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "GT"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "SHARED_TIE",
+        "strong_vs_mixed": "MODEL_ONLY_DISTINCTION"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "aucune"
+      },
+      "scenario_code": "SCN-05",
+      "structural_invalid_tiers": []
+    },
+    {
+      "cause_class": "ANCHORS_TOO_SIMILAR_FOR_HUMAN_AND_MODEL",
+      "criterion_ref": "scn-05.quality.instruction-clarity",
+      "disposition": "REVISE_ANCHORS",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 2,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "SHARED_TIE",
+        "strong_vs_mixed": "SHARED_TIE"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "aucune"
+      },
+      "scenario_code": "SCN-05",
+      "structural_invalid_tiers": []
+    },
+    {
+      "cause_class": "INSUFFICIENT_EVIDENCE",
+      "criterion_ref": "scn-06.quality.assessment-clarity",
+      "disposition": "OWNER_DECISION_REQUIRED",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 2,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "GT",
+        "strong_vs_mixed": "GT"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "MODEL_ONLY_DISTINCTION",
+        "strong_vs_mixed": "MODEL_ONLY_DISTINCTION"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "aucune"
+      },
+      "scenario_code": "SCN-06",
+      "structural_invalid_tiers": []
+    },
+    {
+      "cause_class": "INSUFFICIENT_EVIDENCE",
+      "criterion_ref": "scn-06.quality.marking-scheme-coherence",
+      "disposition": "OWNER_DECISION_REQUIRED",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 2,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "GT",
+        "strong_vs_mixed": "EQ"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "MODEL_ONLY_DISTINCTION",
+        "strong_vs_mixed": "SHARED_TIE"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "aucune"
+      },
+      "scenario_code": "SCN-06",
+      "structural_invalid_tiers": []
+    },
+    {
+      "cause_class": "INSUFFICIENT_EVIDENCE",
+      "criterion_ref": "scn-07.quality.correction-quality",
+      "disposition": "OWNER_DECISION_REQUIRED",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 2,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "GT",
+        "strong_vs_mixed": "EQ"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "MODEL_ONLY_DISTINCTION",
+        "strong_vs_mixed": "SHARED_TIE"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "aucune"
+      },
+      "scenario_code": "SCN-07",
+      "structural_invalid_tiers": []
+    },
+    {
+      "cause_class": "INSUFFICIENT_EVIDENCE",
+      "criterion_ref": "scn-07.quality.remediation-clarity",
+      "disposition": "OWNER_DECISION_REQUIRED",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 2,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "GT",
+        "strong_vs_mixed": "EQ"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "MODEL_ONLY_DISTINCTION",
+        "strong_vs_mixed": "SHARED_TIE"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "aucune"
+      },
+      "scenario_code": "SCN-07",
+      "structural_invalid_tiers": []
+    },
+    {
+      "cause_class": "INSUFFICIENT_EVIDENCE",
+      "criterion_ref": "scn-08.quality.distractor-quality",
+      "disposition": "REVISE_ANCHORS",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 2,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "GT"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "SHARED_TIE",
+        "strong_vs_mixed": "MODEL_ONLY_DISTINCTION"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "révision"
+      },
+      "scenario_code": "SCN-08",
+      "structural_invalid_tiers": []
+    },
+    {
+      "cause_class": "INSUFFICIENT_EVIDENCE",
+      "criterion_ref": "scn-08.quality.feedback-quality",
+      "disposition": "REVISE_ANCHORS",
+      "human_labels_by_tier": {
+        "MIXED": "SATISFAISANT",
+        "STRONG": "SATISFAISANT",
+        "WEAK_BUT_STRUCTURALLY_VALID": "SATISFAISANT"
+      },
+      "human_ordering": {
+        "inverted_adjacent_pairs": 0,
+        "non_evaluable_relations": 0,
+        "strict": false,
+        "tied_adjacent_pairs": 2,
+        "weak": true
+      },
+      "human_relations": {
+        "mixed_vs_weak": "EQ",
+        "strong_vs_mixed": "EQ"
+      },
+      "model_relations": {
+        "mixed_vs_weak": "GT",
+        "strong_vs_mixed": "EQ"
+      },
+      "relation_comparisons": {
+        "mixed_vs_weak": "MODEL_ONLY_DISTINCTION",
+        "strong_vs_mixed": "SHARED_TIE"
+      },
+      "requested_actions_by_tier": {
+        "MIXED": "aucune",
+        "STRONG": "aucune",
+        "WEAK_BUT_STRUCTURALLY_VALID": "révision"
+      },
+      "scenario_code": "SCN-08",
+      "structural_invalid_tiers": []
+    }
+  ],
+  "decision": {
+    "CALIBRATION_CONFIDENCE": "PROVISIONAL_REVIEW_EXPOSURE_LIMITED",
+    "HUMAN_ANCHOR_EVIDENCE": "PARTIAL",
+    "HUMAN_REVIEW_COMPLETE": true,
+    "JUDGE_CALIBRATION_DISPOSITION": "ANCHOR_REVISION_REQUIRED",
+    "PROVIDER_ROUTE_CHANGE": "NONE",
+    "RELEASE_THRESHOLD_ADOPTION": "NOT_ALLOWED"
+  },
+  "expected_tier_comparison": {
+    "action_counts_by_tier": {
+      "MIXED": {
+        "aucune": 7,
+        "exclusion": 0,
+        "révision": 1
+      },
+      "STRONG": {
+        "aucune": 7,
+        "exclusion": 0,
+        "révision": 1
+      },
+      "WEAK_BUT_STRUCTURALLY_VALID": {
+        "aucune": 5,
+        "exclusion": 0,
+        "révision": 3
+      }
+    },
+    "human_label_counts_by_tier": {
+      "MIXED": {
+        "FRAGILE": 0,
+        "INSUFFISANT": 0,
+        "NON_EVALUABLE": 0,
+        "SATISFAISANT": 16,
+        "TRES_SATISFAISANT": 0
+      },
+      "STRONG": {
+        "FRAGILE": 0,
+        "INSUFFISANT": 0,
+        "NON_EVALUABLE": 0,
+        "SATISFAISANT": 12,
+        "TRES_SATISFAISANT": 4
+      },
+      "WEAK_BUT_STRUCTURALLY_VALID": {
+        "FRAGILE": 0,
+        "INSUFFISANT": 0,
+        "NON_EVALUABLE": 0,
+        "SATISFAISANT": 16,
+        "TRES_SATISFAISANT": 0
+      }
+    },
+    "structural_invalid_count_by_tier": {
+      "MIXED": 1,
+      "STRONG": 0,
+      "WEAK_BUT_STRUCTURALLY_VALID": 0
+    }
+  },
+  "governance": {
+    "adr_required": false,
+    "adrs_applied": [
+      "ADR-P12-063",
+      "ADR-P12-064"
+    ],
+    "anchor_revision_launched": false,
+    "anchor_revision_requires_new_corpus_checksum_calibration_approval": true,
+    "next_gate": "OWNER_CALIBRATION_DECISION_READY"
+  },
+  "human_model_relation_comparison": {
+    "metrics": {
+      "disagreement_count": 0,
+      "human_only_distinction_count": 4,
+      "model_only_distinction_count": 12,
+      "non_assessable_count": 0,
+      "relation_agreement_count": 0,
+      "relation_count": 32,
+      "shared_tie_count": 16
+    },
+    "rule": "ORDINAL_RELATIONS_ONLY_NO_DIRECT_LABEL_FRACTION_EQUIVALENCE"
+  },
+  "human_ordering": {
+    "metrics": {
+      "criterion_count": 16,
+      "human_distinction_count": 4,
+      "inverted_pair_count": 0,
+      "non_evaluable_relation_count": 0,
+      "strict_ordering_count": 0,
+      "tied_pair_count": 28,
+      "weak_ordering_count": 16
+    },
+    "scale": "ORDINAL_ONLY_NO_NUMERIC_PEDAGOGICAL_SCORE"
+  },
+  "key_integrity": {
+    "catalog_corpus_match": true,
+    "content_repeated": false,
+    "item_count": 24,
+    "per_item_sha256_valid_count": 24,
+    "unique_anchor_count": 24,
+    "unique_review_item_count": 24
+  },
+  "offline_execution": {
+    "anthropic_calls": 0,
+    "completed_review_mutated": false,
+    "credentials_resolved": false,
+    "openai_calls": 0,
+    "provider_cost_usd": "0.000000",
+    "provider_transport_constructed": false,
+    "reconciliation_key_mutated": false,
+    "runtime_routes_mutated": false,
+    "source_packet_mutated": false
+  },
+  "phase": "12.16-G2-HUMAN-ANCHOR-REVIEW",
+  "reproducibility": {
+    "canonical_payload_without_reproducibility_sha256": "450fdd0f48a1dbaa48dadaa9d068bd4b6a7aebffe6b6299b860dec16b3f351aa",
+    "deterministic_timestamps_excluded": true,
+    "numeric_human_score_artifact": "ABSENT"
+  },
+  "review_metadata": {
+    "action_decision_count": 24,
+    "criterion_appreciation_count": 48,
+    "exposure_class": "DETAILED_RESULTS_EXPOSED",
+    "exposure_declaration": "OUI — résultats agrégés et certains détails par critère consultés ; mapping REV→anchor, tiers attendus et scores individuels par item non consultés pendant la revue.",
+    "global_opinion": "RÉVISIONS_REQUISES",
+    "grid_version": "human-review-v1",
+    "item_count": 24,
+    "review_date": "2026-08-30",
+    "review_status": "COMPLETED",
+    "reviewer_code": "OWNER_HUMAN_REVIEWER",
+    "structure_decision_count": 24
+  },
+  "source_proofs": {
+    "completed_review_sha256": "594e3220cb30cd26a706f847bb33ffdb2f26077a79374ef0405fddc3ff4425eb",
+    "corpus_sha256": "abeec0b4e5e1f60f2974ec1c19de34a5307e1b7d92e11c7b811e338d3b2e626d",
+    "corpus_version": "12.16-g1-v1",
+    "packet_sha256": "d9ea4b33b84ee52c0460097cf1dd97e89f33a67106c57cc10dd611536b8d1e5e",
+    "reconciliation_key_sha256": "d314ef0b6e26dec812e06f59c747af110b55804c88cc4f6a3e919aca0427e749"
+  },
+  "status": "PASS_CLOSED",
+  "validation": {
+    "compileall_backend_harness_calibration": "PASS",
+    "global_pytest": "PASS_4316_SKIPPED_3_EXPLICIT_GATES",
+    "mypy_backend_and_evaluation_harness": "PASS_689_SOURCE_FILES",
+    "ruff_global": "PASS",
+    "targeted_calibration_regression": "PASS_131"
+  }
+}

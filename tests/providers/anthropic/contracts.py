@@ -54,6 +54,53 @@ class AnthropicStopReason(StrEnum):
     UNKNOWN = "unknown"
 
 
+class AnthropicThinkingMode(StrEnum):
+    ADAPTIVE = "adaptive"
+    DISABLED = "disabled"
+
+
+class AnthropicEffort(StrEnum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    XHIGH = "xhigh"
+    MAX = "max"
+
+
+def _validate_safe_telemetry(
+    *,
+    text_block_count: int | None,
+    thinking_block_count: int | None,
+    thinking_tokens: int | None,
+    input_tokens: int | None,
+    cached_input_tokens: int | None,
+    output_tokens: int | None,
+    total_tokens: int | None,
+) -> None:
+    if any(
+        value is not None and (type(value) is not int or not 0 <= value <= 100)
+        for value in (text_block_count, thinking_block_count)
+    ):
+        raise ValueError("block counts must be between 0 and 100")
+    if any(
+        value is not None and (type(value) is not int or value < 0)
+        for value in (
+            thinking_tokens,
+            input_tokens,
+            cached_input_tokens,
+            output_tokens,
+            total_tokens,
+        )
+    ):
+        raise ValueError("usage values must be non-negative integers")
+    if (
+        thinking_tokens is not None
+        and output_tokens is not None
+        and thinking_tokens > output_tokens
+    ):
+        raise ValueError("thinking tokens cannot exceed output tokens")
+
+
 class AnthropicTransportError(RuntimeError):
     """Closed provider failure with no raw SDK payload or message."""
 
@@ -63,6 +110,8 @@ class AnthropicTransportError(RuntimeError):
     response_received: bool
     stop_reason: AnthropicStopReason | None
     text_block_count: int | None
+    thinking_block_count: int | None
+    thinking_tokens: int | None
     input_tokens: int | None
     cached_input_tokens: int | None
     output_tokens: int | None
@@ -77,6 +126,8 @@ class AnthropicTransportError(RuntimeError):
         response_received: bool = False,
         stop_reason: AnthropicStopReason | None = None,
         text_block_count: int | None = None,
+        thinking_block_count: int | None = None,
+        thinking_tokens: int | None = None,
         input_tokens: int | None = None,
         cached_input_tokens: int | None = None,
         output_tokens: int | None = None,
@@ -96,27 +147,23 @@ class AnthropicTransportError(RuntimeError):
             raise TypeError("response_received must be a bool")
         if stop_reason is not None and type(stop_reason) is not AnthropicStopReason:
             raise TypeError("stop_reason must be closed")
-        if text_block_count is not None and (
-            type(text_block_count) is not int or not 0 <= text_block_count <= 100
-        ):
-            raise ValueError("text_block_count must be between 0 and 100")
-        usage_values = (
-            input_tokens,
-            cached_input_tokens,
-            output_tokens,
-            total_tokens,
+        _validate_safe_telemetry(
+            text_block_count=text_block_count,
+            thinking_block_count=thinking_block_count,
+            thinking_tokens=thinking_tokens,
+            input_tokens=input_tokens,
+            cached_input_tokens=cached_input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=total_tokens,
         )
-        if any(
-            value is not None and (type(value) is not int or value < 0)
-            for value in usage_values
-        ):
-            raise ValueError("usage values must be non-negative integers")
         self.code = code
         self.http_status = http_status
         self.provider_error_type = provider_error_type
         self.response_received = response_received
         self.stop_reason = stop_reason
         self.text_block_count = text_block_count
+        self.thinking_block_count = thinking_block_count
+        self.thinking_tokens = thinking_tokens
         self.input_tokens = input_tokens
         self.cached_input_tokens = cached_input_tokens
         self.output_tokens = output_tokens
@@ -131,6 +178,8 @@ class AnthropicTransportError(RuntimeError):
             f"response_received={self.response_received!r}, "
             f"stop_reason={_enum_value(self.stop_reason)!r}, "
             f"text_block_count={self.text_block_count!r}, "
+            f"thinking_block_count={self.thinking_block_count!r}, "
+            f"thinking_tokens={self.thinking_tokens!r}, "
             f"input_tokens={self.input_tokens!r}, "
             f"cached_input_tokens={self.cached_input_tokens!r}, "
             f"output_tokens={self.output_tokens!r}, "
@@ -149,6 +198,16 @@ class AnthropicScoringRequest:
     input_json: str
     output_schema: dict[str, object]
     max_tokens: int
+    thinking_mode: AnthropicThinkingMode | None = None
+    effort: AnthropicEffort | None = None
+
+    def __post_init__(self) -> None:
+        if type(self.max_tokens) is not int or self.max_tokens <= 0:
+            raise ValueError("max_tokens must be a positive integer")
+        if self.thinking_mode is not None and type(self.thinking_mode) is not AnthropicThinkingMode:
+            raise TypeError("thinking_mode must be closed")
+        if self.effort is not None and type(self.effort) is not AnthropicEffort:
+            raise TypeError("effort must be closed")
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,6 +219,19 @@ class AnthropicScoringResponse:
     total_tokens: int | None = None
     stop_reason: AnthropicStopReason | None = None
     text_block_count: int | None = None
+    thinking_block_count: int | None = None
+    thinking_tokens: int | None = None
+
+    def __post_init__(self) -> None:
+        _validate_safe_telemetry(
+            text_block_count=self.text_block_count,
+            thinking_block_count=self.thinking_block_count,
+            thinking_tokens=self.thinking_tokens,
+            input_tokens=self.input_tokens,
+            cached_input_tokens=self.cached_input_tokens,
+            output_tokens=self.output_tokens,
+            total_tokens=self.total_tokens,
+        )
 
 
 class AnthropicScoringTransport(Protocol):

@@ -107,9 +107,7 @@ def test_twenty_four_anchors_and_forty_eight_items_are_safe_and_structurally_val
     assert len(CRITERION_ORDERINGS) == 16
     assert len(ANCHOR_ADMISSIBILITY_RULE_IDS) == 5
     results = tuple(assess_anchor_admissibility(anchor) for anchor in CALIBRATION_ANCHORS)
-    assert {result.status for result in results} == {
-        AnchorAdmissibilityStatus.ADMISSIBLE
-    }
+    assert {result.status for result in results} == {AnchorAdmissibilityStatus.ADMISSIBLE}
     assert all(result.violated_rule_ids == () for result in results)
     assert all(len(anchor.candidate_projection()) <= 2_500 for anchor in CALIBRATION_ANCHORS)
 
@@ -118,8 +116,7 @@ def test_analysis_ordering_is_closed_ordinal_and_contains_no_expected_scores() -
     assert tuple(item.tier for item in ANCHOR_EXPECTATIONS[:3]) == tuple(AnchorTier)
     assert len(ANCHOR_EXPECTATIONS) == 24
     assert {
-        tier: sum(item.tier is tier for item in ANCHOR_EXPECTATIONS)
-        for tier in AnchorTier
+        tier: sum(item.tier is tier for item in ANCHOR_EXPECTATIONS) for tier in AnchorTier
     } == {tier: 8 for tier in AnchorTier}
     assert tuple(field.name for field in fields(AnchorExpectation)) == (
         "anchor_id",
@@ -187,7 +184,7 @@ def test_existing_anthropic_mapper_serializes_all_48_items_through_fake_transpor
             provider_id,
             ModelCode("claude-sonnet-5"),
             ModelContextLimits(1_000_000, 872_000, 128_000),
-            ProviderInvocationLimits(1, 30_000, max_output_tokens=512),
+            ProviderInvocationLimits(1, 30_000, max_output_tokens=2_048),
             (ProviderWorkloadKind.EVALUATION_SCORING,),
             structured_output_required=True,
         ),
@@ -233,3 +230,4 @@ def test_existing_anthropic_mapper_serializes_all_48_items_through_fake_transpor
         assert "provider" not in serialized
         assert "model_id" not in serialized
         assert request.model == "claude-sonnet-5"
+        assert request.max_tokens == 2_048

@@ -1,0 +1,49 @@
+{
+  "already_approved": false,
+  "calls": [
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-01.quality.organization-utility"
+      ],
+      "effort": "low",
+      "execution_call_id": "remediation.r4.scorer-policy.scn-01.c.organization-utility.canary.r1",
+      "input_refs": [
+        "anchor:cal.scn-01.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-01.c.organization-utility.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-01",
+      "task_kind": "resource-organization",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    }
+  ],
+  "cost": {
+    "call_count": 1,
+    "input_max_per_call": 8000,
+    "margin_amount_usd": "0.009120",
+    "margin_multiplier": "1.25",
+    "maximum_before_margin_usd": "0.036480",
+    "output_max_per_call": 2048,
+    "per_call_maximum_usd": "0.036480",
+    "pricing": {
+      "cache_hit_usd_per_mtok": "0.20",
+      "input_usd_per_mtok": "2.00",
+      "output_usd_per_mtok": "10.00"
+    },
+    "requested_ceiling_usd": "0.045600"
+  },
+  "execution_call_id": "remediation.r4.scorer-policy.scn-01.c.organization-utility.canary.r1",
+  "financial_approval_text": "J'approuve exclusivement l'exécution de la matrice\n12.16-g2-r4-r2-anthropic-policy-canary-v1,\nchecksum 906de866d6c5f3503a20c38f9909182f48b9e7aaf980f0138470cb25dd1a717b,\n1 appel maximum (Anthropic Scorer claude-sonnet-5, thinking adaptive, effort low, max_output_tokens 2048),\nplafond 0.045600 USD,\naucun retry et arrêt immédiat après ce canary quel que soit le résultat.",
+  "ledger_relative_path": "artifacts/calibration/12.16-g2-r4-r2/ledger.json",
+  "logical_slot_id": "cal.score.anchor.scn-01.c.organization-utility.r1",
+  "matrix_sha256": "906de866d6c5f3503a20c38f9909182f48b9e7aaf980f0138470cb25dd1a717b",
+  "transfer_approval_text": "J'autorise explicitement l'envoi à l'API Anthropic, exclusivement pour\nla matrice 12.16-g2-r4-r2-anthropic-policy-canary-v1,\nchecksum 906de866d6c5f3503a20c38f9909182f48b9e7aaf980f0138470cb25dd1a717b,\nd'un anchor synthétique G1 strictement nécessaire au canary.\nAucune base SQLite, aucun output historique et aucun secret supplémentaire.",
+  "version": "12.16-g2-r4-r2-anthropic-policy-canary-v1"
+}

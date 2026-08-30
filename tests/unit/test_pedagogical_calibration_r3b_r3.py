@@ -389,8 +389,38 @@ def test_generated_reports_and_ignored_ledger_match_deterministic_renderers() ->
         encoding="utf-8"
     ) == render_remaining_plan_json(audit)
     ledger = json.loads((ROOT / R4_LEDGER_RELATIVE_PATH).read_text(encoding="utf-8"))
-    assert ledger == build_r4_ledger_template(
+    template = build_r4_ledger_template(
         calls,
         manifest_sha256=manifest_sha256,
         matrix_sha256=R4_CALL_MATRIX_SHA256,
     )
+    immutable_ledger_keys = {
+        "plan_version",
+        "matrix_sha256",
+        "requested_hard_ceiling_usd",
+        "reused_evidence_manifest_sha256",
+        "reused_slot_count",
+        "anthropic_readiness",
+        "anthropic_readiness_evidence_sha256",
+        "automatic_retry_count",
+        "automatic_rerun_count",
+        "stop_on_first_systemic_failure",
+        "systemic_failure_codes",
+    }
+    assert {key: ledger[key] for key in immutable_ledger_keys} == {
+        key: template[key] for key in immutable_ledger_keys
+    }
+    mutable_call_keys = {
+        "status",
+        "started_at",
+        "completed_at",
+        "closed_error_code",
+        "cost_usd",
+        "raw_output_path",
+        "raw_output_sha256",
+    }
+    for actual, planned in zip(ledger["calls"], template["calls"], strict=True):
+        immutable_call_keys = set(planned) - mutable_call_keys
+        assert {key: actual[key] for key in immutable_call_keys} == {
+            key: planned[key] for key in immutable_call_keys
+        }

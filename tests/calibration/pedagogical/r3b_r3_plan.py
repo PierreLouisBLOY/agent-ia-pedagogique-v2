@@ -1110,7 +1110,7 @@ def render_evidence_baseline_markdown(audit: R3ConsolidatedEvidenceAudit) -> str
             "",
         ]
     )
-    return "\n".join(lines)
+    return "\n".join(lines).rstrip()
 
 
 def render_remaining_plan_markdown(audit: R3ConsolidatedEvidenceAudit) -> str:
@@ -1190,7 +1190,7 @@ def render_remaining_plan_markdown(audit: R3ConsolidatedEvidenceAudit) -> str:
             "",
         ]
     )
-    return "\n".join(lines)
+    return "\n".join(lines).rstrip()
 
 
 def render_remaining_plan_json(audit: R3ConsolidatedEvidenceAudit) -> str:

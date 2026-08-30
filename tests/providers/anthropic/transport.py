@@ -7,6 +7,7 @@ from typing import cast
 
 import anthropic
 from anthropic import Anthropic
+from anthropic.types import OutputConfigParam, ThinkingConfigParam
 
 from backend.infrastructure.config.secrets.provider import ProviderSecretValue
 from tests.providers.anthropic.contracts import (
@@ -41,27 +42,47 @@ class AnthropicSDKScoringTransport:
 
     def create(self, *, request: AnthropicScoringRequest) -> AnthropicScoringResponse:
         provider_schema = transform_anthropic_provider_schema(request.output_schema)
+        output_config: dict[str, object] = {
+            "format": {
+                "type": "json_schema",
+                "schema": provider_schema,
+            }
+        }
+        if request.effort is not None:
+            output_config["effort"] = request.effort.value
         try:
-            response = self.__client.messages.create(
-                model=request.model,
-                max_tokens=request.max_tokens,
-                system=request.system,
-                messages=[{"role": "user", "content": request.input_json}],
-                output_config={
-                    "format": {
-                        "type": "json_schema",
-                        "schema": provider_schema,
-                    }
-                },
-                stream=False,
-            )
+            if request.thinking_mode is None:
+                response = self.__client.messages.create(
+                    model=request.model,
+                    max_tokens=request.max_tokens,
+                    system=request.system,
+                    messages=[{"role": "user", "content": request.input_json}],
+                    output_config=cast(OutputConfigParam, output_config),
+                    stream=False,
+                )
+            else:
+                response = self.__client.messages.create(
+                    model=request.model,
+                    max_tokens=request.max_tokens,
+                    system=request.system,
+                    messages=[{"role": "user", "content": request.input_json}],
+                    thinking=cast(
+                        ThinkingConfigParam,
+                        {"type": request.thinking_mode.value},
+                    ),
+                    output_config=cast(OutputConfigParam, output_config),
+                    stream=False,
+                )
         except anthropic.AnthropicError as error:
             raise _closed_anthropic_error(error) from None
         stop_reason = _anthropic_stop_reason(getattr(response, "stop_reason", None))
         raw_content = getattr(response, "content", ())
         content = raw_content if type(raw_content) in {list, tuple} else ()
-        text_blocks = tuple(
-            block for block in content if getattr(block, "type", None) == "text"
+        text_blocks = tuple(block for block in content if getattr(block, "type", None) == "text")
+        thinking_blocks = tuple(
+            block
+            for block in content
+            if getattr(block, "type", None) in {"thinking", "redacted_thinking"}
         )
         text = "".join(
             cast(str, block_text)
@@ -69,15 +90,16 @@ class AnthropicSDKScoringTransport:
             if type(block_text := getattr(block, "text", None)) is str
         )
         text_block_count = min(len(text_blocks), 100)
+        thinking_block_count = min(len(thinking_blocks), 100)
         usage = getattr(response, "usage", None)
-        input_tokens = _optional_non_negative_int(
-            getattr(usage, "input_tokens", None)
-        )
+        input_tokens = _optional_non_negative_int(getattr(usage, "input_tokens", None))
         cached_input_tokens = _optional_non_negative_int(
             getattr(usage, "cache_read_input_tokens", None)
         )
-        output_tokens = _optional_non_negative_int(
-            getattr(usage, "output_tokens", None)
+        output_tokens = _optional_non_negative_int(getattr(usage, "output_tokens", None))
+        output_tokens_details = getattr(usage, "output_tokens_details", None)
+        thinking_tokens = _optional_non_negative_int(
+            getattr(output_tokens_details, "thinking_tokens", None)
         )
         total_tokens = None
         if input_tokens is not None and output_tokens is not None:
@@ -89,6 +111,8 @@ class AnthropicSDKScoringTransport:
                 response_received=True,
                 stop_reason=stop_reason,
                 text_block_count=text_block_count,
+                thinking_block_count=thinking_block_count,
+                thinking_tokens=thinking_tokens,
                 input_tokens=input_tokens,
                 cached_input_tokens=cached_input_tokens,
                 output_tokens=output_tokens,
@@ -101,6 +125,8 @@ class AnthropicSDKScoringTransport:
                 response_received=True,
                 stop_reason=stop_reason,
                 text_block_count=text_block_count,
+                thinking_block_count=thinking_block_count,
+                thinking_tokens=thinking_tokens,
                 input_tokens=input_tokens,
                 cached_input_tokens=cached_input_tokens,
                 output_tokens=output_tokens,
@@ -114,6 +140,8 @@ class AnthropicSDKScoringTransport:
             total_tokens=total_tokens,
             stop_reason=stop_reason,
             text_block_count=text_block_count,
+            thinking_block_count=thinking_block_count,
+            thinking_tokens=thinking_tokens,
         )
 
 

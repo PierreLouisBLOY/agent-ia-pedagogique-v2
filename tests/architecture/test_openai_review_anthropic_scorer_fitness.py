@@ -21,7 +21,13 @@ from backend.agent_runtime.agents.review import (
 )
 from evaluation_harness import NormalizedScore, ScorerOutcome, ScoreStatus
 from evaluation_harness.scoring.ports import EvaluationScorerPort
-from tests.providers.anthropic import AnthropicEvaluationScorer
+from tests.providers.anthropic import (
+    AnthropicEffort,
+    AnthropicEvaluationScorer,
+    AnthropicScoringRequest,
+    AnthropicScoringResponse,
+    AnthropicThinkingMode,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND = ROOT / "backend"
@@ -46,13 +52,9 @@ def _python_files(owner: Path) -> list[Path]:
 
 
 def test_runtime_dependency_stays_openai_only_and_anthropic_is_optional() -> None:
-    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))[
-        "project"
-    ]
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     assert project["dependencies"] == ["openai>=3.5,<4"]
-    assert project["optional-dependencies"] == {
-        "calibration": ["anthropic>=1.2,<2"]
-    }
+    assert project["optional-dependencies"] == {"calibration": ["anthropic>=1.2,<2"]}
 
 
 def test_anthropic_sdk_imports_are_confined_to_calibration_owner() -> None:
@@ -140,16 +142,37 @@ def test_existing_review_and_scoring_contracts_are_reused_exactly() -> None:
     )
 
 
+def test_explicit_anthropic_policy_is_private_raw_free_and_has_no_authority() -> None:
+    assert tuple(item.value for item in AnthropicThinkingMode) == ("adaptive", "disabled")
+    assert tuple(item.value for item in AnthropicEffort) == (
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+    )
+    assert tuple(item.name for item in fields(AnthropicScoringRequest))[-2:] == (
+        "thinking_mode",
+        "effort",
+    )
+    assert tuple(item.name for item in fields(AnthropicScoringResponse))[-2:] == (
+        "thinking_block_count",
+        "thinking_tokens",
+    )
+    adr = (
+        ROOT / "architecture/adr/ADR-P12-064-explicit-homogeneous-anthropic-scoring-policy.md"
+    ).read_text(encoding="utf-8")
+    assert "adaptive explicite" in adr
+    assert "effort = low explicite" in adr
+    assert "max_tokens = 2048" in adr
+    assert "DIAGNOSTIC_ONLY_NOT_FINAL_CALIBRATION" in adr
+    assert "n'accorde aucune autorité métier" in adr
+
+
 def test_openai_diagnostics_remain_private_to_the_provider_transport() -> None:
-    assert tuple(item.name for item in fields(OpenAIResponsesRequest))[-1] == (
-        "reasoning_effort"
-    )
-    assert tuple(item.name for item in fields(OpenAIResponseUsage))[-1] == (
-        "reasoning_tokens"
-    )
-    assert tuple(item.name for item in fields(OpenAIResponsesResponse))[-1] == (
-        "incomplete_reason"
-    )
+    assert tuple(item.name for item in fields(OpenAIResponsesRequest))[-1] == ("reasoning_effort")
+    assert tuple(item.name for item in fields(OpenAIResponseUsage))[-1] == ("reasoning_tokens")
+    assert tuple(item.name for item in fields(OpenAIResponsesResponse))[-1] == ("incomplete_reason")
     assert tuple(item.value for item in OpenAIIncompleteReason) == (
         "none",
         "max_output_tokens",
@@ -177,12 +200,8 @@ def test_openai_transport_and_secret_resolver_are_not_duplicated() -> None:
             if isinstance(node, ast.ClassDef) and node.name in class_owners:
                 class_owners[node.name].append(path.relative_to(ROOT).as_posix())
     assert class_owners == {
-        "OpenAISDKResponsesTransport": [
-            "backend/adapters/outbound/openai/transport.py"
-        ],
-        "EnvironmentProviderSecretResolver": [
-            "backend/infrastructure/config/secrets/provider.py"
-        ],
+        "OpenAISDKResponsesTransport": ["backend/adapters/outbound/openai/transport.py"],
+        "EnvironmentProviderSecretResolver": ["backend/infrastructure/config/secrets/provider.py"],
     }
 
 

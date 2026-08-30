@@ -1,0 +1,1681 @@
+{
+  "already_approved": false,
+  "calls": [
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-01.quality.clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-01.a.clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-01.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-01.a.clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-01",
+      "task_kind": "resource-organization",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-01.quality.organization-utility"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-01.a.organization-utility.r1",
+      "input_refs": [
+        "anchor:cal.scn-01.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-01.a.organization-utility.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-01",
+      "task_kind": "resource-organization",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-01.quality.clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-01.b.clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-01.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-01.b.clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-01",
+      "task_kind": "resource-organization",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-01.quality.organization-utility"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-01.b.organization-utility.r1",
+      "input_refs": [
+        "anchor:cal.scn-01.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-01.b.organization-utility.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-01",
+      "task_kind": "resource-organization",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-01.quality.clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-01.c.clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-01.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-01.c.clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-01",
+      "task_kind": "resource-organization",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-02.quality.relevance"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-02.a.relevance.r1",
+      "input_refs": [
+        "anchor:cal.scn-02.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-02.a.relevance.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-02",
+      "task_kind": "resource-search",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-02.quality.coverage"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-02.a.coverage.r1",
+      "input_refs": [
+        "anchor:cal.scn-02.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-02.a.coverage.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-02",
+      "task_kind": "resource-search",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-02.quality.relevance"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-02.b.relevance.r1",
+      "input_refs": [
+        "anchor:cal.scn-02.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-02.b.relevance.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-02",
+      "task_kind": "resource-search",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-02.quality.coverage"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-02.b.coverage.r1",
+      "input_refs": [
+        "anchor:cal.scn-02.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-02.b.coverage.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-02",
+      "task_kind": "resource-search",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-02.quality.relevance"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-02.c.relevance.r1",
+      "input_refs": [
+        "anchor:cal.scn-02.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-02.c.relevance.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-02",
+      "task_kind": "resource-search",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-02.quality.coverage"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-02.c.coverage.r1",
+      "input_refs": [
+        "anchor:cal.scn-02.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-02.c.coverage.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-02",
+      "task_kind": "resource-search",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-03.quality.clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-03.a.clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-03.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-03.a.clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-03",
+      "task_kind": "course-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-03.quality.level-adaptation"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-03.a.level-adaptation.r1",
+      "input_refs": [
+        "anchor:cal.scn-03.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-03.a.level-adaptation.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-03",
+      "task_kind": "course-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-03.quality.clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-03.b.clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-03.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-03.b.clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-03",
+      "task_kind": "course-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-03.quality.level-adaptation"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-03.b.level-adaptation.r1",
+      "input_refs": [
+        "anchor:cal.scn-03.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-03.b.level-adaptation.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-03",
+      "task_kind": "course-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-03.quality.clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-03.c.clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-03.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-03.c.clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-03",
+      "task_kind": "course-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-03.quality.level-adaptation"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-03.c.level-adaptation.r1",
+      "input_refs": [
+        "anchor:cal.scn-03.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-03.c.level-adaptation.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-03",
+      "task_kind": "course-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-04.quality.fidelity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-04.a.fidelity.r1",
+      "input_refs": [
+        "anchor:cal.scn-04.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-04.a.fidelity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-04",
+      "task_kind": "resource-transformation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-04.quality.level-adaptation"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-04.a.level-adaptation.r1",
+      "input_refs": [
+        "anchor:cal.scn-04.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-04.a.level-adaptation.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-04",
+      "task_kind": "resource-transformation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-04.quality.fidelity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-04.b.fidelity.r1",
+      "input_refs": [
+        "anchor:cal.scn-04.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-04.b.fidelity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-04",
+      "task_kind": "resource-transformation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-04.quality.level-adaptation"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-04.b.level-adaptation.r1",
+      "input_refs": [
+        "anchor:cal.scn-04.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-04.b.level-adaptation.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-04",
+      "task_kind": "resource-transformation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-04.quality.fidelity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-04.c.fidelity.r1",
+      "input_refs": [
+        "anchor:cal.scn-04.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-04.c.fidelity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-04",
+      "task_kind": "resource-transformation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-04.quality.level-adaptation"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-04.c.level-adaptation.r1",
+      "input_refs": [
+        "anchor:cal.scn-04.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-04.c.level-adaptation.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-04",
+      "task_kind": "resource-transformation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-05.quality.difficulty-appropriateness"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-05.a.difficulty-appropriateness.r1",
+      "input_refs": [
+        "anchor:cal.scn-05.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-05.a.difficulty-appropriateness.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-05",
+      "task_kind": "exercise-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-05.quality.instruction-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-05.a.instruction-clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-05.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-05.a.instruction-clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-05",
+      "task_kind": "exercise-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-05.quality.difficulty-appropriateness"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-05.b.difficulty-appropriateness.r1",
+      "input_refs": [
+        "anchor:cal.scn-05.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-05.b.difficulty-appropriateness.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-05",
+      "task_kind": "exercise-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-05.quality.instruction-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-05.b.instruction-clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-05.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-05.b.instruction-clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-05",
+      "task_kind": "exercise-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-05.quality.difficulty-appropriateness"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-05.c.difficulty-appropriateness.r1",
+      "input_refs": [
+        "anchor:cal.scn-05.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-05.c.difficulty-appropriateness.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-05",
+      "task_kind": "exercise-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-05.quality.instruction-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-05.c.instruction-clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-05.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-05.c.instruction-clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-05",
+      "task_kind": "exercise-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-06.quality.assessment-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-06.a.assessment-clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-06.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-06.a.assessment-clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-06",
+      "task_kind": "assessment-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-06.quality.marking-scheme-coherence"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-06.a.marking-scheme-coherence.r1",
+      "input_refs": [
+        "anchor:cal.scn-06.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-06.a.marking-scheme-coherence.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-06",
+      "task_kind": "assessment-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-06.quality.assessment-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-06.b.assessment-clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-06.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-06.b.assessment-clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-06",
+      "task_kind": "assessment-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-06.quality.marking-scheme-coherence"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-06.b.marking-scheme-coherence.r1",
+      "input_refs": [
+        "anchor:cal.scn-06.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-06.b.marking-scheme-coherence.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-06",
+      "task_kind": "assessment-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-06.quality.assessment-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-06.c.assessment-clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-06.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-06.c.assessment-clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-06",
+      "task_kind": "assessment-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-06.quality.marking-scheme-coherence"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-06.c.marking-scheme-coherence.r1",
+      "input_refs": [
+        "anchor:cal.scn-06.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-06.c.marking-scheme-coherence.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-06",
+      "task_kind": "assessment-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-07.quality.correction-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.a.correction-quality.r1",
+      "input_refs": [
+        "anchor:cal.scn-07.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-07.a.correction-quality.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-07",
+      "task_kind": "correction-remediation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-07.quality.remediation-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.a.remediation-clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-07.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-07.a.remediation-clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-07",
+      "task_kind": "correction-remediation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-07.quality.correction-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.b.correction-quality.r1",
+      "input_refs": [
+        "anchor:cal.scn-07.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-07.b.correction-quality.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-07",
+      "task_kind": "correction-remediation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-07.quality.remediation-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.b.remediation-clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-07.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-07.b.remediation-clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-07",
+      "task_kind": "correction-remediation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-07.quality.correction-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.c.correction-quality.r1",
+      "input_refs": [
+        "anchor:cal.scn-07.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-07.c.correction-quality.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-07",
+      "task_kind": "correction-remediation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-07.quality.remediation-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.c.remediation-clarity.r1",
+      "input_refs": [
+        "anchor:cal.scn-07.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-07.c.remediation-clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-07",
+      "task_kind": "correction-remediation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-08.quality.distractor-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.a.distractor-quality.r1",
+      "input_refs": [
+        "anchor:cal.scn-08.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-08.a.distractor-quality.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-08",
+      "task_kind": "qcm-quiz-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-08.quality.feedback-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.a.feedback-quality.r1",
+      "input_refs": [
+        "anchor:cal.scn-08.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-08.a.feedback-quality.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-08",
+      "task_kind": "qcm-quiz-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-08.quality.distractor-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.b.distractor-quality.r1",
+      "input_refs": [
+        "anchor:cal.scn-08.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-08.b.distractor-quality.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-08",
+      "task_kind": "qcm-quiz-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-08.quality.feedback-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.b.feedback-quality.r1",
+      "input_refs": [
+        "anchor:cal.scn-08.b"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-08.b.feedback-quality.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-08",
+      "task_kind": "qcm-quiz-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-08.quality.distractor-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.c.distractor-quality.r1",
+      "input_refs": [
+        "anchor:cal.scn-08.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-08.c.distractor-quality.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-08",
+      "task_kind": "qcm-quiz-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-08.quality.feedback-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.c.feedback-quality.r1",
+      "input_refs": [
+        "anchor:cal.scn-08.c"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-08.c.feedback-quality.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-08",
+      "task_kind": "qcm-quiz-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-01.quality.clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-01.a.clarity.r2",
+      "input_refs": [
+        "anchor:cal.scn-01.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-01.a.clarity.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-01",
+      "task_kind": "resource-organization",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-01.quality.organization-utility"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-01.a.organization-utility.r2",
+      "input_refs": [
+        "anchor:cal.scn-01.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-01.a.organization-utility.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-01",
+      "task_kind": "resource-organization",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-02.quality.relevance"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-02.a.relevance.r2",
+      "input_refs": [
+        "anchor:cal.scn-02.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-02.a.relevance.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-02",
+      "task_kind": "resource-search",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-02.quality.coverage"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-02.a.coverage.r2",
+      "input_refs": [
+        "anchor:cal.scn-02.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-02.a.coverage.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-02",
+      "task_kind": "resource-search",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-03.quality.clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-03.a.clarity.r2",
+      "input_refs": [
+        "anchor:cal.scn-03.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-03.a.clarity.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-03",
+      "task_kind": "course-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-03.quality.level-adaptation"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-03.a.level-adaptation.r2",
+      "input_refs": [
+        "anchor:cal.scn-03.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-03.a.level-adaptation.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-03",
+      "task_kind": "course-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-04.quality.fidelity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-04.a.fidelity.r2",
+      "input_refs": [
+        "anchor:cal.scn-04.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-04.a.fidelity.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-04",
+      "task_kind": "resource-transformation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-04.quality.level-adaptation"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-04.a.level-adaptation.r2",
+      "input_refs": [
+        "anchor:cal.scn-04.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-04.a.level-adaptation.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-04",
+      "task_kind": "resource-transformation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-05.quality.difficulty-appropriateness"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-05.a.difficulty-appropriateness.r2",
+      "input_refs": [
+        "anchor:cal.scn-05.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-05.a.difficulty-appropriateness.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-05",
+      "task_kind": "exercise-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-05.quality.instruction-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-05.a.instruction-clarity.r2",
+      "input_refs": [
+        "anchor:cal.scn-05.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-05.a.instruction-clarity.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-05",
+      "task_kind": "exercise-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-06.quality.assessment-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-06.a.assessment-clarity.r2",
+      "input_refs": [
+        "anchor:cal.scn-06.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-06.a.assessment-clarity.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-06",
+      "task_kind": "assessment-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-06.quality.marking-scheme-coherence"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-06.a.marking-scheme-coherence.r2",
+      "input_refs": [
+        "anchor:cal.scn-06.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-06.a.marking-scheme-coherence.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-06",
+      "task_kind": "assessment-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-07.quality.correction-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.a.correction-quality.r2",
+      "input_refs": [
+        "anchor:cal.scn-07.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-07.a.correction-quality.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-07",
+      "task_kind": "correction-remediation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-07.quality.remediation-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-07.a.remediation-clarity.r2",
+      "input_refs": [
+        "anchor:cal.scn-07.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-07.a.remediation-clarity.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-07",
+      "task_kind": "correction-remediation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-08.quality.distractor-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.a.distractor-quality.r2",
+      "input_refs": [
+        "anchor:cal.scn-08.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-08.a.distractor-quality.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-08",
+      "task_kind": "qcm-quiz-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-08.quality.feedback-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.anchor.scn-08.a.feedback-quality.r2",
+      "input_refs": [
+        "anchor:cal.scn-08.a"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.anchor.scn-08.a.feedback-quality.r2",
+      "provider": "anthropic",
+      "repetition": 2,
+      "scenario_code": "SCN-08",
+      "task_kind": "qcm-quiz-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-03.quality.clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-03.clarity.r1",
+      "input_refs": [
+        "output:cal.generation.course.primary.r1"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.output.scn-03.clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-03",
+      "task_kind": "course-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-03.quality.level-adaptation"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-03.level-adaptation.r1",
+      "input_refs": [
+        "output:cal.generation.course.primary.r1"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.output.scn-03.level-adaptation.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-03",
+      "task_kind": "course-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-04.quality.fidelity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-04.fidelity.r1",
+      "input_refs": [
+        "output:cal.transformation.resource.primary.r1"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.output.scn-04.fidelity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-04",
+      "task_kind": "resource-transformation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-04.quality.level-adaptation"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-04.level-adaptation.r1",
+      "input_refs": [
+        "output:cal.transformation.resource.primary.r1"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.output.scn-04.level-adaptation.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-04",
+      "task_kind": "resource-transformation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-05.quality.difficulty-appropriateness"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-05.difficulty-appropriateness.r1",
+      "input_refs": [
+        "output:cal.generation.exercise.primary.r1"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.output.scn-05.difficulty-appropriateness.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-05",
+      "task_kind": "exercise-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-05.quality.instruction-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-05.instruction-clarity.r1",
+      "input_refs": [
+        "output:cal.generation.exercise.primary.r1"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.output.scn-05.instruction-clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-05",
+      "task_kind": "exercise-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-06.quality.assessment-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-06.assessment-clarity.r1",
+      "input_refs": [
+        "output:cal.generation.assessment.primary.r1"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.output.scn-06.assessment-clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-06",
+      "task_kind": "assessment-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-06.quality.marking-scheme-coherence"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-06.marking-scheme-coherence.r1",
+      "input_refs": [
+        "output:cal.generation.assessment.primary.r1"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.output.scn-06.marking-scheme-coherence.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-06",
+      "task_kind": "assessment-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-07.quality.correction-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-07.correction-quality.r1",
+      "input_refs": [
+        "output:cal.correction.remediation.primary.r1"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.output.scn-07.correction-quality.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-07",
+      "task_kind": "correction-remediation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-07.quality.remediation-clarity"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-07.remediation-clarity.r1",
+      "input_refs": [
+        "output:cal.correction.remediation.primary.r1"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.output.scn-07.remediation-clarity.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-07",
+      "task_kind": "correction-remediation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-08.quality.distractor-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-08.distractor-quality.r1",
+      "input_refs": [
+        "output:cal.generation.qcm.primary.r1"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.output.scn-08.distractor-quality.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-08",
+      "task_kind": "qcm-quiz-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    },
+    {
+      "automatic_retry_count": 0,
+      "criterion_refs": [
+        "scn-08.quality.feedback-quality"
+      ],
+      "effort": "low",
+      "execution_call_id": "uniform.r4.scorer-policy.cal.score.output.scn-08.feedback-quality.r1",
+      "input_refs": [
+        "output:cal.generation.qcm.primary.r1"
+      ],
+      "input_utf8_upper_bound_bytes": 8000,
+      "max_output_tokens": 2048,
+      "model": "claude-sonnet-5",
+      "model_profile_id": "anthropic.claude-sonnet-5.scorer",
+      "original_logical_slot_id": "cal.score.output.scn-08.feedback-quality.r1",
+      "provider": "anthropic",
+      "repetition": 1,
+      "scenario_code": "SCN-08",
+      "task_kind": "qcm-quiz-creation",
+      "thinking_mode": "adaptive",
+      "workload": "scoring"
+    }
+  ],
+  "cost": {
+    "call_count": 75,
+    "input_max_per_call": 8000,
+    "margin_amount_usd": "0.684000",
+    "margin_multiplier": "1.25",
+    "maximum_before_margin_usd": "2.736000",
+    "output_max_per_call": 2048,
+    "per_call_maximum_usd": "0.036480",
+    "pricing": {
+      "cache_hit_usd_per_mtok": "0.20",
+      "input_usd_per_mtok": "2.00",
+      "output_usd_per_mtok": "10.00"
+    },
+    "requested_ceiling_usd": "3.420000"
+  },
+  "financial_approval_text": "J'approuve exclusivement l'exécution conditionnelle de la matrice\n12.16-g2-r4-r3-anthropic-uniform-completion-v1,\nchecksum 5ed0abbb6a27b0118be7045abc412216ef320a6fe407ad4d02a6076d621ccd82,\n75 appels maximum (75 Anthropic Scorer claude-sonnet-5, thinking adaptive, effort low, max_output_tokens 2048),\nplafond 3.420000 USD,\naucun retry et arrêt immédiat au premier échec technique.",
+  "ledger_relative_path": "artifacts/calibration/12.16-g2-r4-r3/ledger.json",
+  "matrix_sha256": "5ed0abbb6a27b0118be7045abc412216ef320a6fe407ad4d02a6076d621ccd82",
+  "prerequisite": "R2_CANARY_PASS_HASH_VALID_AND_NEW_APPROVALS",
+  "split": {
+    "initial_anchor_scoring": 47,
+    "repeatability": 16,
+    "selected_outputs": 12
+  },
+  "transfer_approval_text": "J'autorise explicitement l'envoi à l'API Anthropic, exclusivement pour\nla matrice conditionnelle 12.16-g2-r4-r3-anthropic-uniform-completion-v1,\nchecksum 5ed0abbb6a27b0118be7045abc412216ef320a6fe407ad4d02a6076d621ccd82,\ndes anchors synthétiques G1 et des projections pédagogiques autorisées des six productions historiques strictement nécessaires.\nAucune base SQLite et aucun secret supplémentaire.",
+  "version": "12.16-g2-r4-r3-anthropic-uniform-completion-v1"
+}

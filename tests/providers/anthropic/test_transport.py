@@ -8,10 +8,13 @@ import pytest
 
 from backend.infrastructure.config.secrets.provider import ProviderSecretValue
 from tests.providers.anthropic import (
+    AnthropicEffort,
     AnthropicProviderErrorType,
     AnthropicScoringRequest,
+    AnthropicScoringResponse,
     AnthropicSDKScoringTransport,
     AnthropicStopReason,
+    AnthropicThinkingMode,
     AnthropicTransportError,
     AnthropicTransportErrorCode,
 )
@@ -38,14 +41,37 @@ class _FakeMessages:
         return self.response
 
 
-def _request() -> AnthropicScoringRequest:
+def _request(
+    *,
+    thinking_mode: AnthropicThinkingMode | None = None,
+    effort: AnthropicEffort | None = None,
+    max_tokens: int = 512,
+) -> AnthropicScoringRequest:
     return AnthropicScoringRequest(
         model="claude-sonnet-5",
         system="Bounded scorer instruction",
         input_json='{"observations":[]}',
         output_schema={"type": "object"},
-        max_tokens=512,
+        max_tokens=max_tokens,
+        thinking_mode=thinking_mode,
+        effort=effort,
     )
+
+
+@pytest.mark.parametrize(
+    "telemetry",
+    (
+        {"thinking_block_count": -1},
+        {"thinking_block_count": 101},
+        {"thinking_tokens": -1},
+        {"thinking_tokens": 3, "output_tokens": 2},
+    ),
+)
+def test_response_contract_rejects_out_of_bounds_safe_telemetry(
+    telemetry: dict[str, int],
+) -> None:
+    with pytest.raises(ValueError):
+        AnthropicScoringResponse(output_text="{}", **telemetry)  # type: ignore[arg-type]
 
 
 def test_sdk_transport_is_one_structured_non_streaming_call_without_controls(
@@ -77,6 +103,8 @@ def test_sdk_transport_is_one_structured_non_streaming_call_without_controls(
     assert response.output_text == '{"status":"SCORED"}'
     assert response.stop_reason is AnthropicStopReason.END_TURN
     assert response.text_block_count == 1
+    assert response.thinking_block_count == 0
+    assert response.thinking_tokens is None
     assert len(messages.calls) == 1
     call = messages.calls[0]
     assert call == {
@@ -96,11 +124,84 @@ def test_sdk_transport_is_one_structured_non_streaming_call_without_controls(
         },
         "stream": False,
     }
-    assert all(
-        key not in call
-        for key in ("tools", "thinking", "temperature", "top_p", "top_k")
-    )
+    assert all(key not in call for key in ("tools", "thinking", "temperature", "top_p", "top_k"))
     assert _SECRET not in repr(transport)
+
+
+def test_sdk_transport_maps_explicit_adaptive_low_and_discards_thinking_content(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sensitive_thinking = "private-thinking-must-not-be-retained"
+    messages = _FakeMessages(
+        SimpleNamespace(
+            stop_reason="end_turn",
+            content=[
+                SimpleNamespace(type="thinking", thinking=sensitive_thinking),
+                SimpleNamespace(type="redacted_thinking", data="discarded-redacted-thinking"),
+                SimpleNamespace(type="text", text='{"status":"SCORED"}'),
+            ],
+            usage=SimpleNamespace(
+                input_tokens=17,
+                cache_read_input_tokens=2,
+                output_tokens=31,
+                output_tokens_details=SimpleNamespace(thinking_tokens=23),
+            ),
+        )
+    )
+    constructor: dict[str, object] = {}
+
+    def fake_anthropic(**kwargs: object) -> object:
+        constructor.update(kwargs)
+        return SimpleNamespace(messages=messages)
+
+    monkeypatch.setattr("tests.providers.anthropic.transport.Anthropic", fake_anthropic)
+    transport = AnthropicSDKScoringTransport(
+        secret=ProviderSecretValue(_SECRET),
+        timeout_seconds=12.5,
+    )
+    response = transport.create(
+        request=_request(
+            thinking_mode=AnthropicThinkingMode.ADAPTIVE,
+            effort=AnthropicEffort.LOW,
+            max_tokens=2_048,
+        )
+    )
+
+    assert constructor["max_retries"] == 0
+    assert messages.calls[0]["thinking"] == {"type": "adaptive"}
+    assert messages.calls[0]["output_config"]["effort"] == "low"  # type: ignore[index]
+    assert messages.calls[0]["max_tokens"] == 2_048
+    assert messages.calls[0]["stream"] is False
+    assert "tools" not in messages.calls[0]
+    assert response.output_text == '{"status":"SCORED"}'
+    assert response.thinking_block_count == 2
+    assert response.text_block_count == 1
+    assert response.thinking_tokens == 23
+    assert sensitive_thinking not in repr(response)
+
+
+def test_sdk_transport_maps_explicit_disabled_thinking(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    messages = _FakeMessages(
+        SimpleNamespace(
+            stop_reason="end_turn",
+            content=[SimpleNamespace(type="text", text='{"status":"SCORED"}')],
+        )
+    )
+    monkeypatch.setattr(
+        "tests.providers.anthropic.transport.Anthropic",
+        lambda **_: SimpleNamespace(messages=messages),
+    )
+    transport = AnthropicSDKScoringTransport(
+        secret=ProviderSecretValue(_SECRET),
+        timeout_seconds=1.0,
+    )
+
+    transport.create(request=_request(thinking_mode=AnthropicThinkingMode.DISABLED))
+
+    assert messages.calls[0]["thinking"] == {"type": "disabled"}
+    assert "effort" not in messages.calls[0]["output_config"]  # type: ignore[operator]
 
 
 def test_sdk_timeout_and_refusal_are_closed(
@@ -242,12 +343,13 @@ def test_empty_success_is_closed_with_safe_usage_and_response_shape(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     response = SimpleNamespace(
-        stop_reason="end_turn",
-        content=[],
+        stop_reason="max_tokens",
+        content=[SimpleNamespace(type="thinking", thinking="discard-me")],
         usage=SimpleNamespace(
             input_tokens=19,
             cache_read_input_tokens=3,
             output_tokens=4,
+            output_tokens_details=SimpleNamespace(thinking_tokens=4),
         ),
     )
     messages = _FakeMessages(response)
@@ -267,8 +369,10 @@ def test_empty_success_is_closed_with_safe_usage_and_response_shape(
     assert error.code is AnthropicTransportErrorCode.EMPTY_RESPONSE
     assert error.provider_error_type is AnthropicProviderErrorType.EMPTY_RESPONSE
     assert error.response_received is True
-    assert error.stop_reason is AnthropicStopReason.END_TURN
+    assert error.stop_reason is AnthropicStopReason.MAX_TOKENS
     assert error.text_block_count == 0
+    assert error.thinking_block_count == 1
+    assert error.thinking_tokens == 4
     assert (error.input_tokens, error.cached_input_tokens, error.output_tokens) == (19, 3, 4)
     assert error.total_tokens == 26
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from dataclasses import replace
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -234,7 +235,10 @@ def test_runner_preserves_closed_transport_category_without_raw_data(
         if call.provider is CalibrationProvider.ANTHROPIC
     )
     review = executor.execute(review_call, dependency_candidate=None)
-    scoring = executor.execute(score_call, dependency_candidate=None)
+    scoring = executor.execute(
+        replace(score_call, max_output_tokens=2_048),
+        dependency_candidate=None,
+    )
     assert review.closed_error_code == "OPENAI_REVIEW_TRANSPORT_INVALID_REQUEST"
     assert scoring.closed_error_code == "ANTHROPIC_SCORER_TRANSPORT_BILLING"
     assert review.raw_output_text is None

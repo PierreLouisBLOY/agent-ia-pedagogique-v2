@@ -28,9 +28,11 @@ from evaluation_harness.contracts.scoring import (
 )
 from evaluation_harness.scoring.ports import ScorerNotFoundError
 from tests.providers.anthropic.contracts import (
+    AnthropicEffort,
     AnthropicProviderErrorType,
     AnthropicScoringTransportFactory,
     AnthropicStopReason,
+    AnthropicThinkingMode,
     AnthropicTransportError,
     AnthropicTransportErrorCode,
 )
@@ -39,6 +41,9 @@ from tests.providers.anthropic.transport import AnthropicSDKScoringTransportFact
 
 CANONICAL_SCORER_REF = "pedagogical-quality-fixture-scorer"
 _MODEL_CODE = "claude-sonnet-5"
+_THINKING_MODE = AnthropicThinkingMode.ADAPTIVE
+_EFFORT = AnthropicEffort.LOW
+_MAX_OUTPUT_TOKENS = 2_048
 
 
 class AnthropicScorerErrorCode(StrEnum):
@@ -57,6 +62,8 @@ class AnthropicScorerError(RuntimeError):
     response_received: bool
     stop_reason: AnthropicStopReason | None
     text_block_count: int | None
+    thinking_block_count: int | None
+    thinking_tokens: int | None
     input_tokens: int | None
     cached_input_tokens: int | None
     output_tokens: int | None
@@ -69,40 +76,30 @@ class AnthropicScorerError(RuntimeError):
         transport_error: AnthropicTransportError | None = None,
     ) -> None:
         self.code = code
-        self.transport_code = (
-            transport_error.code if transport_error is not None else None
-        )
-        self.http_status = (
-            transport_error.http_status if transport_error is not None else None
-        )
+        self.transport_code = transport_error.code if transport_error is not None else None
+        self.http_status = transport_error.http_status if transport_error is not None else None
         self.provider_error_type = (
-            transport_error.provider_error_type
-            if transport_error is not None
-            else None
+            transport_error.provider_error_type if transport_error is not None else None
         )
         self.response_received = (
             transport_error.response_received if transport_error is not None else False
         )
-        self.stop_reason = (
-            transport_error.stop_reason if transport_error is not None else None
-        )
+        self.stop_reason = transport_error.stop_reason if transport_error is not None else None
         self.text_block_count = (
             transport_error.text_block_count if transport_error is not None else None
         )
-        self.input_tokens = (
-            transport_error.input_tokens if transport_error is not None else None
+        self.thinking_block_count = (
+            transport_error.thinking_block_count if transport_error is not None else None
         )
+        self.thinking_tokens = (
+            transport_error.thinking_tokens if transport_error is not None else None
+        )
+        self.input_tokens = transport_error.input_tokens if transport_error is not None else None
         self.cached_input_tokens = (
-            transport_error.cached_input_tokens
-            if transport_error is not None
-            else None
+            transport_error.cached_input_tokens if transport_error is not None else None
         )
-        self.output_tokens = (
-            transport_error.output_tokens if transport_error is not None else None
-        )
-        self.total_tokens = (
-            transport_error.total_tokens if transport_error is not None else None
-        )
+        self.output_tokens = transport_error.output_tokens if transport_error is not None else None
+        self.total_tokens = transport_error.total_tokens if transport_error is not None else None
         super().__init__(code.value)
 
 
@@ -148,30 +145,24 @@ class AnthropicEvaluationScorer:
             raise TypeError("scorer_ref must be an EvaluationScorerRef")
         if scorer_ref.value != CANONICAL_SCORER_REF:
             raise ScorerNotFoundError(scorer_ref.value)
-        max_tokens = min(
-            self._model_profile.invocation_limits.max_output_tokens
-            or self._model_profile.context_limits.reserved_output_tokens,
-            self._model_profile.context_limits.reserved_output_tokens,
-        )
         request = build_anthropic_scoring_request(
             observations=observations,
             model=self._model_profile.model_code.value,
-            max_tokens=max_tokens,
+            max_tokens=_MAX_OUTPUT_TOKENS,
+            thinking_mode=_THINKING_MODE,
+            effort=_EFFORT,
         )
         try:
             secret = self._secret_resolver.resolve(self._provider_profile.credential_ref)
             transport = self._transport_factory.build(
                 secret=secret,
                 timeout_seconds=(
-                    self._model_profile.invocation_limits.call_timeout_milliseconds
-                    / 1_000.0
+                    self._model_profile.invocation_limits.call_timeout_milliseconds / 1_000.0
                 ),
             )
             response = transport.create(request=request)
         except ProviderSecretError:
-            raise AnthropicScorerError(
-                AnthropicScorerErrorCode.CREDENTIAL_UNAVAILABLE
-            ) from None
+            raise AnthropicScorerError(AnthropicScorerErrorCode.CREDENTIAL_UNAVAILABLE) from None
         except AnthropicTransportError as error:
             raise AnthropicScorerError(
                 AnthropicScorerErrorCode.PROVIDER_UNAVAILABLE,
@@ -269,6 +260,9 @@ def _validate_configuration(
         raise TypeError("provider_profile must be a ProviderProfileConfig")
     if type(model) is not ModelProfileConfig:
         raise TypeError("model_profile must be a ModelProfileConfig")
+    configured_output_limit = (
+        model.invocation_limits.max_output_tokens or model.context_limits.reserved_output_tokens
+    )
     if (
         not provider.enabled
         or not model.enabled
@@ -277,6 +271,7 @@ def _validate_configuration(
         or model.model_code.value != _MODEL_CODE
         or not model.structured_output_required
         or ProviderWorkloadKind.EVALUATION_SCORING not in model.supported_workloads
+        or configured_output_limit < _MAX_OUTPUT_TOKENS
     ):
         _configuration_error()
 

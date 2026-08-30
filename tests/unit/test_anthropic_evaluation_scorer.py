@@ -11,6 +11,7 @@ from backend.infrastructure.config.schemas.provider import (
     ModelProfileConfig,
     ModelProfileId,
     ProviderCode,
+    ProviderConfigurationError,
     ProviderInvocationLimits,
     ProviderProfileConfig,
     ProviderProfileId,
@@ -34,11 +35,13 @@ from evaluation_harness import (
     ScoreStatus,
 )
 from tests.providers.anthropic import (
+    AnthropicEffort,
     AnthropicEvaluationScorer,
     AnthropicProviderErrorType,
     AnthropicScorerError,
     AnthropicScoringResponse,
     AnthropicStopReason,
+    AnthropicThinkingMode,
     AnthropicTransportError,
     AnthropicTransportErrorCode,
 )
@@ -116,11 +119,7 @@ def _scorer(
     RecordingAnthropicScoringTransportFactory,
 ]:
     transport = RecordingAnthropicScoringTransport(
-        response=(
-            AnthropicScoringResponse(output_text)
-            if output_text is not None
-            else None
-        ),
+        response=(AnthropicScoringResponse(output_text) if output_text is not None else None),
         error=error,
     )
     factory = RecordingAnthropicScoringTransportFactory(transport)
@@ -151,9 +150,7 @@ def _output(
 
 def test_observation_serialization_is_closed_deterministic_and_exact() -> None:
     scalar = ObservationScalar(ObservationScalarKind.DECIMAL, Decimal("0.1250"))
-    sequence = ObservationSequence(
-        (ObservationScalar(ObservationScalarKind.INTEGER, 2), scalar)
-    )
+    sequence = ObservationSequence((ObservationScalar(ObservationScalarKind.INTEGER, 2), scalar))
     observation = _criterion_observation()
 
     assert serialize_observation(scalar) == {"kind": "DECIMAL", "value": "0.1250"}
@@ -188,6 +185,18 @@ def test_anthropic_request_is_model_exact_tool_free_by_contract_and_strict() -> 
     assert json.loads(request.input_json)["observations"][0]["kind"] == "OBJECT"
     assert request.output_schema == score_output_schema()
     assert request.output_schema["additionalProperties"] is False
+    assert request.thinking_mode is None
+    assert request.effort is None
+
+    explicit = build_anthropic_scoring_request(
+        observations=(_criterion_observation(),),
+        model="claude-sonnet-5",
+        max_tokens=2_048,
+        thinking_mode=AnthropicThinkingMode.ADAPTIVE,
+        effort=AnthropicEffort.LOW,
+    )
+    assert explicit.thinking_mode is AnthropicThinkingMode.ADAPTIVE
+    assert explicit.effort is AnthropicEffort.LOW
 
 
 @pytest.mark.parametrize(
@@ -208,8 +217,35 @@ def test_known_scorer_maps_only_exact_rational_scores(
     assert result.status is ScoreStatus.SCORED
     assert result.score == expected
     assert transport.calls[0].model == "claude-sonnet-5"
+    assert transport.calls[0].max_tokens == 2_048
+    assert transport.calls[0].thinking_mode is AnthropicThinkingMode.ADAPTIVE
+    assert transport.calls[0].effort is AnthropicEffort.LOW
     assert factory.build_calls == [("ProviderSecretValue([REDACTED])", 45.0)]
     assert _SECRET not in repr(scorer)
+
+
+def test_policy_rejects_a_model_profile_that_cannot_supply_2048_output_tokens() -> None:
+    model = ModelProfileConfig(
+        ModelProfileId("anthropic.claude-sonnet-5.scorer"),
+        ProviderProfileId("anthropic-calibration-provider"),
+        ModelCode("claude-sonnet-5"),
+        ModelContextLimits(1_000_000, 872_000, 128_000),
+        ProviderInvocationLimits(1, 45_000, max_output_tokens=512),
+        (ProviderWorkloadKind.EVALUATION_SCORING,),
+        structured_output_required=True,
+    )
+
+    with pytest.raises(ProviderConfigurationError):
+        AnthropicEvaluationScorer(
+            provider_profile=_provider(),
+            model_profile=model,
+            secret_resolver=EnvironmentProviderSecretResolver(
+                {"ANTHROPIC_CALIBRATION_API_KEY": _SECRET}
+            ),
+            transport_factory=RecordingAnthropicScoringTransportFactory(
+                RecordingAnthropicScoringTransport(response=AnthropicScoringResponse("{}"))
+            ),
+        )
 
 
 def test_unknown_scorer_is_not_routed_or_called() -> None:
@@ -266,6 +302,8 @@ def test_safe_transport_diagnostics_do_not_change_public_scorer_contracts() -> N
         response_received=True,
         stop_reason=AnthropicStopReason.END_TURN,
         text_block_count=0,
+        thinking_block_count=1,
+        thinking_tokens=2,
         input_tokens=11,
         cached_input_tokens=2,
         output_tokens=3,
@@ -283,6 +321,8 @@ def test_safe_transport_diagnostics_do_not_change_public_scorer_contracts() -> N
     assert error.response_received is True
     assert error.stop_reason is AnthropicStopReason.END_TURN
     assert error.text_block_count == 0
+    assert error.thinking_block_count == 1
+    assert error.thinking_tokens == 2
     assert (error.input_tokens, error.cached_input_tokens, error.output_tokens) == (11, 2, 3)
     assert error.total_tokens == 16
     assert ScorerOutcome.__module__ == "evaluation_harness.contracts.scoring"

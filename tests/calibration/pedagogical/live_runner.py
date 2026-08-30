@@ -118,17 +118,11 @@ from tests.providers.anthropic import (
 )
 
 ROOT = Path(__file__).resolve().parents[3]
-EXPECTED_MATRIX_SHA256 = (
-    "997e814f65ac7c5fc25da990cf286800fa6ca4edd761d821a6f6f59f5e2550ed"
-)
+EXPECTED_MATRIX_SHA256 = "997e814f65ac7c5fc25da990cf286800fa6ca4edd761d821a6f6f59f5e2550ed"
 APPROVED_HARD_CEILING_USD = Decimal("4.096440")
 LEDGER_RELATIVE_PATH = "artifacts/calibration/12.16-g2/ledger.json"
-REPORT_JSON_RELATIVE_PATH = (
-    "docs/development/PHASE_12_16_G2_PEDAGOGICAL_CALIBRATION_REPORT.json"
-)
-REPORT_MARKDOWN_RELATIVE_PATH = (
-    "docs/development/PHASE_12_16_G2_PEDAGOGICAL_CALIBRATION_REPORT.md"
-)
+REPORT_JSON_RELATIVE_PATH = "docs/development/PHASE_12_16_G2_PEDAGOGICAL_CALIBRATION_REPORT.json"
+REPORT_MARKDOWN_RELATIVE_PATH = "docs/development/PHASE_12_16_G2_PEDAGOGICAL_CALIBRATION_REPORT.md"
 LIVE_FLAG = "RUN_PEDAGOGICAL_LIVE_CALIBRATION"
 LIVE_OUTPUT_PATH_ENV = "PEDAGOGICAL_CALIBRATION_OUTPUT_PATH"
 APPROVED_CEILING_ENV = "PEDAGOGICAL_CALIBRATION_APPROVED_CEILING_USD"
@@ -170,8 +164,8 @@ _G1_HISTORICAL_PRICING = {
 _REPORT_FORBIDDEN_MARKERS = (
     "OPENAI_API_KEY=",
     "ANTHROPIC_API_KEY=",
-    "api_key\":\"sk-",
-    "authorization\":\"bearer ",
+    'api_key":"sk-',
+    'authorization":"bearer ',
     "C:\\Users\\",
     "/Users/",
     "[context] La ressource porte",
@@ -242,12 +236,8 @@ class SystemicCanaryBreaker:
     """Test-only owner that requires one successful canary before family fan-out."""
 
     def __init__(self) -> None:
-        self._states = {
-            family: _CanaryState.PENDING for family in ProviderWorkloadFamily
-        }
-        self._failure_categories: dict[
-            ProviderWorkloadFamily, ProviderTransportCategory
-        ] = {}
+        self._states = {family: _CanaryState.PENDING for family in ProviderWorkloadFamily}
+        self._failure_categories: dict[ProviderWorkloadFamily, ProviderTransportCategory] = {}
 
     def authorize(
         self,
@@ -310,6 +300,8 @@ class ProviderCallResult:
     response_received: bool = False
     stop_reason: AnthropicStopReason | None = None
     text_block_count: int | None = None
+    thinking_block_count: int | None = None
+    thinking_tokens: int | None = None
 
 
 class CalibrationExecutor(Protocol):
@@ -335,8 +327,7 @@ def _maximum_call_cost(call: CalibrationCallSpec) -> Decimal:
         (
             Decimal(call.input_utf8_upper_bound_bytes)
             * Decimal(quote["input_usd_per_million_tokens"])
-            + Decimal(call.max_output_tokens)
-            * Decimal(quote["output_usd_per_million_tokens"])
+            + Decimal(call.max_output_tokens) * Decimal(quote["output_usd_per_million_tokens"])
         )
         / Decimal(1_000_000)
     )
@@ -356,8 +347,7 @@ def _observed_call_cost(
     cost = (
         Decimal(regular_input) * Decimal(quote["input_usd_per_million_tokens"])
         + Decimal(cached) * Decimal(quote["cached_input_usd_per_million_tokens"])
-        + Decimal(result.output_tokens)
-        * Decimal(quote["output_usd_per_million_tokens"])
+        + Decimal(result.output_tokens) * Decimal(quote["output_usd_per_million_tokens"])
     ) / Decimal(1_000_000)
     return _money(cost)
 
@@ -608,9 +598,7 @@ class _RecordingOpenAITransport:
 
 class _RecordingOpenAIFactory:
     def __init__(self) -> None:
-        self._inner: OpenAIResponsesTransportFactory = (
-            OpenAISDKResponsesTransportFactory()
-        )
+        self._inner: OpenAIResponsesTransportFactory = OpenAISDKResponsesTransportFactory()
         self.transport: _RecordingOpenAITransport | None = None
 
     def build(self, *, secret: object, timeout_seconds: float) -> OpenAIResponsesTransport:
@@ -646,9 +634,7 @@ class _RecordingAnthropicTransport:
 
 class _RecordingAnthropicFactory:
     def __init__(self) -> None:
-        self._inner: AnthropicScoringTransportFactory = (
-            AnthropicSDKScoringTransportFactory()
-        )
+        self._inner: AnthropicScoringTransportFactory = AnthropicSDKScoringTransportFactory()
         self.transport: _RecordingAnthropicTransport | None = None
 
     def build(self, *, secret: object, timeout_seconds: float) -> AnthropicScoringTransport:
@@ -833,12 +819,8 @@ def _openai_result(
         total_tokens=usage.total_tokens if usage is not None else None,
         latency_milliseconds=latency,
         closed_error_code=error_code,
-        provider_response_status=(
-            response.status.value if response is not None else None
-        ),
-        incomplete_reason=(
-            response.incomplete_reason.value if response is not None else None
-        ),
+        provider_response_status=(response.status.value if response is not None else None),
+        incomplete_reason=(response.incomplete_reason.value if response is not None else None),
         reasoning_tokens=(usage.reasoning_tokens if usage is not None else None),
         public_error_code=public_error_code,
         private_diagnostic_code=private_diagnostic_code,
@@ -882,16 +864,12 @@ def _anthropic_result(
         total_tokens=total_tokens,
         latency_milliseconds=latency,
         closed_error_code=error_code,
-        transport_http_status=(
-            scorer_error.http_status if scorer_error is not None else None
-        ),
+        transport_http_status=(scorer_error.http_status if scorer_error is not None else None),
         provider_error_type=(
             scorer_error.provider_error_type if scorer_error is not None else None
         ),
         response_received=(
-            scorer_error.response_received
-            if scorer_error is not None
-            else response is not None
+            scorer_error.response_received if scorer_error is not None else response is not None
         ),
         stop_reason=(
             response.stop_reason
@@ -902,6 +880,16 @@ def _anthropic_result(
             response.text_block_count
             if response is not None
             else (scorer_error.text_block_count if scorer_error is not None else None)
+        ),
+        thinking_block_count=(
+            response.thinking_block_count
+            if response is not None
+            else (scorer_error.thinking_block_count if scorer_error is not None else None)
+        ),
+        thinking_tokens=(
+            response.thinking_tokens
+            if response is not None
+            else (scorer_error.thinking_tokens if scorer_error is not None else None)
         ),
     )
 
@@ -962,9 +950,7 @@ def _generation_request(call: CalibrationCallSpec) -> GenerationPortRequest:
         target_ref = f"calibration-production:{call.scenario_code.lower()}"
     elif operation is GenerationOperation.CORRECT:
         target_version_ref = ObjectVersionRef(
-            TypedEntityRef(
-                TypedEntityId("calibration-production", call.scenario_code.lower())
-            ),
+            TypedEntityRef(TypedEntityId("calibration-production", call.scenario_code.lower())),
             VersionRef("v1"),
         )
     return GenerationPortRequest(
@@ -1001,9 +987,7 @@ def _review_request(call: CalibrationCallSpec) -> ReviewPortRequest:
         operation=ReviewOperation.SEMANTIC_REVIEW,
         capability_id=CapabilityId("CAP-V01"),
         target_production_ref=ObjectVersionRef(
-            TypedEntityRef(
-                TypedEntityId("calibration-production", call.scenario_code.lower())
-            ),
+            TypedEntityRef(TypedEntityId("calibration-production", call.scenario_code.lower())),
             VersionRef("v1"),
         ),
         review_dimensions=(ReviewDimension.ACCURACY, ReviewDimension.PEDAGOGY),
@@ -1030,8 +1014,7 @@ def _anthropic_observation(
         item = next(
             criterion
             for criterion in CALIBRATION_CRITERION_ITEMS
-            if criterion.anchor_id == anchor_id
-            and criterion.criterion_ref == criterion_ref
+            if criterion.anchor_id == anchor_id and criterion.criterion_ref == criterion_ref
         )
         return build_blind_scorer_observation(item)
     if dependency_candidate is None:
@@ -1167,10 +1150,7 @@ class LiveCalibrationRunner:
                 raw_output_path=raw_path,
                 cost_usd=cost,
             )
-            self.progress(
-                f"{index:02d}/96 {terminal.value} {call.call_id} "
-                f"cost={cost}"
-            )
+            self.progress(f"{index:02d}/96 {terminal.value} {call.call_id} cost={cost}")
         final_ledger = self.ledger.read()
         first = build_safe_aggregate(final_ledger, self.raw_store)
         second = build_safe_aggregate(final_ledger, self.raw_store)
@@ -1218,11 +1198,7 @@ class LiveCalibrationRunner:
 
 def validate_call_identity(call: CalibrationCallSpec) -> None:
     planned = next(
-        (
-            item
-            for item in PEDAGOGICAL_CALIBRATION_CALL_MATRIX
-            if item.call_id == call.call_id
-        ),
+        (item for item in PEDAGOGICAL_CALIBRATION_CALL_MATRIX if item.call_id == call.call_id),
         None,
     )
     if planned is None or planned != call:
@@ -1234,9 +1210,10 @@ def _validate_live_gates(root: Path, environment: Mapping[str, str]) -> None:
         _stop(LiveCalibrationStopCode.MATRIX_MISMATCH)
     if revalidated_theoretical_ceiling_usd() > APPROVED_HARD_CEILING_USD:
         _stop(LiveCalibrationStopCode.APPROVED_CEILING_INSUFFICIENT)
-    if not environment.get("OPENAI_API_KEY", "").strip() or not environment.get(
-        "ANTHROPIC_API_KEY", ""
-    ).strip():
+    if (
+        not environment.get("OPENAI_API_KEY", "").strip()
+        or not environment.get("ANTHROPIC_API_KEY", "").strip()
+    ):
         _stop(LiveCalibrationStopCode.LIVE_PROVIDER_CREDENTIAL_REQUIRED)
     if environment.get(LIVE_FLAG) != "1":
         _stop(LiveCalibrationStopCode.LIVE_ENVIRONMENT_GATE_CLOSED)
@@ -1249,9 +1226,10 @@ def _validate_live_gates(root: Path, environment: Mapping[str, str]) -> None:
     if ceiling != APPROVED_HARD_CEILING_USD:
         _stop(LiveCalibrationStopCode.LIVE_ENVIRONMENT_GATE_CLOSED)
     gitignore = root / ".gitignore"
-    if not gitignore.exists() or "/artifacts/" not in gitignore.read_text(
-        encoding="utf-8"
-    ).splitlines():
+    if (
+        not gitignore.exists()
+        or "/artifacts/" not in gitignore.read_text(encoding="utf-8").splitlines()
+    ):
         _stop(LiveCalibrationStopCode.RAW_OUTPUT_PATH_UNSAFE)
 
 
@@ -1267,9 +1245,9 @@ def _require_prior_calls_terminal(ledger: Mapping[str, object], count: int) -> N
 
 
 def _is_selected_output_score(call: CalibrationCallSpec) -> bool:
-    return call.provider is CalibrationProvider.ANTHROPIC and call.input_refs[
-        0
-    ].startswith("output:")
+    return call.provider is CalibrationProvider.ANTHROPIC and call.input_refs[0].startswith(
+        "output:"
+    )
 
 
 def _selected_output_dependency(
@@ -1344,8 +1322,7 @@ def build_safe_aggregate(
     raw_store: RawOutputStore,
 ) -> dict[str, object]:
     records = {
-        cast(str, item["call_id"]): item
-        for item in cast(list[dict[str, object]], ledger["calls"])
+        cast(str, item["call_id"]): item for item in cast(list[dict[str, object]], ledger["calls"])
     }
     call_results: list[dict[str, object]] = []
     invocation_observations: list[InvocationObservation] = []
@@ -1494,9 +1471,7 @@ def build_safe_aggregate(
         "pricing": {
             "historical_g1": _G1_HISTORICAL_PRICING,
             "revalidated_g2": _G2_PRICING,
-            "revalidated_theoretical_ceiling_usd": str(
-                revalidated_theoretical_ceiling_usd()
-            ),
+            "revalidated_theoretical_ceiling_usd": str(revalidated_theoretical_ceiling_usd()),
         },
         "credential_readiness": {
             "openai": "PRESENT_AT_EXECUTION",
@@ -1513,14 +1488,12 @@ def build_safe_aggregate(
         "execution": {
             "status_counts": status_counts,
             "provider_calls_attempted": sum(
-                result["terminal_status"]
-                != LedgerCallStatus.SKIPPED_DEPENDENCY_FAILED.value
+                result["terminal_status"] != LedgerCallStatus.SKIPPED_DEPENDENCY_FAILED.value
                 and result["terminal_status"] != LedgerCallStatus.PENDING.value
                 for result in call_results
             ),
             "dependency_skipped_calls": sum(
-                result["terminal_status"]
-                == LedgerCallStatus.SKIPPED_DEPENDENCY_FAILED.value
+                result["terminal_status"] == LedgerCallStatus.SKIPPED_DEPENDENCY_FAILED.value
                 for result in call_results
             ),
             "automatic_retries": 0,
@@ -1538,9 +1511,7 @@ def build_safe_aggregate(
                 "refusal_count": item.refusal_count,
                 "error_count": item.error_count,
                 "inconclusive_count": item.inconclusive_count,
-                "valid_structured_response_rate": _fraction(
-                    item.valid_structured_response_rate
-                ),
+                "valid_structured_response_rate": _fraction(item.valid_structured_response_rate),
                 "refusal_rate": _fraction(item.refusal_rate),
                 "error_rate": _fraction(item.error_rate),
                 "input_tokens": item.input_tokens,
@@ -1568,9 +1539,7 @@ def build_safe_aggregate(
             "exact_agreement_rate": _fraction(repeatability.exact_agreement_rate),
             "inconclusive_rate": _fraction(repeatability.inconclusive_rate),
             "maximum_spread": _fraction(repeatability.maximum_spread),
-            "mean_absolute_rational_delta": _fraction(
-                repeatability.mean_absolute_rational_delta
-            ),
+            "mean_absolute_rational_delta": _fraction(repeatability.mean_absolute_rational_delta),
         },
         "selected_output_metrics": {
             "scores": selected_scores,
@@ -1586,24 +1555,19 @@ def build_safe_aggregate(
                 for item in quality_metrics
             ],
             "pairwise_comparison_count": pairwise.comparison_count,
-            "fallback_soft_quality_comparison": (
-                "NOT_FULLY_ESTABLISHED_BY_G2_MATRIX"
-            ),
+            "fallback_soft_quality_comparison": ("NOT_FULLY_ESTABLISHED_BY_G2_MATRIX"),
         },
         "cost": {
             "estimated_g1_base_usd": "1.087576",
             "approved_hard_ceiling_usd": str(APPROVED_HARD_CEILING_USD),
-            "revalidated_theoretical_ceiling_usd": str(
-                revalidated_theoretical_ceiling_usd()
-            ),
+            "revalidated_theoretical_ceiling_usd": str(revalidated_theoretical_ceiling_usd()),
             "actual_measured_total_usd": str(_money(measured_total)),
             "prudent_unknown_usage_reserve_usd": str(
                 _money(Decimal(cast(str, ledger["total_cost_usd"])) - measured_total)
             ),
             "budget_accounted_total_usd": ledger["total_cost_usd"],
             "actual_measured_by_provider_usd": {
-                key: str(_money(value))
-                for key, value in sorted(measured_costs_by_provider.items())
+                key: str(_money(value)) for key, value in sorted(measured_costs_by_provider.items())
             },
             "budget_accounted_by_provider_usd": {
                 key: str(_money(value)) for key, value in sorted(costs_by_provider.items())
@@ -1615,8 +1579,7 @@ def build_safe_aggregate(
                 key: str(_money(value)) for key, value in sorted(costs_by_workload.items())
             },
             "ceiling_preserved": (
-                Decimal(cast(str, ledger["total_cost_usd"]))
-                <= APPROVED_HARD_CEILING_USD
+                Decimal(cast(str, ledger["total_cost_usd"])) <= APPROVED_HARD_CEILING_USD
             ),
         },
         "human_anchor_review": "NOT_COMPLETED",

@@ -142,6 +142,8 @@ def test_anthropic_runner_result_exposes_only_safe_closed_diagnostics() -> None:
         response_received=True,
         stop_reason=AnthropicStopReason.END_TURN,
         text_block_count=0,
+        thinking_block_count=1,
+        thinking_tokens=0,
         input_tokens=23,
         output_tokens=0,
         total_tokens=23,
@@ -164,6 +166,8 @@ def test_anthropic_runner_result_exposes_only_safe_closed_diagnostics() -> None:
     assert result.response_received is True
     assert result.stop_reason is AnthropicStopReason.END_TURN
     assert result.text_block_count == 0
+    assert result.thinking_block_count == 1
+    assert result.thinking_tokens == 0
     assert (result.input_tokens, result.output_tokens, result.total_tokens) == (23, 0, 23)
     assert "request-id" not in repr(result)
     assert "header" not in repr(result)

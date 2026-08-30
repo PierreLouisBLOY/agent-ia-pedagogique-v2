@@ -323,9 +323,18 @@ def test_generated_documents_and_ignored_artifacts_match_renderers() -> None:
     assert json.loads((ROOT / REUSABLE_MANIFEST_RELATIVE_PATH).read_text(encoding="utf-8")) == (
         build_reusable_manifest(ROOT)
     )
-    assert json.loads((ROOT / RECOVERY_LEDGER_RELATIVE_PATH).read_text(encoding="utf-8")) == (
-        build_recovery_ledger(ROOT)
-    )
+    recovery_path = ROOT / RECOVERY_LEDGER_RELATIVE_PATH
+    recovery = json.loads(recovery_path.read_text(encoding="utf-8"))
+    validate_recovery_ledger(recovery, ROOT)
+    if recovery["run_status"] == "AWAITING_EXPLICIT_APPROVAL":
+        assert recovery == build_recovery_ledger(ROOT)
+    else:
+        summary = json.loads(
+            (
+                ROOT / "artifacts/calibration/12.16-g2-r4-r4/summary.json"
+            ).read_text(encoding="utf-8")
+        )
+        assert _sha(recovery_path) == summary["ledger_final_sha256"]
 
 
 def test_writing_r1_outputs_does_not_mutate_historical_proofs() -> None:
@@ -335,6 +344,7 @@ def test_writing_r1_outputs_does_not_mutate_historical_proofs() -> None:
         ROOT / "artifacts/calibration/12.16-g2-r4-r2/summary.json",
         ROOT / "artifacts/calibration/12.16-g2-r4-r3/summary.json",
         ROOT / "artifacts/calibration/12.16-g2-r4-r3/transfer_manifest.json",
+        ROOT / RECOVERY_LEDGER_RELATIVE_PATH,
     )
     before = {path: _sha(path) for path in protected}
 

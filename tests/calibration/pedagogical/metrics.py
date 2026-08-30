@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from enum import StrEnum
 from fractions import Fraction
+from math import ceil
 
 from tests.calibration.pedagogical.catalog import CriterionOrdering
 
@@ -121,6 +122,84 @@ class InvocationMetrics:
     output_tokens: int
     latency_milliseconds: int
     observed_cost_usd: Decimal
+
+
+@dataclass(frozen=True, slots=True)
+class RationalDistributionMetrics:
+    observation_count: int
+    distinct_value_count: int
+    histogram: tuple[tuple[Fraction, int], ...]
+    denominator_frequencies: tuple[tuple[int, int], ...]
+    zero_count: int
+    one_count: int
+    intermediate_count: int
+    mean: Fraction | None
+    median: Fraction | None
+
+
+@dataclass(frozen=True, slots=True)
+class LatencyMetrics:
+    observation_count: int
+    total_milliseconds: int
+    minimum_milliseconds: int | None
+    median_milliseconds: Fraction | None
+    p95_milliseconds: int | None
+    maximum_milliseconds: int | None
+
+
+def summarize_rational_distribution(
+    values: tuple[Fraction, ...],
+) -> RationalDistributionMetrics:
+    """Summarize exact rational values without converting through binary floats."""
+
+    ordered = sorted(values)
+    histogram = tuple((value, values.count(value)) for value in sorted(set(values)))
+    denominators = tuple(
+        (denominator, sum(value.denominator == denominator for value in values))
+        for denominator in sorted({value.denominator for value in values})
+    )
+    count = len(ordered)
+    if count == 0:
+        median = None
+    elif count % 2:
+        median = ordered[count // 2]
+    else:
+        median = (ordered[count // 2 - 1] + ordered[count // 2]) / 2
+    return RationalDistributionMetrics(
+        observation_count=count,
+        distinct_value_count=len(histogram),
+        histogram=histogram,
+        denominator_frequencies=denominators,
+        zero_count=sum(value == 0 for value in values),
+        one_count=sum(value == 1 for value in values),
+        intermediate_count=sum(0 < value < 1 for value in values),
+        mean=(sum(values, start=Fraction(0, 1)) / count if count else None),
+        median=median,
+    )
+
+
+def summarize_latency(values: tuple[int, ...]) -> LatencyMetrics:
+    """Use the nearest-rank definition for p95 and an exact rational median."""
+
+    if any(type(value) is not int or value < 0 for value in values):
+        raise ValueError("latencies must be non-negative integers")
+    ordered = sorted(values)
+    count = len(ordered)
+    if count == 0:
+        return LatencyMetrics(0, 0, None, None, None, None)
+    median = (
+        Fraction(ordered[count // 2], 1)
+        if count % 2
+        else Fraction(ordered[count // 2 - 1] + ordered[count // 2], 2)
+    )
+    return LatencyMetrics(
+        observation_count=count,
+        total_milliseconds=sum(ordered),
+        minimum_milliseconds=ordered[0],
+        median_milliseconds=median,
+        p95_milliseconds=ordered[ceil(Fraction(95 * count, 100)) - 1],
+        maximum_milliseconds=ordered[-1],
+    )
 
 
 def summarize_orderings(

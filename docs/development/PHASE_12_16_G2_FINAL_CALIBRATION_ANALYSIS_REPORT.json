@@ -1,0 +1,2020 @@
+{
+  "anchor_orderings": {
+    "details": [
+      {
+        "criterion_ref": "scn-01.quality.clarity",
+        "distinct_score_count": 1,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "saturation_count": 3,
+        "scenario_code": "SCN-01",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 2,
+        "weak": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-01.quality.organization-utility",
+        "distinct_score_count": 2,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "range": {
+          "denominator": 2,
+          "numerator": 1
+        },
+        "saturation_count": 2,
+        "scenario_code": "SCN-01",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 1,
+        "weak": {
+          "denominator": 2,
+          "numerator": 1
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-02.quality.relevance",
+        "distinct_score_count": 1,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "saturation_count": 3,
+        "scenario_code": "SCN-02",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 2,
+        "weak": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-02.quality.coverage",
+        "distinct_score_count": 1,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "saturation_count": 3,
+        "scenario_code": "SCN-02",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 2,
+        "weak": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-03.quality.clarity",
+        "distinct_score_count": 1,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "saturation_count": 3,
+        "scenario_code": "SCN-03",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 2,
+        "weak": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-03.quality.level-adaptation",
+        "distinct_score_count": 2,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "saturation_count": 3,
+        "scenario_code": "SCN-03",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 1,
+        "weak": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-04.quality.fidelity",
+        "distinct_score_count": 2,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "saturation_count": 3,
+        "scenario_code": "SCN-04",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 1,
+        "weak": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-04.quality.level-adaptation",
+        "distinct_score_count": 2,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "range": {
+          "denominator": 2,
+          "numerator": 1
+        },
+        "saturation_count": 2,
+        "scenario_code": "SCN-04",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 1,
+        "weak": {
+          "denominator": 2,
+          "numerator": 1
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-05.quality.difficulty-appropriateness",
+        "distinct_score_count": 2,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "saturation_count": 3,
+        "scenario_code": "SCN-05",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 1,
+        "weak": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-05.quality.instruction-clarity",
+        "distinct_score_count": 1,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "saturation_count": 3,
+        "scenario_code": "SCN-05",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "tied_adjacent_pairs": 2,
+        "weak": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-06.quality.assessment-clarity",
+        "distinct_score_count": 3,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 2,
+          "numerator": 1
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "saturation_count": 2,
+        "scenario_code": "SCN-06",
+        "strict": true,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 0,
+        "weak": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-06.quality.marking-scheme-coherence",
+        "distinct_score_count": 2,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "saturation_count": 3,
+        "scenario_code": "SCN-06",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 1,
+        "weak": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-07.quality.correction-quality",
+        "distinct_score_count": 2,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "saturation_count": 3,
+        "scenario_code": "SCN-07",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 1,
+        "weak": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-07.quality.remediation-clarity",
+        "distinct_score_count": 2,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "saturation_count": 3,
+        "scenario_code": "SCN-07",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 1,
+        "weak": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-08.quality.distractor-quality",
+        "distinct_score_count": 2,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "saturation_count": 3,
+        "scenario_code": "SCN-08",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 1,
+        "weak": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "weak_ordering": true
+      },
+      {
+        "criterion_ref": "scn-08.quality.feedback-quality",
+        "distinct_score_count": 2,
+        "inverted_adjacent_pairs": 0,
+        "mixed": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "range": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "saturation_count": 3,
+        "scenario_code": "SCN-08",
+        "strict": false,
+        "strong": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "tied_adjacent_pairs": 1,
+        "weak": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "weak_ordering": true
+      }
+    ],
+    "evidence": "PARTIAL",
+    "global_distribution": {
+      "denominator_frequencies": [
+        {
+          "count": 45,
+          "denominator": 1
+        },
+        {
+          "count": 3,
+          "denominator": 2
+        }
+      ],
+      "distinct_value_count": 3,
+      "histogram": [
+        {
+          "count": 14,
+          "score": {
+            "denominator": 1,
+            "numerator": 0
+          }
+        },
+        {
+          "count": 3,
+          "score": {
+            "denominator": 2,
+            "numerator": 1
+          }
+        },
+        {
+          "count": 31,
+          "score": {
+            "denominator": 1,
+            "numerator": 1
+          }
+        }
+      ],
+      "intermediate_count": 3,
+      "mean": {
+        "denominator": 96,
+        "numerator": 65
+      },
+      "median": {
+        "denominator": 1,
+        "numerator": 1
+      },
+      "observation_count": 48,
+      "one_count": 31,
+      "zero_count": 14
+    },
+    "metrics": {
+      "criterion_count": 16,
+      "inconclusive_count": 0,
+      "inverted_pair_count": 0,
+      "strict_ordering_count": 1,
+      "tied_pair_count": 20,
+      "weak_ordering_count": 16
+    },
+    "rule": "STRONG iff all 16 complete orderings are strict; CONTRADICTORY iff any adjacent inversion exists; PARTIAL iff complete and weak without inversion; otherwise INSUFFICIENT.",
+    "tier_distributions": {
+      "MIXED": {
+        "denominator_frequencies": [
+          {
+            "count": 15,
+            "denominator": 1
+          },
+          {
+            "count": 1,
+            "denominator": 2
+          }
+        ],
+        "distinct_value_count": 3,
+        "histogram": [
+          {
+            "count": 3,
+            "score": {
+              "denominator": 1,
+              "numerator": 0
+            }
+          },
+          {
+            "count": 1,
+            "score": {
+              "denominator": 2,
+              "numerator": 1
+            }
+          },
+          {
+            "count": 12,
+            "score": {
+              "denominator": 1,
+              "numerator": 1
+            }
+          }
+        ],
+        "intermediate_count": 1,
+        "mean": {
+          "denominator": 32,
+          "numerator": 25
+        },
+        "median": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "observation_count": 16,
+        "one_count": 12,
+        "zero_count": 3
+      },
+      "STRONG": {
+        "denominator_frequencies": [
+          {
+            "count": 16,
+            "denominator": 1
+          }
+        ],
+        "distinct_value_count": 2,
+        "histogram": [
+          {
+            "count": 1,
+            "score": {
+              "denominator": 1,
+              "numerator": 0
+            }
+          },
+          {
+            "count": 15,
+            "score": {
+              "denominator": 1,
+              "numerator": 1
+            }
+          }
+        ],
+        "intermediate_count": 0,
+        "mean": {
+          "denominator": 16,
+          "numerator": 15
+        },
+        "median": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "observation_count": 16,
+        "one_count": 15,
+        "zero_count": 1
+      },
+      "WEAK_BUT_STRUCTURALLY_VALID": {
+        "denominator_frequencies": [
+          {
+            "count": 14,
+            "denominator": 1
+          },
+          {
+            "count": 2,
+            "denominator": 2
+          }
+        ],
+        "distinct_value_count": 3,
+        "histogram": [
+          {
+            "count": 10,
+            "score": {
+              "denominator": 1,
+              "numerator": 0
+            }
+          },
+          {
+            "count": 2,
+            "score": {
+              "denominator": 2,
+              "numerator": 1
+            }
+          },
+          {
+            "count": 4,
+            "score": {
+              "denominator": 1,
+              "numerator": 1
+            }
+          }
+        ],
+        "intermediate_count": 2,
+        "mean": {
+          "denominator": 16,
+          "numerator": 5
+        },
+        "median": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "observation_count": 16,
+        "one_count": 4,
+        "zero_count": 10
+      }
+    }
+  },
+  "anthropic_technical": {
+    "by_category": {
+      "INITIAL_ANCHOR": {
+        "cached_input_tokens": 0,
+        "call_count": 48,
+        "input_tokens": 48973,
+        "latency_milliseconds": 115473,
+        "measured_cost_usd": "0.134706",
+        "output_tokens": 3676,
+        "structured_count": 48,
+        "thinking_tokens": 2266,
+        "total_tokens": 52649,
+        "valid_structured_response_rate": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      "REPEATABILITY": {
+        "cached_input_tokens": 0,
+        "call_count": 16,
+        "input_tokens": 16913,
+        "latency_milliseconds": 34092,
+        "measured_cost_usd": "0.043106",
+        "output_tokens": 928,
+        "structured_count": 16,
+        "thinking_tokens": 460,
+        "total_tokens": 17841,
+        "valid_structured_response_rate": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      "SELECTED_OUTPUT": {
+        "cached_input_tokens": 0,
+        "call_count": 12,
+        "input_tokens": 13387,
+        "latency_milliseconds": 34813,
+        "measured_cost_usd": "0.030894",
+        "output_tokens": 412,
+        "structured_count": 12,
+        "thinking_tokens": 63,
+        "total_tokens": 13799,
+        "valid_structured_response_rate": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      }
+    },
+    "call_count": 76,
+    "latency": {
+      "maximum_milliseconds": 12125,
+      "median_milliseconds": {
+        "denominator": 1,
+        "numerator": 2241
+      },
+      "minimum_milliseconds": 1144,
+      "p95_milliseconds": 3917,
+      "total_milliseconds": 184378
+    },
+    "measured_cost_usd": "0.208706",
+    "score_status_counts": {
+      "ERROR": 0,
+      "INCONCLUSIVE": 0,
+      "REFUSAL": 0,
+      "SCORED": 76
+    },
+    "stop_reasons": {
+      "end_turn": 76
+    },
+    "structured_valid_count": 76,
+    "structured_valid_rate": {
+      "denominator": 1,
+      "numerator": 1
+    },
+    "text_block_counts": {
+      "1": 76
+    },
+    "thinking_block_counts": {
+      "0": 41,
+      "1": 35
+    },
+    "usage": {
+      "cached_input_tokens": 0,
+      "input_tokens": 79273,
+      "output_tokens": 5016,
+      "thinking_tokens": 2789,
+      "total_tokens": 84289
+    }
+  },
+  "cost_accounting": {
+    "A_FINAL_USEFUL_OPENAI_EXECUTION_COST": "0.211738",
+    "B_FINAL_UNIFORM_ANTHROPIC_SCORING_COST": "0.208706",
+    "C_DIAGNOSTIC_AND_REMEDIATION_MEASURED_COST": "0.054800",
+    "D_CONSERVATIVE_RESERVES_NOT_PROVEN_AS_BILLED": "1.957696",
+    "billing_truth": "PROVIDER_DASHBOARDS",
+    "experimental_measured_cost_usd": "0.475244",
+    "final_useful_cost_usd": "0.420444",
+    "historical_diagnostic_anthropic_score_count": 5,
+    "measured_plus_conservative_reserves_usd": "2.432940",
+    "no_double_counting": true
+  },
+  "decision": {
+    "ANCHOR_ORDINAL_EVIDENCE": "PARTIAL",
+    "CALIBRATION_CONFIDENCE": "PROVISIONAL_PENDING_HUMAN_REVIEW",
+    "HUMAN_ANCHOR_REVIEW": "NOT_COMPLETED",
+    "PROVIDER_ROUTE_CHANGE": "NONE",
+    "RELEASE_THRESHOLD_ADOPTION": "NOT_ALLOWED",
+    "REPEATABILITY_EVIDENCE": "PARTIAL",
+    "SELECTED_OUTPUT_EVIDENCE": "DESCRIPTIVE_ONLY"
+  },
+  "delivery": {
+    "branch": "phase12/12-16-provider-model-calibration",
+    "commit_message": "test: analyze pedagogical model calibration",
+    "commit_parent": "123b4ebec6633df5c4512fce0e4755415f00c38d",
+    "commit_sha_embedded": false,
+    "commit_sha_reporting": "FINAL_EXECUTION_REPORT_ONLY",
+    "files_changed": [
+      "docs/development/PHASE_12_16_G2_FINAL_CALIBRATION_ANALYSIS_REPORT.md",
+      "docs/development/PHASE_12_16_G2_FINAL_CALIBRATION_ANALYSIS_REPORT.json",
+      "docs/development/PHASE_12_16_G2_FINAL_CALIBRATION_ANALYSIS_BASELINE.md",
+      "docs/development/PHASE_12_16_G2_HUMAN_ANCHOR_REVIEW_PACKET.md",
+      "tests/architecture/test_final_calibration_analysis_fitness.py",
+      "tests/calibration/pedagogical/metrics.py",
+      "tests/calibration/pedagogical/r4_r3_r1_recovery.py",
+      "tests/calibration/pedagogical/r4_r3_r3_analysis.py",
+      "tests/unit/test_pedagogical_calibration_r4_r3_r1.py",
+      "tests/unit/test_pedagogical_calibration_r4_r3_r3.py"
+    ],
+    "main_unchanged": true
+  },
+  "final_manifest": {
+    "diagnostic_only_results_included": false,
+    "logical_slot_ids_unique": true,
+    "policy_uniform": true,
+    "result_count": 76,
+    "sha256": "273c5b6e9cfe36d5bebf364337a050eecb8d13077f3409c34da6c8f7f8698677",
+    "split": {
+      "INITIAL_ANCHOR": 48,
+      "REPEATABILITY": 16,
+      "SELECTED_OUTPUT": 12
+    }
+  },
+  "governance": {
+    "adr_required": false,
+    "adrs_applied": [
+      "ADR-P12-063",
+      "ADR-P12-064"
+    ],
+    "next_gate": "12.16-G2-HUMAN_ANCHOR_REVIEW_READY"
+  },
+  "human_review": {
+    "blind": true,
+    "item_count": 24,
+    "packet_relative_path": "docs/development/PHASE_12_16_G2_HUMAN_ANCHOR_REVIEW_PACKET.md",
+    "packet_sha256": "d9ea4b33b84ee52c0460097cf1dd97e89f33a67106c57cc10dd611536b8d1e5e",
+    "review_status": "NOT_COMPLETED",
+    "unfilled": true
+  },
+  "offline_execution": {
+    "anthropic_calls": 0,
+    "credentials_resolved": false,
+    "historical_artifacts_mutated": false,
+    "openai_calls": 0,
+    "provider_cost_usd": "0.000000",
+    "provider_transport_constructed": false,
+    "runtime_routes_mutated": false
+  },
+  "openai_reused": {
+    "families": {
+      "CORRECTION": {
+        "cached_input_tokens": 0,
+        "call_count": 3,
+        "input_tokens": 1759,
+        "latency_milliseconds": 10845,
+        "measured_cost_usd": "0.016158",
+        "output_tokens": 596,
+        "reasoning_tokens": 0,
+        "statuses": {
+          "COMPLETED": 3
+        },
+        "total_tokens": 2355
+      },
+      "GENERATION": {
+        "cached_input_tokens": 0,
+        "call_count": 8,
+        "input_tokens": 4421,
+        "latency_milliseconds": 31333,
+        "measured_cost_usd": "0.035376",
+        "output_tokens": 1534,
+        "reasoning_tokens": 0,
+        "statuses": {
+          "COMPLETED": 8
+        },
+        "total_tokens": 5955
+      },
+      "REVIEW_SOL": {
+        "cached_input_tokens": 0,
+        "call_count": 5,
+        "input_tokens": 4371,
+        "latency_milliseconds": 95208,
+        "measured_cost_usd": "0.140464",
+        "output_tokens": 6149,
+        "reasoning_tokens": 1834,
+        "statuses": {
+          "PARTIAL": 5
+        },
+        "total_tokens": 10520
+      },
+      "REVIEW_TERRA": {
+        "cached_input_tokens": 0,
+        "call_count": 2,
+        "input_tokens": 1740,
+        "latency_milliseconds": 12649,
+        "measured_cost_usd": "0.013320",
+        "output_tokens": 820,
+        "reasoning_tokens": 222,
+        "statuses": {
+          "SUCCEEDED": 2
+        },
+        "total_tokens": 2560
+      },
+      "TRANSFORMATION": {
+        "cached_input_tokens": 0,
+        "call_count": 2,
+        "input_tokens": 1170,
+        "latency_milliseconds": 4302,
+        "measured_cost_usd": "0.006420",
+        "output_tokens": 340,
+        "reasoning_tokens": 0,
+        "statuses": {
+          "COMPLETED": 2
+        },
+        "total_tokens": 1510
+      }
+    },
+    "result_count": 20,
+    "results": [
+      {
+        "family": "CORRECTION",
+        "latency_milliseconds": 4096,
+        "logical_slot_id": "cal.correction.remediation.fallback.r1",
+        "measured_cost_usd": "0.003610",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.correction-fallback",
+        "output_sha256": "04b29a9193b71cc596ed61586fbfef9f1c600d6a17126c2e62bdd68a66170bf1",
+        "post_validation_status": "COMPLETED",
+        "proof_set": "G2",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 587,
+          "output_tokens": 203,
+          "reasoning_tokens": 0,
+          "total_tokens": 790
+        }
+      },
+      {
+        "family": "CORRECTION",
+        "latency_milliseconds": 2719,
+        "logical_slot_id": "cal.correction.remediation.primary.r1",
+        "measured_cost_usd": "0.006324",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.correction",
+        "output_sha256": "9966a3cc5773a25db17c370a749cb20e691907d42e1413f75f96e938c93c3122",
+        "post_validation_status": "COMPLETED",
+        "proof_set": "G2",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 586,
+          "output_tokens": 199,
+          "reasoning_tokens": 0,
+          "total_tokens": 785
+        }
+      },
+      {
+        "family": "CORRECTION",
+        "latency_milliseconds": 4030,
+        "logical_slot_id": "cal.correction.remediation.primary.r2",
+        "measured_cost_usd": "0.006224",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.correction",
+        "output_sha256": "02b5f41ec210c535dd5eef249ee9d2ff4b7c5cc03d9536eaeda4bf49f7beb07f",
+        "post_validation_status": "COMPLETED",
+        "proof_set": "G2",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 586,
+          "output_tokens": 194,
+          "reasoning_tokens": 0,
+          "total_tokens": 780
+        }
+      },
+      {
+        "family": "GENERATION",
+        "latency_milliseconds": 3853,
+        "logical_slot_id": "cal.generation.assessment.fallback.r1",
+        "measured_cost_usd": "0.008160",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.generation-fallback",
+        "output_sha256": "e88365bc63f7f40774e3c44df19ad61e6ab0290035e9b19b3a64c305451f6955",
+        "post_validation_status": "COMPLETED",
+        "proof_set": "G2",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 560,
+          "output_tokens": 296,
+          "reasoning_tokens": 0,
+          "total_tokens": 856
+        }
+      },
+      {
+        "family": "GENERATION",
+        "latency_milliseconds": 3324,
+        "logical_slot_id": "cal.generation.assessment.primary.r1",
+        "measured_cost_usd": "0.003914",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "output_sha256": "6f1436688c314bc3e900c6d77747d7e5eb12f60c107cfc1a3d9772072876d059",
+        "post_validation_status": "COMPLETED",
+        "proof_set": "G2",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 559,
+          "output_tokens": 233,
+          "reasoning_tokens": 0,
+          "total_tokens": 792
+        }
+      },
+      {
+        "family": "GENERATION",
+        "latency_milliseconds": 7913,
+        "logical_slot_id": "cal.generation.course.fallback.r1",
+        "measured_cost_usd": "0.005288",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.generation-fallback",
+        "output_sha256": "e264b018ede1f08f38540e5142f73f1f655fea664887c8c64217a1c5ce87d249",
+        "post_validation_status": "COMPLETED",
+        "proof_set": "G2",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 552,
+          "output_tokens": 154,
+          "reasoning_tokens": 0,
+          "total_tokens": 706
+        }
+      },
+      {
+        "family": "GENERATION",
+        "latency_milliseconds": 5174,
+        "logical_slot_id": "cal.generation.course.primary.r1",
+        "measured_cost_usd": "0.003010",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "output_sha256": "4c224e7b85af14a1f9a33cbd292c4567a45aef7fcbda02fde7d64ff6cf8d3fcb",
+        "post_validation_status": "COMPLETED",
+        "proof_set": "G2",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 551,
+          "output_tokens": 159,
+          "reasoning_tokens": 0,
+          "total_tokens": 710
+        }
+      },
+      {
+        "family": "GENERATION",
+        "latency_milliseconds": 3137,
+        "logical_slot_id": "cal.generation.course.primary.r2",
+        "measured_cost_usd": "0.003334",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "output_sha256": "53d4b056c16cc1212a4b9f7995f1d01bb2c8333793aaeca5ed77abdba8baf1a5",
+        "post_validation_status": "COMPLETED",
+        "proof_set": "G2",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 551,
+          "output_tokens": 186,
+          "reasoning_tokens": 0,
+          "total_tokens": 737
+        }
+      },
+      {
+        "family": "GENERATION",
+        "latency_milliseconds": 3361,
+        "logical_slot_id": "cal.generation.exercise.primary.r1",
+        "measured_cost_usd": "0.003546",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "output_sha256": "aded5d6dd52e3250670954803445ac4dddc9ae81843af62eaab85bcd2335f01b",
+        "post_validation_status": "COMPLETED",
+        "proof_set": "G2",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 531,
+          "output_tokens": 207,
+          "reasoning_tokens": 0,
+          "total_tokens": 738
+        }
+      },
+      {
+        "family": "GENERATION",
+        "latency_milliseconds": 2294,
+        "logical_slot_id": "cal.generation.qcm.fallback.r1",
+        "measured_cost_usd": "0.005196",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.generation-fallback",
+        "output_sha256": "6884150bf6a88db77fd0d2e0afdd623d6a30f2f2ba4be8efca09f77fef1a7306",
+        "post_validation_status": "COMPLETED",
+        "proof_set": "G2",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 559,
+          "output_tokens": 148,
+          "reasoning_tokens": 0,
+          "total_tokens": 707
+        }
+      },
+      {
+        "family": "GENERATION",
+        "latency_milliseconds": 2277,
+        "logical_slot_id": "cal.generation.qcm.primary.r1",
+        "measured_cost_usd": "0.002928",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "output_sha256": "a4567ef0f93d856799cc1df88924a2ecd95ce0273c6a1aefdb2f23831bba1036",
+        "post_validation_status": "COMPLETED",
+        "proof_set": "G2",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 558,
+          "output_tokens": 151,
+          "reasoning_tokens": 0,
+          "total_tokens": 709
+        }
+      },
+      {
+        "family": "REVIEW_SOL",
+        "latency_milliseconds": 21616,
+        "logical_slot_id": "cal.review.assessment.primary.r1",
+        "measured_cost_usd": "0.034340",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.review",
+        "output_sha256": "06958c577191ffde838c5e7b9e6aa47859ccf74e88fcaee3c7ca82b7dac1d703",
+        "post_validation_status": "PARTIAL",
+        "proof_set": "R3B",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 885,
+          "output_tokens": 1540,
+          "reasoning_tokens": 392,
+          "total_tokens": 2425
+        }
+      },
+      {
+        "family": "REVIEW_SOL",
+        "latency_milliseconds": 18180,
+        "logical_slot_id": "cal.review.correction.primary.r1",
+        "measured_cost_usd": "0.026220",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.review",
+        "output_sha256": "4ee34727d9c5feb7c4570ed84e7949d7fe5f71fb40fdf7b221db454b92fc9771",
+        "post_validation_status": "PARTIAL",
+        "proof_set": "R3B",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 875,
+          "output_tokens": 1136,
+          "reasoning_tokens": 329,
+          "total_tokens": 2011
+        }
+      },
+      {
+        "family": "REVIEW_TERRA",
+        "latency_milliseconds": 9058,
+        "logical_slot_id": "cal.review.exercise.fallback.r1",
+        "measured_cost_usd": "0.009180",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.review-fallback",
+        "output_sha256": "bfecd1259be3de50cd6aa89dc5921eb7c4c98096a736330fa3c5cd2a221261ad",
+        "post_validation_status": "SUCCEEDED",
+        "proof_set": "R3B",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 864,
+          "output_tokens": 621,
+          "reasoning_tokens": 126,
+          "total_tokens": 1485
+        }
+      },
+      {
+        "family": "REVIEW_SOL",
+        "latency_milliseconds": 25026,
+        "logical_slot_id": "cal.review.exercise.primary.r1",
+        "measured_cost_usd": "0.034712",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.review",
+        "output_sha256": "8430b6ae90a17451a94f69557de3aef1bca45e3e78ca6dff743ac161a4aac65b",
+        "post_validation_status": "PARTIAL",
+        "proof_set": "R2B",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 873,
+          "output_tokens": 1561,
+          "reasoning_tokens": 708,
+          "total_tokens": 2434
+        }
+      },
+      {
+        "family": "REVIEW_SOL",
+        "latency_milliseconds": 16788,
+        "logical_slot_id": "cal.review.exercise.primary.r2",
+        "measured_cost_usd": "0.024412",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.review",
+        "output_sha256": "5b5fc80fad92fd39eca3e279729a4a7d7512856a9de7389f5e41e33b310e17e1",
+        "post_validation_status": "PARTIAL",
+        "proof_set": "R3B",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 863,
+          "output_tokens": 1048,
+          "reasoning_tokens": 219,
+          "total_tokens": 1911
+        }
+      },
+      {
+        "family": "REVIEW_TERRA",
+        "latency_milliseconds": 3591,
+        "logical_slot_id": "cal.review.qcm.fallback.r1",
+        "measured_cost_usd": "0.004140",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.review-fallback",
+        "output_sha256": "384cfcd39c69fcfdc385bdc5794310a9769d96a5fc1db393011bdcdfee8637a3",
+        "post_validation_status": "SUCCEEDED",
+        "proof_set": "R3B",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 876,
+          "output_tokens": 199,
+          "reasoning_tokens": 96,
+          "total_tokens": 1075
+        }
+      },
+      {
+        "family": "REVIEW_SOL",
+        "latency_milliseconds": 13598,
+        "logical_slot_id": "cal.review.qcm.primary.r1",
+        "measured_cost_usd": "0.020780",
+        "model": "gpt-5.6-sol",
+        "model_profile_id": "openai.gpt-5.6-sol.review",
+        "output_sha256": "e54af12c650691ea53e5327dfb7c465fe54ffddd120bb6169f7a095db6fc26c3",
+        "post_validation_status": "PARTIAL",
+        "proof_set": "R3B",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 875,
+          "output_tokens": 864,
+          "reasoning_tokens": 186,
+          "total_tokens": 1739
+        }
+      },
+      {
+        "family": "TRANSFORMATION",
+        "latency_milliseconds": 1834,
+        "logical_slot_id": "cal.transformation.resource.primary.r1",
+        "measured_cost_usd": "0.003174",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "output_sha256": "965d11d36db35d200c1616930e0357d2089e18a3878d44e4f71a981714c94975",
+        "post_validation_status": "COMPLETED",
+        "proof_set": "G2",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 585,
+          "output_tokens": 167,
+          "reasoning_tokens": 0,
+          "total_tokens": 752
+        }
+      },
+      {
+        "family": "TRANSFORMATION",
+        "latency_milliseconds": 2468,
+        "logical_slot_id": "cal.transformation.resource.primary.r2",
+        "measured_cost_usd": "0.003246",
+        "model": "gpt-5.6-terra",
+        "model_profile_id": "openai.gpt-5.6-terra.generation",
+        "output_sha256": "b7e67be59faf25133033eabdcccd6048dd2359bea7c9c5e6592ae41ef1887590",
+        "post_validation_status": "COMPLETED",
+        "proof_set": "G2",
+        "usage": {
+          "cached_input_tokens": 0,
+          "input_tokens": 585,
+          "output_tokens": 173,
+          "reasoning_tokens": 0,
+          "total_tokens": 758
+        }
+      }
+    ],
+    "status_counts": {
+      "COMPLETED": 13,
+      "PARTIAL": 5,
+      "SUCCEEDED": 2
+    }
+  },
+  "phase": "12.16-G2-R3B-R4-R3-R3",
+  "proofs": {
+    "continuation_ledger_sha256": "4271bbcc24d453fa596eb200c2e4bcf02892599175fbc106ce3e684154f0dd17",
+    "continuation_raw_call_order_sha256": "a6b75cb01e8fe8ce3935b1c4ba7b8a060a79c949eb39e340e0c03115b7c9a894",
+    "continuation_summary_sha256": "83c5da3d662a33036d840da147920ed2f137c9704039a5a42a861cf5b34da7fd",
+    "continuation_transfer_manifest_sha256": "723ce92f820c2e18416d19ed372ecbe3fb2065b9a50fd54c664834c12170f685",
+    "r2_ledger_sha256": "ef694ad8174a28079db030086d83d0ffb8d02d7aed598092961b821b3fdd2a31",
+    "r2_raw_sha256": "a16287401cc87863d23dc170b76cf2983ccae1909374d2a3b6af8226642f6053",
+    "r2_summary_sha256": "ec88b72b616793bd4d215ec1f4a5e24a03b458691e1b00ce7491b4f6486d5948",
+    "r3_ledger_sha256": "bd4f9272730c225a7e1a309137cf937bcb0b8a9603446cc76c8d94871a029c99",
+    "r3_raw_ordered_list_sha256": "f39d83334eda6b0f87b4ecf363e9f432d818b298d55defa6c1076ec766a34c52",
+    "r3_summary_sha256": "c3052b33193bf6542cd96a2ff1706c8d210e297c736d1d3ffa101676c9405729",
+    "r3_transfer_manifest_sha256": "c8742f5e4a46215a34141e93b17b36a730c6ab6136b3c92ad3eba073be1e905a"
+  },
+  "refs": {
+    "entry_branch": "phase12/12-16-provider-model-calibration",
+    "entry_head": "123b4ebec6633df5c4512fce0e4755415f00c38d",
+    "entry_main": "7ae02ee109bcc6399ec0f71616da6aef07abda81",
+    "entry_origin_main": "7ae02ee109bcc6399ec0f71616da6aef07abda81",
+    "entry_upstream": "123b4ebec6633df5c4512fce0e4755415f00c38d"
+  },
+  "repeatability": {
+    "details": [
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-01.a",
+        "criterion_ref": "scn-01.quality.clarity",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-01.a",
+        "criterion_ref": "scn-01.quality.organization-utility",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-02.a",
+        "criterion_ref": "scn-02.quality.coverage",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-02.a",
+        "criterion_ref": "scn-02.quality.relevance",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-03.a",
+        "criterion_ref": "scn-03.quality.clarity",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-03.a",
+        "criterion_ref": "scn-03.quality.level-adaptation",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-04.a",
+        "criterion_ref": "scn-04.quality.fidelity",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-04.a",
+        "criterion_ref": "scn-04.quality.level-adaptation",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-05.a",
+        "criterion_ref": "scn-05.quality.difficulty-appropriateness",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-05.a",
+        "criterion_ref": "scn-05.quality.instruction-clarity",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 0
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "anchor_id": "cal.scn-06.a",
+        "criterion_ref": "scn-06.quality.assessment-clarity",
+        "direction": "DOWN",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 0
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 5,
+          "numerator": 4
+        },
+        "anchor_id": "cal.scn-06.a",
+        "criterion_ref": "scn-06.quality.marking-scheme-coherence",
+        "direction": "DOWN",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 5,
+          "numerator": 1
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-07.a",
+        "criterion_ref": "scn-07.quality.correction-quality",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-07.a",
+        "criterion_ref": "scn-07.quality.remediation-clarity",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-08.a",
+        "criterion_ref": "scn-08.quality.distractor-quality",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      },
+      {
+        "absolute_delta": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "anchor_id": "cal.scn-08.a",
+        "criterion_ref": "scn-08.quality.feedback-quality",
+        "direction": "UNCHANGED",
+        "initial": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "repeat": {
+          "denominator": 1,
+          "numerator": 1
+        }
+      }
+    ],
+    "evidence": "PARTIAL",
+    "metrics": {
+      "exact_agreement_count": 14,
+      "exact_agreement_rate": {
+        "denominator": 8,
+        "numerator": 7
+      },
+      "group_count": 16,
+      "inconclusive_count": 0,
+      "inconclusive_rate": {
+        "denominator": 1,
+        "numerator": 0
+      },
+      "maximum_spread": {
+        "denominator": 1,
+        "numerator": 1
+      },
+      "mean_absolute_rational_delta": {
+        "denominator": 80,
+        "numerator": 9
+      }
+    },
+    "rule": "STRONG iff all 16 complete two-observation groups agree exactly; WEAK iff none agree; PARTIAL iff some agree; otherwise INSUFFICIENT.",
+    "two_observations_per_group_only": true
+  },
+  "reproducibility": {
+    "canonical_analysis_without_reproducibility_sha256": "be3d7f03f9fa3fd47b565cbeca51a6c8f48aa70a7f86f6dc9de53be42f24cc90",
+    "deterministic_timestamps_excluded": true,
+    "json_float_count": 0
+  },
+  "selected_output": {
+    "details": [
+      {
+        "anchor_scores": {
+          "mixed": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "strong": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "weak": {
+            "denominator": 1,
+            "numerator": 1
+          }
+        },
+        "criterion_ref": "scn-03.quality.clarity",
+        "logical_slot_id": "cal.score.output.scn-03.clarity.r1",
+        "output_logical_source_id": "cal.generation.course.primary.r1",
+        "relative_classification": "UNCLASSIFIABLE_NON_MONOTONIC_ANCHORS",
+        "scenario_code": "SCN-03",
+        "score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "source_openai_model": "gpt-5.6-terra",
+        "source_openai_profile_id": "openai.gpt-5.6-terra.generation"
+      },
+      {
+        "anchor_scores": {
+          "mixed": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "strong": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "weak": {
+            "denominator": 1,
+            "numerator": 0
+          }
+        },
+        "criterion_ref": "scn-03.quality.level-adaptation",
+        "logical_slot_id": "cal.score.output.scn-03.level-adaptation.r1",
+        "output_logical_source_id": "cal.generation.course.primary.r1",
+        "relative_classification": "UNCLASSIFIABLE_NON_MONOTONIC_ANCHORS",
+        "scenario_code": "SCN-03",
+        "score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "source_openai_model": "gpt-5.6-terra",
+        "source_openai_profile_id": "openai.gpt-5.6-terra.generation"
+      },
+      {
+        "anchor_scores": {
+          "mixed": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "strong": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "weak": {
+            "denominator": 1,
+            "numerator": 0
+          }
+        },
+        "criterion_ref": "scn-04.quality.fidelity",
+        "logical_slot_id": "cal.score.output.scn-04.fidelity.r1",
+        "output_logical_source_id": "cal.transformation.resource.primary.r1",
+        "relative_classification": "UNCLASSIFIABLE_NON_MONOTONIC_ANCHORS",
+        "scenario_code": "SCN-04",
+        "score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "source_openai_model": "gpt-5.6-terra",
+        "source_openai_profile_id": "openai.gpt-5.6-terra.generation"
+      },
+      {
+        "anchor_scores": {
+          "mixed": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "strong": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "weak": {
+            "denominator": 2,
+            "numerator": 1
+          }
+        },
+        "criterion_ref": "scn-04.quality.level-adaptation",
+        "logical_slot_id": "cal.score.output.scn-04.level-adaptation.r1",
+        "output_logical_source_id": "cal.transformation.resource.primary.r1",
+        "relative_classification": "UNCLASSIFIABLE_NON_MONOTONIC_ANCHORS",
+        "scenario_code": "SCN-04",
+        "score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "source_openai_model": "gpt-5.6-terra",
+        "source_openai_profile_id": "openai.gpt-5.6-terra.generation"
+      },
+      {
+        "anchor_scores": {
+          "mixed": {
+            "denominator": 1,
+            "numerator": 0
+          },
+          "strong": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "weak": {
+            "denominator": 1,
+            "numerator": 0
+          }
+        },
+        "criterion_ref": "scn-05.quality.difficulty-appropriateness",
+        "logical_slot_id": "cal.score.output.scn-05.difficulty-appropriateness.r1",
+        "output_logical_source_id": "cal.generation.exercise.primary.r1",
+        "relative_classification": "UNCLASSIFIABLE_NON_MONOTONIC_ANCHORS",
+        "scenario_code": "SCN-05",
+        "score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "source_openai_model": "gpt-5.6-terra",
+        "source_openai_profile_id": "openai.gpt-5.6-terra.generation"
+      },
+      {
+        "anchor_scores": {
+          "mixed": {
+            "denominator": 1,
+            "numerator": 0
+          },
+          "strong": {
+            "denominator": 1,
+            "numerator": 0
+          },
+          "weak": {
+            "denominator": 1,
+            "numerator": 0
+          }
+        },
+        "criterion_ref": "scn-05.quality.instruction-clarity",
+        "logical_slot_id": "cal.score.output.scn-05.instruction-clarity.r1",
+        "output_logical_source_id": "cal.generation.exercise.primary.r1",
+        "relative_classification": "UNCLASSIFIABLE_NON_MONOTONIC_ANCHORS",
+        "scenario_code": "SCN-05",
+        "score": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "source_openai_model": "gpt-5.6-terra",
+        "source_openai_profile_id": "openai.gpt-5.6-terra.generation"
+      },
+      {
+        "anchor_scores": {
+          "mixed": {
+            "denominator": 2,
+            "numerator": 1
+          },
+          "strong": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "weak": {
+            "denominator": 1,
+            "numerator": 0
+          }
+        },
+        "criterion_ref": "scn-06.quality.assessment-clarity",
+        "logical_slot_id": "cal.score.output.scn-06.assessment-clarity.r1",
+        "output_logical_source_id": "cal.generation.assessment.primary.r1",
+        "relative_classification": "EQUAL_STRONG",
+        "scenario_code": "SCN-06",
+        "score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "source_openai_model": "gpt-5.6-terra",
+        "source_openai_profile_id": "openai.gpt-5.6-terra.generation"
+      },
+      {
+        "anchor_scores": {
+          "mixed": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "strong": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "weak": {
+            "denominator": 1,
+            "numerator": 0
+          }
+        },
+        "criterion_ref": "scn-06.quality.marking-scheme-coherence",
+        "logical_slot_id": "cal.score.output.scn-06.marking-scheme-coherence.r1",
+        "output_logical_source_id": "cal.generation.assessment.primary.r1",
+        "relative_classification": "UNCLASSIFIABLE_NON_MONOTONIC_ANCHORS",
+        "scenario_code": "SCN-06",
+        "score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "source_openai_model": "gpt-5.6-terra",
+        "source_openai_profile_id": "openai.gpt-5.6-terra.generation"
+      },
+      {
+        "anchor_scores": {
+          "mixed": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "strong": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "weak": {
+            "denominator": 1,
+            "numerator": 0
+          }
+        },
+        "criterion_ref": "scn-07.quality.correction-quality",
+        "logical_slot_id": "cal.score.output.scn-07.correction-quality.r1",
+        "output_logical_source_id": "cal.correction.remediation.primary.r1",
+        "relative_classification": "UNCLASSIFIABLE_NON_MONOTONIC_ANCHORS",
+        "scenario_code": "SCN-07",
+        "score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "source_openai_model": "gpt-5.6-sol",
+        "source_openai_profile_id": "openai.gpt-5.6-sol.correction"
+      },
+      {
+        "anchor_scores": {
+          "mixed": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "strong": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "weak": {
+            "denominator": 1,
+            "numerator": 0
+          }
+        },
+        "criterion_ref": "scn-07.quality.remediation-clarity",
+        "logical_slot_id": "cal.score.output.scn-07.remediation-clarity.r1",
+        "output_logical_source_id": "cal.correction.remediation.primary.r1",
+        "relative_classification": "UNCLASSIFIABLE_NON_MONOTONIC_ANCHORS",
+        "scenario_code": "SCN-07",
+        "score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "source_openai_model": "gpt-5.6-sol",
+        "source_openai_profile_id": "openai.gpt-5.6-sol.correction"
+      },
+      {
+        "anchor_scores": {
+          "mixed": {
+            "denominator": 1,
+            "numerator": 0
+          },
+          "strong": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "weak": {
+            "denominator": 1,
+            "numerator": 0
+          }
+        },
+        "criterion_ref": "scn-08.quality.distractor-quality",
+        "logical_slot_id": "cal.score.output.scn-08.distractor-quality.r1",
+        "output_logical_source_id": "cal.generation.qcm.primary.r1",
+        "relative_classification": "UNCLASSIFIABLE_NON_MONOTONIC_ANCHORS",
+        "scenario_code": "SCN-08",
+        "score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "source_openai_model": "gpt-5.6-terra",
+        "source_openai_profile_id": "openai.gpt-5.6-terra.generation"
+      },
+      {
+        "anchor_scores": {
+          "mixed": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "strong": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "weak": {
+            "denominator": 1,
+            "numerator": 0
+          }
+        },
+        "criterion_ref": "scn-08.quality.feedback-quality",
+        "logical_slot_id": "cal.score.output.scn-08.feedback-quality.r1",
+        "output_logical_source_id": "cal.generation.qcm.primary.r1",
+        "relative_classification": "UNCLASSIFIABLE_NON_MONOTONIC_ANCHORS",
+        "scenario_code": "SCN-08",
+        "score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "source_openai_model": "gpt-5.6-terra",
+        "source_openai_profile_id": "openai.gpt-5.6-terra.generation"
+      }
+    ],
+    "evidence": "DESCRIPTIVE_ONLY",
+    "fallback_soft_quality_comparison": "NOT_ESTABLISHED",
+    "quality_aggregation": [
+      {
+        "criterion_ref": "scn-03.quality.clarity",
+        "inconclusive_count": 0,
+        "mean_score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "model": "gpt-5.6-terra",
+        "observation_count": 1,
+        "scenario_code": "SCN-03"
+      },
+      {
+        "criterion_ref": "scn-03.quality.level-adaptation",
+        "inconclusive_count": 0,
+        "mean_score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "model": "gpt-5.6-terra",
+        "observation_count": 1,
+        "scenario_code": "SCN-03"
+      },
+      {
+        "criterion_ref": "scn-04.quality.fidelity",
+        "inconclusive_count": 0,
+        "mean_score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "model": "gpt-5.6-terra",
+        "observation_count": 1,
+        "scenario_code": "SCN-04"
+      },
+      {
+        "criterion_ref": "scn-04.quality.level-adaptation",
+        "inconclusive_count": 0,
+        "mean_score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "model": "gpt-5.6-terra",
+        "observation_count": 1,
+        "scenario_code": "SCN-04"
+      },
+      {
+        "criterion_ref": "scn-05.quality.difficulty-appropriateness",
+        "inconclusive_count": 0,
+        "mean_score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "model": "gpt-5.6-terra",
+        "observation_count": 1,
+        "scenario_code": "SCN-05"
+      },
+      {
+        "criterion_ref": "scn-05.quality.instruction-clarity",
+        "inconclusive_count": 0,
+        "mean_score": {
+          "denominator": 1,
+          "numerator": 0
+        },
+        "model": "gpt-5.6-terra",
+        "observation_count": 1,
+        "scenario_code": "SCN-05"
+      },
+      {
+        "criterion_ref": "scn-06.quality.assessment-clarity",
+        "inconclusive_count": 0,
+        "mean_score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "model": "gpt-5.6-terra",
+        "observation_count": 1,
+        "scenario_code": "SCN-06"
+      },
+      {
+        "criterion_ref": "scn-06.quality.marking-scheme-coherence",
+        "inconclusive_count": 0,
+        "mean_score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "model": "gpt-5.6-terra",
+        "observation_count": 1,
+        "scenario_code": "SCN-06"
+      },
+      {
+        "criterion_ref": "scn-07.quality.correction-quality",
+        "inconclusive_count": 0,
+        "mean_score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "model": "gpt-5.6-sol",
+        "observation_count": 1,
+        "scenario_code": "SCN-07"
+      },
+      {
+        "criterion_ref": "scn-07.quality.remediation-clarity",
+        "inconclusive_count": 0,
+        "mean_score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "model": "gpt-5.6-sol",
+        "observation_count": 1,
+        "scenario_code": "SCN-07"
+      },
+      {
+        "criterion_ref": "scn-08.quality.distractor-quality",
+        "inconclusive_count": 0,
+        "mean_score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "model": "gpt-5.6-terra",
+        "observation_count": 1,
+        "scenario_code": "SCN-08"
+      },
+      {
+        "criterion_ref": "scn-08.quality.feedback-quality",
+        "inconclusive_count": 0,
+        "mean_score": {
+          "denominator": 1,
+          "numerator": 1
+        },
+        "model": "gpt-5.6-terra",
+        "observation_count": 1,
+        "scenario_code": "SCN-08"
+      }
+    ]
+  },
+  "status": "PASS_CLOSED",
+  "validation": {
+    "compileall_backend_harness_calibration": "PASS",
+    "diff_check": "PASS",
+    "global_pytest": "PASS_4298_SKIPPED_3_EXPLICIT_OPTIONAL_GATES",
+    "live_tests_executed": false,
+    "mypy_backend_and_evaluation_harness": "PASS_689_SOURCE_FILES",
+    "ruff_global": "PASS",
+    "security_scan": "PASS_NO_SECRET_PRIVATE_PATH_RUNTIME_DATA",
+    "targeted_regression": "PASS_37"
+  }
+}

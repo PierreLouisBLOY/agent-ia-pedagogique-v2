@@ -1205,8 +1205,19 @@ def write_r1_outputs(root: Path = ROOT) -> None:
         PLAN_MARKDOWN_RELATIVE_PATH: render_plan_markdown(root) + "\n",
         PLAN_JSON_RELATIVE_PATH: render_plan_json(root),
         REUSABLE_MANIFEST_RELATIVE_PATH: _pretty_json(build_reusable_manifest(root)),
-        RECOVERY_LEDGER_RELATIVE_PATH: _pretty_json(build_recovery_ledger(root)),
     }
+    recovery_path = root / RECOVERY_LEDGER_RELATIVE_PATH
+    preserve_terminal_ledger = False
+    if recovery_path.is_file():
+        try:
+            current = json.loads(recovery_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            current = None
+        preserve_terminal_ledger = type(current) is dict and current.get("run_status") != (
+            "AWAITING_EXPLICIT_APPROVAL"
+        )
+    if not preserve_terminal_ledger:
+        outputs[RECOVERY_LEDGER_RELATIVE_PATH] = _pretty_json(build_recovery_ledger(root))
     for relative_path, content in outputs.items():
         _atomic_write(root / relative_path, content.encode("utf-8"))
 

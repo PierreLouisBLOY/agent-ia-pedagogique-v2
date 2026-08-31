@@ -16,10 +16,10 @@ from backend.adapters.outbound.openai import (
 )
 from backend.adapters.outbound.review.openai.adapter import _map_response
 from backend.agent_runtime.agents.review import ReviewPortError
-from tests.calibration.pedagogical.call_plan import (
+from tests.calibration.pedagogical.catalog import anchor_by_id
+from tests.calibration.pedagogical.legacy_call_plan import (
     PEDAGOGICAL_CALIBRATION_CALL_MATRIX,
 )
-from tests.calibration.pedagogical.catalog import anchor_by_id
 from tests.calibration.pedagogical.live_runner import (
     _anthropic_observation,
     _model_profile,

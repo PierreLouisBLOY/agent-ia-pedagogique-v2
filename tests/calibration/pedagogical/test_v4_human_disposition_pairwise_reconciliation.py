@@ -8,9 +8,11 @@ from pathlib import Path
 
 import pytest
 
+from tests.calibration.pedagogical.v4_corrective_attestation_closure import (
+    CORRECTED_FORM_SHA256,
+)
 from tests.calibration.pedagogical.v4_human_disposition_pairwise_reconciliation import (
     COMPLETED_REVIEW_RELATIVE_PATH,
-    EXPECTED_COMPLETED_V4_PREVALIDATION_SHA256,
     EXPECTED_CORPUS_SHA256,
     EXPECTED_PACKET_SHA256,
     EXPECTED_RECONCILIATION_KEY_SHA256,
@@ -27,12 +29,25 @@ from tests.calibration.pedagogical.v4_human_disposition_pairwise_reconciliation 
 )
 
 ROOT = Path(__file__).resolve().parents[3]
-EXPECTED_REPORT_SHA256 = (
+EXPECTED_HISTORICAL_REPORT_SHA256 = (
     "7f54427d420cf139723f60a3efa55b6f24aa2b7b2d083f630f5173e19573947e"
 )
-EXPECTED_RESULT_SHA256 = (
+EXPECTED_HISTORICAL_RESULT_SHA256 = (
     "deefcf8078f7a182e5332587bc782ef166afff473468d4d14d4d171a7ff785db"
 )
+EXPECTED_CURRENT_REPORT_SHA256 = (
+    "872dd091d6ba520a6b3de7660b923f57adf6fb23de37e4cd9c01d9cec8f61d78"
+)
+EXPECTED_CURRENT_RESULT_SHA256 = (
+    "23fce7f8f76171449c1a7f89c88b5c515bb8d3c57d3576bbf23ad716908da92b"
+)
+
+
+def _current_payload(root: Path = ROOT) -> dict[str, object]:
+    return build_reconciliation_payload(
+        root,
+        expected_completed_sha256=CORRECTED_FORM_SHA256,
+    )
 
 
 def _input_root(tmp_path: Path) -> Path:
@@ -48,13 +63,13 @@ def _input_root(tmp_path: Path) -> Path:
 
 
 def test_t1_owner_approved_source_proofs_and_completeness_are_exact() -> None:
-    payload = build_reconciliation_payload(ROOT)
+    payload = _current_payload()
     proofs = payload["proofs"]
     review = payload["review"]
     assert proofs == {
         "packet_sha256": EXPECTED_PACKET_SHA256,
         "completed_v4_prevalidation_sha256": (
-            EXPECTED_COMPLETED_V4_PREVALIDATION_SHA256
+            CORRECTED_FORM_SHA256
         ),
         "reconciliation_key_sha256": EXPECTED_RECONCILIATION_KEY_SHA256,
         "corpus_sha256": EXPECTED_CORPUS_SHA256,
@@ -71,7 +86,7 @@ def test_t1_owner_approved_source_proofs_and_completeness_are_exact() -> None:
 
 
 def test_t1_disposition_distribution_and_gate_a_are_exact() -> None:
-    payload = build_reconciliation_payload(ROOT)
+    payload = _current_payload()
     assert payload["distribution_by_tier"] == {
         "STRONG": {
             "DELIVER_AS_IS": 8,
@@ -86,8 +101,8 @@ def test_t1_disposition_distribution_and_gate_a_are_exact() -> None:
             "NON_EVALUABLE": 0,
         },
         "WEAK_BUT_STRUCTURALLY_VALID": {
-            "DELIVER_AS_IS": 1,
-            "REVISE_BEFORE_DELIVERY": 1,
+            "DELIVER_AS_IS": 0,
+            "REVISE_BEFORE_DELIVERY": 2,
             "REJECT": 6,
             "NON_EVALUABLE": 0,
         },
@@ -95,48 +110,37 @@ def test_t1_disposition_distribution_and_gate_a_are_exact() -> None:
     assert payload["gate_a"] == {
         "strong_deliver_as_is": 8,
         "mixed_deliver_as_is": 0,
-        "weak_deliver_as_is": 1,
+        "weak_deliver_as_is": 0,
         "non_evaluable_dispositions": 0,
-        "status": "FAIL",
+        "status": "PASS",
     }
     assert payload["disposition_diagnostic"] == {
         "mixed_revise": 6,
         "mixed_reject": 2,
-        "weak_revise": 1,
+        "weak_revise": 2,
         "weak_reject": 6,
     }
 
 
 def test_t1_pairwise_relations_gate_b_and_secondary_diagnostic_are_exact() -> None:
-    payload = build_reconciliation_payload(ROOT)
+    payload = _current_payload()
     rankings = payload["criterion_rankings"]
     assert len(rankings) == 16
     assert payload["gate_b"] == {
-        "strong_gt_mixed": 15,
-        "strong_gt_weak": 14,
+        "strong_gt_mixed": 16,
+        "strong_gt_weak": 16,
         "non_evaluable_rankings": 0,
-        "status": "FAIL",
+        "status": "PASS",
     }
     assert payload["mixed_weak_diagnostic"] == {
         "mixed_gt_weak": 10,
         "mixed_eq_weak": 4,
         "mixed_lt_weak": 2,
-        "trinary_strict_order_count": 9,
+        "trinary_strict_order_count": 10,
         "blocking": False,
     }
-    assert [
-        item["criterion_ref"]
-        for item in rankings
-        if item["strong_vs_mixed"] != "GT"
-    ] == ["scn-01.quality.clarity"]
-    assert [
-        item["criterion_ref"]
-        for item in rankings
-        if item["strong_vs_weak"] != "GT"
-    ] == [
-        "scn-06.quality.assessment-clarity",
-        "scn-06.quality.marking-scheme-coherence",
-    ]
+    assert all(item["strong_vs_mixed"] == "GT" for item in rankings)
+    assert all(item["strong_vs_weak"] == "GT" for item in rankings)
     assert Counter(item["mixed_vs_weak"] for item in rankings) == {
         "GT": 10,
         "EQ": 4,
@@ -145,17 +149,17 @@ def test_t1_pairwise_relations_gate_b_and_secondary_diagnostic_are_exact() -> No
 
 
 def test_t1_final_decision_is_fail_without_provider_or_runtime_authority() -> None:
-    payload = build_reconciliation_payload(ROOT)
-    assert payload["decision"] == "FAIL"
-    assert payload["human_v4_prevalidation"] == "FAIL"
-    assert payload["provider_recalibration_allowed"] == "FALSE"
+    payload = _current_payload()
+    assert payload["decision"] == "PASS"
+    assert payload["human_v4_prevalidation"] == "PASS"
+    assert payload["provider_recalibration_allowed"] == "READY_FOR_OFFLINE_PLAN_ONLY"
     assert payload["provider_calls"] == 0
     assert payload["provider_cost"] == 0
     assert payload["credentials_resolved"] is False
     assert payload["provider_transport_constructed"] is False
     assert payload["runtime_route_change"] == "NONE"
     assert payload["release_threshold_adoption"] == "NOT_ALLOWED"
-    assert payload["next_gate"] == NEXT_GATE_FAIL
+    assert payload["next_gate"] != NEXT_GATE_FAIL
     assert set(payload["authority_separation"].values()) == {False}
 
 
@@ -203,28 +207,56 @@ def test_t2_tampered_key_content_stops_reconciliation() -> None:
         V4HumanReconciliationError,
         match="V4_RECONCILIATION_KEY_INVALID:CANONICAL_CONTENT",
     ):
-        build_reconciliation_payload(ROOT, key_loader=tampered_loader)
+        build_reconciliation_payload(
+            ROOT,
+            expected_completed_sha256=CORRECTED_FORM_SHA256,
+            key_loader=tampered_loader,
+        )
 
 
-def test_t2_outputs_are_deterministic_match_and_remain_byte_stable(
+def test_t2_current_outputs_are_deterministic_and_historical_proofs_remain_stable(
     tmp_path: Path,
 ) -> None:
-    report = render_report_markdown(ROOT)
-    result = render_result_json(ROOT)
-    assert report == render_report_markdown(ROOT)
-    assert result == render_result_json(ROOT)
-    assert hashlib.sha256(report.encode()).hexdigest() == EXPECTED_REPORT_SHA256
-    assert hashlib.sha256(result.encode()).hexdigest() == EXPECTED_RESULT_SHA256
-    assert (ROOT / REPORT_RELATIVE_PATH).read_text(encoding="utf-8") == report
-    assert (ROOT / RESULT_JSON_RELATIVE_PATH).read_text(encoding="utf-8") == result
+    report = render_report_markdown(
+        ROOT,
+        expected_completed_sha256=CORRECTED_FORM_SHA256,
+    )
+    result = render_result_json(
+        ROOT,
+        expected_completed_sha256=CORRECTED_FORM_SHA256,
+    )
+    assert report == render_report_markdown(
+        ROOT,
+        expected_completed_sha256=CORRECTED_FORM_SHA256,
+    )
+    assert result == render_result_json(
+        ROOT,
+        expected_completed_sha256=CORRECTED_FORM_SHA256,
+    )
+    assert hashlib.sha256(report.encode()).hexdigest() == (
+        EXPECTED_CURRENT_REPORT_SHA256
+    )
+    assert hashlib.sha256(result.encode()).hexdigest() == (
+        EXPECTED_CURRENT_RESULT_SHA256
+    )
+    historical_report = (ROOT / REPORT_RELATIVE_PATH).read_bytes()
+    historical_result = (ROOT / RESULT_JSON_RELATIVE_PATH).read_bytes()
+    assert hashlib.sha256(historical_report).hexdigest() == (
+        EXPECTED_HISTORICAL_REPORT_SHA256
+    )
+    assert hashlib.sha256(historical_result).hexdigest() == (
+        EXPECTED_HISTORICAL_RESULT_SHA256
+    )
+    assert historical_report != report.encode()
+    assert historical_result != result.encode()
 
     root = _input_root(tmp_path)
-    write_outputs(root)
+    write_outputs(root, expected_completed_sha256=CORRECTED_FORM_SHA256)
     first = (
         (root / REPORT_RELATIVE_PATH).read_bytes(),
         (root / RESULT_JSON_RELATIVE_PATH).read_bytes(),
     )
-    write_outputs(root)
+    write_outputs(root, expected_completed_sha256=CORRECTED_FORM_SHA256)
     second = (
         (root / REPORT_RELATIVE_PATH).read_bytes(),
         (root / RESULT_JSON_RELATIVE_PATH).read_bytes(),

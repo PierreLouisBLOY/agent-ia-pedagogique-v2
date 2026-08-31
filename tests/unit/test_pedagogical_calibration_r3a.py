@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from backend.adapters.outbound.openai import OpenAIReasoningEffort
-from tests.calibration.pedagogical.call_plan import (
+from tests.calibration.pedagogical.legacy_call_plan import (
     PEDAGOGICAL_CALIBRATION_CALL_MATRIX,
     CalibrationProvider,
     CalibrationWorkload,

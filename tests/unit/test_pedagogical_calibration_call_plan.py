@@ -1,12 +1,16 @@
 from __future__ import annotations
 
-import json
 from decimal import Decimal
 from fractions import Fraction
 from pathlib import Path
 
 import pytest
 
+from tests.calibration.pedagogical import pricing as pricing_module
+from tests.calibration.pedagogical.anchor_corpus_v4 import (
+    V4_CALIBRATION_ANCHORS,
+    V4_CRITERION_ORDERINGS,
+)
 from tests.calibration.pedagogical.call_plan import (
     ANTHROPIC_CALL_COUNT,
     MODEL_PRICE_QUOTES,
@@ -22,7 +26,6 @@ from tests.calibration.pedagogical.call_plan import (
     call_matrix_sha256,
     estimate_call_plan_cost,
 )
-from tests.calibration.pedagogical.catalog import CRITERION_ORDERINGS
 from tests.calibration.pedagogical.metrics import (
     CalibrationResponseStatus,
     InvocationObservation,
@@ -35,13 +38,22 @@ from tests.calibration.pedagogical.metrics import (
     summarize_quality,
     summarize_repeatability,
 )
+from tests.calibration.pedagogical.pricing import (
+    EXPECTED_PRICING_SNAPSHOT_SHA256,
+    PRICING_SNAPSHOT_ID,
+    pricing_snapshot_sha256,
+)
+from tests.calibration.pedagogical.protocol import (
+    V4_CALIBRATION_CRITERION_ITEMS,
+    build_v4_blind_scorer_observation,
+)
 
 
 def test_call_matrix_is_exact_versioned_bounded_and_covers_required_workloads() -> None:
     calls = PEDAGOGICAL_CALIBRATION_CALL_MATRIX
-    assert len(calls) == 96
+    assert len(calls) == 102
     assert OPENAI_CALL_COUNT == 20
-    assert ANTHROPIC_CALL_COUNT == 76
+    assert ANTHROPIC_CALL_COUNT == 82
     assert len({call.call_id for call in calls}) == len(calls)
     assert RAW_OUTPUT_DIRECTORY.startswith("artifacts/")
     generation = tuple(call for call in calls if call.workload is CalibrationWorkload.GENERATION)
@@ -88,9 +100,9 @@ def test_repeatability_and_selected_output_scoring_are_deterministic_subsets() -
     )
     assert len(anchor_repeats) == 16
     assert {call.criterion_refs[0] for call in anchor_repeats} == {
-        ordering.criterion_ref for ordering in CRITERION_ORDERINGS
+        ordering.criterion_ref for ordering in V4_CRITERION_ORDERINGS
     }
-    assert len(output_scores) == 12
+    assert len(output_scores) == 18
     assert {call.scenario_code for call in output_scores} == {
         "SCN-03",
         "SCN-04",
@@ -99,6 +111,7 @@ def test_repeatability_and_selected_output_scoring_are_deterministic_subsets() -
         "SCN-07",
         "SCN-08",
     }
+    assert sum(".fallback." in call.call_id for call in output_scores) == 6
     assert {call.workload for call in openai_repeats} == {
         CalibrationWorkload.GENERATION,
         CalibrationWorkload.TRANSFORMATION,
@@ -110,39 +123,55 @@ def test_repeatability_and_selected_output_scoring_are_deterministic_subsets() -
 def test_call_matrix_checksum_and_decimal_cost_plan_are_frozen() -> None:
     assert (
         call_matrix_sha256()
-        == "997e814f65ac7c5fc25da990cf286800fa6ca4edd761d821a6f6f59f5e2550ed"
+        == "f159f200bf45d9df631007dd742e6ea9cc44a3e487ed76180f92c1392cd6245e"
     )
     estimate = estimate_call_plan_cost()
-    assert estimate.call_count == 96
-    assert estimate.estimated_input_tokens == 183_250
-    assert estimate.estimated_output_tokens == 35_072
-    assert estimate.estimated_base_usd == Decimal("1.087576")
-    assert estimate.maximum_input_tokens == 733_000
-    assert estimate.maximum_output_tokens == 70_144
-    assert estimate.estimated_maximum_before_margin_usd == Decimal("3.277152")
-    assert estimate.estimated_maximum_with_margin_usd == Decimal("4.096440")
+    assert estimate.call_count == 102
+    assert estimate.estimated_input_tokens == 195_250
+    assert estimate.estimated_output_tokens == 36_608
+    assert estimate.estimated_base_usd == Decimal("0.877656")
+    assert estimate.maximum_input_tokens == 781_000
+    assert estimate.maximum_output_tokens == 73_216
+    assert estimate.estimated_maximum_before_margin_usd == Decimal("2.601312")
+    assert estimate.estimated_maximum_with_margin_usd == Decimal("3.251640")
     assert {quote.model for quote in MODEL_PRICE_QUOTES} == {
         "gpt-5.6-terra",
         "gpt-5.6-sol",
         "claude-sonnet-5",
     }
     assert all(quote.unit == "USD per 1M tokens" for quote in MODEL_PRICE_QUOTES)
-    assert all(quote.verified_on == "2026-08-29" for quote in MODEL_PRICE_QUOTES)
-    report = json.loads(
-        (
-            Path(__file__).resolve().parents[2]
-            / "docs/development/PHASE_12_16_G1_LIVE_CALIBRATION_COST_PLAN.json"
-        ).read_text(encoding="utf-8")
+    assert all(quote.verified_on == "2026-08-31" for quote in MODEL_PRICE_QUOTES)
+    assert PRICING_SNAPSHOT_ID == "official-2026-08-31-v4"
+    assert pricing_snapshot_sha256() == EXPECTED_PRICING_SNAPSHOT_SHA256
+
+
+def test_call_matrix_uses_all_and_only_opaque_v4_anchor_ids() -> None:
+    expected = {anchor.anchor_id for anchor in V4_CALIBRATION_ANCHORS}
+    actual = {
+        call.input_refs[0].removeprefix("anchor:")
+        for call in PEDAGOGICAL_CALIBRATION_CALL_MATRIX
+        if call.input_refs[0].startswith("anchor:")
+    }
+    assert actual == expected
+    assert len(actual) == 24
+    assert all(anchor_id.startswith("cal.v4.scn-") for anchor_id in actual)
+    assert all(not anchor_id.startswith("cal.scn-") for anchor_id in actual)
+    assert len(V4_CALIBRATION_CRITERION_ITEMS) == 48
+    assert all(
+        build_v4_blind_scorer_observation(item).fields
+        for item in V4_CALIBRATION_CRITERION_ITEMS
     )
-    assert report["call_matrix_sha256"] == call_matrix_sha256()
-    assert report["OPENAI_CALL_COUNT"] == OPENAI_CALL_COUNT
-    assert report["ANTHROPIC_CALL_COUNT"] == ANTHROPIC_CALL_COUNT
-    assert report["ESTIMATED_BASE_COST_USD"] == str(estimate.estimated_base_usd)
-    assert report["ESTIMATED_MAX_COST_USD"] == str(
-        estimate.estimated_maximum_with_margin_usd
-    )
-    assert report["APPROVAL_REQUIRED"] is True
-    assert report["LIVE_PROVIDER_CALL_COUNT"] == 0
+
+
+def test_pricing_snapshot_mutation_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    changed = tmp_path / "pricing.json"
+    changed.write_text('{"snapshot_id":"changed"}\n', encoding="utf-8")
+    monkeypatch.setattr(pricing_module, "SNAPSHOT_PATH", changed)
+    with pytest.raises(RuntimeError, match="PRICING_SNAPSHOT_SHA256_MISMATCH"):
+        pricing_module.pricing_snapshot_sha256()
 
 
 def test_budget_guard_blocks_before_call_on_every_closed_failure() -> None:
@@ -183,7 +212,7 @@ def test_budget_guard_blocks_before_call_on_every_closed_failure() -> None:
             CalibrationBudgetErrorCode.APPROVED_CEILING_MISSING,
         ),
         (
-            {"approved_ceiling_usd": Decimal("4.00")},
+            {"approved_ceiling_usd": Decimal("3.25")},
             CalibrationBudgetErrorCode.APPROVED_CEILING_TOO_LOW,
         ),
         (
@@ -202,7 +231,7 @@ def test_budget_guard_blocks_before_call_on_every_closed_failure() -> None:
 
 
 def test_threshold_free_metrics_cover_ordering_repeatability_quality_and_usage() -> None:
-    ordering = CRITERION_ORDERINGS[0]
+    ordering = V4_CRITERION_ORDERINGS[0]
     scores = {
         (ordering.criterion_ref, ordering.ordered_anchor_ids[0]): Fraction(4, 5),
         (ordering.criterion_ref, ordering.ordered_anchor_ids[1]): Fraction(1, 2),

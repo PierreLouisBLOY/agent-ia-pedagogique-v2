@@ -12,7 +12,7 @@ from backend.adapters.outbound.openai import OpenAISDKResponsesTransportFactory
 from backend.infrastructure.config.secrets.provider import (
     EnvironmentProviderSecretResolver,
 )
-from tests.calibration.pedagogical.call_plan import (
+from tests.calibration.pedagogical.legacy_call_plan import (
     PEDAGOGICAL_CALIBRATION_CALL_MATRIX,
     CalibrationProvider,
 )

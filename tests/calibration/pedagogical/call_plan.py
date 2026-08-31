@@ -8,10 +8,21 @@ from dataclasses import dataclass
 from decimal import ROUND_CEILING, Decimal
 from enum import StrEnum
 
-from tests.calibration.pedagogical.catalog import CALIBRATION_SCENARIOS
+from tests.calibration.pedagogical.anchor_corpus_v4 import (
+    PEDAGOGICAL_CALIBRATION_CORPUS_V4_VERSION,
+    V4_ANCHOR_EXPECTATIONS,
+    V4_CALIBRATION_ANCHORS,
+    v4_calibration_corpus_sha256,
+)
+from tests.calibration.pedagogical.catalog import CALIBRATION_SCENARIOS, AnchorTier
+from tests.calibration.pedagogical.pricing import (
+    MODEL_PRICE_QUOTES,
+    PRICING_SNAPSHOT_ID,
+    ModelPriceQuote,
+    pricing_snapshot_sha256,
+)
 
-PEDAGOGICAL_CALIBRATION_PLAN_VERSION = "12.16-g2-plan-v1"
-PRICING_SNAPSHOT_ID = "official-2026-08-29"
+PEDAGOGICAL_CALIBRATION_PLAN_VERSION = "12.16-g2-v4-plan-v1"
 RAW_OUTPUT_DIRECTORY = "artifacts/calibration/12.16-g2/raw"
 COST_SAFETY_MARGIN = Decimal("1.25")
 LIVE_PROVIDER_CALL_COUNT = 0
@@ -35,19 +46,6 @@ class CalibrationWorkload(StrEnum):
     CORRECTION = "correction"
     REVIEW = "review"
     SCORING = "scoring"
-
-
-@dataclass(frozen=True, slots=True)
-class ModelPriceQuote:
-    provider: CalibrationProvider
-    model: str
-    input_usd_per_million_tokens: Decimal
-    cached_input_usd_per_million_tokens: Decimal
-    output_usd_per_million_tokens: Decimal
-    unit: str
-    source_url: str
-    verified_on: str
-    effective_note: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,43 +75,6 @@ class CostEstimate:
     maximum_output_tokens: int
     estimated_maximum_before_margin_usd: Decimal
     estimated_maximum_with_margin_usd: Decimal
-
-
-MODEL_PRICE_QUOTES = (
-    ModelPriceQuote(
-        CalibrationProvider.OPENAI,
-        "gpt-5.6-terra",
-        Decimal("2.00"),
-        Decimal("0.20"),
-        Decimal("12.00"),
-        "USD per 1M tokens",
-        "https://developers.openai.com/api/docs/models/compare",
-        "2026-08-29",
-        "official price snapshot; reverify before G2 approval",
-    ),
-    ModelPriceQuote(
-        CalibrationProvider.OPENAI,
-        "gpt-5.6-sol",
-        Decimal("4.00"),
-        Decimal("0.40"),
-        Decimal("20.00"),
-        "USD per 1M tokens",
-        "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
-        "2026-08-29",
-        "official promotional price shown through at least 2026-11-21; reverify",
-    ),
-    ModelPriceQuote(
-        CalibrationProvider.ANTHROPIC,
-        "claude-sonnet-5",
-        Decimal("3.00"),
-        Decimal("0.30"),
-        Decimal("15.00"),
-        "USD per 1M tokens",
-        "https://platform.claude.com/docs/en/about-claude/pricing",
-        "2026-08-29",
-        "standard price effective 2026-09-01, conservatively used instead of promotion",
-    ),
-)
 
 
 def _openai_call(
@@ -405,19 +366,42 @@ def _anthropic_call(
     )
 
 
+_V4_ANCHOR_BY_ID = {anchor.anchor_id: anchor for anchor in V4_CALIBRATION_ANCHORS}
+V4_ANCHOR_BY_SCENARIO_TIER = {
+    (_V4_ANCHOR_BY_ID[item.anchor_id].scenario_code, item.tier): _V4_ANCHOR_BY_ID[
+        item.anchor_id
+    ]
+    for item in V4_ANCHOR_EXPECTATIONS
+}
+V4_TIER_BY_ANCHOR_ID = {
+    item.anchor_id: item.tier for item in V4_ANCHOR_EXPECTATIONS
+}
+
+
+def _tier_slug(tier: AnchorTier) -> str:
+    return tier.value.casefold().replace("_but_structurally_valid", "")
+
+
 _ANCHOR_SCORING_CALLS = tuple(
     _anthropic_call(
         call_id=(
-            f"cal.score.anchor.{scenario.scenario_code.lower()}.{suffix}."
+            f"cal.score.anchor.{scenario.scenario_code.lower()}.{_tier_slug(tier)}."
             f"{_criterion_slug(criterion_ref)}.r1"
         ),
         scenario_code=scenario.scenario_code,
         criterion_ref=criterion_ref,
-        input_ref=f"anchor:cal.{scenario.scenario_code.lower()}.{suffix}",
+        input_ref=(
+            "anchor:"
+            f"{V4_ANCHOR_BY_SCENARIO_TIER[(scenario.scenario_code, tier)].anchor_id}"
+        ),
         repetition=1,
     )
     for scenario in CALIBRATION_SCENARIOS
-    for suffix in ("a", "b", "c")
+    for tier in (
+        AnchorTier.STRONG,
+        AnchorTier.MIXED,
+        AnchorTier.WEAK_BUT_STRUCTURALLY_VALID,
+    )
     for criterion_ref in scenario.criterion_refs
 )
 
@@ -425,12 +409,15 @@ _ANCHOR_SCORING_CALLS = tuple(
 _ANCHOR_REPEAT_CALLS = tuple(
     _anthropic_call(
         call_id=(
-            f"cal.score.anchor.{scenario.scenario_code.lower()}.a."
+            f"cal.score.anchor.{scenario.scenario_code.lower()}.strong."
             f"{_criterion_slug(criterion_ref)}.r2"
         ),
         scenario_code=scenario.scenario_code,
         criterion_ref=criterion_ref,
-        input_ref=f"anchor:cal.{scenario.scenario_code.lower()}.a",
+        input_ref=(
+            "anchor:"
+            f"{V4_ANCHOR_BY_SCENARIO_TIER[(scenario.scenario_code, AnchorTier.STRONG)].anchor_id}"
+        ),
         repetition=2,
     )
     for scenario in CALIBRATION_SCENARIOS
@@ -438,29 +425,34 @@ _ANCHOR_REPEAT_CALLS = tuple(
 )
 
 
-_SELECTED_OUTPUTS = {
-    "SCN-03": "cal.generation.course.primary.r1",
-    "SCN-04": "cal.transformation.resource.primary.r1",
-    "SCN-05": "cal.generation.exercise.primary.r1",
-    "SCN-06": "cal.generation.assessment.primary.r1",
-    "SCN-07": "cal.correction.remediation.primary.r1",
-    "SCN-08": "cal.generation.qcm.primary.r1",
+_OUTPUTS_TO_SCORE = {
+    ("SCN-03", CalibrationRole.PRIMARY): "cal.generation.course.primary.r1",
+    ("SCN-03", CalibrationRole.FALLBACK): "cal.generation.course.fallback.r1",
+    ("SCN-04", CalibrationRole.PRIMARY): "cal.transformation.resource.primary.r1",
+    ("SCN-05", CalibrationRole.PRIMARY): "cal.generation.exercise.primary.r1",
+    ("SCN-06", CalibrationRole.PRIMARY): "cal.generation.assessment.primary.r1",
+    ("SCN-06", CalibrationRole.FALLBACK): "cal.generation.assessment.fallback.r1",
+    ("SCN-07", CalibrationRole.PRIMARY): "cal.correction.remediation.primary.r1",
+    ("SCN-07", CalibrationRole.FALLBACK): "cal.correction.remediation.fallback.r1",
+    ("SCN-08", CalibrationRole.PRIMARY): "cal.generation.qcm.primary.r1",
 }
 
 
 _OUTPUT_SCORING_CALLS = tuple(
     _anthropic_call(
         call_id=(
-            f"cal.score.output.{scenario.scenario_code.lower()}."
+            f"cal.score.output.{scenario.scenario_code.lower()}.{role.value.casefold()}."
             f"{_criterion_slug(criterion_ref)}.r1"
         ),
         scenario_code=scenario.scenario_code,
         criterion_ref=criterion_ref,
-        input_ref=f"output:{_SELECTED_OUTPUTS[scenario.scenario_code]}",
+        input_ref=f"output:{source_call_id}",
         repetition=1,
     )
     for scenario in CALIBRATION_SCENARIOS
-    if scenario.scenario_code in _SELECTED_OUTPUTS
+    for role in (CalibrationRole.PRIMARY, CalibrationRole.FALLBACK)
+    if (source_call_id := _OUTPUTS_TO_SCORE.get((scenario.scenario_code, role)))
+    is not None
     for criterion_ref in scenario.criterion_refs
 )
 
@@ -485,7 +477,10 @@ ANTHROPIC_CALL_COUNT = sum(
 def call_matrix_sha256() -> str:
     payload = {
         "plan_version": PEDAGOGICAL_CALIBRATION_PLAN_VERSION,
+        "corpus_version": PEDAGOGICAL_CALIBRATION_CORPUS_V4_VERSION,
+        "corpus_sha256": v4_calibration_corpus_sha256(),
         "pricing_snapshot_id": PRICING_SNAPSHOT_ID,
+        "pricing_snapshot_sha256": pricing_snapshot_sha256(),
         "calls": [
             {
                 "call_id": call.call_id,

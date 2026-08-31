@@ -1,4 +1,4 @@
-"""Approved, resumable and budget-bounded G2 live calibration runner."""
+"""Offline-tested, resumable and owner-gated G2 V4 calibration runner."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import time
 from collections import defaultdict
 from collections.abc import Callable, Mapping
@@ -69,19 +70,29 @@ from evaluation_harness import (
     ObservationSequence,
     ScoreStatus,
 )
+from tests.calibration.pedagogical.anchor_corpus_v4 import (
+    V4_CRITERION_ORDERINGS,
+    v4_calibration_corpus_sha256,
+)
 from tests.calibration.pedagogical.call_plan import (
+    ANTHROPIC_CALL_COUNT,
     COST_SAFETY_MARGIN,
+    OPENAI_CALL_COUNT,
     PEDAGOGICAL_CALIBRATION_CALL_MATRIX,
     PEDAGOGICAL_CALIBRATION_PLAN_VERSION,
     RAW_OUTPUT_DIRECTORY,
+    V4_ANCHOR_BY_SCENARIO_TIER,
+    V4_TIER_BY_ANCHOR_ID,
     CalibrationBudgetGuard,
     CalibrationCallSpec,
     CalibrationProvider,
+    CalibrationRole,
     CalibrationWorkload,
     call_matrix_sha256,
+    estimate_call_plan_cost,
 )
 from tests.calibration.pedagogical.catalog import (
-    CRITERION_ORDERINGS,
+    AnchorTier,
     CalibrationScenario,
     anchor_by_id,
     scenario_by_code,
@@ -98,11 +109,24 @@ from tests.calibration.pedagogical.metrics import (
     summarize_quality,
     summarize_repeatability,
 )
+from tests.calibration.pedagogical.pricing import (
+    EXPECTED_PRICING_SNAPSHOT_SHA256,
+    MODEL_PRICE_BY_NAME,
+    PRICING_SNAPSHOT_ID,
+    pricing_snapshot_payload,
+    pricing_snapshot_sha256,
+)
 from tests.calibration.pedagogical.protocol import (
     CALIBRATION_CRITERION_ITEMS,
     MAX_CANDIDATE_PROJECTION_CHARACTERS,
     SCORER_OBSERVATION_FIELD_CODES,
+    V4_CALIBRATION_CRITERION_ITEMS,
     build_blind_scorer_observation,
+    build_v4_blind_scorer_observation,
+)
+from tests.calibration.pedagogical.v4_corrective_attestation_closure import (
+    CORRECTED_FORM_SHA256,
+    build_closure_payload,
 )
 from tests.providers.anthropic import (
     AnthropicEvaluationScorer,
@@ -118,8 +142,18 @@ from tests.providers.anthropic import (
 )
 
 ROOT = Path(__file__).resolve().parents[3]
-EXPECTED_MATRIX_SHA256 = "997e814f65ac7c5fc25da990cf286800fa6ca4edd761d821a6f6f59f5e2550ed"
-APPROVED_HARD_CEILING_USD = Decimal("4.096440")
+EXPECTED_MATRIX_SHA256 = "f159f200bf45d9df631007dd742e6ea9cc44a3e487ed76180f92c1392cd6245e"
+V4_CLOSURE_COMMIT = "a3de3a86f5ddd9afea10d71a277854458a7d4b5f"
+EXPECTED_V4_CORPUS_SHA256 = (
+    "9c8e262028f1d63fa50963f2f8bcb742e4c24d4e106a73244861416f826ca034"
+)
+PROPOSED_TECHNICAL_CEILING_USD = Decimal("3.251640")
+OWNER_CONFIGURATION_APPROVAL = "APPROVED"
+APPROVED_MATRIX_SHA256 = EXPECTED_MATRIX_SHA256
+APPROVED_PRICING_SHA256 = EXPECTED_PRICING_SNAPSHOT_SHA256
+APPROVED_MAX_CALL_COUNT = 102
+APPROVED_HARD_CEILING_USD = Decimal("3.251640")
+LIVE_PROVIDER_RECALIBRATION_AUTHORIZED = False
 LEDGER_RELATIVE_PATH = "artifacts/calibration/12.16-g2/ledger.json"
 REPORT_JSON_RELATIVE_PATH = "docs/development/PHASE_12_16_G2_PEDAGOGICAL_CALIBRATION_REPORT.json"
 REPORT_MARKDOWN_RELATIVE_PATH = "docs/development/PHASE_12_16_G2_PEDAGOGICAL_CALIBRATION_REPORT.md"
@@ -127,32 +161,7 @@ LIVE_FLAG = "RUN_PEDAGOGICAL_LIVE_CALIBRATION"
 LIVE_OUTPUT_PATH_ENV = "PEDAGOGICAL_CALIBRATION_OUTPUT_PATH"
 APPROVED_CEILING_ENV = "PEDAGOGICAL_CALIBRATION_APPROVED_CEILING_USD"
 
-_G2_PRICING = {
-    "gpt-5.6-terra": {
-        "provider": "openai",
-        "input_usd_per_million_tokens": "2.00",
-        "cached_input_usd_per_million_tokens": "0.20",
-        "output_usd_per_million_tokens": "12.00",
-        "source_url": "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
-        "verified_on": "2026-08-29",
-    },
-    "gpt-5.6-sol": {
-        "provider": "openai",
-        "input_usd_per_million_tokens": "4.00",
-        "cached_input_usd_per_million_tokens": "0.40",
-        "output_usd_per_million_tokens": "20.00",
-        "source_url": "https://developers.openai.com/api/docs/models/compare",
-        "verified_on": "2026-08-29",
-    },
-    "claude-sonnet-5": {
-        "provider": "anthropic",
-        "input_usd_per_million_tokens": "2.00",
-        "cached_input_usd_per_million_tokens": "0.20",
-        "output_usd_per_million_tokens": "10.00",
-        "source_url": "https://platform.claude.com/docs/en/about-claude/pricing",
-        "verified_on": "2026-08-29",
-    },
-}
+_CURRENT_PRICING_SNAPSHOT = pricing_snapshot_payload()
 _G1_HISTORICAL_PRICING = {
     "snapshot_id": "official-2026-08-29",
     "terra_input_output_usd_per_mtok": "2.00/12.00",
@@ -182,8 +191,16 @@ class LedgerCallStatus(StrEnum):
 
 
 class LiveCalibrationStopCode(StrEnum):
-    ENTRY_BASELINE_MISMATCH = "ENTRY_BASELINE_MISMATCH"
+    V4_CLOSURE_BASELINE_MISMATCH = "V4_CLOSURE_BASELINE_MISMATCH"
+    V4_CORRECTED_FORM_MISMATCH = "V4_CORRECTED_FORM_MISMATCH"
+    V4_CORPUS_MISMATCH = "V4_CORPUS_MISMATCH"
+    V4_HUMAN_PREVALIDATION_NOT_PASS = "V4_HUMAN_PREVALIDATION_NOT_PASS"
+    V4_WORKTREE_DIRTY = "V4_WORKTREE_DIRTY"
+    V4_BASELINE_COMMIT_NOT_ANCESTOR = "V4_BASELINE_COMMIT_NOT_ANCESTOR"
     MATRIX_MISMATCH = "MATRIX_MISMATCH"
+    PRICING_SNAPSHOT_MISMATCH = "PRICING_SNAPSHOT_MISMATCH"
+    OWNER_CONFIGURATION_MISMATCH = "OWNER_CONFIGURATION_MISMATCH"
+    LIVE_OWNER_AUTHORIZATION_REQUIRED = "LIVE_OWNER_AUTHORIZATION_REQUIRED"
     LIVE_PROVIDER_CREDENTIAL_REQUIRED = "LIVE_PROVIDER_CREDENTIAL_REQUIRED"
     LIVE_ENVIRONMENT_GATE_CLOSED = "LIVE_ENVIRONMENT_GATE_CLOSED"
     RAW_OUTPUT_PATH_UNSAFE = "RAW_OUTPUT_PATH_UNSAFE"
@@ -208,6 +225,7 @@ class LiveCalibrationStop(RuntimeError):
 
 
 class ProviderWorkloadFamily(StrEnum):
+    OPENAI_GENERATION_CORRECTION = "OPENAI_GENERATION_CORRECTION"
     OPENAI_REVIEW = "OPENAI_REVIEW"
     ANTHROPIC_SCORER = "ANTHROPIC_SCORER"
 
@@ -233,11 +251,37 @@ class _CanaryState(StrEnum):
 
 
 class SystemicCanaryBreaker:
-    """Test-only owner that requires one successful canary before family fan-out."""
+    """Require one successful, ledger-backed canary before family fan-out."""
 
-    def __init__(self) -> None:
-        self._states = {family: _CanaryState.PENDING for family in ProviderWorkloadFamily}
-        self._failure_categories: dict[ProviderWorkloadFamily, ProviderTransportCategory] = {}
+    def __init__(
+        self,
+        *,
+        states: Mapping[ProviderWorkloadFamily, _CanaryState] | None = None,
+        failure_categories: Mapping[
+            ProviderWorkloadFamily, ProviderTransportCategory
+        ]
+        | None = None,
+    ) -> None:
+        self._states = {
+            family: (states or {}).get(family, _CanaryState.PENDING)
+            for family in ProviderWorkloadFamily
+        }
+        self._failure_categories = dict(failure_categories or {})
+
+    @classmethod
+    def from_ledger(cls, ledger: Mapping[str, object]) -> SystemicCanaryBreaker:
+        raw_canaries = cast(dict[str, dict[str, object]], ledger["canaries"])
+        states = {
+            family: _CanaryState(cast(str, raw_canaries[family.value]["state"]))
+            for family in ProviderWorkloadFamily
+        }
+        failures = {
+            family: ProviderTransportCategory(cast(str, raw["failure_category"]))
+            for family in ProviderWorkloadFamily
+            if (raw := raw_canaries[family.value]).get("failure_category")
+            is not None
+        }
+        return cls(states=states, failure_categories=failures)
 
     def authorize(
         self,
@@ -279,6 +323,27 @@ class SystemicCanaryBreaker:
     ) -> ProviderTransportCategory | None:
         return self._failure_categories.get(family)
 
+    def state(self, family: ProviderWorkloadFamily) -> _CanaryState:
+        return self._states[family]
+
+
+def _workload_family(call: CalibrationCallSpec) -> ProviderWorkloadFamily:
+    if call.provider is CalibrationProvider.ANTHROPIC:
+        return ProviderWorkloadFamily.ANTHROPIC_SCORER
+    if call.workload is CalibrationWorkload.REVIEW:
+        return ProviderWorkloadFamily.OPENAI_REVIEW
+    return ProviderWorkloadFamily.OPENAI_GENERATION_CORRECTION
+
+
+CANARY_CALL_IDS = {
+    family: next(
+        call.call_id
+        for call in PEDAGOGICAL_CALIBRATION_CALL_MATRIX
+        if _workload_family(call) is family
+    )
+    for family in ProviderWorkloadFamily
+}
+
 
 @dataclass(frozen=True, slots=True)
 class ProviderCallResult:
@@ -304,6 +369,46 @@ class ProviderCallResult:
     thinking_tokens: int | None = None
 
 
+def _systemic_failure_category(
+    result: ProviderCallResult,
+) -> ProviderTransportCategory | None:
+    if result.response_status is not CalibrationResponseStatus.ERROR:
+        return None
+    markers = " ".join(
+        value
+        for value in (
+            result.closed_error_code,
+            result.public_error_code,
+            result.private_diagnostic_code,
+            result.provider_error_type.value
+            if result.provider_error_type is not None
+            else None,
+        )
+        if value is not None
+    ).upper()
+    if "REFUSAL" in markers or "INCONCLUSIVE" in markers:
+        return None
+    categories = (
+        (("AUTH",), ProviderTransportCategory.AUTHENTICATION),
+        (("PERMISSION", "FORBIDDEN"), ProviderTransportCategory.PERMISSION),
+        (("BILLING", "CREDIT", "QUOTA"), ProviderTransportCategory.BILLING),
+        (("RATE_LIMIT",), ProviderTransportCategory.RATE_LIMIT),
+        (("NOT_FOUND", "MODEL"), ProviderTransportCategory.NOT_FOUND),
+        (
+            ("INVALID_REQUEST", "REQUEST_TOO_LARGE", "CONFIG"),
+            ProviderTransportCategory.INVALID_REQUEST,
+        ),
+        (("TIMEOUT",), ProviderTransportCategory.TIMEOUT),
+        (("CONNECTION",), ProviderTransportCategory.CONNECTION),
+        (("SERVER",), ProviderTransportCategory.SERVER),
+        (("UNAVAILABLE",), ProviderTransportCategory.UNAVAILABLE),
+    )
+    for needles, category in categories:
+        if any(needle in markers for needle in needles):
+            return category
+    return ProviderTransportCategory.UNAVAILABLE
+
+
 class CalibrationExecutor(Protocol):
     def execute(
         self,
@@ -311,6 +416,10 @@ class CalibrationExecutor(Protocol):
         *,
         dependency_candidate: str | None,
     ) -> ProviderCallResult: ...
+
+
+class _AnchorProjection(Protocol):
+    def candidate_projection(self) -> str: ...
 
 
 def revalidated_theoretical_ceiling_usd() -> Decimal:
@@ -322,12 +431,12 @@ def revalidated_theoretical_ceiling_usd() -> Decimal:
 
 
 def _maximum_call_cost(call: CalibrationCallSpec) -> Decimal:
-    quote = _G2_PRICING[call.model]
+    quote = MODEL_PRICE_BY_NAME[call.model]
     return _money(
         (
             Decimal(call.input_utf8_upper_bound_bytes)
-            * Decimal(quote["input_usd_per_million_tokens"])
-            + Decimal(call.max_output_tokens) * Decimal(quote["output_usd_per_million_tokens"])
+            * quote.input_usd_per_million_tokens
+            + Decimal(call.max_output_tokens) * quote.output_usd_per_million_tokens
         )
         / Decimal(1_000_000)
     )
@@ -342,12 +451,12 @@ def _observed_call_cost(
     cached = result.cached_input_tokens or 0
     if cached > result.input_tokens:
         return None
-    quote = _G2_PRICING[call.model]
+    quote = MODEL_PRICE_BY_NAME[call.model]
     regular_input = result.input_tokens - cached
     cost = (
-        Decimal(regular_input) * Decimal(quote["input_usd_per_million_tokens"])
-        + Decimal(cached) * Decimal(quote["cached_input_usd_per_million_tokens"])
-        + Decimal(result.output_tokens) * Decimal(quote["output_usd_per_million_tokens"])
+        Decimal(regular_input) * quote.input_usd_per_million_tokens
+        + Decimal(cached) * quote.cached_input_usd_per_million_tokens
+        + Decimal(result.output_tokens) * quote.output_usd_per_million_tokens
     ) / Decimal(1_000_000)
     return _money(cost)
 
@@ -378,12 +487,27 @@ def _atomic_write_bytes(path: Path, payload: bytes) -> None:
             temporary.unlink()
 
 
-def _initial_ledger() -> dict[str, object]:
+def _initial_ledger(
+    approved_ceiling_usd: Decimal | None,
+) -> dict[str, object]:
     return {
         "plan_version": PEDAGOGICAL_CALIBRATION_PLAN_VERSION,
         "matrix_sha256": EXPECTED_MATRIX_SHA256,
-        "approved_ceiling_usd": str(APPROVED_HARD_CEILING_USD),
-        "pricing_snapshot": _G2_PRICING,
+        "proposed_technical_ceiling_usd": str(PROPOSED_TECHNICAL_CEILING_USD),
+        "approved_ceiling_usd": (
+            str(approved_ceiling_usd) if approved_ceiling_usd is not None else None
+        ),
+        "pricing_snapshot_id": PRICING_SNAPSHOT_ID,
+        "pricing_snapshot_sha256": pricing_snapshot_sha256(),
+        "pricing_snapshot": _CURRENT_PRICING_SNAPSHOT,
+        "canaries": {
+            family.value: {
+                "call_id": CANARY_CALL_IDS[family],
+                "state": _CanaryState.PENDING.value,
+                "failure_category": None,
+            }
+            for family in ProviderWorkloadFamily
+        },
         "calls": [
             {
                 "call_id": call.call_id,
@@ -409,12 +533,18 @@ def _initial_ledger() -> dict[str, object]:
 
 
 class AtomicCalibrationLedger:
-    def __init__(self, path: Path) -> None:
+    def __init__(
+        self,
+        path: Path,
+        *,
+        approved_ceiling_usd: Decimal | None = APPROVED_HARD_CEILING_USD,
+    ) -> None:
         self.path = path
+        self.approved_ceiling_usd = approved_ceiling_usd
 
     def initialize(self) -> dict[str, object]:
         if not self.path.exists():
-            self.write(_initial_ledger())
+            self.write(_initial_ledger(self.approved_ceiling_usd))
         return self.read()
 
     def read(self) -> dict[str, object]:
@@ -425,11 +555,11 @@ class AtomicCalibrationLedger:
         if type(ledger) is not dict:
             _stop(LiveCalibrationStopCode.LEDGER_INVALID)
         normalized = cast(dict[str, object], ledger)
-        _validate_ledger(normalized)
+        _validate_ledger(normalized, self.approved_ceiling_usd)
         return normalized
 
     def write(self, ledger: Mapping[str, object]) -> None:
-        _validate_ledger(dict(ledger))
+        _validate_ledger(dict(ledger), self.approved_ceiling_usd)
         payload = (
             json.dumps(
                 ledger,
@@ -461,6 +591,9 @@ class AtomicCalibrationLedger:
         raw_output_path: str | None,
         cost_usd: Decimal,
         closed_error_code: str | None = None,
+        canary_family: ProviderWorkloadFamily | None = None,
+        canary_succeeded: bool | None = None,
+        canary_failure_category: ProviderTransportCategory | None = None,
     ) -> dict[str, object]:
         ledger = self.read()
         record = _ledger_record(ledger, call_id)
@@ -489,6 +622,26 @@ class AtomicCalibrationLedger:
                 (result.input_tokens or 0) + (result.output_tokens or 0)
             )
             record["latency_milliseconds"] = result.latency_milliseconds
+        if canary_family is not None:
+            if canary_succeeded is None:
+                _stop(LiveCalibrationStopCode.LEDGER_INVALID)
+            raw_canaries = cast(dict[str, dict[str, object]], ledger["canaries"])
+            canary = raw_canaries[canary_family.value]
+            if (
+                canary["call_id"] != call_id
+                or canary["state"] != _CanaryState.PENDING.value
+            ):
+                _stop(LiveCalibrationStopCode.CANARY_ALREADY_TERMINAL)
+            canary["state"] = (
+                _CanaryState.PASSED.value
+                if canary_succeeded
+                else _CanaryState.BLOCKED.value
+            )
+            canary["failure_category"] = (
+                None
+                if canary_succeeded
+                else (canary_failure_category or ProviderTransportCategory.UNAVAILABLE).value
+            )
         ledger["total_cost_usd"] = str(
             _money(
                 sum(
@@ -504,14 +657,47 @@ class AtomicCalibrationLedger:
         return ledger
 
 
-def _validate_ledger(ledger: dict[str, object]) -> None:
+def _validate_ledger(
+    ledger: dict[str, object],
+    approved_ceiling_usd: Decimal | None,
+) -> None:
+    expected_approved = (
+        str(approved_ceiling_usd) if approved_ceiling_usd is not None else None
+    )
     if (
         ledger.get("plan_version") != PEDAGOGICAL_CALIBRATION_PLAN_VERSION
         or ledger.get("matrix_sha256") != EXPECTED_MATRIX_SHA256
-        or ledger.get("approved_ceiling_usd") != str(APPROVED_HARD_CEILING_USD)
-        or ledger.get("pricing_snapshot") != _G2_PRICING
+        or ledger.get("proposed_technical_ceiling_usd")
+        != str(PROPOSED_TECHNICAL_CEILING_USD)
+        or ledger.get("approved_ceiling_usd") != expected_approved
+        or ledger.get("pricing_snapshot_id") != PRICING_SNAPSHOT_ID
+        or ledger.get("pricing_snapshot_sha256") != pricing_snapshot_sha256()
+        or ledger.get("pricing_snapshot") != _CURRENT_PRICING_SNAPSHOT
     ):
         _stop(LiveCalibrationStopCode.LEDGER_INVALID)
+    canaries = ledger.get("canaries")
+    if type(canaries) is not dict or set(canaries) != {
+        family.value for family in ProviderWorkloadFamily
+    }:
+        _stop(LiveCalibrationStopCode.LEDGER_INVALID)
+    for family in ProviderWorkloadFamily:
+        raw = cast(dict[str, object], canaries.get(family.value))
+        if type(raw) is not dict:
+            _stop(LiveCalibrationStopCode.LEDGER_INVALID)
+        try:
+            state = _CanaryState(cast(str, raw.get("state")))
+        except ValueError:
+            _stop(LiveCalibrationStopCode.LEDGER_INVALID)
+        failure = raw.get("failure_category")
+        if raw.get("call_id") != CANARY_CALL_IDS[family]:
+            _stop(LiveCalibrationStopCode.LEDGER_INVALID)
+        if state is _CanaryState.BLOCKED:
+            try:
+                ProviderTransportCategory(cast(str, failure))
+            except ValueError:
+                _stop(LiveCalibrationStopCode.LEDGER_INVALID)
+        elif failure is not None:
+            _stop(LiveCalibrationStopCode.LEDGER_INVALID)
     calls = ledger.get("calls")
     if type(calls) is not list or len(calls) != len(PEDAGOGICAL_CALIBRATION_CALL_MATRIX):
         _stop(LiveCalibrationStopCode.LEDGER_INVALID)
@@ -540,7 +726,8 @@ def _validate_ledger(ledger: dict[str, object]) -> None:
         total = Decimal(cast(str, ledger["total_cost_usd"]))
     except (KeyError, ArithmeticError):
         _stop(LiveCalibrationStopCode.LEDGER_INVALID)
-    if _money(cost) != total or total > APPROVED_HARD_CEILING_USD:
+    ceiling = approved_ceiling_usd or Decimal("0")
+    if _money(cost) != total or total > ceiling:
         _stop(LiveCalibrationStopCode.LEDGER_INVALID)
 
 
@@ -943,7 +1130,7 @@ def _generation_request(call: CalibrationCallSpec) -> GenerationPortRequest:
         CalibrationWorkload.TRANSFORMATION: GenerationOperation.TRANSFORM,
         CalibrationWorkload.CORRECTION: GenerationOperation.CORRECT,
     }[call.workload]
-    strong = anchor_by_id(f"cal.{call.scenario_code.lower()}.a")
+    strong = _strong_anchor_projection(call)
     target_ref = None
     target_version_ref = None
     if operation is GenerationOperation.TRANSFORM:
@@ -981,7 +1168,7 @@ def _generation_request(call: CalibrationCallSpec) -> GenerationPortRequest:
 
 def _review_request(call: CalibrationCallSpec) -> ReviewPortRequest:
     scenario = scenario_by_code(call.scenario_code)
-    strong = anchor_by_id(f"cal.{call.scenario_code.lower()}.a")
+    strong = _strong_anchor_projection(call)
     return ReviewPortRequest(
         source_step_id=call.call_id,
         operation=ReviewOperation.SEMANTIC_REVIEW,
@@ -1011,12 +1198,20 @@ def _anthropic_observation(
     input_ref = call.input_refs[0]
     if input_ref.startswith("anchor:"):
         anchor_id = input_ref.removeprefix("anchor:")
+        if anchor_id not in V4_TIER_BY_ANCHOR_ID:
+            item = next(
+                criterion
+                for criterion in CALIBRATION_CRITERION_ITEMS
+                if criterion.anchor_id == anchor_id
+                and criterion.criterion_ref == criterion_ref
+            )
+            return build_blind_scorer_observation(item)
         item = next(
             criterion
-            for criterion in CALIBRATION_CRITERION_ITEMS
+            for criterion in V4_CALIBRATION_CRITERION_ITEMS
             if criterion.anchor_id == anchor_id and criterion.criterion_ref == criterion_ref
         )
-        return build_blind_scorer_observation(item)
+        return build_v4_blind_scorer_observation(item)
     if dependency_candidate is None:
         raise ValueError("selected output dependency is unavailable")
     return _blind_output_observation(
@@ -1024,6 +1219,15 @@ def _anthropic_observation(
         criterion_ref,
         dependency_candidate,
     )
+
+
+def _strong_anchor_projection(call: CalibrationCallSpec) -> _AnchorProjection:
+    input_ref = call.input_refs[0]
+    if input_ref.startswith("corpus:12.16-g2-v4-plan-v1:"):
+        return V4_ANCHOR_BY_SCENARIO_TIER[
+            (call.scenario_code, AnchorTier.STRONG)
+        ]
+    return anchor_by_id(f"cal.{call.scenario_code.lower()}.a")
 
 
 def _blind_output_observation(
@@ -1060,6 +1264,80 @@ def _blind_output_observation(
     )
 
 
+def _git_baseline_state(root: Path) -> tuple[bool, bool]:
+    try:
+        ancestor = subprocess.run(
+            (
+                "git",
+                "-C",
+                str(root),
+                "merge-base",
+                "--is-ancestor",
+                V4_CLOSURE_COMMIT,
+                "HEAD",
+            ),
+            capture_output=True,
+            check=False,
+            text=True,
+        )
+        status = subprocess.run(
+            (
+                "git",
+                "-C",
+                str(root),
+                "status",
+                "--porcelain",
+                "--untracked-files=all",
+            ),
+            capture_output=True,
+            check=False,
+            text=True,
+        )
+    except OSError:
+        return False, False
+    return ancestor.returncode == 0, status.returncode == 0 and not status.stdout.strip()
+
+
+def validate_v4_baseline(
+    root: Path,
+    *,
+    closure_builder: Callable[[Path], dict[str, object]] = build_closure_payload,
+    corpus_hash_builder: Callable[[], str] = v4_calibration_corpus_sha256,
+    git_probe: Callable[[Path], tuple[bool, bool]] = _git_baseline_state,
+) -> None:
+    ancestor, worktree_clean = git_probe(root)
+    if not ancestor:
+        _stop(LiveCalibrationStopCode.V4_BASELINE_COMMIT_NOT_ANCESTOR)
+    if not worktree_clean:
+        _stop(LiveCalibrationStopCode.V4_WORKTREE_DIRTY)
+    try:
+        closure = closure_builder(root)
+    except Exception:
+        _stop(LiveCalibrationStopCode.V4_CLOSURE_BASELINE_MISMATCH)
+    if closure.get("corrected_form_sha256") != CORRECTED_FORM_SHA256:
+        _stop(LiveCalibrationStopCode.V4_CORRECTED_FORM_MISMATCH)
+    try:
+        corpus_sha256 = corpus_hash_builder()
+    except Exception:
+        _stop(LiveCalibrationStopCode.V4_CORPUS_MISMATCH)
+    if corpus_sha256 != EXPECTED_V4_CORPUS_SHA256:
+        _stop(LiveCalibrationStopCode.V4_CORPUS_MISMATCH)
+    gate_a = cast(dict[str, object], closure.get("gate_a"))
+    gate_b = cast(dict[str, object], closure.get("gate_b"))
+    closure_pass = (
+        closure.get("trace_correction_check") == "PASS"
+        and type(gate_a) is dict
+        and gate_a.get("status") == "PASS"
+        and type(gate_b) is dict
+        and gate_b.get("status") == "PASS"
+        and closure.get("human_v4_prevalidation")
+        == "PASS_WITH_CORRECTIVE_ATTESTATION"
+        and closure.get("methodological_status") == "PASS"
+    )
+    if not closure_pass:
+        _stop(LiveCalibrationStopCode.V4_HUMAN_PREVALIDATION_NOT_PASS)
+
+
 class LiveCalibrationRunner:
     def __init__(
         self,
@@ -1068,19 +1346,41 @@ class LiveCalibrationRunner:
         environment: Mapping[str, str],
         executor: CalibrationExecutor,
         progress: Callable[[str], None] | None = None,
+        baseline_validator: Callable[[Path], None] = validate_v4_baseline,
+        approved_ceiling_usd: Decimal | None = APPROVED_HARD_CEILING_USD,
+        live_authorized: bool = LIVE_PROVIDER_RECALIBRATION_AUTHORIZED,
+        gates_prevalidated: bool = False,
     ) -> None:
         self.root = root
         self.environment = dict(environment)
         self.executor = executor
         self.progress = progress or (lambda _: None)
-        self.ledger = AtomicCalibrationLedger(root / LEDGER_RELATIVE_PATH)
+        self.baseline_validator = baseline_validator
+        self.approved_ceiling_usd = approved_ceiling_usd
+        self.live_authorized = live_authorized
+        self.gates_prevalidated = gates_prevalidated
+        self.ledger = AtomicCalibrationLedger(
+            root / LEDGER_RELATIVE_PATH,
+            approved_ceiling_usd=approved_ceiling_usd,
+        )
         self.raw_store = RawOutputStore(root)
 
     def run(self) -> dict[str, object]:
-        _validate_live_gates(self.root, self.environment)
+        if not self.gates_prevalidated:
+            _validate_live_gates(
+                self.root,
+                self.environment,
+                approved_ceiling_usd=self.approved_ceiling_usd,
+                live_authorized=self.live_authorized,
+                baseline_validator=self.baseline_validator,
+            )
         ledger = self.ledger.initialize()
+        total_calls = len(PEDAGOGICAL_CALIBRATION_CALL_MATRIX)
         for index, call in enumerate(PEDAGOGICAL_CALIBRATION_CALL_MATRIX, start=1):
             ledger = self.ledger.read()
+            breaker = SystemicCanaryBreaker.from_ledger(ledger)
+            family = _workload_family(call)
+            is_canary = CANARY_CALL_IDS[family] == call.call_id
             record = _ledger_record(ledger, call.call_id)
             status = LedgerCallStatus(cast(str, record["status"]))
             if status is LedgerCallStatus.STARTED:
@@ -1092,6 +1392,21 @@ class LiveCalibrationRunner:
             }:
                 continue
             _require_prior_calls_terminal(ledger, index - 1)
+            if breaker.state(family) is _CanaryState.BLOCKED and not is_canary:
+                self.ledger.mark_terminal(
+                    call.call_id,
+                    status=LedgerCallStatus.SKIPPED_DEPENDENCY_FAILED,
+                    result=None,
+                    raw_output_sha256=None,
+                    raw_output_path=None,
+                    cost_usd=Decimal("0"),
+                    closed_error_code=f"CANARY_BLOCKED_{family.value}",
+                )
+                self.progress(
+                    f"{index:03d}/{total_calls} SKIPPED {call.call_id} canary-blocked"
+                )
+                continue
+            breaker.authorize(family, is_canary=is_canary)
             dependency_candidate = _selected_output_dependency(
                 call,
                 ledger,
@@ -1107,7 +1422,7 @@ class LiveCalibrationRunner:
                     cost_usd=Decimal("0"),
                     closed_error_code="SELECTED_OUTPUT_DEPENDENCY_FAILED",
                 )
-                self.progress(f"{index:02d}/96 SKIPPED {call.call_id}")
+                self.progress(f"{index:03d}/{total_calls} SKIPPED {call.call_id}")
                 continue
             self._authorize(call, ledger)
             self.ledger.mark_started(call.call_id)
@@ -1142,6 +1457,15 @@ class LiveCalibrationRunner:
                 if result.response_status is CalibrationResponseStatus.ERROR
                 else LedgerCallStatus.COMPLETED
             )
+            failure_category = (
+                _systemic_failure_category(result) if is_canary else None
+            )
+            if is_canary:
+                breaker.record_canary(
+                    family,
+                    succeeded=failure_category is None,
+                    failure_category=failure_category,
+                )
             self.ledger.mark_terminal(
                 call.call_id,
                 status=terminal,
@@ -1149,8 +1473,13 @@ class LiveCalibrationRunner:
                 raw_output_sha256=raw_sha,
                 raw_output_path=raw_path,
                 cost_usd=cost,
+                canary_family=family if is_canary else None,
+                canary_succeeded=(failure_category is None) if is_canary else None,
+                canary_failure_category=failure_category,
             )
-            self.progress(f"{index:02d}/96 {terminal.value} {call.call_id} cost={cost}")
+            self.progress(
+                f"{index:03d}/{total_calls} {terminal.value} {call.call_id} cost={cost}"
+            )
         final_ledger = self.ledger.read()
         first = build_safe_aggregate(final_ledger, self.raw_store)
         second = build_safe_aggregate(final_ledger, self.raw_store)
@@ -1170,8 +1499,10 @@ class LiveCalibrationRunner:
         ledger: Mapping[str, object],
     ) -> None:
         validate_call_identity(call)
+        if self.approved_ceiling_usd is None:
+            _stop(LiveCalibrationStopCode.LIVE_OWNER_AUTHORIZATION_REQUIRED)
         actual = Decimal(cast(str, ledger["total_cost_usd"]))
-        if actual + _maximum_call_cost(call) > APPROVED_HARD_CEILING_USD:
+        if actual + _maximum_call_cost(call) > self.approved_ceiling_usd:
             _stop(LiveCalibrationStopCode.APPROVED_CEILING_INSUFFICIENT)
         completed = tuple(
             cast(str, record["call_id"])
@@ -1189,7 +1520,7 @@ class LiveCalibrationRunner:
             model=call.model,
             model_profile_id=call.model_profile_id,
             matrix_checksum=call_matrix_sha256(),
-            approved_ceiling_usd=APPROVED_HARD_CEILING_USD,
+            approved_ceiling_usd=self.approved_ceiling_usd,
             credential_available=True,
             completed_call_ids=completed,
             actual_cost_usd=actual,
@@ -1205,11 +1536,47 @@ def validate_call_identity(call: CalibrationCallSpec) -> None:
         _stop(LiveCalibrationStopCode.CALL_IDENTITY_MISMATCH)
 
 
-def _validate_live_gates(root: Path, environment: Mapping[str, str]) -> None:
-    if call_matrix_sha256() != EXPECTED_MATRIX_SHA256:
+def _validate_live_gates(
+    root: Path,
+    environment: Mapping[str, str],
+    *,
+    approved_ceiling_usd: Decimal | None,
+    live_authorized: bool = LIVE_PROVIDER_RECALIBRATION_AUTHORIZED,
+    baseline_validator: Callable[[Path], None] = validate_v4_baseline,
+) -> None:
+    baseline_validator(root)
+    try:
+        current_pricing_sha256 = pricing_snapshot_sha256()
+    except RuntimeError:
+        _stop(LiveCalibrationStopCode.PRICING_SNAPSHOT_MISMATCH)
+    try:
+        current_matrix_sha256 = call_matrix_sha256()
+    except RuntimeError:
         _stop(LiveCalibrationStopCode.MATRIX_MISMATCH)
-    if revalidated_theoretical_ceiling_usd() > APPROVED_HARD_CEILING_USD:
+    if current_matrix_sha256 != EXPECTED_MATRIX_SHA256:
+        _stop(LiveCalibrationStopCode.MATRIX_MISMATCH)
+    if (
+        current_pricing_sha256 != EXPECTED_PRICING_SNAPSHOT_SHA256
+        or revalidated_theoretical_ceiling_usd()
+        != PROPOSED_TECHNICAL_CEILING_USD
+        or estimate_call_plan_cost().estimated_maximum_with_margin_usd
+        != PROPOSED_TECHNICAL_CEILING_USD
+    ):
+        _stop(LiveCalibrationStopCode.PRICING_SNAPSHOT_MISMATCH)
+    if (
+        OWNER_CONFIGURATION_APPROVAL != "APPROVED"
+        or APPROVED_MATRIX_SHA256 != current_matrix_sha256
+        or APPROVED_PRICING_SHA256 != current_pricing_sha256
+        or APPROVED_MAX_CALL_COUNT != len(PEDAGOGICAL_CALIBRATION_CALL_MATRIX)
+        or approved_ceiling_usd != APPROVED_HARD_CEILING_USD
+    ):
+        _stop(LiveCalibrationStopCode.OWNER_CONFIGURATION_MISMATCH)
+    if approved_ceiling_usd is None:
+        _stop(LiveCalibrationStopCode.LIVE_OWNER_AUTHORIZATION_REQUIRED)
+    if revalidated_theoretical_ceiling_usd() > approved_ceiling_usd:
         _stop(LiveCalibrationStopCode.APPROVED_CEILING_INSUFFICIENT)
+    if not live_authorized:
+        _stop(LiveCalibrationStopCode.LIVE_OWNER_AUTHORIZATION_REQUIRED)
     if (
         not environment.get("OPENAI_API_KEY", "").strip()
         or not environment.get("ANTHROPIC_API_KEY", "").strip()
@@ -1223,7 +1590,7 @@ def _validate_live_gates(root: Path, environment: Mapping[str, str]) -> None:
         ceiling = Decimal(environment.get(APPROVED_CEILING_ENV, ""))
     except ArithmeticError:
         _stop(LiveCalibrationStopCode.LIVE_ENVIRONMENT_GATE_CLOSED)
-    if ceiling != APPROVED_HARD_CEILING_USD:
+    if ceiling != approved_ceiling_usd:
         _stop(LiveCalibrationStopCode.LIVE_ENVIRONMENT_GATE_CLOSED)
     gitignore = root / ".gitignore"
     if (
@@ -1324,6 +1691,9 @@ def build_safe_aggregate(
     records = {
         cast(str, item["call_id"]): item for item in cast(list[dict[str, object]], ledger["calls"])
     }
+    matrix_by_id = {
+        call.call_id: call for call in PEDAGOGICAL_CALIBRATION_CALL_MATRIX
+    }
     call_results: list[dict[str, object]] = []
     invocation_observations: list[InvocationObservation] = []
     scores_by_key: dict[tuple[str, str], Fraction | None] = {}
@@ -1385,19 +1755,20 @@ def build_safe_aggregate(
             score = _score_from_record(record, raw_store)
             criterion = call.criterion_refs[0]
             subject = call.input_refs[0].split(":", 1)[1]
-            if subject.startswith("cal.scn-"):
+            if subject in V4_TIER_BY_ANCHOR_ID:
                 if call.repetition == 1:
                     scores_by_key[(criterion, subject)] = score
-                if subject.endswith(".a"):
+                if V4_TIER_BY_ANCHOR_ID[subject] is AnchorTier.STRONG:
                     repeat_observations.append(
                         RepeatScore(subject, criterion, call.repetition, score)
                     )
             else:
+                source_call = matrix_by_id[subject]
                 quality_observations.append(
                     QualityScoreObservation(
                         call.scenario_code,
                         criterion,
-                        call.model,
+                        source_call.model,
                         score,
                     )
                 )
@@ -1407,13 +1778,15 @@ def build_safe_aggregate(
                         "scenario_code": call.scenario_code,
                         "criterion_ref": criterion,
                         "source_call_id": subject,
+                        "producer_model": source_call.model,
+                        "producer_role": source_call.role.value,
                         "status": response_status.value,
                         "score": _fraction(score),
                     }
                 )
-    orderings = summarize_orderings(CRITERION_ORDERINGS, scores_by_key)
+    orderings = summarize_orderings(V4_CRITERION_ORDERINGS, scores_by_key)
     ordering_details = []
-    for ordering in CRITERION_ORDERINGS:
+    for ordering in V4_CRITERION_ORDERINGS:
         metric = summarize_orderings((ordering,), scores_by_key)
         ordering_details.append(
             {
@@ -1450,27 +1823,40 @@ def build_safe_aggregate(
         }
         for provider in CalibrationProvider
     }
+    approved_ceiling_raw = ledger.get("approved_ceiling_usd")
+    approved_ceiling = (
+        Decimal(cast(str, approved_ceiling_raw))
+        if approved_ceiling_raw is not None
+        else None
+    )
     aggregate: dict[str, object] = {
         "phase": "12.16-G2",
         "decision": "CALIBRATION_INCONCLUSIVE",
-        "confidence": "PROVISIONAL_PENDING_HUMAN_REVIEW",
+        "confidence": "PROVISIONAL_PENDING_PROVIDER_EXECUTION",
         "refs": {
             "branch": "phase12/12-16-provider-model-calibration",
-            "entry_head": "413a61ad2f50f6c061891a44d8c0987374722f81",
-            "entry_parent": "619c5a5d11e2091c5a311bc913c4b6684358ff6d",
+            "closure_commit": V4_CLOSURE_COMMIT,
             "entry_main": "7ae02ee109bcc6399ec0f71616da6aef07abda81",
+            "corrected_form_sha256": CORRECTED_FORM_SHA256,
+            "v4_corpus_sha256": EXPECTED_V4_CORPUS_SHA256,
         },
         "authorization": {
             "plan_version": PEDAGOGICAL_CALIBRATION_PLAN_VERSION,
             "call_matrix_sha256": EXPECTED_MATRIX_SHA256,
-            "openai_call_count": 20,
-            "anthropic_call_count": 76,
-            "total_matrix_call_count": 96,
-            "approved_hard_ceiling_usd": str(APPROVED_HARD_CEILING_USD),
+            "openai_call_count": OPENAI_CALL_COUNT,
+            "anthropic_call_count": ANTHROPIC_CALL_COUNT,
+            "total_matrix_call_count": len(PEDAGOGICAL_CALIBRATION_CALL_MATRIX),
+            "proposed_technical_ceiling_usd": str(
+                PROPOSED_TECHNICAL_CEILING_USD
+            ),
+            "approved_hard_ceiling_usd": approved_ceiling_raw,
+            "live_provider_recalibration_authorized": False,
         },
         "pricing": {
             "historical_g1": _G1_HISTORICAL_PRICING,
-            "revalidated_g2": _G2_PRICING,
+            "snapshot_id": PRICING_SNAPSHOT_ID,
+            "snapshot_sha256": pricing_snapshot_sha256(),
+            "current_v4": _CURRENT_PRICING_SNAPSHOT,
             "revalidated_theoretical_ceiling_usd": str(revalidated_theoretical_ceiling_usd()),
         },
         "credential_readiness": {
@@ -1500,6 +1886,7 @@ def build_safe_aggregate(
             "automatic_reruns": 0,
             "duplicate_call_ids": [],
             "sequential_execution": True,
+            "canaries": ledger["canaries"],
             "call_results": call_results,
         },
         "invocation_metrics": [
@@ -1555,11 +1942,20 @@ def build_safe_aggregate(
                 for item in quality_metrics
             ],
             "pairwise_comparison_count": pairwise.comparison_count,
-            "fallback_soft_quality_comparison": ("NOT_FULLY_ESTABLISHED_BY_G2_MATRIX"),
+            "pairwise_primary_win_count": pairwise.primary_win_count,
+            "pairwise_fallback_win_count": pairwise.fallback_win_count,
+            "pairwise_tie_count": pairwise.tie_count,
+            "pairwise_inconclusive_count": pairwise.inconclusive_count,
+            "fallback_soft_quality_comparison": "ESTABLISHED_FOR_EXPLICIT_PAIRS",
         },
         "cost": {
-            "estimated_g1_base_usd": "1.087576",
-            "approved_hard_ceiling_usd": str(APPROVED_HARD_CEILING_USD),
+            "estimated_v4_base_usd": str(
+                estimate_call_plan_cost().estimated_base_usd
+            ),
+            "proposed_technical_ceiling_usd": str(
+                PROPOSED_TECHNICAL_CEILING_USD
+            ),
+            "approved_hard_ceiling_usd": approved_ceiling_raw,
             "revalidated_theoretical_ceiling_usd": str(revalidated_theoretical_ceiling_usd()),
             "actual_measured_total_usd": str(_money(measured_total)),
             "prudent_unknown_usage_reserve_usd": str(
@@ -1579,17 +1975,18 @@ def build_safe_aggregate(
                 key: str(_money(value)) for key, value in sorted(costs_by_workload.items())
             },
             "ceiling_preserved": (
-                Decimal(cast(str, ledger["total_cost_usd"])) <= APPROVED_HARD_CEILING_USD
+                approved_ceiling is not None
+                and Decimal(cast(str, ledger["total_cost_usd"])) <= approved_ceiling
             ),
         },
-        "human_anchor_review": "NOT_COMPLETED",
+        "human_anchor_review": "PASS_WITH_CORRECTIVE_ATTESTATION",
         "release_threshold_adoption": "NOT_ALLOWED",
         "adr_required": False,
         "limitations": [
             "No definitive release threshold is adopted.",
-            "Human review of the 24 anchors is not completed.",
             "Repeatability covers strong anchors only.",
-            "Fallback soft-quality comparison is not established by this matrix.",
+            "Pairwise model comparison is limited to explicit producer pairs.",
+            "Live provider execution still requires separate owner approval.",
         ],
         "reproducibility": {
             "aggregate_json_double_build_equal": True,
@@ -1634,8 +2031,50 @@ def _aggregate_response_status(
 def _pairwise_quality(
     selected_scores: list[dict[str, object]],
 ) -> tuple[PairwiseQualityObservation, ...]:
-    del selected_scores
-    return ()
+    grouped: dict[
+        tuple[str, str],
+        dict[str, tuple[str, Fraction | None]],
+    ] = defaultdict(dict)
+    for item in selected_scores:
+        role = cast(str, item["producer_role"])
+        if role not in {CalibrationRole.PRIMARY.value, CalibrationRole.FALLBACK.value}:
+            continue
+        grouped[
+            (cast(str, item["scenario_code"]), cast(str, item["criterion_ref"]))
+        ][role] = (
+            cast(str, item["producer_model"]),
+            _parse_fraction(cast(str | None, item["score"])),
+        )
+    observations: list[PairwiseQualityObservation] = []
+    for (scenario_code, criterion_ref), values in sorted(grouped.items()):
+        if not {
+            CalibrationRole.PRIMARY.value,
+            CalibrationRole.FALLBACK.value,
+        }.issubset(values):
+            continue
+        primary_model, primary_score = values[CalibrationRole.PRIMARY.value]
+        fallback_model, fallback_score = values[CalibrationRole.FALLBACK.value]
+        observations.append(
+            PairwiseQualityObservation(
+                scenario_code,
+                criterion_ref,
+                primary_model,
+                fallback_model,
+                primary_score,
+                fallback_score,
+            )
+        )
+    return tuple(observations)
+
+
+def _parse_fraction(value: str | None) -> Fraction | None:
+    if value is None:
+        return None
+    try:
+        numerator, denominator = value.split("/", 1)
+        return Fraction(int(numerator), int(denominator))
+    except (ValueError, ZeroDivisionError):
+        return None
 
 
 def render_safe_reports(aggregate: Mapping[str, object]) -> tuple[bytes, bytes]:
@@ -1648,13 +2087,13 @@ def render_safe_reports(aggregate: Mapping[str, object]) -> tuple[bytes, bytes]:
     repeatability = cast(dict[str, object], aggregate["repeatability"])
     cost = cast(dict[str, object], aggregate["cost"])
     lines = [
-        "# Phase 12.16-G2 — Calibration pédagogique live",
+        "# Phase 12.16-G2-V4 — Calibration pédagogique fournisseur",
         "",
         "## Résultat descriptif",
         "",
         f"- Décision : `{aggregate['decision']}`",
         f"- Confiance : `{aggregate['confidence']}`",
-        "- Revue humaine des anchors : `NOT_COMPLETED`",
+        "- Revue humaine des anchors : `PASS_WITH_CORRECTIVE_ATTESTATION`",
         "- Adoption d'un seuil de release : `NOT_ALLOWED`",
         "",
         "## Autorisation et exécution",
@@ -1685,17 +2124,18 @@ def render_safe_reports(aggregate: Mapping[str, object]) -> tuple[bytes, bytes]:
         "",
         "## Coûts",
         "",
-        f"- Base estimée G1 : `{cost['estimated_g1_base_usd']} USD`",
+        f"- Base estimée V4 : `{cost['estimated_v4_base_usd']} USD`",
         f"- Plafond théorique G2 revalidé : `{cost['revalidated_theoretical_ceiling_usd']} USD`",
         f"- Coût réel mesuré : `{cost['actual_measured_total_usd']} USD`",
         f"- Réserve prudente pour usage inconnu : `{cost['prudent_unknown_usage_reserve_usd']} USD`",
         f"- Total comptabilisé pour le budget : `{cost['budget_accounted_total_usd']} USD`",
-        f"- Plafond absolu : `{cost['approved_hard_ceiling_usd']} USD`",
+        f"- Plafond technique proposé : `{cost['proposed_technical_ceiling_usd']} USD`",
+        f"- Plafond propriétaire approuvé : `{cost['approved_hard_ceiling_usd']}`",
         f"- Plafond préservé : `{cost['ceiling_preserved']}`",
         "",
         "## Limites",
         "",
-        "- La comparaison pédagogique soft des fallbacks n'est pas établie par cette matrice.",
+        "- La comparaison pairwise couvre uniquement les paires de producteurs explicites.",
         "- La répétabilité porte uniquement sur les anchors forts.",
         "- Aucun score n'est une autorité ni un seuil de release.",
         "- Les sorties brutes restent locales et Git-ignorées, avec rétention maximale de 7 jours.",
@@ -1719,13 +2159,24 @@ def run_live_calibration(
     root: Path = ROOT,
     environment: Mapping[str, str] | None = None,
     progress: Callable[[str], None] | None = None,
+    baseline_validator: Callable[[Path], None] = validate_v4_baseline,
 ) -> dict[str, object]:
     effective_environment = dict(os.environ if environment is None else environment)
+    _validate_live_gates(
+        root,
+        effective_environment,
+        approved_ceiling_usd=APPROVED_HARD_CEILING_USD,
+        live_authorized=LIVE_PROVIDER_RECALIBRATION_AUTHORIZED,
+        baseline_validator=baseline_validator,
+    )
     return LiveCalibrationRunner(
         root=root,
         environment=effective_environment,
         executor=RealCalibrationExecutor(effective_environment),
         progress=progress,
+        approved_ceiling_usd=APPROVED_HARD_CEILING_USD,
+        live_authorized=LIVE_PROVIDER_RECALIBRATION_AUTHORIZED,
+        gates_prevalidated=True,
     ).run()
 
 

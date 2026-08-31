@@ -14,6 +14,7 @@ from evaluation_harness import (
     ObservationScalarKind,
     ObservationSequence,
 )
+from tests.calibration.pedagogical.anchor_corpus_v4 import V4_CALIBRATION_ANCHORS
 from tests.calibration.pedagogical.catalog import (
     CALIBRATION_ANCHORS,
     CalibrationAnchor,
@@ -128,12 +129,44 @@ CALIBRATION_CRITERION_ITEMS = tuple(
     for criterion_ref in scenario_by_code(anchor.scenario_code).criterion_refs
 )
 
+V4_CALIBRATION_CRITERION_ITEMS = tuple(
+    CalibrationCriterionItem(
+        anchor_id=anchor.anchor_id,
+        scenario_code=anchor.scenario_code,
+        criterion_ref=criterion_ref,
+    )
+    for anchor in V4_CALIBRATION_ANCHORS
+    for criterion_ref in scenario_by_code(anchor.scenario_code).criterion_refs
+)
+
+_V4_ANCHOR_BY_ID = {anchor.anchor_id: anchor for anchor in V4_CALIBRATION_ANCHORS}
+
 
 def build_blind_scorer_observation(item: CalibrationCriterionItem) -> ObservationObject:
     """Project only the seven fields needed by the independent scorer."""
 
-    anchor = anchor_by_id(item.anchor_id)
+    return _build_blind_scorer_observation(item, anchor_by_id(item.anchor_id))
+
+
+def build_v4_blind_scorer_observation(
+    item: CalibrationCriterionItem,
+) -> ObservationObject:
+    """Project one opaque V4 anchor without falling back to the G1 catalog."""
+
+    try:
+        anchor = _V4_ANCHOR_BY_ID[item.anchor_id]
+    except KeyError:
+        raise ValueError("criterion item does not reference a V4 anchor") from None
+    return _build_blind_scorer_observation(item, anchor)
+
+
+def _build_blind_scorer_observation(
+    item: CalibrationCriterionItem,
+    anchor: CalibrationAnchor,
+) -> ObservationObject:
     scenario = scenario_by_code(item.scenario_code)
+    if anchor.scenario_code != item.scenario_code:
+        raise ValueError("anchor does not belong to the criterion scenario")
     if item.criterion_ref not in scenario.criterion_refs:
         raise ValueError("criterion does not belong to the scenario rubric")
 

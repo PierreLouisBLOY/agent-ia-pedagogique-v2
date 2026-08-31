@@ -630,12 +630,28 @@ def build_reconciliation_payload(
     }
 
 
-def render_result_json(root: Path = ROOT) -> str:
-    return _pretty_json(build_reconciliation_payload(root))
+def render_result_json(
+    root: Path = ROOT,
+    *,
+    expected_completed_sha256: str = EXPECTED_COMPLETED_V4_PREVALIDATION_SHA256,
+) -> str:
+    return _pretty_json(
+        build_reconciliation_payload(
+            root,
+            expected_completed_sha256=expected_completed_sha256,
+        )
+    )
 
 
-def render_report_markdown(root: Path = ROOT) -> str:
-    payload = build_reconciliation_payload(root)
+def render_report_markdown(
+    root: Path = ROOT,
+    *,
+    expected_completed_sha256: str = EXPECTED_COMPLETED_V4_PREVALIDATION_SHA256,
+) -> str:
+    payload = build_reconciliation_payload(
+        root,
+        expected_completed_sha256=expected_completed_sha256,
+    )
     proofs = cast(dict[str, str], payload["proofs"])
     review = cast(dict[str, object], payload["review"])
     gate_a = cast(dict[str, object], payload["gate_a"])
@@ -773,9 +789,25 @@ def _atomic_write(path: Path, payload: bytes) -> None:
             temporary.unlink()
 
 
-def write_outputs(root: Path = ROOT) -> None:
-    _atomic_write(root / REPORT_RELATIVE_PATH, render_report_markdown(root).encode())
-    _atomic_write(root / RESULT_JSON_RELATIVE_PATH, render_result_json(root).encode())
+def write_outputs(
+    root: Path = ROOT,
+    *,
+    expected_completed_sha256: str = EXPECTED_COMPLETED_V4_PREVALIDATION_SHA256,
+) -> None:
+    _atomic_write(
+        root / REPORT_RELATIVE_PATH,
+        render_report_markdown(
+            root,
+            expected_completed_sha256=expected_completed_sha256,
+        ).encode(),
+    )
+    _atomic_write(
+        root / RESULT_JSON_RELATIVE_PATH,
+        render_result_json(
+            root,
+            expected_completed_sha256=expected_completed_sha256,
+        ).encode(),
+    )
 
 
 def main() -> None:

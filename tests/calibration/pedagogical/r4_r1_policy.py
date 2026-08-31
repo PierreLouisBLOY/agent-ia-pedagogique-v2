@@ -13,7 +13,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Never, cast
 
-from tests.calibration.pedagogical.call_plan import (
+from tests.calibration.pedagogical.legacy_call_plan import (
     PEDAGOGICAL_CALIBRATION_CALL_MATRIX,
     CalibrationCallSpec,
     CalibrationProvider,

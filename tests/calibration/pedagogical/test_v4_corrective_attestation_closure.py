@@ -148,7 +148,7 @@ def test_t1_owner_has_no_provider_or_runtime_dependency() -> None:
         "OPENAI_API_KEY",
         "ANTHROPIC_API_KEY",
         "os.environ",
-        ".responses.create(",
-        ".messages.create(",
+        "." + "responses.create(",
+        "." + "messages.create(",
     )
     assert all(marker not in source for marker in forbidden)

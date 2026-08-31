@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from tests.calibration.pedagogical.call_plan import (
+from tests.calibration.pedagogical.legacy_call_plan import (
     PEDAGOGICAL_CALIBRATION_CALL_MATRIX,
     PEDAGOGICAL_CALIBRATION_PLAN_VERSION,
     RAW_OUTPUT_DIRECTORY,

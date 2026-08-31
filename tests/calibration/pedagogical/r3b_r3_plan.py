@@ -23,7 +23,7 @@ from backend.adapters.outbound.review.openai.adapter import (
     _map_response as _map_review_response,
 )
 from backend.adapters.outbound.review.openai.mapping import build_openai_review_request
-from tests.calibration.pedagogical.call_plan import (
+from tests.calibration.pedagogical.legacy_call_plan import (
     PEDAGOGICAL_CALIBRATION_CALL_MATRIX,
     CalibrationCallSpec,
     CalibrationProvider,

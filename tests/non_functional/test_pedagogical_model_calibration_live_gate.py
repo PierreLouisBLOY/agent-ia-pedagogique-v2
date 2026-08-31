@@ -14,7 +14,11 @@ from tests.calibration.pedagogical.call_plan import (
     call_matrix_sha256,
     estimate_call_plan_cost,
 )
-from tests.calibration.pedagogical.live_runner import run_live_calibration
+from tests.calibration.pedagogical.live_runner import (
+    APPROVED_HARD_CEILING_USD,
+    LIVE_PROVIDER_RECALIBRATION_AUTHORIZED,
+    run_live_calibration,
+)
 
 LIVE_FLAG = "RUN_PEDAGOGICAL_LIVE_CALIBRATION"
 LIVE_OUTPUT_PATH_ENV = "PEDAGOGICAL_CALIBRATION_OUTPUT_PATH"
@@ -39,8 +43,11 @@ def test_g1_provider_call_guard_is_zero_without_live_execution() -> None:
 
 
 @pytest.mark.skipif(
-    os.environ.get(LIVE_FLAG) != "1",
-    reason=f"explicit live gate requires {LIVE_FLAG}=1",
+    os.environ.get(LIVE_FLAG) != "1"
+    or LIVE_PROVIDER_RECALIBRATION_AUTHORIZED is not True,
+    reason=(
+        f"live gate requires {LIVE_FLAG}=1 and separate live owner authorization"
+    ),
 )
 def test_g2_live_calibration_executes_or_resumes_approved_matrix() -> None:
     """Execute or safely resume the exact approved matrix when explicitly enabled."""
@@ -54,8 +61,8 @@ def test_g2_live_calibration_executes_or_resumes_approved_matrix() -> None:
     assert RAW_OUTPUT_DIRECTORY.startswith("artifacts/")
     assert call_matrix_sha256()
     estimated_maximum = estimate_call_plan_cost().estimated_maximum_with_margin_usd
-    assert estimated_maximum == Decimal("4.096440")
-    assert Decimal(approved_ceiling) >= estimated_maximum
+    assert estimated_maximum == APPROVED_HARD_CEILING_USD == Decimal("3.251640")
+    assert Decimal(approved_ceiling) == APPROVED_HARD_CEILING_USD
     aggregate = run_live_calibration(
         progress=lambda message: print(message, flush=True)
     )

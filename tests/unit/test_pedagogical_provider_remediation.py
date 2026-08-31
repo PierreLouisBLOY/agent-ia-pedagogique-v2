@@ -21,7 +21,7 @@ from backend.adapters.outbound.openai import (
     OpenAITransportErrorCode,
 )
 from backend.infrastructure.config.secrets.provider import ProviderSecretValue
-from tests.calibration.pedagogical.call_plan import (
+from tests.calibration.pedagogical.legacy_call_plan import (
     PEDAGOGICAL_CALIBRATION_CALL_MATRIX,
     PEDAGOGICAL_CALIBRATION_PLAN_VERSION,
     CalibrationProvider,

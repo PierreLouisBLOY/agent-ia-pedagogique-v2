@@ -1,0 +1,14 @@
+# Phase 12.16-G2 — Matrice de remédiation ciblée des contrôles négatifs v4
+
+- Corpus : `12.16-g1-v4`.
+- Checksum : `9c8e262028f1d63fa50963f2f8bcb742e4c24d4e106a73244861416f826ca034`.
+- Politique : `REVISE_ONLY_V3_NEGATIVES_WITH_ACTION_NONE`.
+- Les contenus restent factuellement exacts et structurellement complets.
+
+| scenario | tier | v3_action | v3_content_hash | v4_content_hash | why_v3_was_deliverable | v4_controlled_defect | criterion_alignment | expected_disposition |
+|---|---|---|---|---|---|---|---|---|
+| SCN-01 | MIXED | aucune | `7ecb3bf9ea7d021b992e645fdb762de09c3f1c81874d581f18b8238dad27e5ac` | `a520136aa47e530f8a868c197137c3722faead5a0b77efe33cc19ea851bd68fb` | action=aucune; scn-01.quality.clarity=TRES_SATISFAISANT; scn-01.quality.organization-utility=TRES_SATISFAISANT | métadonnées aplaties dans une note libre sans hiérarchie, indexation ni procédure de vérification | scn-01.quality.clarity; scn-01.quality.organization-utility | REVISE_BEFORE_DELIVERY |
+| SCN-04 | MIXED | aucune | `162a859ec0b6a064122e18c2935e6e9ff97a6d512d93bd2c33e6d2fbfb8abd0d` | `281b138f8787d3f1c0d9e6f2e3742ffd98afc78015d469d45280e94c809633c5` | action=aucune; scn-04.quality.fidelity=TRES_SATISFAISANT; scn-04.quality.level-adaptation=TRES_SATISFAISANT | résultat TTC factuellement exact mais méthode, taxe intermédiaire et contrôle non restituables | scn-04.quality.fidelity; scn-04.quality.level-adaptation | REVISE_BEFORE_DELIVERY |
+| SCN-06 | MIXED | aucune | `8194a8910434a6ce909c51d1718a1770f04848f0e28098cc9b6cf92516da8bce` | `7013f3516127fcef95bcb846584db26d2b185074713f18a042444e7a8a2a6756` | action=aucune; scn-06.quality.assessment-clarity=SATISFAISANT; scn-06.quality.marking-scheme-coherence=SATISFAISANT | consignes sous-spécifiées et barème global non aligné sur les étapes évaluées | scn-06.quality.assessment-clarity; scn-06.quality.marking-scheme-coherence | REVISE_BEFORE_DELIVERY |
+| SCN-07 | WEAK_BUT_STRUCTURALLY_VALID | aucune | `a10469d87c499df10555651caf9550a37b0e366410c027cabde4a2392d45c1a0` | `730591b88ca844cf9b091c32d6b80cc68f00dc7429cf6604a7b957eb50ad77b3` | action=aucune; scn-07.quality.correction-quality=TRES_SATISFAISANT; scn-07.quality.remediation-clarity=TRES_SATISFAISANT | correction générale sans diagnostic, formule, activité bornée ni critère de réussite | scn-07.quality.correction-quality; scn-07.quality.remediation-clarity | REVISE_BEFORE_DELIVERY |
+| SCN-08 | WEAK_BUT_STRUCTURALLY_VALID | aucune | `c630103f7131c8a09674a04e37c106ff0755f5dfd163e0b8e61a40059c21e142` | `6d8379cc1b99863b6934f29c13169633c46a7f30bf01a6572d8891af604311a2` | action=aucune; scn-08.quality.distractor-quality=TRES_SATISFAISANT; scn-08.quality.feedback-quality=TRES_SATISFAISANT | distracteurs arithmétiques peu diagnostiques et feedback sans explication individualisée | scn-08.quality.distractor-quality; scn-08.quality.feedback-quality | REVISE_BEFORE_DELIVERY |

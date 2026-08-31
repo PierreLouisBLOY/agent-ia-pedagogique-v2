@@ -33,7 +33,7 @@ EXPECTED_V4_OWNER_SHA256 = (
     "b0a86640502db4ab1d0b623e50faffa45178d9e93b0a24976df3312d460662be"
 )
 EXPECTED_REPORT_SHA256 = (
-    "6b81546a054334a9f33738d37b9e2fd4a0dbf5ec918694fb1e7a767073d66a79"
+    "628af28cb58bb6dd58edbc1a6505c5c12f98cc0341b74ee5fd9884ecd20733ae"
 )
 
 
@@ -56,15 +56,18 @@ def test_t1_corrected_and_pre_correction_hash_proofs_are_exact() -> None:
     ).hexdigest() == EXPECTED_V4_OWNER_SHA256
 
 
-def test_t1_semantic_diff_is_not_bounded_to_attested_scn05_scope() -> None:
+def test_t1_semantic_diff_is_bounded_to_the_corrected_owner_attestation() -> None:
     payload = build_closure_payload(ROOT)
-    assert payload["attested_corrected_scope"] == "SCN-05 TWO PAIRWISE RANKINGS"
+    assert payload["attested_corrected_scope"] == (
+        "SCN-01 ONE PAIRWISE RANKING; "
+        "SCN-06 ONE DISPOSITION AND TWO PAIRWISE RANKINGS"
+    )
     assert payload["changed_scenarios"] == ["SCN-01", "SCN-06"]
     assert payload["changed_pairwise_rankings"] == 3
     assert payload["changed_dispositions"] == 1
     assert payload["changed_justifications"] == 0
     assert payload["changed_other_fields"] == 0
-    assert payload["trace_correction_check"] == "FAIL"
+    assert payload["trace_correction_check"] == "PASS"
     assert [
         (item["scenario"], item["kind"], item["ref"])
         for item in payload["semantic_changes"]
@@ -84,7 +87,7 @@ def test_t1_semantic_diff_is_not_bounded_to_attested_scn05_scope() -> None:
     ]
 
 
-def test_t1_mechanical_gates_pass_but_methodological_closure_is_partial() -> None:
+def test_t1_mechanical_gates_and_methodological_closure_pass() -> None:
     payload = build_closure_payload(ROOT)
     assert payload["gate_a"] == {
         "strong_deliver_as_is": 8,
@@ -99,12 +102,16 @@ def test_t1_mechanical_gates_pass_but_methodological_closure_is_partial() -> Non
         "non_evaluable_rankings": 0,
         "status": "PASS",
     }
-    assert payload["human_v4_prevalidation"] == "PARTIAL"
-    assert payload["methodological_status"] == "PARTIAL"
-    assert payload["provider_recalibration_allowed"] == "FALSE"
+    assert payload["human_v4_prevalidation"] == "PASS_WITH_CORRECTIVE_ATTESTATION"
+    assert payload["methodological_status"] == "PASS"
+    assert payload["provider_recalibration_allowed"] == (
+        "READY_FOR_OFFLINE_PLAN_ONLY"
+    )
     assert payload["provider_calls"] == 0
     assert payload["runtime_route_change"] == "NONE"
-    assert payload["next_gate"] == "12.16-G2-V4-OWNER_DECISION_REQUIRED"
+    assert payload["next_gate"] == (
+        "12.16-G2-V4-PROVIDER-RECALIBRATION-PLAN_READY"
+    )
 
 
 def test_t1_public_report_is_deterministic_and_does_not_expose_key_mapping() -> None:
@@ -114,9 +121,15 @@ def test_t1_public_report_is_deterministic_and_does_not_expose_key_mapping() -> 
     assert (ROOT / REPORT_RELATIVE_PATH).read_text(encoding="utf-8") == report
     assert "CAND-" not in report
     assert "cal.v4.scn-" not in report
-    assert "TRACE_CORRECTION_CHECK = `FAIL`" in report
-    assert "HUMAN_V4_PREVALIDATION = `PARTIAL`" in report
-    assert "PROVIDER_RECALIBRATION_ALLOWED = `FALSE`" in report
+    assert "TRACE_CORRECTION_CHECK = `PASS`" in report
+    assert (
+        "HUMAN_V4_PREVALIDATION = `PASS_WITH_CORRECTIVE_ATTESTATION`"
+        in report
+    )
+    assert (
+        "PROVIDER_RECALIBRATION_ALLOWED = `READY_FOR_OFFLINE_PLAN_ONLY`"
+        in report
+    )
 
 
 def test_t1_owner_has_no_provider_or_runtime_dependency() -> None:

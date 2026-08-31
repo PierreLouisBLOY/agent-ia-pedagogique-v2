@@ -4,7 +4,7 @@
 
 - CORRECTIVE_ATTESTATION = `TRUE`.
 - CORRECTION_CAUSE = `INATTENTION / TRANSCRIPTION_ERROR`.
-- CORRECTED_SCOPE attesté = `SCN-05 TWO PAIRWISE RANKINGS`.
+- CORRECTED_SCOPE attesté = `SCN-01 ONE PAIRWISE RANKING; SCN-06 ONE DISPOSITION AND TWO PAIRWISE RANKINGS`.
 - CORPUS_CHANGED = `FALSE`.
 - Checksum résultat pré-correction local : `deefcf8078f7a182e5332587bc782ef166afff473468d4d14d4d171a7ff785db`.
 - Checksum formulaire pré-correction prouvé : `4ecd7fb8c796ab9c73c12fa8b4a7f3482df5699c4123c15690d57ea81eba5b51`.
@@ -14,9 +14,9 @@
 
 | Élément | Attesté | Observé |
 |---|---|---|
-| Scénarios modifiés | SCN-05 | SCN-01, SCN-06 |
-| Classements pairwise modifiés | 2 | 3 |
-| Dispositions modifiées | 0 | 1 |
+| Scénarios modifiés | SCN-01, SCN-06 | SCN-01, SCN-06 |
+| Classements pairwise modifiés | 3 | 3 |
+| Dispositions modifiées | 1 | 1 |
 | Justifications modifiées | 0 | 0 |
 | Autres champs modifiés | 0 | 0 |
 
@@ -29,8 +29,8 @@
 | SCN-06 | pairwise_ranking | scn-06.quality.assessment-clarity |
 | SCN-06 | pairwise_ranking | scn-06.quality.marking-scheme-coherence |
 
-- TRACE_CORRECTION_CHECK = `FAIL`.
-- La trace n'est pas bornée au scope attesté; la preuve corrigée n'est donc pas acceptée comme clôture méthodologique.
+- TRACE_CORRECTION_CHECK = `PASS`.
+- La trace est strictement bornée au scope attesté; la preuve corrective est recevable.
 
 ## Recalcul mécanique des gates
 
@@ -41,14 +41,14 @@
 - PAIRWISE_CRITERION_GATE = `PASS`.
 - STRONG_GT_MIXED = `16/16`.
 - STRONG_GT_WEAK = `16/16`.
-- Ces résultats mécaniques ne compensent pas l'échec du contrôle de trace.
+- Les résultats mécaniques sont acceptés avec l'attestation corrective et sans modification des gates pré-déclarées.
 
 ## Décision et frontières
 
-- HUMAN_V4_PREVALIDATION = `PARTIAL`.
-- METHODOLOGICAL_STATUS = `PARTIAL`.
-- PROVIDER_RECALIBRATION_ALLOWED = `FALSE`.
+- HUMAN_V4_PREVALIDATION = `PASS_WITH_CORRECTIVE_ATTESTATION`.
+- METHODOLOGICAL_STATUS = `PASS`.
+- PROVIDER_RECALIBRATION_ALLOWED = `READY_FOR_OFFLINE_PLAN_ONLY`.
 - PROVIDER_CALLS = `0`.
 - RUNTIME_ROUTE_CHANGE = `NONE`.
 - GLOBAL_SUITE_RUN = `NO`; TEST_LEVEL = `T1`.
-- NEXT_GATE = `12.16-G2-V4-OWNER_DECISION_REQUIRED`.
+- NEXT_GATE = `12.16-G2-V4-PROVIDER-RECALIBRATION-PLAN_READY`.

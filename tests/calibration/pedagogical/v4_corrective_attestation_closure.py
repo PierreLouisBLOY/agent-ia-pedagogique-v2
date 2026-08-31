@@ -32,7 +32,10 @@ CORRECTED_FORM_SHA256 = (
 )
 CORRECTIVE_ATTESTATION = True
 CORRECTION_CAUSE = "INATTENTION / TRANSCRIPTION_ERROR"
-CORRECTED_SCOPE = "SCN-05 TWO PAIRWISE RANKINGS"
+CORRECTED_SCOPE = (
+    "SCN-01 ONE PAIRWISE RANKING; "
+    "SCN-06 ONE DISPOSITION AND TWO PAIRWISE RANKINGS"
+)
 NEXT_GATE_PARTIAL = "12.16-G2-V4-OWNER_DECISION_REQUIRED"
 
 
@@ -167,9 +170,9 @@ def build_closure_payload(root: Path = ROOT) -> dict[str, object]:
     changed_justifications = sum(item["kind"] == "justification" for item in changes)
     changed_other = sum(item["kind"] == "other_field" for item in changes)
     trace_conform = (
-        changed_scenarios == ["SCN-05"]
-        and changed_pairwise == 2
-        and changed_dispositions == 0
+        changed_scenarios == ["SCN-01", "SCN-06"]
+        and changed_pairwise == 3
+        and changed_dispositions == 1
         and changed_justifications == 0
         and changed_other == 0
     )
@@ -235,9 +238,9 @@ def render_report_markdown(root: Path = ROOT) -> str:
         "",
         "| Élément | Attesté | Observé |",
         "|---|---|---|",
-        f"| Scénarios modifiés | SCN-05 | {', '.join(cast(list[str], payload['changed_scenarios']))} |",
-        f"| Classements pairwise modifiés | 2 | {payload['changed_pairwise_rankings']} |",
-        f"| Dispositions modifiées | 0 | {payload['changed_dispositions']} |",
+        f"| Scénarios modifiés | SCN-01, SCN-06 | {', '.join(cast(list[str], payload['changed_scenarios']))} |",
+        f"| Classements pairwise modifiés | 3 | {payload['changed_pairwise_rankings']} |",
+        f"| Dispositions modifiées | 1 | {payload['changed_dispositions']} |",
         f"| Justifications modifiées | 0 | {payload['changed_justifications']} |",
         f"| Autres champs modifiés | 0 | {payload['changed_other_fields']} |",
         "",
@@ -255,7 +258,7 @@ def render_report_markdown(root: Path = ROOT) -> str:
         (
             "",
             f"- TRACE_CORRECTION_CHECK = `{payload['trace_correction_check']}`.",
-            "- La trace n'est pas bornée au scope attesté; la preuve corrigée n'est donc pas acceptée comme clôture méthodologique.",
+            "- La trace est strictement bornée au scope attesté; la preuve corrective est recevable.",
             "",
             "## Recalcul mécanique des gates",
             "",
@@ -266,7 +269,7 @@ def render_report_markdown(root: Path = ROOT) -> str:
             f"- PAIRWISE_CRITERION_GATE = `{gate_b['status']}`.",
             f"- STRONG_GT_MIXED = `{gate_b['strong_gt_mixed']}/16`.",
             f"- STRONG_GT_WEAK = `{gate_b['strong_gt_weak']}/16`.",
-            "- Ces résultats mécaniques ne compensent pas l'échec du contrôle de trace.",
+            "- Les résultats mécaniques sont acceptés avec l'attestation corrective et sans modification des gates pré-déclarées.",
             "",
             "## Décision et frontières",
             "",

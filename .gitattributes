@@ -1,1 +1,4 @@
 * text=auto eol=lf
+# Preserve the byte-approved V5 integration documents while scoping Git's
+# blank-at-EOF exception to this immutable evidence directory only.
+docs/development/phase_12_16_g2_v5_semantic_validation_integration_offline/*.md whitespace=-blank-at-eof

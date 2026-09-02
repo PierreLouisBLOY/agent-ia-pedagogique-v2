@@ -176,7 +176,7 @@ def _build_blind_scorer_observation(
     def sequence(values: tuple[str, ...]) -> ObservationSequence:
         return ObservationSequence(tuple(scalar(value) for value in values))
 
-    values = (
+    values: tuple[ObservationScalar | ObservationSequence, ...] = (
         scalar(item.criterion_ref),
         scalar(scenario.scenario_code),
         scalar(scenario.level_code),

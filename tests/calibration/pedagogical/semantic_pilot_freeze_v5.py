@@ -16,7 +16,7 @@ from dataclasses import asdict, dataclass
 from decimal import Decimal
 from enum import StrEnum
 from pathlib import Path
-from typing import NoReturn, cast
+from typing import NoReturn
 
 from tests.calibration.pedagogical.offline_calibration_v5 import v5_contract_sha256
 from tests.calibration.pedagogical.pricing import pricing_snapshot_sha256
@@ -189,7 +189,7 @@ def build_pedagogical_transfer_envelopes() -> tuple[PedagogicalTransferEnvelope,
             model=spec.call.model,
             max_output_tokens=spec.call.max_output_tokens,
             system=system,
-            input_payload=cast(dict[str, object], observation.as_payload()),
+            input_payload=observation.as_payload(),
             output_schema=schema,
         )
         validate_transfer_envelope(envelope)

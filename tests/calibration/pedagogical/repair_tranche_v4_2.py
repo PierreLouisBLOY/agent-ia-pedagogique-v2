@@ -612,14 +612,10 @@ def _ceil_div(value: int, divisor: int) -> int:
 
 def _token_cost(input_tokens: int, output_tokens: int, model: str) -> Decimal:
     quote = MODEL_PRICE_BY_NAME[model]
-    return cast(
-        Decimal,
-        (
-            Decimal(input_tokens) * quote.input_usd_per_million_tokens
-            + Decimal(output_tokens) * quote.output_usd_per_million_tokens
-        )
-        / Decimal(1_000_000),
-    )
+    return (
+        Decimal(input_tokens) * quote.input_usd_per_million_tokens
+        + Decimal(output_tokens) * quote.output_usd_per_million_tokens
+    ) / Decimal(1_000_000)
 
 
 def _money(value: Decimal) -> Decimal:

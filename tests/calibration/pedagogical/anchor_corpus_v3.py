@@ -943,12 +943,14 @@ def render_alignment_matrix() -> str:
             "|---|---|---|---|---|---|:---:|---|",
         )
     )
-    for item in CARRY_FORWARD_MANIFEST:
+    for carry_forward in CARRY_FORWARD_MANIFEST:
         lines.append(
-            f"| {item.scenario_code} | `{item.criterion_ref}` | {item.tier} | "
-            f"`{item.v2_content_fingerprint}` | `{item.v3_content_fingerprint}` | "
-            f"{item.human_v2_label} | {'OUI' if item.reuse_allowed else 'NON'} | "
-            f"{item.reason} |"
+            f"| {carry_forward.scenario_code} | `{carry_forward.criterion_ref}` | "
+            f"{carry_forward.tier} | `{carry_forward.v2_content_fingerprint}` | "
+            f"`{carry_forward.v3_content_fingerprint}` | "
+            f"{carry_forward.human_v2_label} | "
+            f"{'OUI' if carry_forward.reuse_allowed else 'NON'} | "
+            f"{carry_forward.reason} |"
         )
     return "\n".join(lines) + "\n"
 

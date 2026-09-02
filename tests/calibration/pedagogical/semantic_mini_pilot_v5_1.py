@@ -671,7 +671,7 @@ def _envelope_for_spec(spec: V5LogicalCallSpec) -> PedagogicalTransferEnvelope:
         model=spec.call.model,
         max_output_tokens=spec.call.max_output_tokens,
         system=system,
-        input_payload=cast(dict[str, object], observation.as_payload()),
+        input_payload=observation.as_payload(),
         output_schema=schema,
     )
     validate_transfer_envelope(envelope)

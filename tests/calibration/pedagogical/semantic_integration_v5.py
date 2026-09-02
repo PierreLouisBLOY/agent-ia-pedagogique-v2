@@ -533,12 +533,9 @@ def v5_call_spec_identity(spec: V5LogicalCallSpec) -> V5CallSpecIdentity:
 def v5_call_spec_sha256(spec: V5LogicalCallSpec) -> str:
     if spec.contract is V5CallContract.V42_UNCHANGED:
         historical = _V42_BY_ID[spec.call.call_id]
-        return cast(
-            str,
-            call_spec_identity(
-                historical, CallIdentityVersion.V42_CORRECTIVE
-            ).sha256(),
-        )
+        return call_spec_identity(
+            historical, CallIdentityVersion.V42_CORRECTIVE
+        ).sha256()
     return v5_call_spec_identity(spec).sha256()
 
 
@@ -982,12 +979,9 @@ def validate_offline_integration() -> None:
 def _v5_dependency_sha256(spec: V5LogicalCallSpec) -> str:
     historical = _V42_BY_ID.get(spec.call.call_id)
     if historical is not None:
-        return cast(
-            str,
-            call_spec_identity(
-                historical, CallIdentityVersion.V42_CORRECTIVE
-            ).source_dependency_sha256,
-        )
+        return call_spec_identity(
+            historical, CallIdentityVersion.V42_CORRECTIVE
+        ).source_dependency_sha256
     dependencies: list[dict[str, str]] = []
     for input_ref in spec.call.input_refs:
         if input_ref.startswith("anchor:"):
@@ -1036,12 +1030,9 @@ def _projection_for_ref(
     input_ref: str, output_projections: Mapping[str, str] | None
 ) -> str:
     if input_ref.startswith("anchor:"):
-        return cast(
-            str,
-            _ANCHOR_BY_ID[
-                input_ref.removeprefix("anchor:")
-            ].candidate_projection(),
-        )
+        return _ANCHOR_BY_ID[
+            input_ref.removeprefix("anchor:")
+        ].candidate_projection()
     return _required_output_projection(input_ref, output_projections)
 
 
@@ -1081,14 +1072,10 @@ def _ceil_div(value: int, divisor: int) -> int:
 def _token_cost(input_tokens: int, output_tokens: int, model: str) -> Decimal:
     quote = MODEL_PRICE_BY_NAME[model]
     million = Decimal(1_000_000)
-    return cast(
-        Decimal,
-        (
-            Decimal(input_tokens) * quote.input_usd_per_million_tokens
-            + Decimal(output_tokens) * quote.output_usd_per_million_tokens
-        )
-        / million,
-    )
+    return (
+        Decimal(input_tokens) * quote.input_usd_per_million_tokens
+        + Decimal(output_tokens) * quote.output_usd_per_million_tokens
+    ) / million
 
 
 def _money(value: Decimal) -> Decimal:

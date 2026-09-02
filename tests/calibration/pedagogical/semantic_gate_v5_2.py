@@ -12,7 +12,7 @@ from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from decimal import ROUND_CEILING, Decimal
 from enum import StrEnum
-from typing import NoReturn, cast
+from typing import NoReturn
 
 from tests.calibration.pedagogical.offline_calibration_v5 import v5_contract_sha256
 from tests.calibration.pedagogical.pricing import (
@@ -486,7 +486,7 @@ def _envelope_for_spec(spec: V5LogicalCallSpec) -> PedagogicalTransferEnvelope:
         model=spec.call.model,
         max_output_tokens=spec.call.max_output_tokens,
         system=system,
-        input_payload=cast(dict[str, object], observation.as_payload()),
+        input_payload=observation.as_payload(),
         output_schema=schema,
     )
     validate_transfer_envelope(envelope)

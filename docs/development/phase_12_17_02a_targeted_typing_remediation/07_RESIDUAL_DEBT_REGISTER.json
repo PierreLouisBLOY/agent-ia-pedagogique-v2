@@ -1,0 +1,161 @@
+{
+  "schema_version": "12.17.2a-residual-mypy-debt-v1",
+  "baseline_commit": "3156092091bf755f1d542ef2d36ada2a34f3c210",
+  "before": {"errors": 33, "error_files": 15},
+  "after": {"errors": 15, "error_files": 10},
+  "removed_error_count": 18,
+  "new_error_count": 0,
+  "deferred_to_12_17_4_count": 15,
+  "errors": [
+    {
+      "error_id": "MYPY-001",
+      "file": "tests/providers/anthropic/transport.py",
+      "line": 88,
+      "code": "redundant-cast",
+      "cluster": "C01_STALE_TYPING_SCAFFOLD",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "The file bytes participate in the Anthropic contract bundle; the local fix changed historical call-spec identities and triggered MATRIX_MISMATCH.",
+      "finding_ids": ["TYP-007", "ARC-003"]
+    },
+    {
+      "error_id": "MYPY-002",
+      "file": "tests/providers/anthropic/scorer.py",
+      "line": 198,
+      "code": "union-attr",
+      "cluster": "C02_PROVIDER_OPTIONAL_NARROWING",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "Provider control-flow contract and tooling placement require one architectural decision.",
+      "finding_ids": ["TYP-002", "ARC-003"]
+    },
+    {
+      "error_id": "MYPY-003",
+      "file": "tests/providers/anthropic/scorer.py",
+      "line": 208,
+      "code": "union-attr",
+      "cluster": "C02_PROVIDER_OPTIONAL_NARROWING",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "Same provider optional-narrowing root cause as MYPY-002.",
+      "finding_ids": ["TYP-002", "ARC-003"]
+    },
+    {
+      "error_id": "MYPY-004",
+      "file": "tests/providers/anthropic/scorer.py",
+      "line": 215,
+      "code": "arg-type",
+      "cluster": "C02_PROVIDER_OPTIONAL_NARROWING",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "Same provider optional-narrowing root cause as MYPY-002.",
+      "finding_ids": ["TYP-002", "ARC-003"]
+    },
+    {
+      "error_id": "MYPY-005",
+      "file": "tests/providers/anthropic/scorer.py",
+      "line": 216,
+      "code": "arg-type",
+      "cluster": "C02_PROVIDER_OPTIONAL_NARROWING",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "Same provider optional-narrowing root cause as MYPY-002.",
+      "finding_ids": ["TYP-002", "ARC-003"]
+    },
+    {
+      "error_id": "MYPY-007",
+      "file": "tests/calibration/pedagogical/catalog.py",
+      "line": 489,
+      "code": "arg-type",
+      "cluster": "C03_FIXED_TUPLE_CARDINALITY",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "The shared three-tier cardinality contract is duplicated across versioned corpora.",
+      "finding_ids": ["TYP-003", "ARC-002"]
+    },
+    {
+      "error_id": "MYPY-008",
+      "file": "tests/calibration/pedagogical/anchor_corpus_v2.py",
+      "line": 681,
+      "code": "arg-type",
+      "cluster": "C03_FIXED_TUPLE_CARDINALITY",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "The shared three-tier cardinality contract is duplicated across versioned corpora.",
+      "finding_ids": ["TYP-003", "ARC-002"]
+    },
+    {
+      "error_id": "MYPY-009",
+      "file": "tests/calibration/pedagogical/anchor_corpus_v3.py",
+      "line": 453,
+      "code": "arg-type",
+      "cluster": "C03_FIXED_TUPLE_CARDINALITY",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "The shared three-tier cardinality contract is duplicated across versioned corpora.",
+      "finding_ids": ["TYP-003", "ARC-002"]
+    },
+    {
+      "error_id": "MYPY-017",
+      "file": "tests/calibration/pedagogical/anchor_corpus_v4.py",
+      "line": 459,
+      "code": "arg-type",
+      "cluster": "C03_FIXED_TUPLE_CARDINALITY",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "The shared three-tier cardinality contract is duplicated across versioned corpora.",
+      "finding_ids": ["TYP-003", "ARC-002"]
+    },
+    {
+      "error_id": "MYPY-018",
+      "file": "tests/calibration/pedagogical/call_plan.py",
+      "line": 607,
+      "code": "operator",
+      "cluster": "C05_OPTIONAL_BUDGET_NARROWING",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "The optional budget guard is duplicated across two versioned call plans.",
+      "finding_ids": ["TYP-005", "ARC-002"]
+    },
+    {
+      "error_id": "MYPY-019",
+      "file": "tests/calibration/pedagogical/call_plan.py",
+      "line": 609,
+      "code": "operator",
+      "cluster": "C05_OPTIONAL_BUDGET_NARROWING",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "Same optional budget-narrowing root cause as MYPY-018.",
+      "finding_ids": ["TYP-005", "ARC-002"]
+    },
+    {
+      "error_id": "MYPY-021",
+      "file": "tests/calibration/pedagogical/call_plan_v4_1.py",
+      "line": 218,
+      "code": "operator",
+      "cluster": "C05_OPTIONAL_BUDGET_NARROWING",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "The historical variant duplicates the optional budget guard.",
+      "finding_ids": ["TYP-005", "ARC-002"]
+    },
+    {
+      "error_id": "MYPY-022",
+      "file": "tests/calibration/pedagogical/call_plan_v4_1.py",
+      "line": 220,
+      "code": "operator",
+      "cluster": "C05_OPTIONAL_BUDGET_NARROWING",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "Same optional budget-narrowing root cause as MYPY-021.",
+      "finding_ids": ["TYP-005", "ARC-002"]
+    },
+    {
+      "error_id": "MYPY-023",
+      "file": "tests/calibration/pedagogical/review_contract_v4_2.py",
+      "line": 20,
+      "code": "attr-defined",
+      "cluster": "C07_IMPLICIT_REEXPORT",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "The canonical owner and versioned import boundary require rationalization.",
+      "finding_ids": ["ARC-002", "BUS-002"]
+    },
+    {
+      "error_id": "MYPY-033",
+      "file": "tests/calibration/pedagogical/semantic_gate_v5_2.py",
+      "line": 738,
+      "code": "assignment",
+      "cluster": "C08_BRANCH_SPEC_UNION",
+      "disposition": "DEFER_TO_12_17_4",
+      "defer_reason": "The versioned micro-canary and mini-pilot specs need an explicit common contract or separated ownership.",
+      "finding_ids": ["TYP-008", "ARC-002"]
+    }
+  ]
+}

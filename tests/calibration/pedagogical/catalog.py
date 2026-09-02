@@ -101,7 +101,7 @@ def _criterion_refs(scenario: CanonicalPedagogicalScenario) -> tuple[str, str]:
     refs = tuple(item.criterion_ref.value for item in scenario.rubric.criteria)
     if len(refs) != 2:
         raise ValueError("each canonical pedagogical rubric must expose two criteria")
-    return refs  # type: ignore[return-value]
+    return refs
 
 
 CALIBRATION_SCENARIOS = tuple(

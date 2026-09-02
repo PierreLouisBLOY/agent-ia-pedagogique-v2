@@ -81,12 +81,9 @@ class ReviewTruncationClassification(StrEnum):
 
 
 def v4_2_strong_projection(scenario_code: str) -> str:
-    return cast(
-        str,
-        V4_ANCHOR_BY_SCENARIO_TIER[
-            (scenario_code, AnchorTier.STRONG)
-        ].candidate_projection(),
-    )
+    return V4_ANCHOR_BY_SCENARIO_TIER[
+        (scenario_code, AnchorTier.STRONG)
+    ].candidate_projection()
 
 
 def build_compact_review_request(call: CalibrationCallSpec) -> OpenAIResponsesRequest:

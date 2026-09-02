@@ -3,6 +3,7 @@ from __future__ import annotations
 import sqlite3
 
 from backend.adapters.outbound.persistence.sqlite import ResourceStore
+from backend.adapters.outbound.persistence.vocabulary import decode_resource
 from backend.modules.resource_library.ports.outbound import ResourceRecord
 from backend.shared_kernel._strings import require_non_empty
 
@@ -21,11 +22,12 @@ class SQLiteResourceStoreAdapter:
         record = self._store.load_resource(resource_ref)
         if record is None:
             return None
+        values = decode_resource(record.get("resource_type"), record.get("identity_status"))
         return ResourceRecord(
             resource_ref=_text(record, "id"),
-            resource_type=_text(record, "resource_type"),
+            resource_type=values.resource_type,
             canonical_title=_text(record, "canonical_title"),
-            identity_status=_text(record, "identity_status"),
+            identity_status=values.identity_status,
         )
 
     def close(self) -> None:

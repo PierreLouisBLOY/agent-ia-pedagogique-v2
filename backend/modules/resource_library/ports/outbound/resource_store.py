@@ -3,6 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
+from backend.modules.resource_library.domain.value_objects.persistence_vocabulary import (
+    ResourceIdentityStatus,
+    ResourceType,
+)
 from backend.shared_kernel._strings import require_non_empty
 
 
@@ -11,15 +15,17 @@ class ResourceRecord:
     """M03-owned logical record crossing OP-03, never a SQLite row."""
 
     resource_ref: str
-    resource_type: str
+    resource_type: ResourceType
     canonical_title: str
-    identity_status: str
+    identity_status: ResourceIdentityStatus
 
     def __post_init__(self) -> None:
         require_non_empty(self.resource_ref, "resource_ref")
-        require_non_empty(self.resource_type, "resource_type")
+        if not isinstance(self.resource_type, ResourceType):
+            raise TypeError("resource_type must be a ResourceType")
         require_non_empty(self.canonical_title, "canonical_title")
-        require_non_empty(self.identity_status, "identity_status")
+        if not isinstance(self.identity_status, ResourceIdentityStatus):
+            raise TypeError("identity_status must be a ResourceIdentityStatus")
 
 
 @runtime_checkable

@@ -1,0 +1,18 @@
+{
+  "schema_version": "12.17.4e-b06-owner-mapping-v1",
+  "family_count": 10,
+  "migration_required_true": 0,
+  "migration_required_unknown": 2,
+  "families": [
+    {"id": 1, "family": "notion", "owner": "knowledge_reference/domain", "types": ["KnowledgeLanguageCode", "NotionIdentityStatus"], "migration": "FALSE"},
+    {"id": 2, "family": "document", "owner": "documents_provenance/domain", "types": ["DocumentType", "DocumentLanguageCode", "DocumentStatus"], "migration": "FALSE"},
+    {"id": 3, "family": "resource", "owner": "resource_library/domain", "types": ["ResourceType", "ResourceIdentityStatus"], "migration": "UNKNOWN"},
+    {"id": 4, "family": "context", "owner": "pedagogical_context/application", "types": ["ContextOrigin"], "migration": "UNKNOWN"},
+    {"id": 5, "family": "session", "owner": "work_orchestration/domain", "types": ["SessionLifecycleStatus"], "migration": "FALSE"},
+    {"id": 6, "family": "task", "owner": "work_orchestration/application", "types": ["TaskType", "TaskObjectiveRef", "TaskStatus"], "migration": "FALSE"},
+    {"id": 7, "family": "production", "owner": "transformation_assembly/domain", "types": ["ProductionType", "ProductionTitle", "ProductionLifecycleStatus"], "migration": "FALSE"},
+    {"id": 8, "family": "validation", "owner": "validation_control/application", "types": ["ValidationType", "ValidationResult", "ValidatorRef"], "migration": "FALSE"},
+    {"id": 9, "family": "quality_promotion", "owner": "quality_evaluation/domain+lifecycle_promotion/domain", "types": ["QualityEvaluationStatus", "QualityScore", "PromotionStatus", "PromotionJustification"], "migration": "FALSE"},
+    {"id": 10, "family": "audit", "owner": "audit_traceability/application", "types": ["AuditEventType", "AuditActorRef", "AuditPayload"], "migration": "FALSE"}
+  ]
+}

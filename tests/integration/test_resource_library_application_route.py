@@ -10,13 +10,22 @@ from backend.agent_runtime.application_routing import (
 from backend.agent_runtime.contracts import AgentId
 from backend.agent_runtime.policy import CapabilityAuthorizationPolicy
 from backend.modules.resource_library.application.queries import GetResourceQuery
+from backend.modules.resource_library.domain.value_objects.persistence_vocabulary import (
+    ResourceIdentityStatus,
+    ResourceType,
+)
 from backend.modules.resource_library.ports.outbound import ResourceRecord
 from tests.support.use_case_routing_fakes import NOW, make_request
 
 
 class FixedResourceStore:
     def load_resource(self, resource_ref: str) -> ResourceRecord | None:
-        return ResourceRecord(resource_ref, "COURSE", "Management", "ACTIVE")
+        return ResourceRecord(
+            resource_ref,
+            ResourceType.COURSE,
+            "Management",
+            ResourceIdentityStatus.ACTIVE,
+        )
 
 
 def test_cap_r01_routes_once_to_the_real_m03_get_resource_inbound() -> None:

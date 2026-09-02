@@ -67,9 +67,9 @@ class GetResourceQuery:
             correlation_id=correlation_id,
             data=ResourceView(
                 resource_ref=record.resource_ref,
-                resource_type=record.resource_type,
+                resource_type=record.resource_type.value,
                 canonical_title=record.canonical_title,
-                identity_status=record.identity_status,
+                identity_status=record.identity_status.value,
             ),
             subject_refs=(subject_ref,),
         )

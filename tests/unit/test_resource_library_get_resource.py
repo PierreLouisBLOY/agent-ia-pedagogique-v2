@@ -5,6 +5,10 @@ from dataclasses import dataclass, field
 from backend.core_contracts.outcome import OutcomeStatus
 from backend.modules.resource_library.application.dto.input import GetResourceRequest
 from backend.modules.resource_library.application.queries import GetResourceQuery
+from backend.modules.resource_library.domain.value_objects.persistence_vocabulary import (
+    ResourceIdentityStatus,
+    ResourceType,
+)
 from backend.modules.resource_library.ports.outbound import ResourceRecord
 from backend.shared_kernel.correlation import CorrelationId
 
@@ -21,7 +25,10 @@ class RecordingResourceStore:
 
 def test_get_resource_maps_one_op03_record_to_a_typed_resource_view() -> None:
     record = ResourceRecord(
-        "resource:1", "EXERCISE_SET", "Fonctions du management", "ACTIVE"
+        "resource:1",
+        ResourceType.EXERCISE_SET,
+        "Fonctions du management",
+        ResourceIdentityStatus.ACTIVE,
     )
     store = RecordingResourceStore(record)
 

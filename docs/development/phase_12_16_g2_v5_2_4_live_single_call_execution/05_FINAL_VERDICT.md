@@ -1,0 +1,4 @@
+# V5.2.4 final verdict
+
+- `VERDICT = V5_2_4_MINI_PILOT_PASS`
+- `RELEASE_THRESHOLD = NONE`

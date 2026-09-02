@@ -94,7 +94,16 @@ def test_active_code_has_no_typing_escape_or_legacy_compatibility_wrapper() -> N
     assert "tests/providers/anthropic" not in source
 
 
-def test_b02_does_not_preempt_anthropic_adapter_composition_or_cli_batches() -> None:
-    assert not (TOOLING / "adapters").exists()
+def test_b03_adds_only_the_anthropic_adapter_without_preempting_b04() -> None:
+    adapter = TOOLING / "adapters/anthropic"
+    assert adapter.is_dir()
+    assert {path.name for path in adapter.glob("*.py")} == {
+        "__init__.py",
+        "contracts.py",
+        "mapping.py",
+        "parser.py",
+        "scorer.py",
+        "transport.py",
+    }
     assert not (TOOLING / "runtime/composition.py").exists()
     assert not (TOOLING / "runtime/cli.py").exists()

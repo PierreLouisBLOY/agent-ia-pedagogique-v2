@@ -100,7 +100,7 @@ def test_active_code_has_no_typing_escape_or_legacy_compatibility_wrapper() -> N
     assert "tests/providers/anthropic" not in source
 
 
-def test_b04_composes_b03_without_preempting_b05() -> None:
+def test_b05_marks_old_roots_historical_after_b04_composition() -> None:
     adapter = TOOLING / "adapters/anthropic"
     assert adapter.is_dir()
     assert {path.name for path in adapter.glob("*.py")} == {
@@ -116,4 +116,4 @@ def test_b04_composes_b03_without_preempting_b05() -> None:
     assert (TOOLING / "runtime/cli.py").is_file()
     assert (TOOLING / "observability/events.py").is_file()
     assert (TOOLING / "observability/redaction.py").is_file()
-    assert not (TOOLING / "HISTORICAL_ONLY.md").exists()
+    assert (TOOLING / "HISTORICAL_ONLY.md").is_file()

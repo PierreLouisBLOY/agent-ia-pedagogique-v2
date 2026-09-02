@@ -1,0 +1,143 @@
+{
+  "schema_version": "12.17.4e-b05-mypy-closure-v1",
+  "diagnostic_count": 15,
+  "closure_mode": "ACTIVE_GRAPH_ISOLATION",
+  "historical_source_files_modified": false,
+  "entries": [
+    {
+      "error_id": "MYPY-001",
+      "before": "tests/providers/anthropic/transport.py:88 redundant-cast",
+      "root_cause": "historical transport cast retained by immutable evidence",
+      "fix": "typed active Anthropic transport with no historical import",
+      "after": "absent from active traversal",
+      "test": "tests/unit/calibration_tooling/test_anthropic_transport_parser.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-002",
+      "before": "tests/providers/anthropic/scorer.py:198 union-attr",
+      "root_cause": "historical optional route configuration",
+      "fix": "active closed error helper annotated NoReturn",
+      "after": "absent from active traversal",
+      "test": "tests/unit/calibration_tooling/test_anthropic_scorer.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-003",
+      "before": "tests/providers/anthropic/scorer.py:208 union-attr",
+      "root_cause": "historical optional model configuration",
+      "fix": "resolved active configuration required before model access",
+      "after": "absent from active traversal",
+      "test": "tests/unit/calibration_tooling/test_anthropic_contracts_mapping.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-004",
+      "before": "tests/providers/anthropic/scorer.py:215 arg-type",
+      "root_cause": "historical optional provider profile passed to scorer",
+      "fix": "non-optional resolved active configuration",
+      "after": "absent from active traversal",
+      "test": "tests/unit/calibration_tooling/test_anthropic_scorer.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-005",
+      "before": "tests/providers/anthropic/scorer.py:216 arg-type",
+      "root_cause": "historical optional model profile passed to scorer",
+      "fix": "atomic active provider/model resolution",
+      "after": "absent from active traversal",
+      "test": "tests/unit/calibration_tooling/test_anthropic_contracts_mapping.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-007",
+      "before": "tests/calibration/pedagogical/catalog.py:489 arg-type",
+      "root_cause": "historical variadic tuple used as a fixed triplet",
+      "fix": "active AnchorTriplet with three typed fields",
+      "after": "absent from active traversal",
+      "test": "tests/unit/calibration_tooling/test_active_historical_parity.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-008",
+      "before": "tests/calibration/pedagogical/anchor_corpus_v2.py:681 arg-type",
+      "root_cause": "historical V2 variadic anchor ordering",
+      "fix": "historical V2 isolated behind the active fixed triplet contract",
+      "after": "absent from active traversal",
+      "test": "tests/unit/calibration_tooling/test_active_historical_parity.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-009",
+      "before": "tests/calibration/pedagogical/anchor_corpus_v3.py:453 arg-type",
+      "root_cause": "historical V3 variadic anchor ordering",
+      "fix": "historical V3 isolated behind the active fixed triplet contract",
+      "after": "absent from active traversal",
+      "test": "tests/unit/calibration_tooling/test_active_historical_parity.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-017",
+      "before": "tests/calibration/pedagogical/anchor_corpus_v4.py:459 arg-type",
+      "root_cause": "historical V4 variadic anchor ordering",
+      "fix": "historical V4 isolated behind the active fixed triplet contract",
+      "after": "absent from active traversal",
+      "test": "tests/unit/calibration_tooling/test_active_historical_parity.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-018",
+      "before": "tests/calibration/pedagogical/call_plan.py:607 operator",
+      "root_cause": "historical optional budget arithmetic",
+      "fix": "active ApprovedBudget is required and exact",
+      "after": "absent from active traversal",
+      "test": "tests/unit/calibration_tooling/test_authorization_budget.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-019",
+      "before": "tests/calibration/pedagogical/call_plan.py:609 operator",
+      "root_cause": "historical optional ceiling comparison",
+      "fix": "active BudgetGuard compares non-optional Decimal values",
+      "after": "absent from active traversal",
+      "test": "tests/unit/calibration_tooling/test_authorization_budget.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-021",
+      "before": "tests/calibration/pedagogical/call_plan_v4_1.py:218 operator",
+      "root_cause": "historical V4.1 optional budget arithmetic",
+      "fix": "V4.1 isolated; active runner uses the shared required budget",
+      "after": "absent from active traversal",
+      "test": "tests/unit/calibration_tooling/test_authorization_budget.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-022",
+      "before": "tests/calibration/pedagogical/call_plan_v4_1.py:220 operator",
+      "root_cause": "historical V4.1 optional ceiling comparison",
+      "fix": "V4.1 isolated; active runner has one typed budget path",
+      "after": "absent from active traversal",
+      "test": "tests/unit/calibration_tooling/test_authorization_budget.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-023",
+      "before": "tests/calibration/pedagogical/review_contract_v4_2.py:20 attr-defined",
+      "root_cause": "historical implicit AnchorTier reexport",
+      "fix": "active code imports AnchorTier from its owning models module",
+      "after": "absent from active traversal",
+      "test": "tests/architecture/test_calibration_tooling_imports.py",
+      "historical_file_modified": false
+    },
+    {
+      "error_id": "MYPY-033",
+      "before": "tests/calibration/pedagogical/semantic_gate_v5_2.py:738 assignment",
+      "root_cause": "historical reuse of one variable across distinct spec types",
+      "fix": "active runner dispatches discriminated absolute and pairwise specs",
+      "after": "absent from active traversal",
+      "test": "tests/integration/calibration_tooling/test_active_parity.py",
+      "historical_file_modified": false
+    }
+  ]
+}

@@ -30,7 +30,7 @@ def _imports(path: Path) -> set[str]:
     return modules
 
 
-def test_exactly_one_active_runner_and_one_active_parser_are_declared() -> None:
+def test_exactly_one_active_runner_parser_and_cli_are_declared() -> None:
     runner_targets = tuple(
         path
         for path in _python_files(TOOLING)
@@ -41,8 +41,14 @@ def test_exactly_one_active_runner_and_one_active_parser_are_declared() -> None:
         for path in _python_files(TOOLING)
         if "ACTIVE_PARSER_TARGET:" in path.read_text(encoding="utf-8")
     )
+    cli_targets = tuple(
+        path
+        for path in _python_files(TOOLING)
+        if "ACTIVE_CLI_TARGET:" in path.read_text(encoding="utf-8")
+    )
     assert runner_targets == (TOOLING / "runtime/runner.py",)
     assert parser_targets == (TOOLING / "contracts/parser.py",)
+    assert cli_targets == (TOOLING / "runtime/cli.py",)
 
 
 def test_active_graph_has_no_import_to_historical_or_test_provider_code() -> None:
@@ -94,7 +100,7 @@ def test_active_code_has_no_typing_escape_or_legacy_compatibility_wrapper() -> N
     assert "tests/providers/anthropic" not in source
 
 
-def test_b03_adds_only_the_anthropic_adapter_without_preempting_b04() -> None:
+def test_b04_composes_b03_without_preempting_b05() -> None:
     adapter = TOOLING / "adapters/anthropic"
     assert adapter.is_dir()
     assert {path.name for path in adapter.glob("*.py")} == {
@@ -105,5 +111,9 @@ def test_b03_adds_only_the_anthropic_adapter_without_preempting_b04() -> None:
         "scorer.py",
         "transport.py",
     }
-    assert not (TOOLING / "runtime/composition.py").exists()
-    assert not (TOOLING / "runtime/cli.py").exists()
+    assert (TOOLING / "runtime/configuration.py").is_file()
+    assert (TOOLING / "runtime/composition.py").is_file()
+    assert (TOOLING / "runtime/cli.py").is_file()
+    assert (TOOLING / "observability/events.py").is_file()
+    assert (TOOLING / "observability/redaction.py").is_file()
+    assert not (TOOLING / "HISTORICAL_ONLY.md").exists()

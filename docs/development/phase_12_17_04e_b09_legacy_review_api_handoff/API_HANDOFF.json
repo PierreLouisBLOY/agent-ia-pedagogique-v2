@@ -1,0 +1,141 @@
+{
+  "schema_version": "12.17.4e-b09-api-handoff-v1",
+  "phase": "12.17.4E-B09",
+  "status": "HANDOFF_ONLY",
+  "target_phase": "12.17.5",
+  "implementation_started": false,
+  "application_delivery_order": [
+    "CAP-R02",
+    "CAP-A01",
+    "CAP-A02"
+  ],
+  "application_owners": [
+    {
+      "capability_id": "CAP-R02",
+      "use_case_id": "application.read_production",
+      "owner": "backend.modules.work_orchestration.application",
+      "kind": "QUERY_READ_ONLY",
+      "implementation_status": "NOT_IMPLEMENTED",
+      "input_contract": {
+        "status": "TO_MATERIALIZE",
+        "required_logical_fields": ["production_ref", "version_ref"]
+      },
+      "output_contract": {
+        "status": "TO_MATERIALIZE",
+        "shape": "MINIMIZED_TYPED_PRODUCTION_READ_VIEW"
+      },
+      "errors": ["VALIDATION_REJECTED", "NOT_FOUND", "APPLICATION_FAILURE"],
+      "invariants": [
+        "READ_ONLY",
+        "NO_SQL_OR_REPOSITORY_IN_INBOUND",
+        "NO_FALLBACK_TO_RESOURCE_READ15",
+        "TRANSPORT_NEUTRAL_OUTCOME"
+      ],
+      "dependencies": ["typed production read outbound port", "production read model"],
+      "required_ports": ["Application inbound query port", "typed production read outbound port"],
+      "required_tests": ["nominal exact version", "missing production/version", "transport boundary", "no SQL import"],
+      "delivery_position": 1
+    },
+    {
+      "capability_id": "CAP-A01",
+      "use_case_id": "application.run_deterministic_validation",
+      "owner": "backend.modules.validation_control.application",
+      "kind": "DETERMINISTIC_COMMAND",
+      "implementation_status": "NOT_IMPLEMENTED",
+      "input_contract": {
+        "status": "TO_MATERIALIZE",
+        "required_logical_fields": ["production_ref"]
+      },
+      "output_contract": {
+        "status": "TO_MATERIALIZE",
+        "shape": "APPLICATION_OUTCOME_WITH_OPAQUE_VALIDATION_RESULT"
+      },
+      "errors": ["VALIDATION_REJECTED", "SUBJECT_NOT_FOUND", "APPLICATION_FAILURE"],
+      "invariants": [
+        "DETERMINISTIC",
+        "PROVIDER_FREE",
+        "VALIDATION_RESULT_NOT_REINTERPRETED_BY_ROUTER",
+        "NO_PROMOTION_AUTHORITY"
+      ],
+      "dependencies": ["validation_control domain rules", "typed validation inputs"],
+      "required_ports": ["Application inbound command port"],
+      "required_tests": ["determinism", "closed invalid input", "outcome preservation", "provider absence"],
+      "delivery_position": 2
+    },
+    {
+      "capability_id": "CAP-A02",
+      "use_case_id": "application.request_promotion",
+      "owner": "backend.modules.lifecycle_promotion.application",
+      "kind": "EFFECTFUL_COMMAND_BEHIND_GATE",
+      "implementation_status": "NOT_IMPLEMENTED",
+      "input_contract": {
+        "status": "TO_MATERIALIZE",
+        "required_logical_fields": ["production_ref"],
+        "idempotency_key_required": true,
+        "trusted_gate_fact_required": "matrix_gate_satisfied"
+      },
+      "output_contract": {
+        "status": "TO_MATERIALIZE",
+        "shape": "APPLICATION_OUTCOME_WITH_OPERATION_AND_EFFECT_REFS"
+      },
+      "errors": ["GATE_NOT_SATISFIED", "IDEMPOTENCY_REQUIRED", "EFFECT_CONFLICT", "APPLICATION_FAILURE"],
+      "invariants": [
+        "PREEXISTING_TRUSTED_GATE_DECISION_REQUIRED",
+        "IDEMPOTENT_EFFECT",
+        "UNKNOWN_EFFECT_RECONCILED_BEFORE_REPLAY",
+        "NO_SELF_APPROVAL",
+        "NO_AUTOMATIC_RETRY"
+      ],
+      "dependencies": ["lifecycle_promotion domain rules", "Gate decision", "idempotency/effect ledger"],
+      "required_ports": ["Application inbound command port", "promotion persistence port", "effect ledger port"],
+      "required_tests": ["approved gate handoff", "rejected/missing gate blocks", "idempotency", "unknown effect reconciliation"],
+      "delivery_position": 3
+    }
+  ],
+  "http_handoff": {
+    "scope": "RESOURCE_READ_15_ONLY",
+    "method": "GET",
+    "route": "/api/v2/resources/{resource_ref}",
+    "endpoint_implemented": false,
+    "path_parameters": ["resource_ref"],
+    "query_parameters": [],
+    "deprecated_for_active_read15": ["version_ref", "include"],
+    "unknown_or_deprecated_field_policy": "CLOSED_VALIDATION_ERROR",
+    "application_inbound": "backend.adapters.inbound.application.resource_library.ResourceLibraryUseCaseInbound",
+    "application_use_case_id": "application.read_canonical_resource",
+    "application_query": "backend.modules.resource_library.application.queries.get_resource.GetResourceQuery.get_resource",
+    "success_response": {
+      "status": 200,
+      "fields": ["resource_ref", "resource_type", "canonical_title", "identity_status"]
+    },
+    "error_mapping": {
+      "INVALID_OR_UNKNOWN_INPUT": 400,
+      "RES_NOT_FOUND": 404,
+      "APPLICATION_FAILURE": 500
+    },
+    "error_minimization": "NO_SQL_PATH_STACK_SECRET_OR_RAW_PAYLOAD",
+    "authority": "APPLICATION",
+    "direct_sql_authorized": false,
+    "repository_import_authorized": false,
+    "migration_required": false,
+    "other_endpoints_authorized": []
+  },
+  "read15_deprecation": {
+    "version_ref": "DEPRECATED_FOR_ACTIVE_READ15",
+    "include": "DEPRECATED_FOR_ACTIVE_READ15",
+    "reintroduction_requires": ["new versioned contract", "consumer justification", "tests", "data-model evidence if applicable"]
+  },
+  "local_browser_downstream": {
+    "V2_EXECUTION_MODE": "LOCAL_BROWSER",
+    "BACKEND_BIND_DEFAULT": "LOOPBACK_ONLY",
+    "GOOGLE_DRIVE_RUNTIME_DEPENDENCY": "NONE",
+    "WINDOWS_EXE_REQUIRED_FOR_V2": false
+  },
+  "open_findings": {
+    "RESOURCE_ACTIVE_CANONICAL": "UNKNOWN",
+    "CONTEXT_ORIGIN": "UNKNOWN",
+    "HISTORICAL_SIDECAR_CREATOR": "UNKNOWN",
+    "SEED_SIDECARS_PREEXISTING_AND_UNCHANGED": true,
+    "HISTORICAL_MYPY": "15 errors / 10 files"
+  }
+}

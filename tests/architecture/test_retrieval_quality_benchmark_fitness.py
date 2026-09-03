@@ -37,6 +37,7 @@ def test_benchmark_uses_agent_boundary_without_parallel_sql_or_provider() -> Non
 def test_real_gate_uses_environment_only_and_no_private_seed_path() -> None:
     source = REAL_GATE.read_text(encoding="utf-8")
     assert "PEDAGOGICAL_CANONICAL_SEED_PATH" not in source
-    assert "SEED_PATH_ENV" in source
+    assert "load_sqlite_paths(os.environ)" in source
+    assert "CANONICAL_SEED_REQUIRED" in source
     assert "G:\\" not in source
     assert "skip" not in source.lower()

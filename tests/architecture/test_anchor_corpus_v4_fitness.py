@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import ast
-import hashlib
 import subprocess
 from pathlib import Path
+
+from tests.support.historical_hash_freeze import assert_current_historical_hashes
 
 ROOT = Path(__file__).resolve().parents[2]
 OWNER = ROOT / "tests/calibration/pedagogical/anchor_corpus_v4.py"
@@ -80,31 +81,17 @@ def test_v4_local_key_is_ignored_and_owner_documents_are_not() -> None:
 
 
 def test_v1_v2_v3_proofs_remain_byte_exact() -> None:
-    frozen = {
-        "tests/calibration/pedagogical/catalog.py": (
-            "53da2068fa6585086fe955b633a1d8e173cf770c8b5cb5e71f6cc8cc474e7317"
+    assert_current_historical_hashes(
+        ROOT,
+        (
+            "tests/calibration/pedagogical/catalog.py",
+            "tests/calibration/pedagogical/anchor_corpus_v2.py",
+            "tests/calibration/pedagogical/anchor_corpus_v3.py",
+            "docs/development/PHASE_12_16_G2_V3_HUMAN_DELTA_PREVALIDATION_RECONCILIATION.md",
+            "docs/development/PHASE_12_16_G2_ANCHOR_CORPUS_V3_STRONG_ONLY_REMEDIATION_BASELINE.md",
+            "architecture/adr/ADR-P12-066-strong-only-deliverability-calibration-semantics.md",
         ),
-        "tests/calibration/pedagogical/anchor_corpus_v2.py": (
-            "bd0c5eff43be20b4f578b99321e076471804f8a3e0e197858b08a3701800be76"
-        ),
-        "tests/calibration/pedagogical/anchor_corpus_v3.py": (
-            "cf90457393b02dca233cd4bc5d5c73e4a63a091591cb448d19b30b68e6bdc241"
-        ),
-        "docs/development/PHASE_12_16_G2_V3_HUMAN_DELTA_PREVALIDATION_RECONCILIATION.md": (
-            "4268c70543a8cf26274db6fc2c9b334ee71473a9ef8f960f0e3109c64b7dffc9"
-        ),
-        "docs/development/PHASE_12_16_G2_ANCHOR_CORPUS_V3_STRONG_ONLY_REMEDIATION_BASELINE.md": (
-            "216a2f9f938557e116b8306604decdafbe51a9f0e2fab235e560a7e719ba876c"
-        ),
-        "architecture/adr/ADR-P12-066-strong-only-deliverability-calibration-semantics.md": (
-            "aaba7d443ef17d8e557ccbceb87961758901b12591a6f368bc38ad05fda8d3ea"
-        ),
-    }
-    actual = {
-        relative: hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
-        for relative in frozen
-    }
-    assert actual == frozen
+    )
 
 
 def test_adr_p12_067_records_durable_separation_and_non_authority() -> None:

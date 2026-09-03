@@ -40,6 +40,7 @@ from tests.calibration.pedagogical.catalog import (
     AnchorTier,
     calibration_corpus_sha256,
 )
+from tests.support.historical_hash_freeze import assert_current_historical_hashes
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -311,19 +312,11 @@ def test_generated_tracked_outputs_match_and_regenerate_byte_identically(tmp_pat
 
 
 def test_v1_owner_and_reports_remain_byte_exact() -> None:
-    expected = {
-        "tests/calibration/pedagogical/catalog.py": (
-            "53da2068fa6585086fe955b633a1d8e173cf770c8b5cb5e71f6cc8cc474e7317"
+    assert_current_historical_hashes(
+        ROOT,
+        (
+            "tests/calibration/pedagogical/catalog.py",
+            "docs/development/PHASE_12_16_G2_FINAL_CALIBRATION_ANALYSIS_REPORT.json",
+            "docs/development/PHASE_12_16_G2_HUMAN_REVIEW_RECONCILIATION_REPORT.json",
         ),
-        "docs/development/PHASE_12_16_G2_FINAL_CALIBRATION_ANALYSIS_REPORT.json": (
-            "f08fad954918f82e690a539b35f02a88ce3d08818a95f6c18df982f4c3d7c272"
-        ),
-        "docs/development/PHASE_12_16_G2_HUMAN_REVIEW_RECONCILIATION_REPORT.json": (
-            "568e810af5a3cee9e46a56696300066db421d2dfc330f721718318be85a8b6cd"
-        ),
-    }
-    actual = {
-        relative_path: hashlib.sha256((ROOT / relative_path).read_bytes()).hexdigest()
-        for relative_path in expected
-    }
-    assert actual == expected
+    )

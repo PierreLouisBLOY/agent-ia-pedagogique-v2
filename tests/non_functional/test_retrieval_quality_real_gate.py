@@ -5,10 +5,13 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-from backend.adapters.outbound.persistence.migrations import inspect_database
+from backend.adapters.outbound.persistence.migrations import (
+    inspect_database,
+    snapshot_sqlite_files,
+)
 from backend.agent_runtime.agents.evidence import EvidenceAgent, RetrievalCoordinator
 from backend.infrastructure.composition.factories.sqlite import build_sqlite_runtime
-from backend.infrastructure.config.loaders.sqlite import SEED_PATH_ENV
+from backend.infrastructure.config.loaders.sqlite import load_sqlite_paths
 from backend.infrastructure.config.schemas.sqlite import SQLiteDatabasePaths
 from backend.shared_kernel.time import Instant
 from tests.support.retrieval_quality_cases import (
@@ -30,9 +33,9 @@ class _Clock:
 def test_retrieval_quality_real_gate_is_reproducible_on_two_fresh_runtimes(
     tmp_path: Path,
 ) -> None:
-    seed_value = os.environ.get(SEED_PATH_ENV)
-    assert seed_value, f"mandatory real gate requires {SEED_PATH_ENV}"
-    seed_path = Path(seed_value)
+    seed_path = load_sqlite_paths(os.environ).canonical_seed_path
+    assert seed_path.is_file(), "CANONICAL_SEED_REQUIRED"
+    seed_files_before = snapshot_sqlite_files(seed_path)
     seed_before = inspect_database(seed_path, authenticate_seed=True)
     assert seed_before.size_bytes == EXPECTED_SEED_SIZE
     assert seed_before.sha256 == EXPECTED_SEED_SHA256
@@ -70,6 +73,7 @@ def test_retrieval_quality_real_gate_is_reproducible_on_two_fresh_runtimes(
 
     assert rendered_runs[0] == rendered_runs[1]
     assert inspect_database(seed_path, authenticate_seed=True) == seed_before
+    assert snapshot_sqlite_files(seed_path) == seed_files_before
 
 
 def _remove_runtime_files(runtime_path: Path) -> None:

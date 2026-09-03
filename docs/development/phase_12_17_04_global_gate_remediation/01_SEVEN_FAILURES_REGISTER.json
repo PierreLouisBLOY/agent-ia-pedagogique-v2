@@ -1,0 +1,67 @@
+{
+  "schema_version": "12.17.4-global-gate-remediation-v1",
+  "baseline_head": "054ba2c7eb19f1be4eb048f94e554022db631dc1",
+  "reproduction": {
+    "result": "7 failed in 3.25s",
+    "classification": {
+      "STALE_HISTORICAL_HASH_ASSERTION": 6,
+      "CANONICAL_SEED_ENVIRONMENT_REQUIREMENT": 1
+    }
+  },
+  "failures": [
+    {
+      "nodeid": "tests/architecture/test_anchor_corpus_v3_fitness.py::test_v1_v2_corpus_and_reconciliation_proofs_remain_byte_exact",
+      "classification": "STALE_HISTORICAL_HASH_ASSERTION",
+      "stale_paths": ["tests/calibration/pedagogical/catalog.py"]
+    },
+    {
+      "nodeid": "tests/architecture/test_anchor_corpus_v4_fitness.py::test_v1_v2_v3_proofs_remain_byte_exact",
+      "classification": "STALE_HISTORICAL_HASH_ASSERTION",
+      "stale_paths": [
+        "tests/calibration/pedagogical/catalog.py",
+        "tests/calibration/pedagogical/anchor_corpus_v3.py"
+      ]
+    },
+    {
+      "nodeid": "tests/architecture/test_v2_human_prevalidation_reconciliation_fitness.py::test_v2_corpus_packet_and_v1_proofs_remain_byte_exact",
+      "classification": "STALE_HISTORICAL_HASH_ASSERTION",
+      "stale_paths": ["tests/calibration/pedagogical/catalog.py"]
+    },
+    {
+      "nodeid": "tests/architecture/test_v3_human_delta_reconciliation_fitness.py::test_v1_v2_v3_corpora_and_historical_proofs_remain_byte_exact",
+      "classification": "STALE_HISTORICAL_HASH_ASSERTION",
+      "stale_paths": [
+        "tests/calibration/pedagogical/catalog.py",
+        "tests/calibration/pedagogical/anchor_corpus_v3.py"
+      ]
+    },
+    {
+      "nodeid": "tests/architecture/test_v4_human_disposition_pairwise_reconciliation_fitness.py::test_historical_v1_v2_v3_v4_sources_remain_byte_exact",
+      "classification": "STALE_HISTORICAL_HASH_ASSERTION",
+      "stale_paths": [
+        "tests/calibration/pedagogical/catalog.py",
+        "tests/calibration/pedagogical/anchor_corpus_v3.py"
+      ]
+    },
+    {
+      "nodeid": "tests/unit/test_pedagogical_calibration_anchor_corpus_v2.py::test_v1_owner_and_reports_remain_byte_exact",
+      "classification": "STALE_HISTORICAL_HASH_ASSERTION",
+      "stale_paths": ["tests/calibration/pedagogical/catalog.py"]
+    },
+    {
+      "nodeid": "tests/non_functional/test_retrieval_quality_real_gate.py::test_retrieval_quality_real_gate_is_reproducible_on_two_fresh_runtimes",
+      "classification": "CANONICAL_SEED_ENVIRONMENT_REQUIREMENT",
+      "message": "mandatory real gate requires PEDAGOGICAL_CANONICAL_SEED_PATH"
+    }
+  ],
+  "stale_hash_evidence": {
+    "tests/calibration/pedagogical/catalog.py": {
+      "stale_expected": "53da2068fa6585086fe955b633a1d8e173cf770c8b5cb5e71f6cc8cc474e7317",
+      "current_approved": "32339ade61085d999bb5cdcc85908b218288162f560f8ec815fa361d427ce191"
+    },
+    "tests/calibration/pedagogical/anchor_corpus_v3.py": {
+      "stale_expected": "cf90457393b02dca233cd4bc5d5c73e4a63a091591cb448d19b30b68e6bdc241",
+      "current_approved": "95e6a253f56b62596f12cfbd43c764288665f9ec264186956958d6ed5eab02da"
+    }
+  }
+}

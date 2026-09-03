@@ -1,0 +1,42 @@
+{
+  "schema_version": "12.17.4-closure-open-findings-v1",
+  "finding_count": 5,
+  "blocking_12_17_5_entry_count": 0,
+  "findings": [
+    {
+      "id": "RESOURCE_STATUS_ACTIVE_CANONICAL_UNKNOWN",
+      "severity": "MEDIUM",
+      "blocker_12_17_5_entry": false,
+      "owner_next_step": "Resource Library owner: resolve from exact schema/data evidence before committing persisted semantics",
+      "forbidden_assumptions": ["ACTIVE equals CANONICAL", "one value is a storage default", "a migration is authorized"]
+    },
+    {
+      "id": "CONTEXT_ORIGIN_UNKNOWN",
+      "severity": "MEDIUM",
+      "blocker_12_17_5_entry": false,
+      "owner_next_step": "Owning bounded context: establish origin semantics during the 12.17.5 data-model audit",
+      "forbidden_assumptions": ["origin can be inferred from nullability", "an enum/default is approved", "a migration is authorized"]
+    },
+    {
+      "id": "HISTORICAL_MYPY_DEBT_15_10",
+      "severity": "LOW",
+      "blocker_12_17_5_entry": false,
+      "owner_next_step": "Calibration governance: keep the ten historical files outside the active graph and monitor the 15-diagnostic baseline",
+      "forbidden_assumptions": ["historical sources are type-clean", "retroactive edits are allowed", "active mypy covers historical evidence"]
+    },
+    {
+      "id": "HISTORICAL_SEED_SIDECAR_CREATOR_UNKNOWN",
+      "severity": "LOW",
+      "blocker_12_17_5_entry": false,
+      "owner_next_step": "Persistence owner: preserve existing seed WAL/SHM and retain PRE/POST attribution on future reads",
+      "forbidden_assumptions": ["B08 created the seed sidecars", "the sidecars are disposable", "their presence authorizes seed writes"]
+    },
+    {
+      "id": "B01_NARRATIVE_VS_MACHINE_READABLE_FREEZE_GAP",
+      "severity": "LOW",
+      "blocker_12_17_5_entry": false,
+      "owner_next_step": "Architecture governance: retain the approved baseline fallback and document the omission in future handoffs",
+      "forbidden_assumptions": ["catalog.py is a B01 entry", "anchor_corpus_v3.py is a B01 entry", "B01 may be rewritten retroactively"]
+    }
+  ]
+}

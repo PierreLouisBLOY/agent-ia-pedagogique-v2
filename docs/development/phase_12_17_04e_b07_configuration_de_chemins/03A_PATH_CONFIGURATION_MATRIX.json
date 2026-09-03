@@ -1,0 +1,42 @@
+{
+  "schema_version": "12.17.4e-b07-path-configuration-v1",
+  "phase": "12.17.4E-B07",
+  "root_change": "RC-07",
+  "new_settings": {
+    "data_directory": "PROJET_V2_DATA_DIR",
+    "canonical_database": "PROJET_V2_CANONICAL_DB",
+    "runtime_database": "PROJET_V2_RUNTIME_DB"
+  },
+  "legacy_aliases": {
+    "canonical_database": "PEDAGOGICAL_CANONICAL_SEED_PATH",
+    "runtime_database": "PEDAGOGICAL_RUNTIME_DATABASE_PATH",
+    "different_simultaneous_values": "FAIL_CLOSED"
+  },
+  "defaults": {
+    "windows": "%LOCALAPPDATA%/ProjetV2",
+    "linux_xdg": "$XDG_DATA_HOME/ProjetV2",
+    "linux_home_fallback": "$HOME/.local/share/ProjetV2",
+    "macos": "$HOME/Library/Application Support/ProjetV2",
+    "canonical_database": "seed/base_pedagogique_v2.sqlite",
+    "runtime_database": "runtime/base_pedagogique_v2.runtime.sqlite"
+  },
+  "derived_directories": [
+    "imports",
+    "exports",
+    "logs",
+    "backups",
+    "runtime"
+  ],
+  "fail_closed_error_codes": [
+    "MISSING_OS_DATA_DIRECTORY",
+    "EMPTY_SETTING",
+    "RELATIVE_PATH",
+    "PATH_RESOLUTION_FAILED",
+    "LEGACY_SETTING_CONFLICT",
+    "SEED_RUNTIME_COLLISION"
+  ],
+  "redaction_safe_errors": true,
+  "global_disk_discovery": false,
+  "sqlite_accessed": false,
+  "provider_calls": 0
+}

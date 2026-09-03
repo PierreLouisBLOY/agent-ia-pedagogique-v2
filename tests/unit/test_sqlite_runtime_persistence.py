@@ -7,24 +7,36 @@ from backend.adapters.outbound.persistence.migrations import (
     MigrationArtifact,
 )
 from backend.infrastructure.config.loaders.sqlite import (
-    RUNTIME_PATH_ENV,
-    SEED_PATH_ENV,
+    CANONICAL_DB_ENV,
+    DATA_DIR_ENV,
+    RUNTIME_DB_ENV,
     load_sqlite_paths,
+)
+from backend.infrastructure.config.schemas.sqlite import (
+    SQLitePathConfigurationError,
+    SQLitePathErrorCode,
 )
 
 
 def test_sqlite_paths_are_typed_and_loaded_without_defaults(tmp_path: Path) -> None:
     paths = load_sqlite_paths(
-        {SEED_PATH_ENV: str(tmp_path / "seed.sqlite"), RUNTIME_PATH_ENV: str(tmp_path / "run.sqlite")}
+        {
+            DATA_DIR_ENV: str(tmp_path),
+            CANONICAL_DB_ENV: str(tmp_path / "seed.sqlite"),
+            RUNTIME_DB_ENV: str(tmp_path / "run.sqlite"),
+        }
     )
 
+    assert paths.data_directory == tmp_path
     assert paths.canonical_seed_path == tmp_path / "seed.sqlite"
     assert paths.runtime_database_path == tmp_path / "run.sqlite"
 
 
-def test_sqlite_paths_require_both_explicit_settings() -> None:
-    with pytest.raises(ValueError, match=RUNTIME_PATH_ENV):
-        load_sqlite_paths({SEED_PATH_ENV: "seed.sqlite"})
+def test_sqlite_paths_fail_closed_when_os_data_directory_is_unavailable() -> None:
+    with pytest.raises(SQLitePathConfigurationError) as raised:
+        load_sqlite_paths({}, platform_name="win32")
+
+    assert raised.value.code is SQLitePathErrorCode.MISSING_OS_DATA_DIRECTORY
 
 
 def test_phase7_migration_artifact_has_stable_identity() -> None:

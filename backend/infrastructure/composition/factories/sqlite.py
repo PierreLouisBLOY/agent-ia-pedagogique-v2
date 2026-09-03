@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -21,6 +22,7 @@ from backend.adapters.outbound.resource_library.sqlite import SQLiteResourceStor
 from backend.adapters.outbound.search.sqlite import BusinessSearchAdapter
 from backend.adapters.outbound.semantic import SemanticPassage, SemanticSearchBackend
 from backend.adapters.outbound.transaction.sqlite import SQLiteUnitOfWork
+from backend.infrastructure.config.loaders.sqlite import load_sqlite_paths
 from backend.infrastructure.config.schemas.sqlite import SQLiteDatabasePaths
 
 
@@ -91,3 +93,16 @@ def build_sqlite_runtime(
         paths.canonical_seed_path, paths.runtime_database_path, migration_path
     )
     return SQLiteRuntimeComposition(paths, migration_path, readiness)
+
+
+def build_configured_sqlite_runtime(
+    environment: Mapping[str, str],
+    migration_path: Path,
+    *,
+    platform_name: str | None = None,
+) -> SQLiteRuntimeComposition:
+    """Compose the existing runtime from the portable injected configuration."""
+
+    return build_sqlite_runtime(
+        load_sqlite_paths(environment, platform_name=platform_name), migration_path
+    )

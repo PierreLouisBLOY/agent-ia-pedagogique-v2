@@ -63,15 +63,29 @@ def new_ref(prefix: str) -> str:
     return f"{prefix}:runtime:{uuid.uuid4().hex}"
 
 
-def connect_sqlite(path: Path, *, readonly: bool = False) -> sqlite3.Connection:
-    """Open either an immutable seed/read connection or a mutable runtime one."""
+def connect_sqlite(
+    path: Path, *, readonly: bool = False, immutable: bool = False
+) -> sqlite3.Connection:
+    """Open a query-only reader or a mutable runtime connection.
+
+    ``immutable`` is reserved for authenticated seed inspection. Runtime readers
+    stay non-immutable so they continue to observe a legitimate runtime WAL.
+    """
+
+    if immutable and not readonly:
+        raise ValueError("immutable SQLite connections must be read-only")
     if readonly:
-        connection = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
+        immutable_query = "&immutable=1" if immutable else ""
+        connection = sqlite3.connect(
+            path.resolve().as_uri() + f"?mode=ro{immutable_query}", uri=True
+        )
     else:
         connection = sqlite3.connect(path, isolation_level=None)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
-    if not readonly:
+    if readonly:
+        connection.execute("PRAGMA query_only = ON")
+    else:
         connection.execute("PRAGMA busy_timeout = 3000")
         connection.execute("PRAGMA journal_mode = WAL")
     return connection

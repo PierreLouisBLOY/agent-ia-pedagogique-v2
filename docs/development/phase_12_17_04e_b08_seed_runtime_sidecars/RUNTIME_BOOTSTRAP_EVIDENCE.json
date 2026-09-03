@@ -1,0 +1,84 @@
+{
+  "schema_version": "12.17.4e-b08-runtime-bootstrap-evidence-v1",
+  "phase": "12.17.4E-B08",
+  "entry_head": "3592ce67855ec65e7adc93d256c9a8043bd978aa",
+  "paths": {
+    "canonical_seed": "EXPLICIT_OWNER_OVERRIDE_REDACTED",
+    "data_directory": "%LOCALAPPDATA%/ProjetV2",
+    "runtime": "%LOCALAPPDATA%/ProjetV2/runtime/base_pedagogique_v2.runtime.sqlite",
+    "distinct": true
+  },
+  "seed": {
+    "size_bytes_pre": 105553920,
+    "size_bytes_post": 105553920,
+    "sha256_pre": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134",
+    "sha256_post": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134",
+    "mtime_utc_pre": "2026-08-22T00:13:57.5500000Z",
+    "mtime_utc_post": "2026-08-22T00:13:57.5500000Z",
+    "inventory": {"tables": 98, "explicit_indexes": 20, "triggers": 7, "views": 2},
+    "integrity": "ok",
+    "quick": "ok",
+    "foreign_key_violations": 0,
+    "opened_mode": "ro+immutable+query_only",
+    "sidecars": {
+      "wal": {"pre": true, "post": true, "size": 0, "mtime_utc_pre": "2026-08-28T09:32:55.5450000Z", "mtime_utc_post": "2026-08-28T09:32:55.5450000Z", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+      "shm": {"pre": true, "post": true, "size": 32768, "mtime_utc_pre": "2026-09-01T09:50:02.0070000Z", "mtime_utc_post": "2026-09-01T09:50:02.0070000Z", "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"},
+      "journal": {"pre": false, "post": false}
+    },
+    "sidecar_created_by_b08": false,
+    "sidecar_modified_by_b08": false
+  },
+  "runtime": {
+    "existed_pre": false,
+    "created": true,
+    "size_bytes": 105553920,
+    "sha256": "de6186a26c1054731a7c0702baa133a8dc995b102417151f6538935ba04d1fb1",
+    "mtime_utc": "2026-09-03T16:13:23.2043306Z",
+    "inventory": {"tables": 98, "explicit_indexes": 20, "triggers": 7, "views": 2},
+    "integrity": "ok",
+    "quick": "ok",
+    "foreign_key_violations": 0,
+    "journal_mode": "wal",
+    "sidecars_pre": {
+      "wal": {"exists": false},
+      "shm": {"exists": false},
+      "journal": {"exists": false}
+    },
+    "sidecars_during_bootstrap": {
+      "wal": {"exists": true, "size": 0, "mtime_utc": "2026-09-03T16:13:23.2769532Z", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+      "shm": {"exists": true, "size": 32768, "mtime_utc": "2026-09-03T16:13:22.9705137Z", "sha256": "bc27912a562335aea78236ab94cf80ce42772485b8e2453e1883a0d678b15656"},
+      "journal": {"exists": false}
+    },
+    "sidecars_immediate_post_close": {
+      "wal": {"exists": false},
+      "shm": {"exists": false},
+      "journal": {"exists": false}
+    },
+    "sidecars_final_validation": {
+      "wal": {"exists": true, "size": 0, "mtime_utc": "2026-09-03T16:13:25.3952193Z", "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+      "shm": {"exists": true, "size": 32768, "mtime_utc": "2026-09-03T16:13:25.3960933Z", "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"},
+      "journal": {"exists": false}
+    },
+    "idempotent_second_bootstrap": true,
+    "second_bootstrap_hash_equal": true,
+    "second_bootstrap_mtime_equal": true
+  },
+  "migration": {
+    "allowed_versions": ["001"],
+    "applied_versions": ["001"],
+    "checksum": "5b4c603d19e9eb195ca1d0d19d5e6755d136d6d13399aeb33c0e90b5bb9b0102",
+    "documents_before": 15,
+    "documents_after": 15,
+    "deferred_unknown": ["resource.active-canonical", "pedagogical-context.origin"]
+  },
+  "validation": {
+    "b07_skips_before": 18,
+    "b07_skips_activated": 18,
+    "b07_skips_residual": 0,
+    "real_gates_passed": 19,
+    "architecture_guards_passed": 46,
+    "provider_calls": 0,
+    "secrets_added": 0
+  },
+  "sidecar_finding": "CLOSED"
+}

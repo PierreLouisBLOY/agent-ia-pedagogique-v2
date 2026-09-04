@@ -22,8 +22,9 @@ def build_sqlite_semantic_search_backend(
     canonical_seed_sha256: str,
     passages: tuple[SemanticPassage, ...],
     embedding_service: ConfiguredEmbeddingService,
+    data_root: Path | None = None,
 ) -> SQLiteSemanticSearchBackend:
-    actual = read_semantic_index_manifest(index_path)
+    actual = read_semantic_index_manifest(index_path, data_root=data_root)
     configured_dimension = (
         embedding_service.embedding_profile.requested_dimensions
     )
@@ -49,4 +50,5 @@ def build_sqlite_semantic_search_backend(
         index_path=index_path,
         expected_manifest=expected,
         embedding_service=embedding_service,
+        data_root=data_root,
     )

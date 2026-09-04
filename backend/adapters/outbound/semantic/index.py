@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import math
-import os
 import sqlite3
 import struct
-import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -20,6 +18,16 @@ from backend.adapters.outbound.semantic.contracts import (
     SemanticPassage,
 )
 from backend.adapters.outbound.semantic.service import ConfiguredEmbeddingService
+from backend.infrastructure.filesystem import (
+    LocalFileSecurityError,
+    assert_local_data_root,
+    atomic_replace_checked,
+    capture_secure_path,
+    ensure_private_directory,
+    harden_private_file,
+    private_temporary_file,
+    resolve_secure_path,
+)
 
 SEMANTIC_INDEX_SCHEMA_VERSION = 2
 SEMANTIC_PROJECTION_VERSION = "canonical-search-passage-v3"
@@ -123,6 +131,7 @@ class SemanticIndexBuilder:
         embedding_provider_code: str,
         embedding_service: ConfiguredEmbeddingService,
         request_interval_seconds: float = 0.0,
+        data_root: Path | None = None,
     ) -> SemanticIndexBuildReport:
         if type(passages) is not tuple or not passages:
             raise ValueError("passages must be a non-empty tuple")
@@ -145,17 +154,29 @@ class SemanticIndexBuilder:
         ):
             raise ValueError("request_interval_seconds must be between 0 and 60")
 
+        try:
+            root = assert_local_data_root(
+                index_path.parent if data_root is None else data_root
+            )
+            index_path = resolve_secure_path(index_path, allowed_root=root)
+            ensure_private_directory(root, allowed_root=root)
+            ensure_private_directory(index_path.parent, allowed_root=root)
+            expected_destination = capture_secure_path(index_path, allowed_root=root)
+        except LocalFileSecurityError as error:
+            raise ValueError("semantic index path boundary rejected") from error
+
         ordered = tuple(sorted(passages, key=lambda item: item.passage_ref))
         projections = tuple(project_semantic_passage(item) for item in ordered)
         batches = embedding_service.batches(projections)
-        index_path.parent.mkdir(parents=True, exist_ok=True)
-        descriptor, temporary_name = tempfile.mkstemp(
-            prefix=f".{index_path.name}.",
-            suffix=".building",
-            dir=index_path.parent,
-        )
-        os.close(descriptor)
-        temporary_path = Path(temporary_name)
+        try:
+            temporary_path = private_temporary_file(
+                index_path.parent,
+                allowed_root=root,
+                prefix=f".{index_path.name}.",
+                suffix=".building",
+            )
+        except LocalFileSecurityError as error:
+            raise ValueError("semantic index temp boundary rejected") from error
         started = time.perf_counter()
         input_tokens = 0
         dimension: int | None = None
@@ -224,14 +245,20 @@ class SemanticIndexBuilder:
                 raise ValueError("semantic index quick_check failed")
             connection.close()
             connection = None
-            os.replace(temporary_path, index_path)
+            harden_private_file(temporary_path, allowed_root=root)
+            atomic_replace_checked(
+                temporary_path,
+                index_path,
+                allowed_root=root,
+                expected_destination=expected_destination,
+            )
         except BaseException:
             if connection is not None:
                 connection.close()
             temporary_path.unlink(missing_ok=True)
             raise
         duration = round((time.perf_counter() - started) * 1_000)
-        verified = read_semantic_index_manifest(index_path)
+        verified = read_semantic_index_manifest(index_path, data_root=root)
         if verified != manifest:
             raise ValueError("semantic index manifest verification failed")
         return SemanticIndexBuildReport(
@@ -250,6 +277,7 @@ class SQLiteSemanticSearchBackend:
         index_path: Path,
         expected_manifest: SemanticIndexManifest,
         embedding_service: ConfiguredEmbeddingService,
+        data_root: Path | None = None,
     ) -> None:
         if not isinstance(index_path, Path) or not index_path.is_absolute():
             raise ValueError("index_path must be an absolute Path")
@@ -257,7 +285,15 @@ class SQLiteSemanticSearchBackend:
             raise TypeError("expected_manifest must be a SemanticIndexManifest")
         if type(embedding_service) is not ConfiguredEmbeddingService:
             raise TypeError("embedding_service must be ConfiguredEmbeddingService")
-        self._index_path = index_path
+        try:
+            self._data_root = assert_local_data_root(
+                index_path.parent if data_root is None else data_root
+            )
+            self._index_path = resolve_secure_path(
+                index_path, allowed_root=self._data_root
+            )
+        except LocalFileSecurityError as error:
+            raise ValueError("semantic index path boundary rejected") from error
         self._expected_manifest = expected_manifest
         self._embedding_service = embedding_service
         self._query_input_tokens = 0
@@ -350,13 +386,29 @@ class SQLiteSemanticSearchBackend:
         tuple[tuple[object, ...], ...],
         dict[str, tuple[str, ...]],
     ]:
-        if not self._index_path.is_file():
+        try:
+            before = capture_secure_path(
+                self._index_path, allowed_root=self._data_root
+            )
+        except LocalFileSecurityError:
+            raise SemanticBackendUnavailable(
+                "SEMANTIC_INDEX_STALE_OR_INCOMPATIBLE"
+            ) from None
+        if not before.is_file:
             raise SemanticBackendUnavailable("SEMANTIC_INDEX_MISSING")
         try:
             connection = sqlite3.connect(
                 f"file:{self._index_path.as_posix()}?mode=ro",
                 uri=True,
             )
+            opened = capture_secure_path(
+                self._index_path, allowed_root=self._data_root
+            )
+            if not before.same_identity(opened):
+                connection.close()
+                raise SemanticBackendUnavailable(
+                    "SEMANTIC_INDEX_STALE_OR_INCOMPATIBLE"
+                )
             manifest = _read_manifest(connection)
             if manifest != self._expected_manifest:
                 raise SemanticBackendUnavailable(
@@ -379,9 +431,16 @@ class SQLiteSemanticSearchBackend:
                 ).fetchall()
             )
             connection.close()
+            after = capture_secure_path(
+                self._index_path, allowed_root=self._data_root
+            )
+            if not before.same_identity(after):
+                raise SemanticBackendUnavailable(
+                    "SEMANTIC_INDEX_STALE_OR_INCOMPATIBLE"
+                )
         except SemanticBackendUnavailable:
             raise
-        except (OSError, sqlite3.Error, TypeError, ValueError):
+        except (LocalFileSecurityError, OSError, sqlite3.Error, TypeError, ValueError):
             raise SemanticBackendUnavailable(
                 "SEMANTIC_INDEX_STALE_OR_INCOMPATIBLE"
             ) from None
@@ -399,15 +458,34 @@ class SQLiteSemanticSearchBackend:
         )
 
 
-def read_semantic_index_manifest(index_path: Path) -> SemanticIndexManifest:
-    if not isinstance(index_path, Path) or not index_path.is_file():
+def read_semantic_index_manifest(
+    index_path: Path, *, data_root: Path | None = None
+) -> SemanticIndexManifest:
+    if not isinstance(index_path, Path):
+        raise ValueError("semantic index path must identify a file")
+    try:
+        root = assert_local_data_root(
+            index_path.parent if data_root is None else data_root
+        )
+        index_path = resolve_secure_path(index_path, allowed_root=root)
+        before = capture_secure_path(index_path, allowed_root=root)
+    except LocalFileSecurityError as error:
+        raise ValueError("semantic index path boundary rejected") from error
+    if not before.is_file:
         raise ValueError("semantic index path must identify a file")
     connection = sqlite3.connect(
         f"file:{index_path.as_posix()}?mode=ro",
         uri=True,
     )
     try:
-        return _read_manifest(connection)
+        opened = capture_secure_path(index_path, allowed_root=root)
+        if not before.same_identity(opened):
+            raise ValueError("semantic index path identity changed")
+        result = _read_manifest(connection)
+        after = capture_secure_path(index_path, allowed_root=root)
+        if not before.same_identity(after):
+            raise ValueError("semantic index path identity changed")
+        return result
     finally:
         connection.close()
 

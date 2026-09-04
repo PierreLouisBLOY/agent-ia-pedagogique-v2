@@ -20,6 +20,12 @@ from backend.adapters.outbound.persistence.vocabulary import (
     encode_task,
     encode_validation,
 )
+from backend.infrastructure.filesystem import (
+    LocalFileSecurityCode,
+    LocalFileSecurityError,
+    capture_secure_path,
+    harden_private_file,
+)
 from backend.modules.audit_traceability.application.dto.persistence_vocabulary import (
     AuditPersistenceValues,
 )
@@ -64,7 +70,11 @@ def new_ref(prefix: str) -> str:
 
 
 def connect_sqlite(
-    path: Path, *, readonly: bool = False, immutable: bool = False
+    path: Path,
+    *,
+    readonly: bool = False,
+    immutable: bool = False,
+    allowed_root: Path | None = None,
 ) -> sqlite3.Connection:
     """Open a query-only reader or a mutable runtime connection.
 
@@ -74,13 +84,23 @@ def connect_sqlite(
 
     if immutable and not readonly:
         raise ValueError("immutable SQLite connections must be read-only")
+    root = path.parent if allowed_root is None else allowed_root
+    before = capture_secure_path(path, allowed_root=root)
+    if not before.is_file:
+        raise LocalFileSecurityError(LocalFileSecurityCode.FILE_REQUIRED)
     if readonly:
         immutable_query = "&immutable=1" if immutable else ""
         connection = sqlite3.connect(
-            path.resolve().as_uri() + f"?mode=ro{immutable_query}", uri=True
+            before.path.as_uri() + f"?mode=ro{immutable_query}", uri=True
         )
     else:
-        connection = sqlite3.connect(path, isolation_level=None)
+        connection = sqlite3.connect(before.path, isolation_level=None)
+    after = capture_secure_path(path, allowed_root=root)
+    if not before.same_identity(after):
+        connection.close()
+        raise LocalFileSecurityError(LocalFileSecurityCode.PATH_CHANGED)
+    if not readonly:
+        harden_private_file(after.path, allowed_root=root)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
     if readonly:

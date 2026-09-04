@@ -3,6 +3,7 @@ from pathlib import Path
 ROOT = Path(__file__).parents[2]
 LIFECYCLE = ROOT / "backend/adapters/outbound/persistence/migrations.py"
 SQLITE = ROOT / "backend/adapters/outbound/persistence/sqlite.py"
+FILESYSTEM = ROOT / "backend/infrastructure/filesystem/security.py"
 
 
 def test_seed_reader_is_explicitly_immutable_and_query_only() -> None:
@@ -16,9 +17,12 @@ def test_seed_reader_is_explicitly_immutable_and_query_only() -> None:
 
 def test_runtime_publication_is_fresh_and_atomic() -> None:
     source = LIFECYCLE.read_text(encoding="utf-8")
+    filesystem = FILESYSTEM.read_text(encoding="utf-8")
 
-    assert "tempfile.mkstemp" in source
-    assert "os.link(source, destination)" in source
+    assert "private_temporary_file" in source
+    assert "tempfile.mkstemp" in filesystem
+    assert "atomic_publish_fresh" in source
+    assert "os.link(source_snapshot.path, destination_snapshot.path)" in filesystem
     assert "shutil.copy2(seed_path, temporary)" in source
     assert "shutil.copy2(seed_path, runtime_path)" not in source
 

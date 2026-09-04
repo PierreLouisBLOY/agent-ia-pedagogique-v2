@@ -11,7 +11,7 @@ from backend.agent_runtime.sandbox.model import (
 
 @runtime_checkable
 class SandboxFilesystemPort(Protocol):
-    """Trusted filesystem boundary; C intentionally provides no implementation."""
+    """Trusted filesystem boundary implemented only by outbound adapters."""
 
     def resolve(
         self,

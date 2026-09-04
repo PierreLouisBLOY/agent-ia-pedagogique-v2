@@ -8,7 +8,6 @@ import os
 import re
 import shutil
 import sqlite3
-import tempfile
 from collections.abc import Mapping
 from contextlib import closing
 from dataclasses import dataclass
@@ -18,6 +17,21 @@ from types import MappingProxyType
 from typing import Any, cast
 
 from backend.adapters.outbound.persistence.sqlite import connect_sqlite
+from backend.infrastructure.filesystem import (
+    LocalFileSecurityCode,
+    LocalFileSecurityError,
+    PermissionStatus,
+    assert_distinct_paths,
+    assert_local_data_root,
+    atomic_publish_fresh,
+    capture_secure_path,
+    ensure_private_directory,
+    harden_private_file,
+    hash_file_nofollow,
+    inspect_permission_status,
+    private_temporary_file,
+    resolve_secure_path,
+)
 
 CANONICAL_SEED_SIZE = 105_553_920
 CANONICAL_SEED_SHA256 = "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134"
@@ -246,6 +260,8 @@ class RuntimeProvisioningReport:
     seed_sidecar_created_by_b08: bool
     runtime_sidecars_observed: tuple[str, ...]
     deferred_migrations: tuple[str, ...]
+    seed_permission_status: str
+    runtime_permission_status: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -255,27 +271,37 @@ class RuntimeBackupReport:
     migration_version: str
     manifest_sha256: str
     created_at: str
+    source_sidecars_observed: tuple[str, ...]
+    backup_permission_status: str
 
 
 def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
+    try:
+        return hash_file_nofollow(path, allowed_root=path.parent)
+    except LocalFileSecurityError as error:
+        raise RuntimeProvisioningError("SQLite file authentication failed") from error
 
 
 def _file_evidence(path: Path) -> FileEvidence:
-    if not path.is_file():
+    try:
+        snapshot = capture_secure_path(path, allowed_root=path.parent)
+    except LocalFileSecurityError as error:
+        raise RuntimeProvisioningError("SQLite file snapshot failed") from error
+    if not snapshot.exists:
         return FileEvidence(False, None, None, None, None, None)
-    stat = path.stat()
+    if not snapshot.is_file:
+        raise RuntimeProvisioningError("SQLite path must identify a regular file")
+    try:
+        file_stat = os.lstat(snapshot.path)
+    except OSError as error:
+        raise RuntimeProvisioningError("SQLite file snapshot failed") from error
     return FileEvidence(
         True,
-        stat.st_size,
-        stat.st_mtime_ns,
-        _sha256(path),
-        stat.st_dev,
-        stat.st_ino,
+        file_stat.st_size,
+        file_stat.st_mtime_ns,
+        _sha256(snapshot.path),
+        file_stat.st_dev,
+        file_stat.st_ino,
     )
 
 
@@ -636,10 +662,13 @@ def _coerce_migration_registry(
 
 def _assert_distinct(left: Path, right: Path) -> None:
     try:
-        if left.resolve(strict=False) == right.resolve(strict=False):
-            raise RuntimeProvisioningError("SQLite file identities must be distinct")
-        if left.exists() and right.exists() and os.path.samefile(left, right):
-            raise RuntimeProvisioningError("SQLite file identities must be distinct")
+        assert_distinct_paths(left, right)
+    except LocalFileSecurityError as error:
+        if error.code is LocalFileSecurityCode.PATH_COLLISION:
+            raise RuntimeProvisioningError(
+                "SQLite file identities must be distinct"
+            ) from error
+        raise RuntimeProvisioningError("SQLite file identity check failed") from error
     except OSError as error:
         raise RuntimeProvisioningError("SQLite file identity check failed") from error
 
@@ -716,10 +745,16 @@ def _existing_migrations_are_current(
         return applied == expected
 
 
-def _temporary_path(parent: Path, *, prefix: str) -> Path:
-    descriptor, raw_path = tempfile.mkstemp(dir=parent, prefix=prefix, suffix=".tmp")
-    os.close(descriptor)
-    return Path(raw_path)
+def _temporary_path(parent: Path, *, prefix: str, data_root: Path) -> Path:
+    try:
+        return private_temporary_file(
+            parent,
+            allowed_root=data_root,
+            prefix=prefix,
+            suffix=".tmp",
+        )
+    except LocalFileSecurityError as error:
+        raise RuntimeProvisioningError("private SQLite temp creation failed") from error
 
 
 def _remove_fresh_file_set(path: Path) -> None:
@@ -728,20 +763,40 @@ def _remove_fresh_file_set(path: Path) -> None:
         Path(f"{path}{suffix}").unlink(missing_ok=True)
 
 
-def _publish_fresh(source: Path, destination: Path) -> None:
+def _publish_fresh(source: Path, destination: Path, *, data_root: Path) -> None:
     """Atomically publish without an overwrite window, then remove the temp name."""
 
     try:
-        os.link(source, destination)
-    except FileExistsError as error:
-        raise RuntimeProvisioningError("publication destination already exists") from error
-    except OSError as error:
+        atomic_publish_fresh(source, destination, allowed_root=data_root)
+    except LocalFileSecurityError as error:
+        if error.code is LocalFileSecurityCode.DESTINATION_EXISTS:
+            raise RuntimeProvisioningError(
+                "publication destination already exists"
+            ) from error
         raise RuntimeProvisioningError("atomic publication failed") from error
+
+
+def _local_runtime_paths(
+    runtime_path: Path, data_root: Path | None
+) -> tuple[Path, Path]:
     try:
-        source.unlink()
-    except OSError as error:
-        destination.unlink(missing_ok=True)
-        raise RuntimeProvisioningError("atomic publication cleanup failed") from error
+        root = assert_local_data_root(
+            runtime_path.parent if data_root is None else data_root
+        )
+        runtime = resolve_secure_path(runtime_path, allowed_root=root)
+        ensure_private_directory(root, allowed_root=root)
+        ensure_private_directory(runtime.parent, allowed_root=root)
+        return root, runtime
+    except LocalFileSecurityError as error:
+        raise RuntimeProvisioningError("runtime path boundary rejected") from error
+
+
+def _common_local_root(*paths: Path) -> Path:
+    try:
+        common = Path(os.path.commonpath(tuple(str(path.parent) for path in paths)))
+        return assert_local_data_root(common)
+    except (LocalFileSecurityError, OSError, ValueError) as error:
+        raise RuntimeProvisioningError("local data root resolution failed") from error
 
 
 def _observed_sidecars(snapshot: SQLiteFileSetSnapshot) -> tuple[str, ...]:
@@ -760,13 +815,30 @@ def provision_runtime(
     seed_path: Path,
     runtime_path: Path,
     migration_source: Path | MigrationRegistry,
+    *,
+    data_root: Path | None = None,
 ) -> RuntimeProvisioningReport:
     """Authenticate a seed and idempotently establish its distinct runtime."""
 
+    runtime_root, runtime_path = _local_runtime_paths(runtime_path, data_root)
+    try:
+        seed_path = resolve_secure_path(seed_path, allowed_root=seed_path.parent)
+    except LocalFileSecurityError as error:
+        raise SeedAuthenticationError("canonical seed path boundary rejected") from error
     seed_pre = snapshot_sqlite_files(seed_path)
     if not seed_pre.main.exists:
         raise SeedAuthenticationError("canonical seed is missing")
     _assert_distinct(seed_path, runtime_path)
+    try:
+        seed_permission = inspect_permission_status(
+            seed_path,
+            allowed_root=seed_path.parent,
+            external_readonly=True,
+        )
+    except LocalFileSecurityError as error:
+        raise SeedAuthenticationError("canonical seed permissions unavailable") from error
+    if seed_permission is PermissionStatus.EXCESSIVE_WRITE:
+        raise SeedAuthenticationError("canonical seed permissions are excessive")
     seed = inspect_database(seed_path, authenticate_seed=True)
     registry = _coerce_migration_registry(migration_source)
     artifacts = registry.load_artifacts()
@@ -782,13 +854,26 @@ def provision_runtime(
 
     try:
         if runtime_existing:
+            try:
+                harden_private_file(runtime_path, allowed_root=runtime_root)
+            except LocalFileSecurityError as error:
+                raise RuntimeProvisioningError(
+                    "runtime permission hardening failed"
+                ) from error
             _assert_runtime_compatible(inspect_database(runtime_path))
         else:
-            runtime_path.parent.mkdir(parents=True, exist_ok=True)
             temporary = _temporary_path(
-                runtime_path.parent, prefix=".projet-v2-runtime-"
+                runtime_path.parent,
+                prefix=".projet-v2-runtime-",
+                data_root=runtime_root,
             )
             shutil.copy2(seed_path, temporary)
+            try:
+                harden_private_file(temporary, allowed_root=runtime_root)
+            except LocalFileSecurityError as error:
+                raise RuntimeProvisioningError(
+                    "runtime permission hardening failed"
+                ) from error
             copied = snapshot_sqlite_files(temporary)
             if (
                 copied.main.size_bytes != seed_pre.main.size_bytes
@@ -828,7 +913,7 @@ def provision_runtime(
 
         if runtime_created:
             assert temporary is not None
-            _publish_fresh(temporary, runtime_path)
+            _publish_fresh(temporary, runtime_path, data_root=runtime_root)
             published_fresh = True
             temporary = None
 
@@ -865,6 +950,8 @@ def provision_runtime(
             seed_sidecar_created_by_b08=False,
             runtime_sidecars_observed=_observed_sidecars(runtime_active),
             deferred_migrations=DEFERRED_UNKNOWN_MIGRATIONS,
+            seed_permission_status=seed_permission.value,
+            runtime_permission_status=PermissionStatus.PRIVATE_OWNER_ONLY.value,
         )
     except BaseException:
         if temporary is not None:
@@ -887,22 +974,42 @@ def create_runtime_backup(
     backup_path: Path,
     *,
     migration_version: str = LATEST_MIGRATION_VERSION,
+    data_root: Path | None = None,
+    canonical_seed_path: Path | None = None,
 ) -> RuntimeBackupReport:
     """Checkpoint and atomically publish a self-authenticating runtime backup."""
 
+    root = _common_local_root(runtime_path, backup_path) if data_root is None else data_root
+    try:
+        root = assert_local_data_root(root)
+        runtime_path = resolve_secure_path(runtime_path, allowed_root=root)
+        backup_path = resolve_secure_path(backup_path, allowed_root=root)
+        ensure_private_directory(root, allowed_root=root)
+        ensure_private_directory(backup_path.parent, allowed_root=root)
+    except LocalFileSecurityError as error:
+        raise RuntimeProvisioningError("backup path boundary rejected") from error
     _assert_distinct(runtime_path, backup_path)
+    if canonical_seed_path is not None:
+        _assert_distinct(canonical_seed_path, runtime_path)
+        _assert_distinct(canonical_seed_path, backup_path)
     if backup_path.exists() or _manifest_path(backup_path).exists():
         raise RuntimeProvisioningError("backup destination already exists")
     runtime = inspect_database(runtime_path)
     _assert_runtime_compatible(runtime)
-    backup_path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = _temporary_path(backup_path.parent, prefix=".projet-v2-backup-")
+    source_sidecars = _observed_sidecars(snapshot_sqlite_files(runtime_path))
+    temporary = _temporary_path(
+        backup_path.parent,
+        prefix=".projet-v2-backup-",
+        data_root=root,
+    )
     manifest_temporary = _temporary_path(
-        backup_path.parent, prefix=".projet-v2-backup-manifest-"
+        backup_path.parent,
+        prefix=".projet-v2-backup-manifest-",
+        data_root=root,
     )
     backup_published = False
     try:
-        with closing(connect_sqlite(runtime_path)) as source:
+        with closing(connect_sqlite(runtime_path, allowed_root=root)) as source:
             source.execute("PRAGMA wal_checkpoint(TRUNCATE)")
             with closing(sqlite3.connect(temporary)) as destination:
                 source.backup(destination)
@@ -919,15 +1026,26 @@ def create_runtime_backup(
         manifest_temporary.write_text(
             json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
         )
-        _publish_fresh(temporary, backup_path)
+        try:
+            harden_private_file(temporary, allowed_root=root)
+            harden_private_file(manifest_temporary, allowed_root=root)
+        except LocalFileSecurityError as error:
+            raise RuntimeProvisioningError("backup permission hardening failed") from error
+        _publish_fresh(temporary, backup_path, data_root=root)
         backup_published = True
-        _publish_fresh(manifest_temporary, _manifest_path(backup_path))
+        _publish_fresh(
+            manifest_temporary,
+            _manifest_path(backup_path),
+            data_root=root,
+        )
         return RuntimeBackupReport(
             runtime_sha256=payload["runtime_sha256"],
             backup_sha256=backup.sha256,
             migration_version=migration_version,
             manifest_sha256=_sha256(_manifest_path(backup_path)),
             created_at=created_at,
+            source_sidecars_observed=source_sidecars,
+            backup_permission_status=PermissionStatus.PRIVATE_OWNER_ONLY.value,
         )
     except BaseException:
         _remove_fresh_file_set(temporary)
@@ -942,14 +1060,30 @@ def restore_runtime_backup(
     target_path: Path,
     *,
     canonical_seed_path: Path,
+    data_root: Path | None = None,
 ) -> DatabaseEvidence:
     """Restore a verified backup to a fresh non-seed target."""
 
+    root = (
+        _common_local_root(backup_path, target_path)
+        if data_root is None
+        else data_root
+    )
+    try:
+        root = assert_local_data_root(root)
+        backup_path = resolve_secure_path(backup_path, allowed_root=root)
+        target_path = resolve_secure_path(target_path, allowed_root=root)
+        manifest_path = resolve_secure_path(
+            _manifest_path(backup_path), allowed_root=root
+        )
+        ensure_private_directory(root, allowed_root=root)
+        ensure_private_directory(target_path.parent, allowed_root=root)
+    except LocalFileSecurityError as error:
+        raise RuntimeProvisioningError("restore path boundary rejected") from error
     _assert_distinct(canonical_seed_path, target_path)
     _assert_distinct(backup_path, target_path)
     if target_path.exists():
         raise RuntimeProvisioningError("restore destination already exists")
-    manifest_path = _manifest_path(backup_path)
     try:
         payload = cast(
             dict[str, Any], json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -959,16 +1093,23 @@ def restore_runtime_backup(
     if payload.get("backup_sha256") != _sha256(backup_path):
         raise RuntimeProvisioningError("backup authentication failed")
 
-    target_path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = _temporary_path(target_path.parent, prefix=".projet-v2-restore-")
+    temporary = _temporary_path(
+        target_path.parent,
+        prefix=".projet-v2-restore-",
+        data_root=root,
+    )
     published = False
     try:
         shutil.copy2(backup_path, temporary)
+        try:
+            harden_private_file(temporary, allowed_root=root)
+        except LocalFileSecurityError as error:
+            raise RuntimeProvisioningError("restore permission hardening failed") from error
         if _sha256(temporary) != payload["backup_sha256"]:
             raise RuntimeProvisioningError("restored copy authentication failed")
         restored = inspect_database(temporary)
         _assert_runtime_compatible(restored)
-        _publish_fresh(temporary, target_path)
+        _publish_fresh(temporary, target_path, data_root=root)
         published = True
         return inspect_database(target_path)
     except BaseException:

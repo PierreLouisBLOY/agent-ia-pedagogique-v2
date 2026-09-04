@@ -91,8 +91,16 @@ def test_later_provider_work_preserves_phase_f_backend_owners() -> None:
         "backend/agent_runtime/agents/evidence/retrieval_coordinator.py",
         "backend/agent_runtime/agents/evidence/retrieval_ports.py",
     }
+    b02_local_boundary_files = {
+        "backend/agent_runtime/sandbox/ports.py",
+        "backend/infrastructure/filesystem/__init__.py",
+        "backend/infrastructure/filesystem/security.py",
+    }
     assert all(
-        path.startswith(allowed) or path in f2a_retrieval_files for path in changed
+        path.startswith(allowed)
+        or path in f2a_retrieval_files
+        or path in b02_local_boundary_files
+        for path in changed
     )
 
 

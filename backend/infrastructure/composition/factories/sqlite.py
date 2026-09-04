@@ -37,14 +37,30 @@ class SQLiteRuntimeComposition:
         return SQLiteUnitOfWork(self.paths.runtime_database_path, operation_ref=operation_ref)
 
     def business_search(self) -> BusinessSearchAdapter:
-        return BusinessSearchAdapter(connect_sqlite(self.paths.runtime_database_path, readonly=True))
+        return BusinessSearchAdapter(
+            connect_sqlite(
+                self.paths.runtime_database_path,
+                readonly=True,
+                allowed_root=self.paths.data_directory,
+            )
+        )
 
     def read_models(self) -> ReadModelAdapter:
-        return ReadModelAdapter(connect_sqlite(self.paths.runtime_database_path, readonly=True))
+        return ReadModelAdapter(
+            connect_sqlite(
+                self.paths.runtime_database_path,
+                readonly=True,
+                allowed_root=self.paths.data_directory,
+            )
+        )
 
     def document_content(self) -> DocumentContentAccessAdapter:
         return DocumentContentAccessAdapter(
-            connect_sqlite(self.paths.runtime_database_path, readonly=True)
+            connect_sqlite(
+                self.paths.runtime_database_path,
+                readonly=True,
+                allowed_root=self.paths.data_directory,
+            )
         )
 
     def evidence_search(
@@ -83,7 +99,11 @@ class SQLiteRuntimeComposition:
 
     def resource_store(self) -> SQLiteResourceStoreAdapter:
         return SQLiteResourceStoreAdapter(
-            connect_sqlite(self.paths.runtime_database_path, readonly=True)
+            connect_sqlite(
+                self.paths.runtime_database_path,
+                readonly=True,
+                allowed_root=self.paths.data_directory,
+            )
         )
 
 
@@ -91,7 +111,10 @@ def build_sqlite_runtime(
     paths: SQLiteDatabasePaths, migration_path: Path | MigrationRegistry
 ) -> SQLiteRuntimeComposition:
     readiness = provision_runtime(
-        paths.canonical_seed_path, paths.runtime_database_path, migration_path
+        paths.canonical_seed_path,
+        paths.runtime_database_path,
+        migration_path,
+        data_root=paths.data_directory,
     )
     return SQLiteRuntimeComposition(paths, migration_path, readiness)
 

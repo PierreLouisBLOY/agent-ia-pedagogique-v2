@@ -103,11 +103,16 @@ def test_later_provider_work_preserves_phase_f_backend_owners() -> None:
         "backend/infrastructure/observability/local.py",
         "backend/infrastructure/observability/operational.py",
     }
+    b04_http_contract_files = {
+        "backend/adapters/inbound/api/__init__.py",
+        "backend/adapters/inbound/api/local_browser.py",
+    }
     assert all(
         path.startswith(allowed)
         or path in f2a_retrieval_files
         or path in b02_local_boundary_files
         or path in b03_observability_files
+        or path in b04_http_contract_files
         for path in changed
     )
 

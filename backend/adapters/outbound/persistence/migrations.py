@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import sqlite3
 import tempfile
@@ -26,8 +27,23 @@ CANONICAL_SEED_TRIGGERS = 7
 CANONICAL_SEED_VIEWS = 2
 MIGRATION_VERSION = "001"
 MIGRATION_001_SHA256 = "5b4c603d19e9eb195ca1d0d19d5e6755d136d6d13399aeb33c0e90b5bb9b0102"
+MIGRATION_001_NAME = "document-sha256-check"
+MIGRATION_001_ORDER = 1
+MIGRATION_002_VERSION = "002"
+MIGRATION_002_SHA256 = "e43b6267a5c4e0686739d4c0ea68d22e74f354bd9cbffb3f89b673e5bd0fe893"
+MIGRATION_002_NAME = "restore-document-invariants"
+MIGRATION_002_ORDER = 2
+MIGRATION_002_FILENAME = "002_restore_document_invariants.sql"
+LATEST_MIGRATION_VERSION = MIGRATION_002_VERSION
+DOCUMENT_SHA256_POSTCONDITION = "document-sha256-check"
+DOCUMENT_INVARIANTS_POSTCONDITION = "document-invariants"
+MIGRATION_VERSION_PATTERN = re.compile(r"^[0-9]{3}$")
+MIGRATION_CHECKSUM_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 APPROVED_RUNTIME_MIGRATIONS: Mapping[str, str] = MappingProxyType(
-    {MIGRATION_VERSION: MIGRATION_001_SHA256}
+    {
+        MIGRATION_VERSION: MIGRATION_001_SHA256,
+        MIGRATION_002_VERSION: MIGRATION_002_SHA256,
+    }
 )
 DEFERRED_UNKNOWN_MIGRATIONS = (
     "resource.active-canonical",
@@ -46,10 +62,19 @@ class SeedMutationDetected(RuntimeError):
 
 
 class MigrationChecksumMismatch(RuntimeError):
-    pass
+    def __init__(self, version: str) -> None:
+        super().__init__(f"MIGRATION_CHECKSUM_MISMATCH: {version}")
 
 
 class MigrationNotAllowed(RuntimeError):
+    pass
+
+
+class MigrationRegistryError(RuntimeError):
+    pass
+
+
+class MigrationOrderError(MigrationRegistryError):
     pass
 
 
@@ -91,19 +116,107 @@ class DatabaseEvidence:
 @dataclass(frozen=True, slots=True)
 class MigrationArtifact:
     version: str
+    name: str
+    order: int
     path: Path
     checksum: str
     sql: str
+    applicable: bool
+    postcondition: str | None
 
     @classmethod
-    def load(cls, path: Path) -> MigrationArtifact:
+    def load(
+        cls,
+        path: Path,
+        *,
+        version: str = MIGRATION_VERSION,
+        name: str = MIGRATION_001_NAME,
+        order: int = MIGRATION_001_ORDER,
+        applicable: bool = True,
+        postcondition: str | None = DOCUMENT_SHA256_POSTCONDITION,
+    ) -> MigrationArtifact:
         raw = path.read_bytes()
         return cls(
-            MIGRATION_VERSION,
+            version,
+            name,
+            order,
             path,
             hashlib.sha256(raw).hexdigest(),
             raw.decode("utf-8"),
+            applicable,
+            postcondition,
         )
+
+
+@dataclass(frozen=True, slots=True)
+class MigrationSpec:
+    version: str
+    name: str
+    order: int
+    path: Path
+    checksum: str
+    applicable: bool = True
+    postcondition: str | None = None
+
+    def load_artifact(self) -> MigrationArtifact:
+        artifact = MigrationArtifact.load(
+            self.path,
+            version=self.version,
+            name=self.name,
+            order=self.order,
+            applicable=self.applicable,
+            postcondition=self.postcondition,
+        )
+        if artifact.checksum != self.checksum:
+            raise MigrationChecksumMismatch(self.version)
+        return artifact
+
+
+@dataclass(frozen=True, slots=True)
+class MigrationRegistry:
+    specs: tuple[MigrationSpec, ...]
+
+    def __post_init__(self) -> None:
+        if not self.specs:
+            raise MigrationRegistryError("migration registry must not be empty")
+        ordered = tuple(sorted(self.specs, key=lambda item: item.order))
+        versions = [item.version for item in ordered]
+        orders = [item.order for item in ordered]
+        if len(set(versions)) != len(versions):
+            raise MigrationRegistryError("duplicate migration version")
+        if len(set(orders)) != len(orders):
+            raise MigrationRegistryError("duplicate migration order")
+        if any(
+            MIGRATION_VERSION_PATTERN.fullmatch(item.version) is None
+            or int(item.version) < 1
+            for item in ordered
+        ):
+            raise MigrationRegistryError("invalid migration version")
+        if any(
+            MIGRATION_CHECKSUM_PATTERN.fullmatch(item.checksum) is None
+            for item in ordered
+        ):
+            raise MigrationRegistryError("invalid migration checksum")
+        expected_orders = list(range(1, len(ordered) + 1))
+        if orders != expected_orders:
+            raise MigrationOrderError("migration order must be contiguous from 1")
+        expected_versions = list(range(1, len(ordered) + 1))
+        if [int(version) for version in versions] != expected_versions:
+            raise MigrationOrderError("migration versions must be contiguous from 001")
+        object.__setattr__(self, "specs", ordered)
+
+    @property
+    def versions(self) -> tuple[str, ...]:
+        return tuple(spec.version for spec in self.specs)
+
+    def load_artifacts(self) -> tuple[MigrationArtifact, ...]:
+        return tuple(spec.load_artifact() for spec in self.specs)
+
+
+@dataclass(frozen=True, slots=True)
+class MigrationSequenceResult:
+    applied: tuple[str, ...]
+    skipped: tuple[str, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,6 +226,9 @@ class RuntimeProvisioningReport:
     migration_version: str
     migration_checksum: str
     migration_applied: bool
+    migration_versions: tuple[str, ...]
+    migrations_applied: tuple[str, ...]
+    migrations_skipped: tuple[str, ...]
     documents_before: int
     documents_after: int
     domain_tables: int
@@ -281,7 +397,94 @@ def _assert_sha_constraint(connection: sqlite3.Connection) -> None:
         connection.execute("RELEASE c0_sha_valid")
 
 
-def apply_migration(connection: sqlite3.Connection, artifact: MigrationArtifact) -> bool:
+def _assert_document_schema_invariants(connection: sqlite3.Connection) -> None:
+    columns = {
+        str(row[1]): row
+        for row in connection.execute("PRAGMA table_info(document)").fetchall()
+    }
+    expected_defaults = {
+        "document_type": "'OTHER'",
+        "language_code": "'fr'",
+        "document_status": "'ACTIVE'",
+        "created_at": "CURRENT_TIMESTAMP",
+    }
+    for column, expected in expected_defaults.items():
+        row = columns.get(column)
+        if row is None or str(row[4]) != expected:
+            raise RuntimeProvisioningError(
+                f"document default mismatch for {column}"
+            )
+
+    table_row = connection.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='document'"
+    ).fetchone()
+    table_sql = " ".join(str(table_row[0]).split()) if table_row is not None else ""
+    if "size_bytes INTEGER CHECK (size_bytes IS NULL OR size_bytes >= 0)" not in table_sql:
+        raise RuntimeProvisioningError("document size_bytes check is missing")
+
+    indexes = {
+        str(row[1]) for row in connection.execute("PRAGMA index_list(document)")
+    }
+    if not {"idx_document_sha256", "idx_document_url"} <= indexes:
+        raise RuntimeProvisioningError("document indexes are incomplete")
+
+
+def _assert_document_invariants(connection: sqlite3.Connection) -> None:
+    _assert_document_schema_invariants(connection)
+    _assert_sha_constraint(connection)
+
+    connection.execute("SAVEPOINT b03_negative_size")
+    rejected = False
+    try:
+        connection.execute(
+            "INSERT INTO document(id, title, size_bytes) VALUES (?, ?, ?)",
+            ("b03:negative-size", "invalid", -1),
+        )
+    except sqlite3.IntegrityError:
+        rejected = True
+    finally:
+        connection.execute("ROLLBACK TO b03_negative_size")
+        connection.execute("RELEASE b03_negative_size")
+    if not rejected:
+        raise RuntimeProvisioningError("document accepted a negative size_bytes")
+
+    connection.execute("SAVEPOINT b03_defaults")
+    try:
+        connection.execute(
+            "INSERT INTO document(id, title) VALUES (?, ?)",
+            ("b03:default-probe", "defaults"),
+        )
+        observed = connection.execute(
+            "SELECT document_type, language_code, document_status, created_at "
+            "FROM document WHERE id = ?",
+            ("b03:default-probe",),
+        ).fetchone()
+        if observed is None or tuple(observed[:3]) != ("OTHER", "fr", "ACTIVE"):
+            raise RuntimeProvisioningError("document defaults are not effective")
+        if observed[3] is None or not str(observed[3]):
+            raise RuntimeProvisioningError("document created_at default is not effective")
+    finally:
+        connection.execute("ROLLBACK TO b03_defaults")
+        connection.execute("RELEASE b03_defaults")
+
+
+def _assert_migration_postcondition(
+    connection: sqlite3.Connection, artifact: MigrationArtifact
+) -> None:
+    if artifact.postcondition is None:
+        return
+    if artifact.postcondition == DOCUMENT_SHA256_POSTCONDITION:
+        _assert_sha_constraint(connection)
+        return
+    if artifact.postcondition == DOCUMENT_INVARIANTS_POSTCONDITION:
+        _assert_document_invariants(connection)
+        return
+    raise RuntimeProvisioningError(
+        f"unknown postcondition for migration {artifact.version}"
+    )
+
+
+def _ensure_migration_ledger(connection: sqlite3.Connection) -> None:
     connection.execute(
         f"""CREATE TABLE IF NOT EXISTS {LEDGER_TABLE} (
                version TEXT PRIMARY KEY,
@@ -289,13 +492,43 @@ def apply_migration(connection: sqlite3.Connection, artifact: MigrationArtifact)
                applied_at TEXT NOT NULL
            )"""
     )
+
+
+def _validate_migration_history(
+    connection: sqlite3.Connection, artifacts: tuple[MigrationArtifact, ...]
+) -> tuple[str, ...]:
+    known = {artifact.version: artifact for artifact in artifacts}
+    rows = connection.execute(
+        f"SELECT version, checksum FROM {LEDGER_TABLE} "
+        "ORDER BY CAST(version AS INTEGER), version"
+    ).fetchall()
+    observed_versions: list[str] = []
+    for row in rows:
+        version = str(row[0])
+        artifact = known.get(version)
+        if artifact is None:
+            raise MigrationNotAllowed(
+                f"migration history contains unregistered version {version}"
+            )
+        if str(row[1]) != artifact.checksum:
+            raise MigrationChecksumMismatch(version)
+        observed_versions.append(version)
+
+    registered_versions = [artifact.version for artifact in artifacts]
+    if observed_versions != registered_versions[: len(observed_versions)]:
+        raise MigrationOrderError("migration history is not an ordered prefix")
+    return tuple(observed_versions)
+
+
+def apply_migration(connection: sqlite3.Connection, artifact: MigrationArtifact) -> bool:
+    _ensure_migration_ledger(connection)
     existing = connection.execute(
         f"SELECT checksum FROM {LEDGER_TABLE} WHERE version = ?", (artifact.version,)
     ).fetchone()
     if existing is not None:
         if str(existing[0]) != artifact.checksum:
             raise MigrationChecksumMismatch(artifact.version)
-        _assert_sha_constraint(connection)
+        _assert_migration_postcondition(connection, artifact)
         return False
 
     documents_before = int(
@@ -317,7 +550,7 @@ def apply_migration(connection: sqlite3.Connection, artifact: MigrationArtifact)
             != documents_before
         ):
             raise RuntimeProvisioningError("document count changed during migration")
-        _assert_sha_constraint(connection)
+        _assert_migration_postcondition(connection, artifact)
         if connection.execute("PRAGMA foreign_key_check").fetchone() is not None:
             raise RuntimeProvisioningError("foreign key check failed during migration")
         connection.execute(
@@ -334,10 +567,71 @@ def apply_migration(connection: sqlite3.Connection, artifact: MigrationArtifact)
     return True
 
 
+def apply_migrations(
+    connection: sqlite3.Connection, registry: MigrationRegistry
+) -> MigrationSequenceResult:
+    """Apply only missing registered migrations in deterministic order."""
+
+    artifacts = registry.load_artifacts()
+    _ensure_migration_ledger(connection)
+    applied_history = set(_validate_migration_history(connection, artifacts))
+    applied: list[str] = []
+    skipped: list[str] = []
+    for artifact in artifacts:
+        if artifact.version in applied_history:
+            _assert_migration_postcondition(connection, artifact)
+            skipped.append(artifact.version)
+            continue
+        if not artifact.applicable:
+            raise MigrationNotAllowed(
+                f"migration {artifact.version} is registered but not applicable"
+            )
+        if apply_migration(connection, artifact):
+            applied.append(artifact.version)
+    return MigrationSequenceResult(tuple(applied), tuple(skipped))
+
+
 def _assert_migration_allowed(artifact: MigrationArtifact) -> None:
     expected = APPROVED_RUNTIME_MIGRATIONS.get(artifact.version)
     if expected is None or expected != artifact.checksum:
         raise MigrationNotAllowed("runtime migration is not allowlisted")
+
+
+def migration_registry(migration_path: Path) -> MigrationRegistry:
+    """Build the approved registry while preserving the legacy path injection API."""
+
+    artifact = MigrationArtifact.load(migration_path)
+    _assert_migration_allowed(artifact)
+    return MigrationRegistry(
+        (
+            MigrationSpec(
+                version=artifact.version,
+                name=artifact.name,
+                order=artifact.order,
+                path=artifact.path,
+                checksum=artifact.checksum,
+                applicable=artifact.applicable,
+                postcondition=artifact.postcondition,
+            ),
+            MigrationSpec(
+                version=MIGRATION_002_VERSION,
+                name=MIGRATION_002_NAME,
+                order=MIGRATION_002_ORDER,
+                path=migration_path.with_name(MIGRATION_002_FILENAME),
+                checksum=MIGRATION_002_SHA256,
+                applicable=True,
+                postcondition=DOCUMENT_INVARIANTS_POSTCONDITION,
+            ),
+        )
+    )
+
+
+def _coerce_migration_registry(
+    migration_source: Path | MigrationRegistry,
+) -> MigrationRegistry:
+    if isinstance(migration_source, MigrationRegistry):
+        return migration_source
+    return migration_registry(migration_source)
 
 
 def _assert_distinct(left: Path, right: Path) -> None:
@@ -381,14 +675,14 @@ def _assert_runtime_writable(connection: sqlite3.Connection) -> None:
 
 
 def _open_and_migrate(
-    path: Path, artifact: MigrationArtifact
-) -> tuple[int, int, bool, str, SQLiteFileSetSnapshot]:
+    path: Path, registry: MigrationRegistry
+) -> tuple[int, int, MigrationSequenceResult, str, SQLiteFileSetSnapshot]:
     with closing(connect_sqlite(path)) as connection:
         journal_mode = str(connection.execute("PRAGMA journal_mode").fetchone()[0])
         documents_before = int(
             connection.execute("SELECT count(*) FROM document").fetchone()[0]
         )
-        applied = apply_migration(connection, artifact)
+        result = apply_migrations(connection, registry)
         documents_after = int(
             connection.execute("SELECT count(*) FROM document").fetchone()[0]
         )
@@ -398,13 +692,16 @@ def _open_and_migrate(
     return (
         documents_before,
         documents_after,
-        applied,
+        result,
         journal_mode,
         active_snapshot,
     )
 
 
-def _existing_migration_is_current(path: Path, artifact: MigrationArtifact) -> bool:
+def _existing_migrations_are_current(
+    path: Path, registry: MigrationRegistry
+) -> bool:
+    artifacts = registry.load_artifacts()
     with closing(connect_sqlite(path, readonly=True)) as connection:
         ledger_exists = connection.execute(
             "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
@@ -412,15 +709,11 @@ def _existing_migration_is_current(path: Path, artifact: MigrationArtifact) -> b
         ).fetchone()
         if ledger_exists is None:
             return False
-        existing = connection.execute(
-            f"SELECT checksum FROM {LEDGER_TABLE} WHERE version = ?",
-            (artifact.version,),
-        ).fetchone()
-        if existing is None:
-            return False
-        if str(existing[0]) != artifact.checksum:
-            raise MigrationChecksumMismatch(artifact.version)
-        return True
+        applied = _validate_migration_history(connection, artifacts)
+        expected = tuple(
+            artifact.version for artifact in artifacts if artifact.applicable
+        )
+        return applied == expected
 
 
 def _temporary_path(parent: Path, *, prefix: str) -> Path:
@@ -464,7 +757,9 @@ def _observed_sidecars(snapshot: SQLiteFileSetSnapshot) -> tuple[str, ...]:
 
 
 def provision_runtime(
-    seed_path: Path, runtime_path: Path, migration_path: Path
+    seed_path: Path,
+    runtime_path: Path,
+    migration_source: Path | MigrationRegistry,
 ) -> RuntimeProvisioningReport:
     """Authenticate a seed and idempotently establish its distinct runtime."""
 
@@ -473,8 +768,9 @@ def provision_runtime(
         raise SeedAuthenticationError("canonical seed is missing")
     _assert_distinct(seed_path, runtime_path)
     seed = inspect_database(seed_path, authenticate_seed=True)
-    artifact = MigrationArtifact.load(migration_path)
-    _assert_migration_allowed(artifact)
+    registry = _coerce_migration_registry(migration_source)
+    artifacts = registry.load_artifacts()
+    latest = artifacts[-1]
 
     runtime_pre = snapshot_sqlite_files(runtime_path)
     runtime_created = not runtime_pre.main.exists
@@ -501,8 +797,8 @@ def provision_runtime(
                 raise RuntimeProvisioningError("runtime copy authentication failed")
             working_path = temporary
 
-        if runtime_existing and _existing_migration_is_current(
-            working_path, artifact
+        if runtime_existing and _existing_migrations_are_current(
+            working_path, registry
         ):
             with closing(connect_sqlite(working_path, readonly=True)) as connection:
                 documents_before = documents_after = int(
@@ -511,16 +807,23 @@ def provision_runtime(
                 journal_mode = str(
                     connection.execute("PRAGMA journal_mode").fetchone()[0]
                 )
-            applied = False
+            sequence_result = MigrationSequenceResult(
+                (),
+                tuple(
+                    artifact.version
+                    for artifact in artifacts
+                    if artifact.applicable
+                ),
+            )
             runtime_active = runtime_pre
         else:
             (
                 documents_before,
                 documents_after,
-                applied,
+                sequence_result,
                 journal_mode,
                 runtime_active,
-            ) = _open_and_migrate(working_path, artifact)
+            ) = _open_and_migrate(working_path, registry)
         _assert_runtime_compatible(inspect_database(working_path))
 
         if runtime_created:
@@ -539,9 +842,12 @@ def provision_runtime(
         return RuntimeProvisioningReport(
             seed=seed,
             runtime_sha256=runtime.sha256,
-            migration_version=artifact.version,
-            migration_checksum=artifact.checksum,
-            migration_applied=applied,
+            migration_version=latest.version,
+            migration_checksum=latest.checksum,
+            migration_applied=bool(sequence_result.applied),
+            migration_versions=registry.versions,
+            migrations_applied=sequence_result.applied,
+            migrations_skipped=sequence_result.skipped,
             documents_before=documents_before,
             documents_after=documents_after,
             domain_tables=runtime.tables,
@@ -580,7 +886,7 @@ def create_runtime_backup(
     runtime_path: Path,
     backup_path: Path,
     *,
-    migration_version: str = MIGRATION_VERSION,
+    migration_version: str = LATEST_MIGRATION_VERSION,
 ) -> RuntimeBackupReport:
     """Checkpoint and atomically publish a self-authenticating runtime backup."""
 

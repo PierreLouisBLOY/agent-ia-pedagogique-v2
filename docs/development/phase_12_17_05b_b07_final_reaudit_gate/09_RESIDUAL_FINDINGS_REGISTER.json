@@ -1,0 +1,99 @@
+{
+  "schema_version": "12.17.5b-b07-residual-findings-v1",
+  "baseline_commit": "576d6bd6dcf5082740c4192842b7c87ccbc1f246",
+  "original_blockers_closed": 5,
+  "finding_count": 8,
+  "priority_counts": {"P0": 0, "P1": 1, "P2": 4, "P3": 3},
+  "blocking_12_17_6_count": 1,
+  "findings": [
+    {
+      "finding_id": "B07-GIT-GUARD-001",
+      "severity": "P1",
+      "status": "OPEN_BLOCKING",
+      "evidence": [
+        "global suite: 4815 passed, 3 skipped, 1 failed",
+        "test_security_recovery_observability_e2e_fitness compares every backend diff with HEAD",
+        "eight approved B05/B06 Domain/Application paths are non-committed carry-forward",
+        "B07 plan does not explicitly authorize consolidation or retrospective guard mutation"
+      ],
+      "blocker_12_17_6": true,
+      "owner": "architecture governance and repository integration owner",
+      "next_substep": "approve an exact B02-to-B07 consolidation baseline or a versioned guard redesign, then rerun the global suite",
+      "forbidden_assumptions": [
+        "a failing required global guard may be ignored",
+        "B07 implicitly authorizes a commit",
+        "a historical architecture test may be silently weakened"
+      ]
+    },
+    {
+      "finding_id": "DMAPI-005",
+      "severity": "P2",
+      "status": "OPEN_NON_BLOCKING",
+      "evidence": ["ContextOrigin remains non-persisted and UNKNOWN"],
+      "blocker_12_17_6": false,
+      "owner": "pedagogical_context Application owner",
+      "next_substep": "await an owner-approved product requirement and storage contract",
+      "forbidden_assumptions": ["origin can be inferred", "a migration is authorized"]
+    },
+    {
+      "finding_id": "DMAPI-006",
+      "severity": "P2",
+      "status": "OPEN_NON_BLOCKING",
+      "evidence": ["CAP-R02 remains handoff-only by design"],
+      "blocker_12_17_6": false,
+      "owner": "work_orchestration Application owner",
+      "next_substep": "materialize only in its authorized delivery phase",
+      "forbidden_assumptions": ["a handoff is an implementation", "READ-15 may substitute for CAP-R02"]
+    },
+    {
+      "finding_id": "DMAPI-007",
+      "severity": "P2",
+      "status": "OPEN_NON_BLOCKING",
+      "evidence": ["CAP-A01 remains handoff-only by design"],
+      "blocker_12_17_6": false,
+      "owner": "validation_control Application owner",
+      "next_substep": "materialize deterministic validation only when authorized",
+      "forbidden_assumptions": ["scenario doubles are the owner use case", "validation grants promotion authority"]
+    },
+    {
+      "finding_id": "DMAPI-008",
+      "severity": "P2",
+      "status": "OPEN_NON_BLOCKING",
+      "evidence": ["CAP-A02 remains handoff-only by design"],
+      "blocker_12_17_6": false,
+      "owner": "lifecycle_promotion Application owner",
+      "next_substep": "materialize only behind a trusted gate and effect ledger",
+      "forbidden_assumptions": ["promotion can self-approve", "unknown effects can be retried blindly"]
+    },
+    {
+      "finding_id": "DMAPI-011",
+      "severity": "P3",
+      "status": "OPEN_NON_BLOCKING",
+      "evidence": ["historical mypy debt remains frozen at 15 diagnostics in 10 files"],
+      "blocker_12_17_6": false,
+      "owner": "calibration governance owner",
+      "next_substep": "keep historical sources outside the active graph",
+      "forbidden_assumptions": ["historical sources are type-clean", "retroactive edits are allowed"]
+    },
+    {
+      "finding_id": "DMAPI-012",
+      "severity": "P3",
+      "status": "OPEN_NON_BLOCKING",
+      "evidence": ["the historical creator of seed WAL/SHM remains unknown"],
+      "blocker_12_17_6": false,
+      "owner": "outbound SQLite persistence owner",
+      "next_substep": "retain PRE/POST attribution on future reads",
+      "forbidden_assumptions": ["B07 created the sidecars", "the sidecars are disposable"]
+    },
+    {
+      "finding_id": "DMAPI-013",
+      "severity": "P3",
+      "status": "OPEN_NON_BLOCKING",
+      "evidence": ["B01 narrative and machine-readable freeze gap remains historical"],
+      "blocker_12_17_6": false,
+      "owner": "architecture governance owner",
+      "next_substep": "retain the approved baseline fallback without rewriting B01",
+      "forbidden_assumptions": ["the historical B01 freeze may be rewritten retroactively"]
+    }
+  ]
+}

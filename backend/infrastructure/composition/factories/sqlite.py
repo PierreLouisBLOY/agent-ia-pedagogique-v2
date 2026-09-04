@@ -13,6 +13,7 @@ from backend.adapters.outbound.evidence.sqlite import (
     SQLiteEvidenceSearchAdapter,
 )
 from backend.adapters.outbound.persistence.migrations import (
+    MigrationRegistry,
     RuntimeProvisioningReport,
     provision_runtime,
 )
@@ -29,7 +30,7 @@ from backend.infrastructure.config.schemas.sqlite import SQLiteDatabasePaths
 @dataclass(frozen=True, slots=True)
 class SQLiteRuntimeComposition:
     paths: SQLiteDatabasePaths
-    migration_path: Path
+    migration_path: Path | MigrationRegistry
     readiness: RuntimeProvisioningReport
 
     def unit_of_work(self, *, operation_ref: str | None = None) -> SQLiteUnitOfWork:
@@ -87,7 +88,7 @@ class SQLiteRuntimeComposition:
 
 
 def build_sqlite_runtime(
-    paths: SQLiteDatabasePaths, migration_path: Path
+    paths: SQLiteDatabasePaths, migration_path: Path | MigrationRegistry
 ) -> SQLiteRuntimeComposition:
     readiness = provision_runtime(
         paths.canonical_seed_path, paths.runtime_database_path, migration_path
@@ -97,7 +98,7 @@ def build_sqlite_runtime(
 
 def build_configured_sqlite_runtime(
     environment: Mapping[str, str],
-    migration_path: Path,
+    migration_path: Path | MigrationRegistry,
     *,
     platform_name: str | None = None,
 ) -> SQLiteRuntimeComposition:

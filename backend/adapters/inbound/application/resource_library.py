@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import cast
 
 from backend.agent_runtime.contracts import ContractMeta, UseCaseRequest, UseCaseResult
 from backend.core_contracts.outcome import ApplicationOutcome
 from backend.modules.resource_library.application.dto.input import GetResourceRequest
 from backend.modules.resource_library.application.dto.output import ResourceView
+from backend.modules.resource_library.domain.value_objects import ResourceRef
 from backend.modules.resource_library.ports.inbound import ResourceLibraryInbound
 
 RESOURCE_READ_USE_CASE_ID = "application.read_canonical_resource"
@@ -28,11 +30,9 @@ class ResourceLibraryUseCaseInbound:
             raise TypeError("request must be a UseCaseRequest")
         if request.use_case_id != RESOURCE_READ_USE_CASE_ID:
             raise ValueError("unsupported use case")
-        resource_ref = request.payload.get("resource_ref")
-        if type(resource_ref) is not str or not resource_ref:
-            raise ValueError("resource_ref must be a non-empty string")
         if set(request.payload) != {"resource_ref"}:
             raise ValueError("getResource payload contains unsupported fields")
+        resource_ref = ResourceRef(cast(str, request.payload["resource_ref"]))
 
         typed_outcome = self._resource_library.get_resource(
             request=GetResourceRequest(resource_ref),
@@ -73,8 +73,8 @@ def _resource_data(view: ResourceView | None) -> Mapping[str, object] | None:
     if view is None:
         return None
     return {
-        "resource_ref": view.resource_ref,
+        "resource_ref": view.resource_ref.value,
         "resource_type": view.resource_type,
         "canonical_title": view.canonical_title,
-        "identity_status": view.identity_status,
+        "availability_status": view.availability_status,
     }

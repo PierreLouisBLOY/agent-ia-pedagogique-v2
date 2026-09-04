@@ -61,8 +61,12 @@ from backend.modules.quality_evaluation.domain.value_objects.persistence_vocabul
     QualityPersistenceValues,
     QualityScore,
 )
+from backend.modules.resource_library.domain.value_objects import (
+    ResourceAvailabilityStatus,
+    ResourceCanonicalityStatus,
+    ResourceSemanticState,
+)
 from backend.modules.resource_library.domain.value_objects.persistence_vocabulary import (
-    ResourceIdentityStatus,
     ResourcePersistenceValues,
     ResourceType,
 )
@@ -120,13 +124,46 @@ def test_document_vocabulary_round_trips() -> None:
     assert decode_document(*encode_document(values)) == values
 
 
-def test_resource_observed_states_remain_distinct_and_round_trip() -> None:
-    active = ResourcePersistenceValues(ResourceType.EXERCISE_SET, ResourceIdentityStatus.ACTIVE)
-    canonical = ResourcePersistenceValues(ResourceType.OTHER, ResourceIdentityStatus.CANONICAL)
+def test_resource_legacy_values_map_to_independent_semantic_dimensions() -> None:
+    active = ResourcePersistenceValues(
+        ResourceType.EXERCISE_SET,
+        ResourceSemanticState(
+            ResourceAvailabilityStatus.ACTIVE,
+            ResourceCanonicalityStatus.UNKNOWN,
+        ),
+    )
+    canonical = ResourcePersistenceValues(
+        ResourceType.OTHER,
+        ResourceSemanticState(
+            ResourceAvailabilityStatus.UNKNOWN,
+            ResourceCanonicalityStatus.CANONICAL,
+        ),
+    )
 
     assert decode_resource(*encode_resource(active)) == active
     assert decode_resource(*encode_resource(canonical)) == canonical
-    assert active.identity_status is not canonical.identity_status
+    assert active.semantic_state.availability_status is ResourceAvailabilityStatus.ACTIVE
+    assert active.semantic_state.canonicality_status is ResourceCanonicalityStatus.UNKNOWN
+    assert canonical.semantic_state.availability_status is ResourceAvailabilityStatus.UNKNOWN
+    assert canonical.semantic_state.canonicality_status is ResourceCanonicalityStatus.CANONICAL
+
+
+@pytest.mark.parametrize(
+    "state",
+    (
+        ResourceSemanticState(
+            ResourceAvailabilityStatus.UNKNOWN,
+            ResourceCanonicalityStatus.UNKNOWN,
+        ),
+    ),
+)
+def test_resource_legacy_column_rejects_lossy_semantic_states(
+    state: ResourceSemanticState,
+) -> None:
+    with pytest.raises(
+        SQLiteVocabularyMappingError, match="not losslessly representable"
+    ):
+        encode_resource(ResourcePersistenceValues(ResourceType.OTHER, state))
 
 
 def test_context_origin_is_validated_but_never_encoded_as_pedagogical_notes() -> None:

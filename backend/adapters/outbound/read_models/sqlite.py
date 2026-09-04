@@ -5,12 +5,14 @@ from __future__ import annotations
 import sqlite3
 from dataclasses import dataclass
 
+from backend.adapters.outbound.persistence.vocabulary import decode_resource
+
 
 @dataclass(frozen=True, slots=True)
 class ResourceCatalogView:
     resource_ref: str
     title: str
-    identity_status: str
+    availability_status: str
     projection_freshness: str = "seed-derived"
 
 
@@ -20,11 +22,18 @@ class ReadModelAdapter:
 
     def resource_catalog(self, *, limit: int = 5) -> tuple[ResourceCatalogView, ...]:
         rows = self._connection.execute(
-            """SELECT id, canonical_title, identity_status
+            """SELECT id, resource_type, canonical_title, identity_status
                FROM resource ORDER BY id LIMIT ?""",
             (limit,),
         ).fetchall()
-        return tuple(ResourceCatalogView(str(r[0]), str(r[1]), str(r[2])) for r in rows)
+        return tuple(
+            ResourceCatalogView(
+                str(row[0]),
+                str(row[2]),
+                decode_resource(row[1], row[3]).semantic_state.availability_status.value,
+            )
+            for row in rows
+        )
 
     def close(self) -> None:
         self._connection.close()

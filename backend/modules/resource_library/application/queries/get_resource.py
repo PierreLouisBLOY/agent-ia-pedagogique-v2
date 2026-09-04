@@ -40,7 +40,9 @@ class GetResourceQuery:
             raise TypeError("correlation_id must be a CorrelationId")
 
         record = self.resources.load_resource(request.resource_ref)
-        subject_ref = TypedEntityRef(TypedEntityId("resource", request.resource_ref))
+        subject_ref = TypedEntityRef(
+            TypedEntityId("resource", request.resource_ref.value)
+        )
         if record is None:
             return ApplicationOutcome(
                 outcome_status=OutcomeStatus.REJECTED,
@@ -69,7 +71,7 @@ class GetResourceQuery:
                 resource_ref=record.resource_ref,
                 resource_type=record.resource_type.value,
                 canonical_title=record.canonical_title,
-                identity_status=record.identity_status.value,
+                availability_status=record.semantic_state.availability_status.value,
             ),
             subject_refs=(subject_ref,),
         )

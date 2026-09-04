@@ -1,0 +1,116 @@
+{
+  "schema_version": "12.17.5b-b04-real-chain-evidence-v1",
+  "phase_status": "PASS",
+  "source_bundle_sha256": "af3b4a536ce18eb73e9d19049a97b810b3a62e4c9fd863daf55814d8601f3429",
+  "baseline_commit": "576d6bd6dcf5082740c4192842b7c87ccbc1f246",
+  "authorization": {
+    "user_runtime_write_authorized": false,
+    "validation_target": "CONTROLLED_RUNTIME_COPY",
+    "provider_calls": 0
+  },
+  "paths": {
+    "seed": "OWNER_OVERRIDE_REDACTED",
+    "user_runtime": "%LOCALAPPDATA%/ProjetV2/runtime/base_pedagogique_v2.runtime.sqlite",
+    "windows_msix_normalization": true,
+    "seed_runtime_distinct": true
+  },
+  "seed": {
+    "main_size_bytes": 105553920,
+    "main_sha256_pre": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134",
+    "main_sha256_post": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134",
+    "sidecars_pre_post_identical": true,
+    "modified": false
+  },
+  "user_runtime": {
+    "main_size_bytes": 105553920,
+    "main_sha256_pre": "de6186a26c1054731a7c0702baa133a8dc995b102417151f6538935ba04d1fb1",
+    "main_sha256_post": "de6186a26c1054731a7c0702baa133a8dc995b102417151f6538935ba04d1fb1",
+    "ledger_pre": [
+      {
+        "version": "001",
+        "checksum": "5b4c603d19e9eb195ca1d0d19d5e6755d136d6d13399aeb33c0e90b5bb9b0102"
+      }
+    ],
+    "ledger_post": [
+      {
+        "version": "001",
+        "checksum": "5b4c603d19e9eb195ca1d0d19d5e6755d136d6d13399aeb33c0e90b5bb9b0102"
+      }
+    ],
+    "document_count": 15,
+    "sidecars_pre_post_identical": true,
+    "migration_002_applied": false,
+    "modified": false
+  },
+  "backup": {
+    "location": "TEMPORARY_OUTSIDE_REPOSITORY_REDACTED",
+    "created": true,
+    "size_bytes": 105553920,
+    "sha256": "32dfca0e2c3a483af5f487539ce5bf75ce8398f1d73aefc700c9adc282978554",
+    "integrity_check": "ok",
+    "quick_check": "ok",
+    "foreign_key_violations": 0,
+    "verified": true,
+    "temporary_artifact_cleaned": true
+  },
+  "chain": {
+    "registry_versions": ["001", "002"],
+    "ledger_before": ["001"],
+    "missing_before": ["002"],
+    "applied": ["002"],
+    "ledger_after": ["001", "002"],
+    "migration_001_sha256": "5b4c603d19e9eb195ca1d0d19d5e6755d136d6d13399aeb33c0e90b5bb9b0102",
+    "migration_002_sha256": "e43b6267a5c4e0686739d4c0ea68d22e74f354bd9cbffb3f89b673e5bd0fe893",
+    "document_count_pre": 15,
+    "document_count_post": 15,
+    "identity_digest_pre": "b5270b322e168d7b8d8e55e977a3cd32a30f4539d49686d86dafb2cf41ff8279",
+    "identity_digest_post": "b5270b322e168d7b8d8e55e977a3cd32a30f4539d49686d86dafb2cf41ff8279",
+    "five_invariants_passed": 5,
+    "sha256_check_retained": true,
+    "integrity_check": "ok",
+    "quick_check": "ok",
+    "foreign_key_violations": 0
+  },
+  "replay": {
+    "migrations_applied": [],
+    "migrations_skipped": ["001", "002"],
+    "main_sha256_before": "7876142f8d84e351d99035d91f7c9e870b6aa49f6982c819e3f89a9147826728",
+    "main_sha256_after": "7876142f8d84e351d99035d91f7c9e870b6aa49f6982c819e3f89a9147826728",
+    "main_file_unchanged": true,
+    "wal_materialized_empty": true,
+    "shm_materialized": true,
+    "migration_no_op": true
+  },
+  "recovery": {
+    "target": "DISTINCT_TEMPORARY_FILE",
+    "source_sha256": "32dfca0e2c3a483af5f487539ce5bf75ce8398f1d73aefc700c9adc282978554",
+    "restored_sha256": "32dfca0e2c3a483af5f487539ce5bf75ce8398f1d73aefc700c9adc282978554",
+    "ledger": ["001"],
+    "document_count": 15,
+    "integrity_check": "ok",
+    "quick_check": "ok",
+    "foreign_key_violations": 0,
+    "passed": true,
+    "temporary_artifact_cleaned": true
+  },
+  "quality": {
+    "targeted_tests_passed": 63,
+    "targeted_tests_total": 63,
+    "architecture_guards_passed": 17,
+    "architecture_guards_total": 17,
+    "historical_freeze_entries_passed": 40,
+    "historical_freeze_entries_total": 40,
+    "targeted_mypy_files": 8,
+    "active_mypy_files": 42,
+    "backend_mypy_files": 671,
+    "ruff": "PASS",
+    "compileall": "PASS",
+    "git_diff_check": "PASS",
+    "secrets": 0
+  },
+  "next_gate": {
+    "status": "READY",
+    "canonical_title": "Contrat resource_ref",
+    "started": false
+  }
+}

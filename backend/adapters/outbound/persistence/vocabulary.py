@@ -35,9 +35,13 @@ from backend.modules.quality_evaluation.domain.value_objects.persistence_vocabul
     QualityScore,
 )
 from backend.modules.resource_library.domain.value_objects.persistence_vocabulary import (
-    ResourceIdentityStatus,
     ResourcePersistenceValues,
     ResourceType,
+)
+from backend.modules.resource_library.domain.value_objects.resource_semantics import (
+    ResourceAvailabilityStatus,
+    ResourceCanonicalityStatus,
+    ResourceSemanticState,
 )
 from backend.modules.transformation_assembly.domain.value_objects.persistence_vocabulary import (
     ProductionLifecycleStatus,
@@ -77,6 +81,13 @@ MAPPED_VOCABULARY_FAMILIES = (
 
 class SQLiteVocabularyMappingError(ValueError):
     """A persisted vocabulary value cannot be decoded by its owning context."""
+
+
+class _LegacyResourceIdentityStatus(StrEnum):
+    """Values accepted by the pre-B06 single SQLite column."""
+
+    ACTIVE = "ACTIVE"
+    CANONICAL = "CANONICAL"
 
 
 def _decode_enum[EnumValue: StrEnum](
@@ -128,13 +139,41 @@ def decode_document(
 def encode_resource(values: ResourcePersistenceValues) -> tuple[str, str]:
     if not isinstance(values, ResourcePersistenceValues):
         raise TypeError("values must be ResourcePersistenceValues")
-    return values.resource_type.value, values.identity_status.value
+    state = values.semantic_state
+    if state == ResourceSemanticState(
+        ResourceAvailabilityStatus.ACTIVE,
+        ResourceCanonicalityStatus.UNKNOWN,
+    ):
+        legacy_status = _LegacyResourceIdentityStatus.ACTIVE
+    elif state == ResourceSemanticState(
+        ResourceAvailabilityStatus.UNKNOWN,
+        ResourceCanonicalityStatus.CANONICAL,
+    ):
+        legacy_status = _LegacyResourceIdentityStatus.CANONICAL
+    else:
+        raise SQLiteVocabularyMappingError(
+            "resource semantic state is not losslessly representable by the legacy column"
+        )
+    return values.resource_type.value, legacy_status.value
 
 
 def decode_resource(resource_type: object, status: object) -> ResourcePersistenceValues:
+    legacy_status = _decode_enum(
+        status, _LegacyResourceIdentityStatus, "resource identity"
+    )
+    if legacy_status is _LegacyResourceIdentityStatus.ACTIVE:
+        semantic_state = ResourceSemanticState(
+            ResourceAvailabilityStatus.ACTIVE,
+            ResourceCanonicalityStatus.UNKNOWN,
+        )
+    else:
+        semantic_state = ResourceSemanticState(
+            ResourceAvailabilityStatus.UNKNOWN,
+            ResourceCanonicalityStatus.CANONICAL,
+        )
     return ResourcePersistenceValues(
         _decode_enum(resource_type, ResourceType, "resource type"),
-        _decode_enum(status, ResourceIdentityStatus, "resource identity"),
+        semantic_state,
     )
 
 

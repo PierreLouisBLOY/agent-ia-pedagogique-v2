@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -43,6 +44,12 @@ def test_real_seed_runtime_sidecars_backup_and_restore(tmp_path: Path) -> None:
         RUNTIME_DB_ENV: str(runtime),
     }
     seed_pre = snapshot_sqlite_files(seed)
+    with sqlite3.connect(
+        f"file:{seed.as_posix()}?mode=ro&immutable=1", uri=True
+    ) as seed_connection:
+        seed_document_ids = seed_connection.execute(
+            "SELECT id FROM document ORDER BY id"
+        ).fetchall()
 
     composition = build_configured_sqlite_runtime(environment, MIGRATION)
     report = composition.readiness
@@ -57,6 +64,8 @@ def test_real_seed_runtime_sidecars_backup_and_restore(tmp_path: Path) -> None:
     assert report.runtime_created is True
     assert report.runtime_existing is False
     assert report.migration_applied is True
+    assert report.migration_versions == ("001", "002")
+    assert report.migrations_applied == ("001", "002")
     assert report.journal_mode == "wal"
     assert {"wal", "shm"} <= set(report.runtime_sidecars_observed)
     assert report.seed_pre_snapshot == report.seed_post_snapshot == seed_pre
@@ -75,4 +84,14 @@ def test_real_seed_runtime_sidecars_backup_and_restore(tmp_path: Path) -> None:
     assert restored.sha256 == backup_report.backup_sha256
     assert restored.integrity == restored.quick == "ok"
     assert restored.foreign_key_violations == 0
+    with sqlite3.connect(runtime) as runtime_connection:
+        assert runtime_connection.execute(
+            "SELECT id FROM document ORDER BY id"
+        ).fetchall() == seed_document_ids
+        assert runtime_connection.execute(
+            "SELECT version FROM _runtime_migration_ledger ORDER BY version"
+        ).fetchall() == [("001",), ("002",)]
+        assert runtime_connection.execute("PRAGMA foreign_key_check").fetchall() == []
+        assert runtime_connection.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+        assert runtime_connection.execute("PRAGMA quick_check").fetchone()[0] == "ok"
     assert snapshot_sqlite_files(seed) == seed_pre

@@ -125,7 +125,9 @@ def test_scn_01_runs_full_harness_through_wf0_application_and_op03(
         assert isinstance(witness.result.outcome.data, Mapping)
         assert witness.result.outcome.data["resource_ref"] == SCN_01_RESOURCE_REF
         assert witness.result.outcome.data["resource_type"] == "EXERCISE_SET"
-        assert witness.result.outcome.data["identity_status"] == "ACTIVE"
+        assert witness.result.outcome.data["availability_status"] == "ACTIVE"
+        assert "identity_status" not in witness.result.outcome.data
+        assert "canonicality_status" not in witness.result.outcome.data
 
         title = witness.result.outcome.data["canonical_title"]
         assert type(title) is str and title

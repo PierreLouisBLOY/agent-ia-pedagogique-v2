@@ -19,6 +19,7 @@ from backend.adapters.outbound.persistence.migrations import (
     provision_runtime,
 )
 from backend.adapters.outbound.persistence.sqlite import ConcurrencyConflict, connect_sqlite
+from backend.adapters.outbound.persistence.vocabulary import decode_resource
 from backend.adapters.outbound.read_models.sqlite import ReadModelAdapter
 from backend.adapters.outbound.search.sqlite import BusinessSearchAdapter
 from backend.adapters.outbound.transaction.sqlite import SQLiteUnitOfWork, operation_committed
@@ -56,8 +57,12 @@ from backend.modules.quality_evaluation.domain.value_objects.persistence_vocabul
     QualityPersistenceValues,
     QualityScore,
 )
+from backend.modules.resource_library.domain.value_objects import (
+    ResourceAvailabilityStatus,
+    ResourceCanonicalityStatus,
+    ResourceSemanticState,
+)
 from backend.modules.resource_library.domain.value_objects.persistence_vocabulary import (
-    ResourceIdentityStatus,
     ResourcePersistenceValues,
     ResourceType,
 )
@@ -93,7 +98,11 @@ DOCUMENT_VALUES = DocumentPersistenceValues(
     DocumentType.OTHER, DocumentLanguageCode.FR, DocumentStatus.ACTIVE
 )
 RESOURCE_VALUES = ResourcePersistenceValues(
-    ResourceType.OTHER, ResourceIdentityStatus.CANONICAL
+    ResourceType.OTHER,
+    ResourceSemanticState(
+        ResourceAvailabilityStatus.UNKNOWN,
+        ResourceCanonicalityStatus.CANONICAL,
+    ),
 )
 CONTEXT_ORIGIN = ContextOrigin(ContextOriginCode.RUNTIME)
 TASK_VALUES = TaskPersistenceValues(
@@ -207,6 +216,27 @@ def test_op03_resource_store_contract(runtime_copy: Path) -> None:
         assert unit.resources.load_resource(resource) is not None
 
 
+def test_existing_resource_rows_preserve_only_observed_availability(
+    runtime_template: Path,
+) -> None:
+    with connect_sqlite(runtime_template, readonly=True) as connection:
+        counts = connection.execute(
+            "SELECT identity_status, count(*) FROM resource "
+            "GROUP BY identity_status ORDER BY identity_status"
+        ).fetchall()
+        sample = connection.execute(
+            "SELECT resource_type, identity_status FROM resource ORDER BY id LIMIT 1"
+        ).fetchone()
+
+    assert [(str(row[0]), int(row[1])) for row in counts] == [("ACTIVE", 1_399)]
+    assert sample is not None
+    values = decode_resource(sample[0], sample[1])
+    assert values.semantic_state == ResourceSemanticState(
+        ResourceAvailabilityStatus.ACTIVE,
+        ResourceCanonicalityStatus.UNKNOWN,
+    )
+
+
 def test_op04_context_store_contract(runtime_copy: Path) -> None:
     with SQLiteUnitOfWork(runtime_copy) as unit:
         context = unit.contexts.add_context("c0-context", CONTEXT_ORIGIN)
@@ -291,6 +321,8 @@ def test_op12_projection_is_real_and_non_owner(runtime_template: Path) -> None:
         views = ReadModelAdapter(connection).resource_catalog(limit=3)
     assert len(views) == 3
     assert all(view.projection_freshness == "seed-derived" for view in views)
+    assert all(view.availability_status == "ACTIVE" for view in views)
+    assert all(not hasattr(view, "identity_status") for view in views)
 
 
 def test_op13_real_read_exposes_only_logical_fragments(runtime_template: Path) -> None:

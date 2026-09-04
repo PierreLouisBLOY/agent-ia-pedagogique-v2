@@ -4,8 +4,8 @@ import sqlite3
 
 from backend.adapters.outbound.persistence.sqlite import ResourceStore
 from backend.adapters.outbound.persistence.vocabulary import decode_resource
+from backend.modules.resource_library.domain.value_objects import ResourceRef
 from backend.modules.resource_library.ports.outbound import ResourceRecord
-from backend.shared_kernel._strings import require_non_empty
 
 
 class SQLiteResourceStoreAdapter:
@@ -17,17 +17,18 @@ class SQLiteResourceStoreAdapter:
         self._connection = connection
         self._store = ResourceStore(connection)
 
-    def load_resource(self, resource_ref: str) -> ResourceRecord | None:
-        require_non_empty(resource_ref, "resource_ref")
-        record = self._store.load_resource(resource_ref)
+    def load_resource(self, resource_ref: ResourceRef) -> ResourceRecord | None:
+        if type(resource_ref) is not ResourceRef:
+            raise TypeError("resource_ref must be a ResourceRef")
+        record = self._store.load_resource(resource_ref.value)
         if record is None:
             return None
         values = decode_resource(record.get("resource_type"), record.get("identity_status"))
         return ResourceRecord(
-            resource_ref=_text(record, "id"),
+            resource_ref=ResourceRef(_text(record, "id")),
             resource_type=values.resource_type,
             canonical_title=_text(record, "canonical_title"),
-            identity_status=values.identity_status,
+            semantic_state=values.semantic_state,
         )
 
     def close(self) -> None:

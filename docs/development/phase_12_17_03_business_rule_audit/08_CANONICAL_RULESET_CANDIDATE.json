@@ -1,0 +1,434 @@
+{
+  "schema_version": "12.17.3-canonical-ruleset-candidate-v1",
+  "status": "CANDIDATE",
+  "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+  "raw_rule_count": 66,
+  "candidate_rule_count": 41,
+  "contradiction_count": 0,
+  "owner_decision_count": 8,
+  "notice": "This catalogue is an audit proposal. It changes no source rule, runtime route, provider policy, schema, API or test.",
+  "rules": [
+    {
+      "candidate_id": "CR-001",
+      "normalized_statement": "No legacy asset may be inherited implicitly; reuse requires explicit audit, approval and traceability.",
+      "source_rule_ids": ["BR-001", "BR-002", "BR-003"],
+      "classification": "GOVERNANCE_POLICY",
+      "disposition": "OWNER_DECISION",
+      "exceptions": ["EX-01"],
+      "owner_decision_required": true,
+      "decision_reason": "Select the authoritative policy location and resolve the missing docs/legacy-review trace."
+    },
+    {
+      "candidate_id": "CR-002",
+      "normalized_statement": "Canonical V2 evidence takes precedence and every rule must expose its authority and supersession chain.",
+      "source_rule_ids": ["BR-004"],
+      "classification": "GOVERNANCE_POLICY",
+      "disposition": "OWNER_DECISION",
+      "exceptions": [],
+      "owner_decision_required": true,
+      "decision_reason": "The Phase 1/2 consolidated rule corpus and a single authority index are absent."
+    },
+    {
+      "candidate_id": "CR-003",
+      "normalized_statement": "Runtime data, binary databases, generated output and secrets must not be committed.",
+      "source_rule_ids": ["BR-005", "BR-006"],
+      "classification": "GOVERNANCE_POLICY",
+      "disposition": "CONSOLIDATE",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-004",
+      "normalized_statement": "Business concepts belong to bounded modules and infrastructure reaches them only through Application contracts.",
+      "source_rule_ids": ["BR-007"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-005",
+      "normalized_statement": "Generation, validation, quality evaluation, review and promotion are distinct responsibilities.",
+      "source_rule_ids": ["BR-008", "BR-053", "BR-055"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "CONSOLIDATE",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-006",
+      "normalized_statement": "A resource lookup accepts one non-empty logical reference through the exact Application use case.",
+      "source_rule_ids": ["BR-009", "BR-011"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "CONSOLIDATE",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-007",
+      "normalized_statement": "Resource identity fields are complete and storage rows are translated into transport-neutral records and views.",
+      "source_rule_ids": ["BR-010", "BR-013", "BR-014"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "CONSOLIDATE",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-008",
+      "normalized_statement": "A missing resource yields a blocking, non-retryable rejected business outcome.",
+      "source_rule_ids": ["BR-012"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "KEEP",
+      "exceptions": ["EX-02"],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-009",
+      "normalized_statement": "Unsupported READ-15 options must remain explicitly rejected or absent until their semantics are approved.",
+      "source_rule_ids": ["BR-015"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "OWNER_DECISION",
+      "exceptions": [],
+      "owner_decision_required": true,
+      "decision_reason": "Choose whether version_ref/include remain out of scope, are deprecated, or receive a future contract."
+    },
+    {
+      "candidate_id": "CR-010",
+      "normalized_statement": "The authenticated canonical seed is immutable and runtime provisioning targets a distinct new copy.",
+      "source_rule_ids": ["BR-016", "BR-017"],
+      "classification": "TECHNICAL_CONSTRAINT",
+      "disposition": "OWNER_DECISION",
+      "exceptions": ["EX-01"],
+      "owner_decision_required": true,
+      "decision_reason": "Confirm the external seed identity and DDL before declaring full data-model equivalence."
+    },
+    {
+      "candidate_id": "CR-011",
+      "normalized_statement": "SQLite connections and ordered migrations are configured explicitly, transactional and checksum-verified.",
+      "source_rule_ids": ["BR-018", "BR-019", "BR-020"],
+      "classification": "TECHNICAL_CONSTRAINT",
+      "disposition": "CONSOLIDATE",
+      "exceptions": ["EX-03", "EX-04"],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-012",
+      "normalized_statement": "Document integrity uses an exact SHA-256 provenance value when content is available.",
+      "source_rule_ids": ["BR-021"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-013",
+      "normalized_statement": "Business persistence is exposed through ports and a transaction-scoped unit of work, never direct SQL from agents.",
+      "source_rule_ids": ["BR-022", "BR-023"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "CONSOLIDATE",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-014",
+      "normalized_statement": "Lifecycle transitions require the expected prior state and fail atomically on conflict.",
+      "source_rule_ids": ["BR-024"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-015",
+      "normalized_statement": "Lifecycle statuses and persistence defaults must come from a Domain/Application-owned canonical vocabulary.",
+      "source_rule_ids": ["BR-025"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "OWNER_DECISION",
+      "exceptions": [],
+      "owner_decision_required": true,
+      "decision_reason": "Ten adapter literal families have no consolidated documented owner."
+    },
+    {
+      "candidate_id": "CR-016",
+      "normalized_statement": "Capability policy, routing and business decisions remain separate authorities.",
+      "source_rule_ids": ["BR-026"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-017",
+      "normalized_statement": "Capability authorization is explicit and fails closed before dispatch.",
+      "source_rule_ids": ["BR-027"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-018",
+      "normalized_statement": "Delegation is allowed only through a validated capability and role edge.",
+      "source_rule_ids": ["BR-028"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-019",
+      "normalized_statement": "Tool routing resolves only validated allowlisted tools and fails closed otherwise.",
+      "source_rule_ids": ["BR-029"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-020",
+      "normalized_statement": "Application routes dispatch only registered use cases and never expose repositories or SQL to agents.",
+      "source_rule_ids": ["BR-030"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-021",
+      "normalized_statement": "Execution gates combine authorization, evidence and budget; approval permits continued evaluation but grants no business authority.",
+      "source_rule_ids": ["BR-031", "BR-032"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "CONSOLIDATE",
+      "exceptions": ["EX-05"],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-022",
+      "normalized_statement": "Runtime dispatch returns correlated bounded results, and successful dispatch never grants business authority.",
+      "source_rule_ids": ["BR-033", "BR-034"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "CONSOLIDATE",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-023",
+      "normalized_statement": "Execution sandboxes enforce explicit filesystem and network allowlists and fail closed.",
+      "source_rule_ids": ["BR-035", "BR-036"],
+      "classification": "TECHNICAL_CONSTRAINT",
+      "disposition": "CONSOLIDATE",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-024",
+      "normalized_statement": "Agent content remains isolated, structurally bounded and incapable of changing authority.",
+      "source_rule_ids": ["BR-037", "BR-038"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "CONSOLIDATE",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-025",
+      "normalized_statement": "Secrets are resolved at the boundary, redacted from output and never persisted as business data.",
+      "source_rule_ids": ["BR-039"],
+      "classification": "TECHNICAL_CONSTRAINT",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-026",
+      "normalized_statement": "Multi-agent orchestration respects explicit roles, tools, budgets and bounded fanout.",
+      "source_rule_ids": ["BR-040"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-027",
+      "normalized_statement": "Recovery decisions preserve correlation, attempt identity and deterministic state reconciliation.",
+      "source_rule_ids": ["BR-041"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-028",
+      "normalized_statement": "Replay and retry require an idempotency/effect decision and remain bounded by deterministic policy.",
+      "source_rule_ids": ["BR-042", "BR-043", "BR-044"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "CONSOLIDATE",
+      "exceptions": ["EX-07"],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-029",
+      "normalized_statement": "Recovery consumes explicit budgets, uses a deterministic circuit breaker and exposes immutable snapshots.",
+      "source_rule_ids": ["BR-045", "BR-046", "BR-047"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "CONSOLIDATE",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-030",
+      "normalized_statement": "Observability is correlated, allowlisted, minimized and never grants authority or leaks secrets.",
+      "source_rule_ids": ["BR-048", "BR-049", "BR-050"],
+      "classification": "TECHNICAL_CONSTRAINT",
+      "disposition": "CONSOLIDATE",
+      "exceptions": ["EX-08"],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-031",
+      "normalized_statement": "Evidence is immutable, attributable and preserved across validation, review and promotion decisions.",
+      "source_rule_ids": ["BR-051", "BR-052"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "CONSOLIDATE",
+      "exceptions": ["EX-06"],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-032",
+      "normalized_statement": "Generation materializes a candidate only and cannot validate or promote it.",
+      "source_rule_ids": ["BR-053"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-033",
+      "normalized_statement": "Correction is versioned, lineage-preserving and bounded.",
+      "source_rule_ids": ["BR-054"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-034",
+      "normalized_statement": "Review provides bounded evidence and disposition without validation or promotion authority.",
+      "source_rule_ids": ["BR-055"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-035",
+      "normalized_statement": "Pedagogical test corpora are synthetic, versioned, deterministic and contain no production data.",
+      "source_rule_ids": ["BR-056"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-036",
+      "normalized_statement": "Calibration scoring is blind, provider-neutral at contract level and payload-minimized.",
+      "source_rule_ids": ["BR-057"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "KEEP",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-037",
+      "normalized_statement": "Primary calibration separates strong delivery candidates from non-strong controls; mixed-versus-weak ordering is non-blocking.",
+      "source_rule_ids": ["BR-058", "BR-059"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "CONSOLIDATE",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-038",
+      "normalized_statement": "Calibration evidence remains immutable; live execution requires exact one-shot authorization and carry-forward requires certified equivalence.",
+      "source_rule_ids": ["BR-060", "BR-061"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "OWNER_DECISION",
+      "exceptions": ["EX-09", "EX-10"],
+      "owner_decision_required": true,
+      "decision_reason": "Retain the general lineage rule while deciding how much V4/V5.x incident-specific policy stays canonical."
+    },
+    {
+      "candidate_id": "CR-039",
+      "normalized_statement": "Calibration completion does not establish a release threshold or alter runtime routing without a new owner decision.",
+      "source_rule_ids": ["BR-062"],
+      "classification": "CANONICAL_BUSINESS",
+      "disposition": "OWNER_DECISION",
+      "exceptions": [],
+      "owner_decision_required": true,
+      "decision_reason": "A future release threshold, if any, requires explicit owner adoption; current value remains NONE."
+    },
+    {
+      "candidate_id": "CR-040",
+      "normalized_statement": "Exactly twelve canonical workflow topologies govern orchestration; obsolete scenario-number labels have no authority.",
+      "source_rule_ids": ["BR-063", "BR-064"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "CONSOLIDATE_AND_DEPRECATE_LEGACY",
+      "exceptions": [],
+      "owner_decision_required": false,
+      "decision_reason": null
+    },
+    {
+      "candidate_id": "CR-041",
+      "normalized_statement": "Every exposable capability requires a concrete Application owner and any API adapter delegates to it without direct storage access.",
+      "source_rule_ids": ["BR-065", "BR-066"],
+      "classification": "APPLICATION_POLICY",
+      "disposition": "OWNER_DECISION",
+      "exceptions": [],
+      "owner_decision_required": true,
+      "decision_reason": "Prioritize concrete owners for CAP-R02/A01/A02 and decide the /api/v2 delivery scope."
+    }
+  ],
+  "canonical_exceptions": [
+    {"exception_id": "EX-01", "parent_candidate_ids": ["CR-001", "CR-010"], "status": "EVIDENCE_GAP"},
+    {"exception_id": "EX-02", "parent_candidate_ids": ["CR-008"], "status": "CANDIDATE"},
+    {"exception_id": "EX-03", "parent_candidate_ids": ["CR-011"], "status": "CANDIDATE"},
+    {"exception_id": "EX-04", "parent_candidate_ids": ["CR-011"], "status": "CANDIDATE"},
+    {"exception_id": "EX-05", "parent_candidate_ids": ["CR-021"], "status": "CANDIDATE"},
+    {"exception_id": "EX-06", "parent_candidate_ids": ["CR-031"], "status": "CANDIDATE"},
+    {"exception_id": "EX-07", "parent_candidate_ids": ["CR-028"], "status": "CANDIDATE"},
+    {"exception_id": "EX-08", "parent_candidate_ids": ["CR-030"], "status": "CANDIDATE"},
+    {"exception_id": "EX-09", "parent_candidate_ids": ["CR-038"], "status": "HISTORICAL_CANDIDATE"},
+    {"exception_id": "EX-10", "parent_candidate_ids": ["CR-038"], "status": "HISTORICAL_CONSUMED"}
+  ]
+}

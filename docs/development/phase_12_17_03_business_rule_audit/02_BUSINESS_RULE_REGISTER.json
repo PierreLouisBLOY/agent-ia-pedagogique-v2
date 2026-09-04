@@ -1,0 +1,2161 @@
+{
+  "schema_version": "12.17.3-business-rule-register-v1",
+  "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+  "granularity": "stable rule occurrence; no source fusion",
+  "classification_note": "classification records the source-facing claim; rationalization_classification is the requested audit classification.",
+  "raw_rule_count": 66,
+  "rules": [
+    {
+      "rule_id": "BR-001",
+      "rationalization_classification": "GOVERNANCE_POLICY",
+      "source_statement": "V2 repart d'une base propre; aucun élément V1 n'est repris automatiquement.",
+      "normalized_statement": "No V1 asset may be inherited implicitly.",
+      "source": [
+        "README.md"
+      ],
+      "domain": "governance",
+      "scope": "repository",
+      "authority": "CANONICAL_README",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [],
+      "tests": [],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "PARTIAL",
+      "test_status": "NONE",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "GOVERNANCE_POLICY",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-EXACT-01",
+      "overlap_cluster": null
+    },
+    {
+      "rule_id": "BR-002",
+      "rationalization_classification": "GOVERNANCE_POLICY",
+      "source_statement": "Aucun élément de V1 n'est hérité implicitement.",
+      "normalized_statement": "No V1 asset may be inherited implicitly.",
+      "source": [
+        "AGENTS.md"
+      ],
+      "domain": "governance",
+      "scope": "repository",
+      "authority": "PERSISTENT_AGENT_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [],
+      "tests": [],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "PARTIAL",
+      "test_status": "NONE",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "GOVERNANCE_POLICY",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-EXACT-01",
+      "overlap_cluster": null
+    },
+    {
+      "rule_id": "BR-003",
+      "rationalization_classification": "GOVERNANCE_POLICY",
+      "source_statement": "Toute réutilisation V1 doit être identifiée, auditée, justifiée, validée et tracée dans docs/legacy-review.",
+      "normalized_statement": "Legacy reuse requires explicit audit, approval, and traceability.",
+      "source": [
+        "README.md"
+      ],
+      "domain": "governance",
+      "scope": "repository",
+      "authority": "CANONICAL_README",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [
+        "EX-01"
+      ],
+      "implementation": [],
+      "tests": [],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "UNIMPLEMENTED",
+      "test_status": "NONE",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-GOVERNANCE"
+    },
+    {
+      "rule_id": "BR-004",
+      "rationalization_classification": "GOVERNANCE_POLICY",
+      "source_statement": "Les livrables canoniques V2 priment sur les préférences de code, d'outil ou de framework.",
+      "normalized_statement": "Canonical V2 deliverables take precedence over implementation preference.",
+      "source": [
+        "AGENTS.md"
+      ],
+      "domain": "governance",
+      "scope": "repository",
+      "authority": "PERSISTENT_AGENT_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [],
+      "tests": [],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "PARTIAL",
+      "test_status": "NONE",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-GOVERNANCE"
+    },
+    {
+      "rule_id": "BR-005",
+      "rationalization_classification": "GOVERNANCE_POLICY",
+      "source_statement": "Aucune donnée runtime, base binaire, sortie générée ou secret ne doit entrer dans Git.",
+      "normalized_statement": "Runtime data, binary databases, generated output, and secrets must not be committed.",
+      "source": [
+        "README.md",
+        ".gitignore"
+      ],
+      "domain": "governance",
+      "scope": "repository",
+      "authority": "CANONICAL_README",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [],
+      "tests": [],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "STRUCTURAL",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-EXACT-02",
+      "overlap_cluster": "OC-SECURITY"
+    },
+    {
+      "rule_id": "BR-006",
+      "rationalization_classification": "GOVERNANCE_POLICY",
+      "source_statement": "Aucune donnée runtime, base binaire, sortie générée ou secret ne doit entrer dans Git.",
+      "normalized_statement": "Runtime data, binary databases, generated output, and secrets must not be committed.",
+      "source": [
+        "AGENTS.md"
+      ],
+      "domain": "governance",
+      "scope": "repository",
+      "authority": "PERSISTENT_AGENT_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [],
+      "tests": [],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "STRUCTURAL",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-EXACT-02",
+      "overlap_cluster": "OC-SECURITY"
+    },
+    {
+      "rule_id": "BR-007",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "Le métier appartient aux modules; shared_kernel reste générique; infrastructure et adapters restent hors métier.",
+      "normalized_statement": "Business concepts belong to bounded modules and infrastructure remains outside them.",
+      "source": [
+        "AGENTS.md",
+        "architecture/adr/ADR-P12-003-agent-runtime-contract-zone.md"
+      ],
+      "domain": "architecture",
+      "scope": "repository",
+      "authority": "CANONICAL_ARCHITECTURE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [],
+      "tests": [
+        "tests/architecture"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "STRUCTURAL",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-01",
+      "overlap_cluster": "OC-APPLICATION_BOUNDARY"
+    },
+    {
+      "rule_id": "BR-008",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "Generation, validation, évaluation de qualité et promotion sont des responsabilités distinctes.",
+      "normalized_statement": "Generation, validation, quality evaluation, and promotion must remain separate responsibilities.",
+      "source": [
+        "AGENTS.md",
+        "docs/development/PHASE_12_15_LIVRABLE_COMPLET_CANONIQUE_FINAL.md"
+      ],
+      "domain": "lifecycle",
+      "scope": "product",
+      "authority": "CANONICAL_ARCHITECTURE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [],
+      "tests": [
+        "tests/integration/test_generation_review_e2e.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-06",
+      "overlap_cluster": "OC-LIFECYCLE"
+    },
+    {
+      "rule_id": "BR-009",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "GetResourceRequest exige resource_ref non vide.",
+      "normalized_statement": "A resource lookup requires a non-empty logical resource reference.",
+      "source": [
+        "backend/modules/resource_library/application/dto/input/get_resource.py"
+      ],
+      "domain": "resource_library",
+      "scope": "READ-15",
+      "authority": "APPLICATION_CONTRACT",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "GetResourceRequest.__post_init__"
+      ],
+      "tests": [
+        "tests/unit/test_resource_library_get_resource.py"
+      ],
+      "data_api_mapping": "API input resource_ref; SQLite resource.id.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "VERIFIED",
+      "api_relevant": true,
+      "api_status": "CONTRACT_ONLY",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-02",
+      "overlap_cluster": null
+    },
+    {
+      "rule_id": "BR-010",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "ResourceRecord et ResourceView exigent quatre chaînes non vides.",
+      "normalized_statement": "Resource records and views require complete non-empty identity fields.",
+      "source": [
+        "backend/modules/resource_library/ports/outbound/resource_store.py",
+        "backend/modules/resource_library/application/dto/output/resource_view.py"
+      ],
+      "domain": "resource_library",
+      "scope": "READ-15",
+      "authority": "APPLICATION_CONTRACT",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "ResourceRecord.__post_init__",
+        "ResourceView.__post_init__"
+      ],
+      "tests": [
+        "tests/unit/test_resource_library_get_resource.py"
+      ],
+      "data_api_mapping": "resource.id, resource_type, canonical_title, identity_status.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "VERIFIED",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-02",
+      "overlap_cluster": null
+    },
+    {
+      "rule_id": "BR-011",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "Le bridge accepte uniquement application.read_canonical_resource et le payload exact {resource_ref}.",
+      "normalized_statement": "The resource inbound accepts one exact use-case ID and one-field payload.",
+      "source": [
+        "backend/adapters/inbound/application/resource_library.py"
+      ],
+      "domain": "resource_library",
+      "scope": "C-12/C-13 bridge",
+      "authority": "APPLICATION_INBOUND",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "ResourceLibraryUseCaseInbound.invoke"
+      ],
+      "tests": [
+        "tests/integration/test_resource_library_application_route.py"
+      ],
+      "data_api_mapping": "UseCaseRequest payload to GetResourceRequest.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "VERIFIED",
+      "api_relevant": true,
+      "api_status": "CONTRACT_ONLY",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-01",
+      "overlap_cluster": null
+    },
+    {
+      "rule_id": "BR-012",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "Une ressource absente produit RES_NOT_FOUND, REJECTED, blocking=true, retryable=false.",
+      "normalized_statement": "A missing resource yields a blocking non-retryable rejected business outcome.",
+      "source": [
+        "backend/modules/resource_library/application/queries/get_resource.py"
+      ],
+      "domain": "resource_library",
+      "scope": "READ-15",
+      "authority": "APPLICATION_USE_CASE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [
+        "EX-02"
+      ],
+      "implementation": [
+        "GetResourceQuery.get_resource"
+      ],
+      "tests": [
+        "tests/unit/test_resource_library_get_resource.py"
+      ],
+      "data_api_mapping": "No row from OP-03 maps to RES_NOT_FOUND.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "VERIFIED",
+      "api_relevant": true,
+      "api_status": "CONTRACT_ONLY",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": null
+    },
+    {
+      "rule_id": "BR-013",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "Une ressource trouvée produit SUCCESS avec ResourceView et conserve subject_ref/correlation_id.",
+      "normalized_statement": "A successful resource lookup preserves identity and correlation in a transport-neutral view.",
+      "source": [
+        "backend/modules/resource_library/application/queries/get_resource.py"
+      ],
+      "domain": "resource_library",
+      "scope": "READ-15",
+      "authority": "APPLICATION_USE_CASE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "GetResourceQuery.get_resource"
+      ],
+      "tests": [
+        "tests/integration/test_sqlite_resource_application_e2e_real_gate.py"
+      ],
+      "data_api_mapping": "SQLite resource row to ResourceView and UseCaseResult.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "VERIFIED",
+      "api_relevant": true,
+      "api_status": "CONTRACT_ONLY",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": null
+    },
+    {
+      "rule_id": "BR-014",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "OP-03 échange ResourceRecord et ne laisse pas sortir une sqlite3.Row.",
+      "normalized_statement": "The resource store port must remain transport-neutral.",
+      "source": [
+        "backend/modules/resource_library/ports/outbound/resource_store.py",
+        "backend/adapters/outbound/resource_library/sqlite.py"
+      ],
+      "domain": "resource_library",
+      "scope": "OP-03",
+      "authority": "DOMAIN_PORT",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "ResourceStorePort",
+        "SQLiteResourceStoreAdapter"
+      ],
+      "tests": [
+        "tests/architecture/test_resource_library_application_sqlite_fitness.py"
+      ],
+      "data_api_mapping": "resource table mapping inferred from adapter; seed DDL external.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "EXTERNAL_REQUIRED",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-01",
+      "overlap_cluster": null
+    },
+    {
+      "rule_id": "BR-015",
+      "rationalization_classification": "LEGACY_HISTORICAL",
+      "source_statement": "Les options READ-15 version_ref et include restent explicitement différées.",
+      "normalized_statement": "Deferred READ-15 options must not be claimed as implemented.",
+      "source": [
+        "docs/development/PHASE_12_15_C2_RESOURCE_APPLICATION_E2E_BASELINE.md"
+      ],
+      "domain": "resource_library",
+      "scope": "READ-15",
+      "authority": "CANONICAL_BASELINE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [],
+      "tests": [],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "UNIMPLEMENTED",
+      "test_status": "NONE",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": true,
+      "api_status": "NONE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": true,
+      "legacy": true,
+      "duplicate_group": null,
+      "overlap_cluster": null
+    },
+    {
+      "rule_id": "BR-016",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "Le seed Phase 3 est immuable, authentifié par taille/hash/structure et copié avant migration.",
+      "normalized_statement": "The canonical seed must be authenticated and never mutated in place.",
+      "source": [
+        "backend/adapters/outbound/persistence/migrations.py",
+        "docs/development/PHASE_12_15_LIVRABLE_COMPLET_CANONIQUE_FINAL.md"
+      ],
+      "domain": "persistence",
+      "scope": "SQLite seed",
+      "authority": "CANONICAL_BASELINE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [
+        "EX-01"
+      ],
+      "implementation": [
+        "inspect_database",
+        "provision_runtime"
+      ],
+      "tests": [
+        "tests/integration/test_sqlite_runtime_real_gate.py"
+      ],
+      "data_api_mapping": "External 98-table seed.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "EXTERNAL_REQUIRED",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-07",
+      "overlap_cluster": "OC-PERSISTENCE"
+    },
+    {
+      "rule_id": "BR-017",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "Le runtime path doit différer du seed et ne doit pas préexister.",
+      "normalized_statement": "Runtime provisioning must target a new path distinct from the seed.",
+      "source": [
+        "backend/adapters/outbound/persistence/migrations.py"
+      ],
+      "domain": "persistence",
+      "scope": "SQLite runtime",
+      "authority": "INFRASTRUCTURE_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "provision_runtime"
+      ],
+      "tests": [
+        "tests/unit/test_sqlite_runtime_persistence.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "EXTERNAL_REQUIRED",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-PERSISTENCE"
+    },
+    {
+      "rule_id": "BR-018",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "Toute connexion active les FK; une connexion mutable ajoute busy_timeout=3000 et WAL.",
+      "normalized_statement": "SQLite connections enforce foreign keys and mutable-runtime concurrency settings.",
+      "source": [
+        "backend/adapters/outbound/persistence/sqlite.py"
+      ],
+      "domain": "persistence",
+      "scope": "SQLite connection",
+      "authority": "INFRASTRUCTURE_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [
+        "EX-03"
+      ],
+      "implementation": [
+        "connect_sqlite"
+      ],
+      "tests": [
+        "tests/unit/test_sqlite_runtime_persistence.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": true,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-PERSISTENCE"
+    },
+    {
+      "rule_id": "BR-019",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "Les migrations sont versionnées, checksummées et une réapplication identique est un no-op vérifié.",
+      "normalized_statement": "Runtime migrations must be versioned, checksummed, and idempotent.",
+      "source": [
+        "backend/adapters/outbound/persistence/migrations.py"
+      ],
+      "domain": "persistence",
+      "scope": "SQLite migrations",
+      "authority": "INFRASTRUCTURE_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [
+        "EX-04"
+      ],
+      "implementation": [
+        "MigrationArtifact",
+        "apply_migration"
+      ],
+      "tests": [
+        "tests/unit/test_sqlite_runtime_persistence.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-PERSISTENCE"
+    },
+    {
+      "rule_id": "BR-020",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "Une migration ne change pas le nombre de documents et doit conserver les FK valides.",
+      "normalized_statement": "Migrations must preserve document cardinality and referential integrity.",
+      "source": [
+        "backend/adapters/outbound/persistence/migrations.py"
+      ],
+      "domain": "persistence",
+      "scope": "migration 001",
+      "authority": "INFRASTRUCTURE_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "apply_migration"
+      ],
+      "tests": [
+        "tests/integration/test_sqlite_runtime_real_gate.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "EXTERNAL_REQUIRED",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-PERSISTENCE"
+    },
+    {
+      "rule_id": "BR-021",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "document.sha256 est nullable; s'il existe, il comporte exactement 64 caractères hexadécimaux.",
+      "normalized_statement": "Document checksums are null or exactly 64 hexadecimal characters.",
+      "source": [
+        "database/migrations/001_document_sha256_check.sql"
+      ],
+      "domain": "documents_provenance",
+      "scope": "document table",
+      "authority": "SQL_CONSTRAINT",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "CHECK document.sha256"
+      ],
+      "tests": [
+        "tests/unit/test_sqlite_runtime_persistence.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "EXTERNAL_REQUIRED",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-PERSISTENCE"
+    },
+    {
+      "rule_id": "BR-022",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "La persistance utilise SQL paramétré, Data Mapper et aucun GenericRepository.",
+      "normalized_statement": "Persistence must use owner-specific parameterized adapters rather than a generic repository.",
+      "source": [
+        "docs/development/PHASE_12_15_LIVRABLE_COMPLET_CANONIQUE_FINAL.md",
+        "backend/adapters/outbound/persistence/sqlite.py"
+      ],
+      "domain": "persistence",
+      "scope": "OP-01..OP-13",
+      "authority": "CANONICAL_ARCHITECTURE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "owner-specific stores"
+      ],
+      "tests": [
+        "tests/architecture/test_sqlite_runtime_persistence_fitness.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "EXTERNAL_REQUIRED",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-PERSISTENCE"
+    },
+    {
+      "rule_id": "BR-023",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "L'UoW utilise BEGIN IMMEDIATE avec commit/rollback explicites et marqueur operation_ref.",
+      "normalized_statement": "Mutable business persistence must be atomic and operation-traceable.",
+      "source": [
+        "backend/adapters/outbound/transaction/sqlite.py",
+        "docs/development/PHASE_12_15_LIVRABLE_COMPLET_CANONIQUE_FINAL.md"
+      ],
+      "domain": "persistence",
+      "scope": "OP-10",
+      "authority": "CANONICAL_ARCHITECTURE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "SQLiteUnitOfWork"
+      ],
+      "tests": [
+        "tests/unit/test_sqlite_runtime_persistence.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-PERSISTENCE"
+    },
+    {
+      "rule_id": "BR-024",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "Le changement de statut session est un compare-and-set sur updated_at et échoue en conflit.",
+      "normalized_statement": "Session lifecycle updates require optimistic concurrency.",
+      "source": [
+        "backend/adapters/outbound/persistence/sqlite.py"
+      ],
+      "domain": "work_orchestration",
+      "scope": "session store",
+      "authority": "ADAPTER_IMPLEMENTATION",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "WorkStore.change_status"
+      ],
+      "tests": [
+        "tests/unit/test_sqlite_runtime_persistence.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "EXTERNAL_REQUIRED",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-LIFECYCLE"
+    },
+    {
+      "rule_id": "BR-025",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "Les stores injectent des valeurs fr/OTHER/CANONICAL/ACTIVE/COMPLETED/VALIDATED/PASS/PROMOTED et score 1.0.",
+      "normalized_statement": "Adapter-created records use fixed lifecycle, type, language, and score literals.",
+      "source": [
+        "backend/adapters/outbound/persistence/sqlite.py"
+      ],
+      "domain": "persistence",
+      "scope": "owner stores",
+      "authority": "UNDOCUMENTED_IMPLEMENTATION",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "KnowledgeStore",
+        "DocumentStore",
+        "ResourceStore",
+        "WorkStore",
+        "ValidationStore",
+        "QualityStore",
+        "LifecycleDecisionStore",
+        "AuditTraceabilityStore"
+      ],
+      "tests": [],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "NONE",
+      "data_mapping_status": "EXTERNAL_REQUIRED",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": true,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-LIFECYCLE"
+    },
+    {
+      "rule_id": "BR-026",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "TOOL, APPLICATION, AGENT, GATE et RUNTIME sont cinq autorités distinctes.",
+      "normalized_statement": "Execution authorities must remain separate and non-substitutable.",
+      "source": [
+        "docs/development/PHASE_12_10_LIVRABLE_COMPLET_CANONIQUE_FINAL.md"
+      ],
+      "domain": "authorization",
+      "scope": "runtime",
+      "authority": "CANONICAL_CLOSURE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "routing and policy packages"
+      ],
+      "tests": [
+        "tests/architecture/test_phase_12_10_runtime_routing_fitness.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-AUTHORITY"
+    },
+    {
+      "rule_id": "BR-027",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "La décision capability est l'intersection matrix/registry/scope; DENY reste terminal.",
+      "normalized_statement": "Capability authorization is an intersection and any denial fails closed.",
+      "source": [
+        "docs/development/CAPABILITY_AUTHORIZATION_POLICY.md",
+        "backend/agent_runtime/policy/capability_decision.py"
+      ],
+      "domain": "authorization",
+      "scope": "capabilities",
+      "authority": "CANONICAL_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "CapabilityAuthorizationPolicy"
+      ],
+      "tests": [
+        "tests/unit/test_capability_authorization_policy.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-03",
+      "overlap_cluster": "OC-AUTHORITY"
+    },
+    {
+      "rule_id": "BR-028",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "Une délégation exige owner exact, capability dans parent et enfant, et interdit la redélégation.",
+      "normalized_statement": "Delegation must narrow authority to the exact specialist owner.",
+      "source": [
+        "docs/development/CAPABILITY_AUTHORIZATION_POLICY.md",
+        "backend/agent_runtime/policy/delegation_policy.py"
+      ],
+      "domain": "authorization",
+      "scope": "multi-agent delegation",
+      "authority": "CANONICAL_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "DelegationScopePolicy"
+      ],
+      "tests": [
+        "tests/unit/test_permission_scope_narrowing.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-AUTHORITY"
+    },
+    {
+      "rule_id": "BR-029",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "Un outil n'est exécutable qu'après ALLOW exact, binding, scope, idempotency, timeout et profil sandbox.",
+      "normalized_statement": "Tool execution requires exact authorization and sandbox binding.",
+      "source": [
+        "docs/development/PHASE_12_10_TOOL_POLICY_BASELINE.md",
+        "backend/agent_runtime/policy/tool_call_policy.py"
+      ],
+      "domain": "authorization",
+      "scope": "tool route",
+      "authority": "CANONICAL_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "ToolCallPolicy"
+      ],
+      "tests": [
+        "tests/unit/test_tool_call_policy.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-03",
+      "overlap_cluster": "OC-AUTHORITY"
+    },
+    {
+      "rule_id": "BR-030",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "Une route Application exige REQUEST et appelle au plus une fois l'inbound exact.",
+      "normalized_statement": "Application routing requires REQUEST and preserves Application authority.",
+      "source": [
+        "docs/development/PHASE_12_10_USE_CASE_ROUTER_BASELINE.md",
+        "backend/agent_runtime/application_routing/router.py"
+      ],
+      "domain": "authorization",
+      "scope": "Application routing",
+      "authority": "CANONICAL_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "UseCaseRouter"
+      ],
+      "tests": [
+        "tests/architecture/test_use_case_routing_boundary_fitness.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": true,
+      "api_status": "CONTRACT_ONLY",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-01",
+      "overlap_cluster": "OC-AUTHORITY"
+    },
+    {
+      "rule_id": "BR-031",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "GateAuthorityPolicy n'admet que ActorKind.USER; source appelée au plus une fois sans retry.",
+      "normalized_statement": "Only a user may author an external gate decision and the source is single-shot.",
+      "source": [
+        "docs/development/PHASE_12_10_GATE_ENGINE_BASELINE.md",
+        "backend/agent_runtime/gates/authority.py"
+      ],
+      "domain": "authorization",
+      "scope": "gate",
+      "authority": "CANONICAL_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "GateAuthorityPolicy",
+        "GateEngine"
+      ],
+      "tests": [
+        "tests/unit/test_gate_authority.py",
+        "tests/unit/test_gate_engine.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-03",
+      "overlap_cluster": "OC-AUTHORITY"
+    },
+    {
+      "rule_id": "BR-032",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "APPROVED produit un fait trusted de lancement, jamais une permission métier ni une promotion.",
+      "normalized_statement": "Gate approval authorizes only continued evaluation, not a business action.",
+      "source": [
+        "docs/development/PHASE_12_10_LIVRABLE_COMPLET_CANONIQUE_FINAL.md"
+      ],
+      "domain": "authorization",
+      "scope": "gate to Application",
+      "authority": "CANONICAL_CLOSURE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [
+        "EX-05"
+      ],
+      "implementation": [
+        "RoutingPreLaunchGuard"
+      ],
+      "tests": [
+        "tests/integration/test_gate_engine_use_case_handoff.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-AUTHORITY"
+    },
+    {
+      "rule_id": "BR-033",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "Le dispatch StepKind est fermé; JOIN et DECISION appartiennent au runtime sans accès métier.",
+      "normalized_statement": "Runtime dispatch must be exhaustive and runtime controls have no business authority.",
+      "source": [
+        "backend/agent_runtime/runtime/routing/runner.py",
+        "docs/development/PHASE_12_10_RUNTIME_ROUTING_BASELINE.md"
+      ],
+      "domain": "orchestration",
+      "scope": "runtime",
+      "authority": "CANONICAL_ARCHITECTURE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "RoutingStepRunner"
+      ],
+      "tests": [
+        "tests/unit/test_routing_step_runner.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-AUTHORITY"
+    },
+    {
+      "rule_id": "BR-034",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "Les outputs outil, agent, document, LLM ou télémétrie n'acquièrent aucune autorité.",
+      "normalized_statement": "Untrusted outputs never create authority.",
+      "source": [
+        "docs/development/PHASE_12_10_LIVRABLE_COMPLET_CANONIQUE_FINAL.md",
+        "docs/development/PHASE_12_12_LIVRABLE_COMPLET_CANONIQUE_FINAL.md"
+      ],
+      "domain": "authorization",
+      "scope": "all outputs",
+      "authority": "CANONICAL_SECURITY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "security classifiers and routers"
+      ],
+      "tests": [
+        "tests/integration/test_tool_application_hostile_propagation.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-04",
+      "overlap_cluster": "OC-SECURITY"
+    },
+    {
+      "rule_id": "BR-035",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "Le profil local autorise des extensions et limites exactes; les chemins restent relatifs et canoniques.",
+      "normalized_statement": "Sandboxed file transforms must stay inside a bounded canonical profile.",
+      "source": [
+        "docs/development/PHASE_12_10_SANDBOX_BASELINE.md",
+        "backend/agent_runtime/sandbox/profiles.py"
+      ],
+      "domain": "sandbox",
+      "scope": "local file transform",
+      "authority": "CANONICAL_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "SandboxProfileRegistry",
+        "SandboxRelativePath"
+      ],
+      "tests": [
+        "tests/unit/test_sandbox_paths.py",
+        "tests/unit/test_sandbox_profiles.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": true,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-SECURITY"
+    },
+    {
+      "rule_id": "BR-036",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "Le sandbox refuse symlink, contenu actif, exécutable, réseau, traversal, URI, drive et UNC.",
+      "normalized_statement": "Unsafe filesystem inputs and escape mechanisms must be denied.",
+      "source": [
+        "backend/agent_runtime/sandbox/policy.py",
+        "docs/development/PHASE_12_10_SANDBOX_BASELINE.md"
+      ],
+      "domain": "sandbox",
+      "scope": "filesystem boundary",
+      "authority": "CANONICAL_SECURITY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "SandboxPolicy"
+      ],
+      "tests": [
+        "tests/unit/test_sandbox_policy.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-SECURITY"
+    },
+    {
+      "rule_id": "BR-037",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "Le contenu externe ou hostile reste DATA et ne peut être interprété comme instruction trusted.",
+      "normalized_statement": "External content must be isolated as untrusted data.",
+      "source": [
+        "architecture/adr/ADR-P12-038-instruction-data-content-isolation.md",
+        "backend/agent_runtime/security/content_isolation.py"
+      ],
+      "domain": "security",
+      "scope": "content boundary",
+      "authority": "CANONICAL_SECURITY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "ContentIsolationPolicy"
+      ],
+      "tests": [
+        "tests/unit/test_content_isolation_policy.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-04",
+      "overlap_cluster": "OC-SECURITY"
+    },
+    {
+      "rule_id": "BR-038",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "Les clés structurelles capability/gate/handler/executor/override sont refusées dans les données non fiables.",
+      "normalized_statement": "Authority-smuggling structural keys must be rejected recursively.",
+      "source": [
+        "backend/agent_runtime/security/structural_keys.py",
+        "docs/development/PHASE_12_12_TOOL_APPLICATION_SECURITY_BASELINE.md"
+      ],
+      "domain": "security",
+      "scope": "structured content",
+      "authority": "CANONICAL_SECURITY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "StructuralSecurityClassifier"
+      ],
+      "tests": [
+        "tests/unit/test_structural_security_classifier.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-SECURITY"
+    },
+    {
+      "rule_id": "BR-039",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "Les credentials et secrets ne sont ni exposés, ni sérialisés, ni propagés vers agents/outils/logs.",
+      "normalized_statement": "Secrets must remain opaque and outside untrusted payloads.",
+      "source": [
+        "architecture/adr/ADR-P12-041-secret-exfiltration-structural-limits.md",
+        "backend/agent_runtime/security/sensitive_values.py"
+      ],
+      "domain": "security",
+      "scope": "runtime",
+      "authority": "CANONICAL_SECURITY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "sensitive value guards"
+      ],
+      "tests": [
+        "tests/integration/test_secret_exfiltration_boundaries.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-05",
+      "overlap_cluster": "OC-SECURITY"
+    },
+    {
+      "rule_id": "BR-040",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "Un handoff multi-agent ne peut élargir trust, permissions, scope, budget ou redélégation.",
+      "normalized_statement": "Multi-agent handoff must monotonically narrow authority.",
+      "source": [
+        "architecture/adr/ADR-P12-040-multi-agent-security-boundary.md",
+        "backend/agent_runtime/security/multi_agent.py"
+      ],
+      "domain": "security",
+      "scope": "multi-agent",
+      "authority": "CANONICAL_SECURITY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "MultiAgentSecurityPolicy"
+      ],
+      "tests": [
+        "tests/integration/test_multi_agent_handoff_security.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-SECURITY"
+    },
+    {
+      "rule_id": "BR-041",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "UNKNOWN ou PARTIAL impose reconciliation avant toute décision de reprise.",
+      "normalized_statement": "Uncertain or partial effects require reconciliation before replay.",
+      "source": [
+        "docs/development/PHASE_12_11_RECONCILIATION_BASELINE.md",
+        "backend/agent_runtime/recovery/reconciliation.py"
+      ],
+      "domain": "recovery",
+      "scope": "effects",
+      "authority": "CANONICAL_RECOVERY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "ReconciliationPolicy"
+      ],
+      "tests": [
+        "tests/integration/test_retry_after_reconciliation.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-RECOVERY"
+    },
+    {
+      "rule_id": "BR-042",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "COMMITTED n'est jamais rejoué.",
+      "normalized_statement": "Committed effects must never be replayed.",
+      "source": [
+        "docs/development/PHASE_12_11_RETRY_REPLAY_BASELINE.md",
+        "backend/agent_runtime/recovery/replay.py"
+      ],
+      "domain": "recovery",
+      "scope": "effects",
+      "authority": "CANONICAL_RECOVERY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "ReplayGuard"
+      ],
+      "tests": [
+        "tests/unit/test_replay_guard.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-RECOVERY"
+    },
+    {
+      "rule_id": "BR-043",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "EffectState.NONE est le seul état pouvant entrer dans un retry canonique sous autres gardes.",
+      "normalized_statement": "Only a known no-effect attempt may be retried.",
+      "source": [
+        "docs/development/PHASE_12_15_LIVRABLE_COMPLET_CANONIQUE_FINAL.md",
+        "backend/agent_runtime/recovery/retry.py"
+      ],
+      "domain": "recovery",
+      "scope": "retry",
+      "authority": "CANONICAL_RECOVERY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [
+        "EX-07"
+      ],
+      "implementation": [
+        "RetryPolicy"
+      ],
+      "tests": [
+        "tests/unit/test_retry_policy.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-RECOVERY"
+    },
+    {
+      "rule_id": "BR-044",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "Le retry/backoff est déterministe, borné et ne transforme jamais un DENY en autorisation.",
+      "normalized_statement": "Technical recovery must remain bounded and cannot grant authority.",
+      "source": [
+        "architecture/adr/ADR-P12-034-replay-retry-backoff-policy-boundary.md",
+        "backend/agent_runtime/recovery/backoff.py"
+      ],
+      "domain": "recovery",
+      "scope": "retry",
+      "authority": "CANONICAL_RECOVERY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "DeterministicBackoff",
+        "RetryPolicy"
+      ],
+      "tests": [
+        "tests/architecture/test_retry_replay_boundary_fitness.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-RECOVERY"
+    },
+    {
+      "rule_id": "BR-045",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "Budget inconnu ou dépassé échoue fermé; accounting et snapshot doivent rester cohérents.",
+      "normalized_statement": "Unknown or exhausted budget forbids launch and replay.",
+      "source": [
+        "docs/development/PHASE_12_11_SNAPSHOT_BUDGET_BASELINE.md",
+        "backend/agent_runtime/recovery/budget.py"
+      ],
+      "domain": "recovery",
+      "scope": "budget",
+      "authority": "CANONICAL_RECOVERY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "BudgetAccountingPolicy"
+      ],
+      "tests": [
+        "tests/unit/test_budget_accounting_policy.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-RECOVERY"
+    },
+    {
+      "rule_id": "BR-046",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "Un circuit OPEN bloque; HALF_OPEN est borné et ne crée pas d'autorisation.",
+      "normalized_statement": "Circuit-breaker state constrains technical attempts only.",
+      "source": [
+        "docs/development/PHASE_12_11_CIRCUIT_BREAKER_BASELINE.md",
+        "backend/agent_runtime/recovery/circuit_breaker.py"
+      ],
+      "domain": "recovery",
+      "scope": "provider/tool attempts",
+      "authority": "CANONICAL_RECOVERY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "CircuitBreakerPolicy"
+      ],
+      "tests": [
+        "tests/unit/test_circuit_breaker_policy.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": true,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-RECOVERY"
+    },
+    {
+      "rule_id": "BR-047",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "Un snapshot stale, incohérent ou de lignée différente échoue fermé.",
+      "normalized_statement": "Recovery snapshots must match the exact run, step, version, and ledger lineage.",
+      "source": [
+        "backend/agent_runtime/recovery/snapshot.py",
+        "docs/development/PHASE_12_11_RUNTIME_RECOVERY_BASELINE.md"
+      ],
+      "domain": "recovery",
+      "scope": "snapshot",
+      "authority": "CANONICAL_RECOVERY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "StateSnapshotPolicy"
+      ],
+      "tests": [
+        "tests/integration/test_runtime_snapshot_recovery.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-RECOVERY"
+    },
+    {
+      "rule_id": "BR-048",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "Observability ne possède aucune autorité et l'échec d'un sink ne change pas le résultat fonctionnel.",
+      "normalized_statement": "Telemetry must be outcome-neutral and failure-isolated.",
+      "source": [
+        "docs/development/PHASE_12_13_LIVRABLE_COMPLET_CANONIQUE_FINAL.md",
+        "backend/agent_runtime/observability/delivery_policy.py"
+      ],
+      "domain": "observability",
+      "scope": "runtime",
+      "authority": "CANONICAL_OBSERVABILITY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [
+        "EX-08"
+      ],
+      "implementation": [
+        "ObservabilityDeliveryPolicy"
+      ],
+      "tests": [
+        "tests/unit/test_observability_failure_isolated_sinks.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-04",
+      "overlap_cluster": "OC-OBSERVABILITY"
+    },
+    {
+      "rule_id": "BR-049",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "Logs et traces excluent contenu brut, secret et cardinalité non bornée.",
+      "normalized_statement": "Telemetry must minimize content and sensitive dimensions.",
+      "source": [
+        "docs/development/PHASE_12_13_STRUCTURED_LOGGING_BASELINE.md",
+        "backend/infrastructure/observability/serialization.py"
+      ],
+      "domain": "observability",
+      "scope": "logging/tracing",
+      "authority": "CANONICAL_OBSERVABILITY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "safe serialization"
+      ],
+      "tests": [
+        "tests/unit/test_observability_serialization.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-05",
+      "overlap_cluster": "OC-OBSERVABILITY"
+    },
+    {
+      "rule_id": "BR-050",
+      "rationalization_classification": "TECHNICAL_CONSTRAINT",
+      "source_statement": "Les métriques viennent d'un catalogue fermé et ne sont pas des scores d'évaluation.",
+      "normalized_statement": "Operational metrics must use bounded catalog dimensions and remain distinct from evaluation scores.",
+      "source": [
+        "docs/development/PHASE_12_13_METRICS_BASELINE.md",
+        "docs/development/PHASE_12_14_LIVRABLE_COMPLET_CANONIQUE_FINAL.md"
+      ],
+      "domain": "observability",
+      "scope": "metrics",
+      "authority": "CANONICAL_OBSERVABILITY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "MetricCatalog",
+        "MetricPolicy"
+      ],
+      "tests": [
+        "tests/unit/test_observability_metric_contracts.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": true,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-OBSERVABILITY"
+    },
+    {
+      "rule_id": "BR-051",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "AG-02 collecte des preuves provider-neutral; les contenus et citations restent non autoritatifs.",
+      "normalized_statement": "Evidence materialization must preserve provenance without granting authority.",
+      "source": [
+        "architecture/adr/ADR-P12-011-evidence-retrieval-boundary.md",
+        "backend/agent_runtime/agents/evidence/evidence_agent.py"
+      ],
+      "domain": "evidence",
+      "scope": "AG-02",
+      "authority": "CANONICAL_AGENT_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "EvidenceAgent"
+      ],
+      "tests": [
+        "tests/unit/test_evidence_agent.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-LIFECYCLE"
+    },
+    {
+      "rule_id": "BR-052",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "Un résultat retrieval DEGRADED est légitime lorsque des canaux déclarés sont indisponibles.",
+      "normalized_statement": "Declared channel unavailability may yield a degraded but explicit evidence result.",
+      "source": [
+        "docs/development/PHASE_12_15_LIVRABLE_COMPLET_CANONIQUE_FINAL.md",
+        "backend/agent_runtime/agents/evidence/retrieval_coordinator.py"
+      ],
+      "domain": "evidence",
+      "scope": "AG-02 retrieval",
+      "authority": "CANONICAL_BASELINE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [
+        "EX-06"
+      ],
+      "implementation": [
+        "RetrievalCoordinator"
+      ],
+      "tests": [
+        "tests/integration/test_sqlite_search_rag_e2e_real_gate.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "EXTERNAL_REQUIRED",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": null
+    },
+    {
+      "rule_id": "BR-053",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "AG-03 produit un ProductionCandidate fondé sur preuves; il ne promeut ni ne persiste une ressource.",
+      "normalized_statement": "Generation yields a grounded candidate, never a promoted resource.",
+      "source": [
+        "architecture/adr/ADR-P12-017-ag03-production-candidate-materialization.md",
+        "backend/agent_runtime/agents/generation/generation_agent.py"
+      ],
+      "domain": "generation",
+      "scope": "AG-03",
+      "authority": "CANONICAL_AGENT_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "GenerationAgent"
+      ],
+      "tests": [
+        "tests/integration/test_generation_candidate_materialization.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": true,
+      "api_status": "CONTRACT_ONLY",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-06",
+      "overlap_cluster": "OC-LIFECYCLE"
+    },
+    {
+      "rule_id": "BR-054",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "Une correction conserve la lignée parent, crée une version distincte et reste bornée.",
+      "normalized_statement": "Correction must be versioned, lineage-preserving, and bounded.",
+      "source": [
+        "architecture/adr/ADR-P12-018-ag03-versioned-correction.md",
+        "backend/agent_runtime/agents/generation/generation_correction.py"
+      ],
+      "domain": "generation",
+      "scope": "AG-03 correction",
+      "authority": "CANONICAL_AGENT_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "GenerationCorrection"
+      ],
+      "tests": [
+        "tests/integration/test_generation_correction_materialization.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": true,
+      "api_status": "CONTRACT_ONLY",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-LIFECYCLE"
+    },
+    {
+      "rule_id": "BR-055",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "AG-04 produit une review indépendante avec couverture/findings/locators; il ne valide ni ne promeut.",
+      "normalized_statement": "Review provides bounded evidence and disposition without business authority.",
+      "source": [
+        "architecture/adr/ADR-P12-022-ag04-semantic-review-materialization.md",
+        "backend/agent_runtime/agents/review/review_agent.py"
+      ],
+      "domain": "review",
+      "scope": "AG-04",
+      "authority": "CANONICAL_AGENT_POLICY",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "ReviewAgent",
+        "ReviewAssessment"
+      ],
+      "tests": [
+        "tests/integration/test_review_result_materialization.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": true,
+      "api_status": "CONTRACT_ONLY",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-06",
+      "overlap_cluster": "OC-LIFECYCLE"
+    },
+    {
+      "rule_id": "BR-056",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "Le golden corpus 12.15 est synthétique, versionné, déterministe, sans donnée production/privée.",
+      "normalized_statement": "Pedagogical test corpora must be synthetic and non-production.",
+      "source": [
+        "docs/development/PHASE_12_15_LIVRABLE_COMPLET_CANONIQUE_FINAL.md"
+      ],
+      "domain": "pedagogy",
+      "scope": "E2E corpus",
+      "authority": "CANONICAL_CLOSURE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "tests/e2e/core/catalog.py"
+      ],
+      "tests": [
+        "tests/integration/test_canonical_pedagogical_full_suite_real_gate.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-CALIBRATION"
+    },
+    {
+      "rule_id": "BR-057",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "La calibration est blindée, provider-neutral au niveau contrat et ne reçoit que des projections minimisées autorisées.",
+      "normalized_statement": "Calibration scoring must be blind, contract-bound, and payload-minimized.",
+      "source": [
+        "architecture/adr/ADR-P12-063-pedagogical-model-calibration-protocol.md",
+        "tests/calibration/pedagogical/protocol.py"
+      ],
+      "domain": "calibration",
+      "scope": "offline/live tooling",
+      "authority": "CANONICAL_CALIBRATION",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "calibration protocol and scorer contracts"
+      ],
+      "tests": [
+        "tests/architecture/test_pedagogical_calibration_fitness.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-CALIBRATION"
+    },
+    {
+      "rule_id": "BR-058",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "Strong est le candidat de délivrabilité; mixed et weak sont des contrôles négatifs non délivrables.",
+      "normalized_statement": "Primary calibration separates strong delivery candidates from all non-strong controls.",
+      "source": [
+        "architecture/adr/ADR-P12-066-strong-only-deliverability-calibration-semantics.md",
+        "docs/development/phase_12_16_closure_canonical/02_CALIBRATION_HISTORY_AND_DECISIONS.md"
+      ],
+      "domain": "calibration",
+      "scope": "pedagogical quality",
+      "authority": "OWNER_DECISION",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "anchor corpora V3/V4 and V5 gates"
+      ],
+      "tests": [
+        "tests/unit/test_pedagogical_calibration_v5_2_semantic_gate.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-08",
+      "overlap_cluster": "OC-CALIBRATION"
+    },
+    {
+      "rule_id": "BR-059",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "L'ordre mixed-vs-weak est un diagnostic secondaire non bloquant.",
+      "normalized_statement": "Mixed-versus-weak ordering must not block strong-only deliverability.",
+      "source": [
+        "architecture/adr/ADR-P12-066-strong-only-deliverability-calibration-semantics.md"
+      ],
+      "domain": "calibration",
+      "scope": "pedagogical quality",
+      "authority": "OWNER_DECISION",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "V5.2 semantic gate"
+      ],
+      "tests": [
+        "tests/unit/test_pedagogical_calibration_v5_2_semantic_gate.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": "DG-Q-08",
+      "overlap_cluster": "OC-CALIBRATION"
+    },
+    {
+      "rule_id": "BR-060",
+      "rationalization_classification": "LEGACY_HISTORICAL",
+      "source_statement": "Toute exécution live exige baseline, matrice, pricing, plafond, allowlist et transfert exacts; l'autorisation est one-shot.",
+      "normalized_statement": "Live provider calibration requires explicit exact owner authorization and is consumed after execution.",
+      "source": [
+        "docs/development/phase_12_16_closure_canonical/03_FINAL_CANONICAL_CONFIGURATION.md",
+        "tests/calibration/pedagogical/live_runner.py"
+      ],
+      "domain": "calibration",
+      "scope": "provider execution",
+      "authority": "OWNER_DECISION",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [
+        "EX-10"
+      ],
+      "implementation": [
+        "live calibration guards"
+      ],
+      "tests": [
+        "tests/unit/test_pedagogical_calibration_live_runner.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": true,
+      "legacy": true,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-CALIBRATION"
+    },
+    {
+      "rule_id": "BR-061",
+      "rationalization_classification": "LEGACY_HISTORICAL",
+      "source_statement": "Les runs échoués/inconclusifs restent des diagnostics; carry-forward exige équivalence et lignée certifiées.",
+      "normalized_statement": "Calibration history must remain immutable and carry-forward evidence must be explicitly certified.",
+      "source": [
+        "docs/development/phase_12_16_closure_canonical/02_CALIBRATION_HISTORY_AND_DECISIONS.md"
+      ],
+      "domain": "calibration",
+      "scope": "evidence lineage",
+      "authority": "CANONICAL_CLOSURE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [
+        "EX-09"
+      ],
+      "implementation": [
+        "versioned calibration ledgers and manifests"
+      ],
+      "tests": [
+        "tests/unit/test_pedagogical_calibration_v4_2.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": true,
+      "legacy": true,
+      "duplicate_group": "DG-Q-07",
+      "overlap_cluster": "OC-CALIBRATION"
+    },
+    {
+      "rule_id": "BR-062",
+      "rationalization_classification": "CANONICAL_BUSINESS",
+      "source_statement": "RELEASE_THRESHOLD=NONE, aucune route runtime ne change, aucune nouvelle exécution live n'est autorisée.",
+      "normalized_statement": "Calibration completion does not establish a release threshold or runtime route.",
+      "source": [
+        "docs/development/phase_12_16_closure_canonical/03_FINAL_CANONICAL_CONFIGURATION.md"
+      ],
+      "domain": "calibration",
+      "scope": "release/runtime",
+      "authority": "CANONICAL_CLOSURE",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "absence of runtime integration"
+      ],
+      "tests": [
+        "tests/architecture/test_final_calibration_analysis_fitness.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": true,
+      "legacy": false,
+      "duplicate_group": "DG-Q-08",
+      "overlap_cluster": "OC-CALIBRATION"
+    },
+    {
+      "rule_id": "BR-063",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "WF-0 à WF-11 forment douze topologies immuables, provider-neutral, avec ownership distinct.",
+      "normalized_statement": "The workflow catalog contains exactly twelve declarative topologies with bounded ownership.",
+      "source": [
+        "docs/development/WORKFLOW_TOPOLOGY_CATALOG.md",
+        "backend/agent_runtime/orchestration/workflows/catalog.py"
+      ],
+      "domain": "orchestration",
+      "scope": "workflow catalog",
+      "authority": "CANONICAL_WORKFLOW",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "WorkflowCatalog"
+      ],
+      "tests": [
+        "tests/unit/test_workflow_catalog.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-LIFECYCLE"
+    },
+    {
+      "rule_id": "BR-064",
+      "rationalization_classification": "LEGACY_HISTORICAL",
+      "source_statement": "La table numérotée Phase 11.17 est legacy et n'a aucune autorité de renommage pour WF-3 à WF-11.",
+      "normalized_statement": "The obsolete scenario-number table must not override the canonical workflow catalog.",
+      "source": [
+        "docs/development/WORKFLOW_TOPOLOGY_CATALOG.md"
+      ],
+      "domain": "orchestration",
+      "scope": "workflow naming",
+      "authority": "CANONICAL_WORKFLOW",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [
+        "canonical catalog supersedes it"
+      ],
+      "tests": [
+        "tests/unit/test_workflow_catalog.py"
+      ],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "IMPLEMENTED",
+      "test_status": "EXPLICIT",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": false,
+      "api_status": "NOT_APPLICABLE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": true,
+      "legacy": true,
+      "duplicate_group": null,
+      "overlap_cluster": null
+    },
+    {
+      "rule_id": "BR-065",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "La surface /api/v2 projetée doit traduire vers Application sans accès direct aux stores.",
+      "normalized_statement": "Exposable operations require an API adapter that delegates to Application.",
+      "source": [
+        "docs/development/PHASE_12_15_C2_RESOURCE_APPLICATION_E2E_BASELINE.md",
+        "backend/adapters/inbound/api/__init__.py"
+      ],
+      "domain": "api",
+      "scope": "/api/v2",
+      "authority": "PROJECTED_CANONICAL",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [],
+      "tests": [],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "UNIMPLEMENTED",
+      "test_status": "NONE",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": true,
+      "api_status": "NONE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-APPLICATION_BOUNDARY"
+    },
+    {
+      "rule_id": "BR-066",
+      "rationalization_classification": "APPLICATION_POLICY",
+      "source_statement": "CAP-R02, CAP-A01 et CAP-A02 requièrent encore des use cases Application concrets; une route n'est pas une implémentation métier.",
+      "normalized_statement": "Read-production, deterministic validation, and promotion require concrete Application owners.",
+      "source": [
+        "docs/development/PHASE_12_15_LIVRABLE_COMPLET_CANONIQUE_FINAL.md",
+        "backend/agent_runtime/application_routing/registry.py"
+      ],
+      "domain": "application",
+      "scope": "non-resource capabilities",
+      "authority": "CANONICAL_HANDOFF",
+      "preconditions": "Applicable when the governed operation is requested.",
+      "postconditions": "The invariant is preserved or the operation fails closed.",
+      "exceptions": [],
+      "implementation": [],
+      "tests": [],
+      "data_api_mapping": "Not applicable.",
+      "implementation_status": "UNIMPLEMENTED",
+      "test_status": "NONE",
+      "data_mapping_status": "NOT_APPLICABLE",
+      "api_relevant": true,
+      "api_status": "NONE",
+      "classification": "CANONICAL_BUSINESS",
+      "over_specific": false,
+      "legacy": false,
+      "duplicate_group": null,
+      "overlap_cluster": "OC-APPLICATION_BOUNDARY"
+    }
+  ]
+}

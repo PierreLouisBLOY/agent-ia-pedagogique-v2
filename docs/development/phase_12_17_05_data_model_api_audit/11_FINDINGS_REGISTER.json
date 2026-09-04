@@ -1,0 +1,164 @@
+{
+  "schema_version": "12.17.5-data-model-api-findings-v1",
+  "baseline_commit": "576d6bd6dcf5082740c4192842b7c87ccbc1f246",
+  "finding_count": 13,
+  "priority_counts": {"P0": 1, "P1": 3, "P2": 5, "P3": 4},
+  "blocking_12_17_6_count": 5,
+  "findings": [
+    {
+      "finding_id": "DMAPI-001",
+      "severity": "P0",
+      "status": "OPEN",
+      "title": "Migration 001 removes the non-negative document size invariant",
+      "evidence": [
+        "seed document DDL: CHECK (size_bytes IS NULL OR size_bytes >= 0)",
+        "runtime document DDL after ledger version 001: size_bytes INTEGER without CHECK",
+        "database/migrations/001_document_sha256_check.sql"
+      ],
+      "blocker_12_17_6": true,
+      "recommended_disposition": "Design and owner-approve a corrective runtime migration that restores the exact invariant while preserving the SHA-256 check; verify on a fresh authenticated copy.",
+      "exact_next_owner": "documents_provenance Domain owner plus outbound SQLite migration owner"
+    },
+    {
+      "finding_id": "DMAPI-002",
+      "severity": "P1",
+      "status": "OPEN",
+      "title": "Migration 001 removes four canonical document defaults",
+      "evidence": [
+        "seed defaults: document_type OTHER, language_code fr, document_status ACTIVE, created_at CURRENT_TIMESTAMP",
+        "runtime after migration 001: all four defaults absent"
+      ],
+      "blocker_12_17_6": true,
+      "recommended_disposition": "Restore the four defaults through the same separately approved corrective migration and assert exact DDL preservation.",
+      "exact_next_owner": "documents_provenance Domain owner plus outbound SQLite migration owner"
+    },
+    {
+      "finding_id": "DMAPI-003",
+      "severity": "P1",
+      "status": "OPEN",
+      "title": "READ-15 resource_ref has no explicit bound or format",
+      "evidence": [
+        "GetResourceRequest only calls require_non_empty",
+        "API_HANDOFF.json names resource_ref but defines no length or format",
+        "09_API_APPLICATION_DOWNSTREAM_CONSTRAINTS.md requires refs to be validated and bounded"
+      ],
+      "blocker_12_17_6": true,
+      "recommended_disposition": "Approve one transport-neutral resource reference bound/format in the Application contract and add negative tests before HTTP materialization.",
+      "exact_next_owner": "resource_library Application owner"
+    },
+    {
+      "finding_id": "DMAPI-004",
+      "severity": "P1",
+      "status": "UNKNOWN_EVIDENCE_REQUIRED",
+      "title": "Resource ACTIVE and CANONICAL semantics remain unresolved for the public identity_status field",
+      "evidence": [
+        "resource.identity_status default ACTIVE",
+        "ResourceIdentityStatus keeps ACTIVE and CANONICAL distinct",
+        "READ-15 exposes identity_status"
+      ],
+      "blocker_12_17_6": true,
+      "recommended_disposition": "Obtain an owner decision defining whether the values share one dimension or require separate concepts; do not infer equivalence from SQLite.",
+      "exact_next_owner": "resource_library Domain/Application owner"
+    },
+    {
+      "finding_id": "DMAPI-005",
+      "severity": "P2",
+      "status": "UNKNOWN_EVIDENCE_REQUIRED",
+      "title": "ContextOrigin has no approved persistence representation",
+      "evidence": [
+        "ContextOrigin.RUNTIME exists in Application",
+        "encode_context_origin deliberately returns None",
+        "pedagogical_context has no origin column and notes remains pedagogical"
+      ],
+      "blocker_12_17_6": false,
+      "recommended_disposition": "Keep origin non-persisted until a product requirement and owner-approved storage contract exist.",
+      "exact_next_owner": "pedagogical_context Application owner"
+    },
+    {
+      "finding_id": "DMAPI-006",
+      "severity": "P2",
+      "status": "UNIMPLEMENTED_BY_DESIGN",
+      "title": "CAP-R02 has a handoff but no concrete Application query or production read port",
+      "evidence": ["API_HANDOFF.json", "registry/test-double references only"],
+      "blocker_12_17_6": false,
+      "recommended_disposition": "Materialize after the data remediation, in delivery position 1, without exposing it in the Resource-only API slice.",
+      "exact_next_owner": "work_orchestration Application owner"
+    },
+    {
+      "finding_id": "DMAPI-007",
+      "severity": "P2",
+      "status": "UNIMPLEMENTED_BY_DESIGN",
+      "title": "CAP-A01 has a handoff but no concrete deterministic validation command",
+      "evidence": ["API_HANDOFF.json", "scenario doubles do not constitute an owner use case"],
+      "blocker_12_17_6": false,
+      "recommended_disposition": "Materialize after CAP-R02 with deterministic provider-free tests and no promotion authority.",
+      "exact_next_owner": "validation_control Application owner"
+    },
+    {
+      "finding_id": "DMAPI-008",
+      "severity": "P2",
+      "status": "UNIMPLEMENTED_BY_DESIGN",
+      "title": "CAP-A02 has a handoff but no concrete gated promotion command",
+      "evidence": ["API_HANDOFF.json", "generic gate/idempotency components exist but no owner command"],
+      "blocker_12_17_6": false,
+      "recommended_disposition": "Materialize last, behind a trusted Gate and effect ledger, with reconciliation-before-replay tests.",
+      "exact_next_owner": "lifecycle_promotion Application owner"
+    },
+    {
+      "finding_id": "DMAPI-009",
+      "severity": "P2",
+      "status": "OPEN",
+      "title": "Migration tests do not assert preservation of pre-existing document DDL",
+      "evidence": [
+        "test_sqlite_runtime_real_gate.py checks SHA, count, FK, checksum and idempotence",
+        "no test compares document defaults or the size_bytes CHECK"
+      ],
+      "blocker_12_17_6": true,
+      "recommended_disposition": "Add an allowlisted structural diff test that permits only the ledger and intended SHA constraint change.",
+      "exact_next_owner": "outbound SQLite migration test owner"
+    },
+    {
+      "finding_id": "DMAPI-010",
+      "severity": "P3",
+      "status": "DOCUMENTATION_DRIFT",
+      "title": "B09 assigns HTTP implementation to 12.17.5 while the current 12.17.5 mandate is audit-only",
+      "evidence": [
+        "05_API_V2_READ15_HANDOFF.md says realization belongs to 12.17.5",
+        "12.17.5 audit prompt forbids HTTP implementation"
+      ],
+      "blocker_12_17_6": false,
+      "recommended_disposition": "Treat the current audit mandate as authoritative and correct phase ownership in the next documentary lot.",
+      "exact_next_owner": "architecture governance owner"
+    },
+    {
+      "finding_id": "DMAPI-011",
+      "severity": "P3",
+      "status": "CARRY_FORWARD_STABLE",
+      "title": "Historical mypy debt remains 15 diagnostics in 10 files",
+      "evidence": ["12.17.4 closure", "12.17.5 replay: active 0/42 and backend 0/671"],
+      "blocker_12_17_6": false,
+      "recommended_disposition": "Keep historical sources outside the active graph and monitor the frozen baseline.",
+      "exact_next_owner": "calibration governance owner"
+    },
+    {
+      "finding_id": "DMAPI-012",
+      "severity": "P3",
+      "status": "CARRY_FORWARD_UNKNOWN",
+      "title": "Historical creator of seed WAL/SHM remains unknown",
+      "evidence": ["seed WAL/SHM were present before this audit and PRE/POST remained identical"],
+      "blocker_12_17_6": false,
+      "recommended_disposition": "Continue PRE/POST attribution and never delete seed sidecars automatically.",
+      "exact_next_owner": "outbound SQLite persistence owner"
+    },
+    {
+      "finding_id": "DMAPI-013",
+      "severity": "P3",
+      "status": "CARRY_FORWARD_ACCEPTED",
+      "title": "B01 narrative and machine-readable freeze differ for two paths",
+      "evidence": ["12.17.4 closure open finding B01_NARRATIVE_VS_MACHINE_READABLE_FREEZE_GAP"],
+      "blocker_12_17_6": false,
+      "recommended_disposition": "Retain the approved baseline fallback and do not rewrite historical B01 evidence.",
+      "exact_next_owner": "architecture governance owner"
+    }
+  ]
+}

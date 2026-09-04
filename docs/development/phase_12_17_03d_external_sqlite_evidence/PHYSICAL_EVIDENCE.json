@@ -1,0 +1,110 @@
+{
+  "schema_version": "12.17.3d-desktop-project-sqlite-evidence-v1",
+  "phase_status": "PASS",
+  "discovery": {
+    "desktop_resolution_method": "[Environment]::GetFolderPath('Desktop')",
+    "desktop_path": "<LOCAL_DESKTOP_ROOT>",
+    "project_folder_path": "<LOCAL_PROJECT_ROOT>",
+    "project_folder_exists": true,
+    "initial_prompt_path": "<LOCAL_PROJECT_ROOT>\\base_pedagogique_v2.sqlite",
+    "initial_prompt_path_exists": false,
+    "owner_supplied_exact_path": "<CANONICAL_SEED_PATH>",
+    "owner_supplied_exact_path_exists": true,
+    "substitute_search_performed": false,
+    "filename_variance": "OWNER_SUPPLIED_PREFIX_01"
+  },
+  "identity": {
+    "expected_documentary_name": "base_pedagogique_v2.sqlite",
+    "observed_filename": "01_base_pedagogique_v2.sqlite",
+    "expected_size_bytes": 105553920,
+    "observed_size_bytes": 105553920,
+    "expected_sha256": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134",
+    "observed_sha256": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134",
+    "observed_mtime_utc": "2026-08-22T00:13:57.5500000Z",
+    "size_comparison": "PASS",
+    "sha256_comparison": "PASS",
+    "physical_content_identity": "PASS"
+  },
+  "read_only_checks": {
+    "uri_mode_ro": true,
+    "uri_immutable": true,
+    "query_only": 1,
+    "integrity_check": "ok",
+    "quick_check": "ok",
+    "foreign_key_violations": 0,
+    "tables": 98,
+    "explicit_indexes": 20,
+    "implicit_autoindexes": 111,
+    "all_index_entries": 131,
+    "triggers": 7,
+    "views": 2,
+    "canonical_inventory_comparison": "PASS_98_20_7_2",
+    "pedagogical_rows_selected_or_exported": 0
+  },
+  "schema_evidence": {
+    "od_05": "PASS_AVAILABLE",
+    "od_06": "PASS_AVAILABLE",
+    "core_tables_inspected": [
+      "notion",
+      "document",
+      "resource",
+      "pedagogical_context",
+      "session",
+      "task",
+      "production",
+      "validation_event",
+      "quality_evaluation",
+      "production_resource_promotion",
+      "audit_event"
+    ],
+    "literal_default_family_count": 10,
+    "data_model_alignment_implemented": false,
+    "external_schema_evidence": "AVAILABLE"
+  },
+  "immutability": {
+    "pre": {
+      "size_bytes": 105553920,
+      "sha256": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134",
+      "mtime_utc": "2026-08-22T00:13:57.5500000Z"
+    },
+    "post": {
+      "size_bytes": 105553920,
+      "sha256": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134",
+      "mtime_utc": "2026-08-22T00:13:57.5500000Z"
+    },
+    "file_moved": false,
+    "file_copied": false,
+    "file_mutated": false,
+    "result": "PASS",
+    "auxiliary_files": {
+      "pre_state": "NOT_CAPTURED",
+      "post": [
+        {
+          "suffix": "-wal",
+          "size_bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "mtime_utc": "2026-08-28T09:32:55.5450000Z",
+          "creation_utc": "2026-09-02T15:58:28.5397440Z"
+        },
+        {
+          "suffix": "-shm",
+          "size_bytes": 32768,
+          "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+          "mtime_utc": "2026-09-01T09:50:02.0070000Z",
+          "creation_utc": "2026-09-02T15:58:28.7273743Z"
+        }
+      ],
+      "creation_attribution": "UNDETERMINED_WITHOUT_PRE_SNAPSHOT",
+      "deleted_or_modified": false
+    }
+  },
+  "phase_12_17_4_rationalization_design_gate": "READY",
+  "scope": {
+    "code_files_modified": 0,
+    "source_rules_modified": 0,
+    "provider_calls": 0,
+    "commit": "NONE",
+    "push": "NONE",
+    "phase_12_17_4_started": false
+  }
+}

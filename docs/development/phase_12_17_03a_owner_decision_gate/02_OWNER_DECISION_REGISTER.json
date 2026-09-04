@@ -1,0 +1,399 @@
+{
+  "schema_version": "12.17.3a-owner-decision-register-v1",
+  "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+  "source_gate": "PHASE_12_17_03_BUSINESS_RULE_AUDIT=PASS",
+  "owner_decision_count": 8,
+  "resolved_count": 0,
+  "unresolved_count": 8,
+  "independent_root_count": 4,
+  "dependent_count": 4,
+  "sqlite_external_evidence_decision_count": 3,
+  "allowed_attestation_choices": [
+    "APPROVE_RECOMMENDATION",
+    "OPTION_A",
+    "OPTION_B",
+    "OPTION_C",
+    "DEFER"
+  ],
+  "readiness": "BLOCKED_OWNER_DECISIONS",
+  "decisions": [
+    {
+      "decision_id": "OD-01",
+      "title": "Phase 1/2 business-rule source authority",
+      "decision_statement": "Identify and authorize the consolidated Phase 1/2 business-rule source, or formally define the audit boundary without it.",
+      "source_finding_ids": ["BRF-001"],
+      "source_candidate_ids": ["CR-002"],
+      "status": "UNRESOLVED",
+      "dependency_class": "INDEPENDENT_ROOT",
+      "depends_on": [],
+      "external_schema_evidence_required": false,
+      "evidence_required": ["Authoritative artifact locator or explicit owner declaration of unavailability", "SHA-256 and provenance if an artifact is supplied"],
+      "recommendation": {
+        "option": "OPTION_A",
+        "confidence": "MEDIUM",
+        "rationale": "Binding the original corpus gives the strongest completeness and supersession evidence, but the artifact has not been located."
+      },
+      "options": [
+        {
+          "choice": "OPTION_A",
+          "label": "Bind the original authoritative corpus",
+          "outcome": "Register the exact Phase 1/2 artifact by locator, hash, provenance and supersession mapping.",
+          "candidate_effects": [{"candidate_id": "CR-002", "action": "REWRITE"}, {"candidate_id": "CR-001", "action": "CONSOLIDATE"}],
+          "impacts": {"product": "Restores historical completeness.", "domain": "May reveal omitted or superseded invariants.", "application": "May alter later design priorities only after comparison.", "api": "No direct change; future API scope must trace to approved rules.", "sqlite": "No direct schema claim.", "migration": "None in this gate.", "tests": "Add future rule-lineage checks.", "security": "Read-only evidence; no secret or runtime data."}
+        },
+        {
+          "choice": "OPTION_B",
+          "label": "Formally close the corpus as unavailable",
+          "outcome": "Declare repository evidence from later canonical phases as the bounded authority for 12.17.",
+          "candidate_effects": [{"candidate_id": "CR-002", "action": "KEEP"}, {"candidate_id": "CR-002", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Allows progress with an explicit completeness limitation.", "domain": "No newly recovered rule.", "application": "Current candidate scope remains.", "api": "No direct change.", "sqlite": "No direct change.", "migration": "None.", "tests": "Documentary boundary test is possible.", "security": "No external artifact access."}
+        },
+        {
+          "choice": "OPTION_C",
+          "label": "Create a provisional reconstruction",
+          "outcome": "Infer a non-authoritative Phase 1/2 index from later ADRs and handoffs, clearly labelled reconstructed.",
+          "candidate_effects": [{"candidate_id": "CR-002", "action": "REWRITE"}, {"candidate_id": "CR-002", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Improves navigation but not original-source completeness.", "domain": "Risk of missing original nuances.", "application": "Only provisional planning input.", "api": "No authority for new endpoints.", "sqlite": "Cannot establish unseen schema rules.", "migration": "None.", "tests": "Test provenance labels and non-authoritative status.", "security": "Repository-only analysis."}
+        },
+        {
+          "choice": "DEFER",
+          "label": "Keep the authority gap open",
+          "outcome": "Do not start dependent rationalization of source authority.",
+          "candidate_effects": [{"candidate_id": "CR-002", "action": "KEEP"}],
+          "impacts": {"product": "Historical completeness remains unproven.", "domain": "No change.", "application": "OD-03 and OD-07 stay blocked.", "api": "No change.", "sqlite": "No change.", "migration": "None.", "tests": "No new acceptance basis.", "security": "Safe default."}
+        }
+      ]
+    },
+    {
+      "decision_id": "OD-02",
+      "title": "Legacy-reuse trace disposition",
+      "decision_statement": "Select the canonical trace location and disposition the Phase 7 adaptation already cited by Phase 12.15.",
+      "source_finding_ids": ["BRF-002"],
+      "source_candidate_ids": ["CR-001"],
+      "status": "UNRESOLVED",
+      "dependency_class": "INDEPENDENT_ROOT",
+      "depends_on": [],
+      "external_schema_evidence_required": false,
+      "evidence_required": ["Phase 12.15 reuse declaration", "README legacy-review policy", "Exact reused component lineage"],
+      "recommendation": {
+        "option": "OPTION_A",
+        "confidence": "HIGH",
+        "rationale": "A retrospective, evidence-bound trace satisfies the declared location without rewriting or retroactively reapproving history."
+      },
+      "options": [
+        {
+          "choice": "OPTION_A",
+          "label": "Create a retrospective canonical trace",
+          "outcome": "Create a docs/legacy-review record linked to Phase 12.15 evidence and explicitly state that it records, not reauthorizes, the prior adaptation.",
+          "candidate_effects": [{"candidate_id": "CR-001", "action": "CONSOLIDATE"}, {"candidate_id": "CR-001", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Closes provenance ambiguity.", "domain": "No semantic rule change.", "application": "No code change.", "api": "None.", "sqlite": "No schema claim.", "migration": "None.", "tests": "Add documentary trace integrity.", "security": "Trace excludes runtime data and secrets."}
+        },
+        {
+          "choice": "OPTION_B",
+          "label": "Supersede the mandated trace location",
+          "outcome": "Declare the Phase 12.15 handoff itself canonical and update the governance policy in a later authorized lot.",
+          "candidate_effects": [{"candidate_id": "CR-001", "action": "REWRITE"}, {"candidate_id": "CR-001", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Uses existing evidence but changes governance convention.", "domain": "None.", "application": "None.", "api": "None.", "sqlite": "None.", "migration": "None.", "tests": "Verify new canonical locator.", "security": "No data transfer."}
+        },
+        {
+          "choice": "OPTION_C",
+          "label": "Freeze as a documented non-conformance",
+          "outcome": "Preserve the Phase 7 reuse as a closed baseline exception and do not attempt retrospective conformity.",
+          "candidate_effects": [{"candidate_id": "CR-001", "action": "KEEP"}, {"candidate_id": "CR-001", "action": "DEPRECATE"}],
+          "impacts": {"product": "Leaves an explicit governance exception.", "domain": "No rule change.", "application": "No code change.", "api": "None.", "sqlite": "None.", "migration": "None.", "tests": "Test that the exception cannot authorize new reuse.", "security": "Fail-closed for future reuse."}
+        },
+        {
+          "choice": "DEFER",
+          "label": "Retain the trace gap",
+          "outcome": "Keep EX-01 in EVIDENCE_GAP state.",
+          "candidate_effects": [{"candidate_id": "CR-001", "action": "KEEP"}],
+          "impacts": {"product": "Provenance remains incomplete.", "domain": "None.", "application": "None.", "api": "None.", "sqlite": "None.", "migration": "None.", "tests": "No trace test.", "security": "Future reuse remains prohibited by default."}
+        }
+      ]
+    },
+    {
+      "decision_id": "OD-03",
+      "title": "Application ownership for CAP-R02, CAP-A01 and CAP-A02",
+      "decision_statement": "Choose the ownership model and delivery order for read-production, deterministic validation and promotion.",
+      "source_finding_ids": ["BRF-003", "BRF-007"],
+      "source_candidate_ids": ["CR-005", "CR-031", "CR-041"],
+      "status": "UNRESOLVED",
+      "dependency_class": "DEPENDENT",
+      "depends_on": ["OD-01"],
+      "external_schema_evidence_required": false,
+      "evidence_required": ["Approved source-authority boundary from OD-01", "Current capability and route contracts"],
+      "recommendation": {
+        "option": "OPTION_A",
+        "confidence": "HIGH",
+        "rationale": "Three explicit bounded Application use cases preserve responsibility separation and prevent route metadata from becoming business authority."
+      },
+      "options": [
+        {
+          "choice": "OPTION_A",
+          "label": "Three bounded Application owners",
+          "outcome": "Deliver CAP-R02, then CAP-A01, then CAP-A02 as separate query/command owners with explicit handoffs.",
+          "candidate_effects": [{"candidate_id": "CR-041", "action": "IMPLEMENT"}, {"candidate_id": "CR-005", "action": "KEEP"}, {"candidate_id": "CR-031", "action": "KEEP"}, {"candidate_id": "CR-041", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Completes the minimum lifecycle authority chain incrementally.", "domain": "Adds bounded concepts only where rules require them.", "application": "Three concrete use-case owners.", "api": "Creates safe prerequisites for transport.", "sqlite": "Ports map later; no direct SQL ownership.", "migration": "Only if approved models require it later.", "tests": "Use-case, negative authority and transition tests.", "security": "Agents remain behind Application."}
+        },
+        {
+          "choice": "OPTION_B",
+          "label": "One lifecycle Application module",
+          "outcome": "Group the three use cases under one lifecycle module while retaining separate commands and authorities.",
+          "candidate_effects": [{"candidate_id": "CR-041", "action": "IMPLEMENT"}, {"candidate_id": "CR-005", "action": "CONSOLIDATE"}, {"candidate_id": "CR-031", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Faster shared delivery but larger coupling surface.", "domain": "Requires a coherent lifecycle aggregate boundary.", "application": "Single module, distinct handlers.", "api": "One facade can expose several operations later.", "sqlite": "One mapping layer can concentrate literals.", "migration": "Potentially broader coordinated migration.", "tests": "Cross-use-case isolation tests are essential.", "security": "Authority separation must be enforced internally."}
+        },
+        {
+          "choice": "OPTION_C",
+          "label": "Keep capabilities projected only",
+          "outcome": "Formally declare CAP-R02/A01/A02 out of the current delivery scope and prevent registry metadata from implying implementation.",
+          "candidate_effects": [{"candidate_id": "CR-041", "action": "DEPRECATE"}, {"candidate_id": "CR-041", "action": "REWRITE"}, {"candidate_id": "CR-041", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Narrows the deliverable product.", "domain": "No new model.", "application": "No new use cases.", "api": "Those endpoints remain prohibited.", "sqlite": "Existing adapter paths remain technical only.", "migration": "None.", "tests": "Add absence/non-authority assertions.", "security": "Reduces exposed authority surface."}
+        },
+        {
+          "choice": "DEFER",
+          "label": "Keep routes non-authoritative",
+          "outcome": "No capability implementation or exposure may proceed.",
+          "candidate_effects": [{"candidate_id": "CR-041", "action": "KEEP"}],
+          "impacts": {"product": "Lifecycle remains incomplete.", "domain": "No change.", "application": "Missing owners persist.", "api": "OD-04 non-resource choices remain blocked.", "sqlite": "No change.", "migration": "None.", "tests": "No positive capability tests.", "security": "Fail-closed default preserved."}
+        }
+      ]
+    },
+    {
+      "decision_id": "OD-04",
+      "title": "First /api/v2 delivery scope",
+      "decision_statement": "Choose the first HTTP scope and confirm that transport delegates to an authoritative Application use case.",
+      "source_finding_ids": ["BRF-004"],
+      "source_candidate_ids": ["CR-006", "CR-007", "CR-008", "CR-041"],
+      "status": "UNRESOLVED",
+      "dependency_class": "DEPENDENT",
+      "depends_on": ["OD-03"],
+      "dependency_note": "OPTION_A can use the already-concrete Resource Library; OPTIONS B/C involving non-resource capabilities require OD-03.",
+      "external_schema_evidence_required": false,
+      "evidence_required": ["Selected Application contract", "Transport-neutral error and response mapping"],
+      "recommendation": {
+        "option": "OPTION_A",
+        "confidence": "HIGH",
+        "rationale": "A read-only Resource Library slice is the only HTTP candidate with an existing concrete Application owner."
+      },
+      "options": [
+        {
+          "choice": "OPTION_A",
+          "label": "Resource READ-15 only",
+          "outcome": "Design one read-only /api/v2 resource lookup that maps strictly to GetResourceQuery.",
+          "candidate_effects": [{"candidate_id": "CR-006", "action": "ALIGN_API"}, {"candidate_id": "CR-007", "action": "ALIGN_API"}, {"candidate_id": "CR-008", "action": "ALIGN_API"}, {"candidate_id": "CR-041", "action": "IMPLEMENT"}, {"candidate_id": "CR-041", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Smallest usable transport slice.", "domain": "No new rule.", "application": "Reuses existing query.", "api": "One bounded read endpoint and error mapping.", "sqlite": "Access remains behind OP-03.", "migration": "None expected.", "tests": "Contract, validation, not-found and no-direct-store tests.", "security": "Read-only, minimized response."}
+        },
+        {
+          "choice": "OPTION_B",
+          "label": "Lifecycle API after OD-03",
+          "outcome": "Expose read-production, validation and promotion only after their separate Application owners are approved and implemented.",
+          "candidate_effects": [{"candidate_id": "CR-041", "action": "IMPLEMENT"}, {"candidate_id": "CR-041", "action": "ALIGN_API"}, {"candidate_id": "CR-005", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Broader product workflow.", "domain": "Requires approved lifecycle semantics.", "application": "Strict prerequisite from OD-03.", "api": "Multiple authority-sensitive endpoints.", "sqlite": "Mappings require owned ports.", "migration": "Conditional on approved models.", "tests": "End-to-end authority and transition suites.", "security": "Higher authorization and replay risk."}
+        },
+        {
+          "choice": "OPTION_C",
+          "label": "No HTTP API in current scope",
+          "outcome": "Keep Application inbounds only and deprecate the current /api/v2 projection as a delivery promise.",
+          "candidate_effects": [{"candidate_id": "CR-041", "action": "DEPRECATE"}, {"candidate_id": "CR-041", "action": "REWRITE"}],
+          "impacts": {"product": "No HTTP delivery surface.", "domain": "Unchanged.", "application": "Internal contracts remain.", "api": "Projection removed from active scope.", "sqlite": "Unchanged.", "migration": "None.", "tests": "Architecture tests assert absence of direct transport access.", "security": "Smallest external attack surface."}
+        },
+        {
+          "choice": "DEFER",
+          "label": "Keep /api/v2 blocked",
+          "outcome": "Do not design or implement endpoints.",
+          "candidate_effects": [{"candidate_id": "CR-041", "action": "KEEP"}],
+          "impacts": {"product": "No HTTP access.", "domain": "None.", "application": "No change.", "api": "Remains 0/11 endpoints.", "sqlite": "None.", "migration": "None.", "tests": "No endpoint tests.", "security": "Fail-closed default."}
+        }
+      ]
+    },
+    {
+      "decision_id": "OD-05",
+      "title": "External SQLite schema evidence",
+      "decision_statement": "Choose whether and how to bind the exact external canonical SQLite seed for read-only structural verification.",
+      "source_finding_ids": ["BRF-005"],
+      "source_candidate_ids": ["CR-007", "CR-010", "CR-011", "CR-012", "CR-013", "CR-014", "CR-015", "CR-031"],
+      "status": "UNRESOLVED",
+      "dependency_class": "INDEPENDENT_ROOT",
+      "depends_on": [],
+      "external_schema_evidence_required": true,
+      "evidence_required": ["Exact seed locator supplied outside Git", "Expected SHA-256 and size", "Read-only schema inventory for 98 tables, 20 indexes, 7 triggers and 2 views", "No row-content export"],
+      "recommendation": {
+        "option": "OPTION_A",
+        "confidence": "HIGH",
+        "rationale": "Hash-bound read-only introspection closes structural evidence without transferring or versioning the database."
+      },
+      "options": [
+        {
+          "choice": "OPTION_A",
+          "label": "Authorize hash-bound read-only introspection",
+          "outcome": "Inspect only schema metadata from the exact external seed and emit a minimized manifest.",
+          "candidate_effects": [{"candidate_id": "CR-007", "action": "ALIGN_DATA_MODEL"}, {"candidate_id": "CR-010", "action": "KEEP"}, {"candidate_id": "CR-011", "action": "ALIGN_DATA_MODEL"}, {"candidate_id": "CR-012", "action": "ALIGN_DATA_MODEL"}, {"candidate_id": "CR-013", "action": "ALIGN_DATA_MODEL"}, {"candidate_id": "CR-014", "action": "ALIGN_DATA_MODEL"}, {"candidate_id": "CR-015", "action": "ALIGN_DATA_MODEL"}, {"candidate_id": "CR-031", "action": "ALIGN_DATA_MODEL"}],
+          "impacts": {"product": "Closes nine structural rule checks.", "domain": "Reveals constraints that models must represent.", "application": "Clarifies port pre/postconditions.", "api": "Improves future mapping evidence only.", "sqlite": "Read-only metadata inspection of exact seed.", "migration": "Validates additive migration preconditions without applying them.", "tests": "Schema contract tests can be specified.", "security": "No row data, copy, mutation or Git inclusion."}
+        },
+        {
+          "choice": "OPTION_B",
+          "label": "Accept the external evidence gap",
+          "outcome": "Keep all nine mappings marked EXTERNAL_SCHEMA_EVIDENCE_REQUIRED and prohibit structural equivalence claims.",
+          "candidate_effects": [{"candidate_id": "CR-010", "action": "KEEP"}, {"candidate_id": "CR-015", "action": "KEEP"}],
+          "impacts": {"product": "Allows non-data planning only.", "domain": "Model alignment remains provisional.", "application": "Port design may proceed with caveats.", "api": "No data-backed completeness claim.", "sqlite": "No access.", "migration": "Cannot validate base-schema assumptions.", "tests": "External real-gate remains environment-dependent.", "security": "No external access."}
+        },
+        {
+          "choice": "OPTION_C",
+          "label": "Provide a signed schema-only export",
+          "outcome": "Owner supplies a minimized DDL/metadata artifact with provenance instead of granting direct seed access.",
+          "candidate_effects": [{"candidate_id": "CR-010", "action": "ALIGN_DATA_MODEL"}, {"candidate_id": "CR-015", "action": "ALIGN_DATA_MODEL"}],
+          "impacts": {"product": "Can close many structural checks if complete.", "domain": "Supports constraint mapping.", "application": "Supports port alignment.", "api": "Indirect only.", "sqlite": "No database file; schema-only evidence.", "migration": "Can compare migration targets.", "tests": "Validate export manifest and completeness.", "security": "Must exclude rows, paths, secrets and personal data."}
+        },
+        {
+          "choice": "DEFER",
+          "label": "Keep all schema checks blocked",
+          "outcome": "No alignment or equivalence decision may rely on the external schema.",
+          "candidate_effects": [{"candidate_id": "CR-010", "action": "KEEP"}, {"candidate_id": "CR-015", "action": "KEEP"}],
+          "impacts": {"product": "Data-model closure delayed.", "domain": "No alignment.", "application": "No data-dependent design closure.", "api": "No data mapping closure.", "sqlite": "Unseen.", "migration": "Unverified against base DDL.", "tests": "No new schema test.", "security": "Safe default."}
+        }
+      ]
+    },
+    {
+      "decision_id": "OD-06",
+      "title": "Ownership of SQLite literal/default families",
+      "decision_statement": "Assign business or technical ownership to the ten status/type/title/actor/default families before alignment.",
+      "source_finding_ids": ["BRF-006", "BRF-013"],
+      "source_candidate_ids": ["CR-015"],
+      "status": "UNRESOLVED",
+      "dependency_class": "DEPENDENT",
+      "depends_on": ["OD-05"],
+      "external_schema_evidence_required": true,
+      "evidence_required": ["OD-05 schema constraint result", "Literal-family inventory", "Bounded-context ownership map"],
+      "recommendation": {
+        "option": "OPTION_A",
+        "confidence": "HIGH",
+        "rationale": "Per-bounded-context vocabulary with explicit adapter translation preserves business ownership and avoids shared-kernel specialization."
+      },
+      "options": [
+        {
+          "choice": "OPTION_A",
+          "label": "Bounded-context vocabulary ownership",
+          "outcome": "Assign each family to its Domain/Application context and map explicitly in adapters.",
+          "candidate_effects": [{"candidate_id": "CR-015", "action": "REWRITE"}, {"candidate_id": "CR-015", "action": "ALIGN_DATA_MODEL"}, {"candidate_id": "CR-015", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Makes lifecycle meaning explicit.", "domain": "Own enums/value objects per context.", "application": "Own transition defaults and commands.", "api": "Maps owned values without leaking DB literals.", "sqlite": "Adapter translation checked against schema.", "migration": "Only if stored vocabulary must change.", "tests": "Transition and adapter conformance tests.", "security": "No authority added to adapters."}
+        },
+        {
+          "choice": "OPTION_B",
+          "label": "Application-level canonical vocabulary",
+          "outcome": "Define transport-neutral Application contracts shared by several bounded contexts, with Domain translation where needed.",
+          "candidate_effects": [{"candidate_id": "CR-015", "action": "CONSOLIDATE"}, {"candidate_id": "CR-015", "action": "ALIGN_DATA_MODEL"}, {"candidate_id": "CR-015", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Uniform vocabulary across workflows.", "domain": "Risk of flattening distinct meanings.", "application": "Central contract owner.", "api": "Simpler serialization.", "sqlite": "Central mapping table required.", "migration": "Conditional.", "tests": "Cross-context semantic distinction tests.", "security": "Authority rules must remain separate from statuses."}
+        },
+        {
+          "choice": "OPTION_C",
+          "label": "Declare literals technical-only",
+          "outcome": "Freeze current literals as adapter implementation details and prohibit treating them as business states.",
+          "candidate_effects": [{"candidate_id": "CR-015", "action": "DEPRECATE"}, {"candidate_id": "CR-015", "action": "KEEP"}, {"candidate_id": "CR-015", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Avoids premature domain modelling but leaves lifecycle capability incomplete.", "domain": "No owned business vocabulary.", "application": "Must not expose literals as decisions.", "api": "Must translate or omit them.", "sqlite": "Values remain unchanged.", "migration": "None.", "tests": "Assert non-authority and encapsulation.", "security": "Reduces accidental authority elevation."}
+        },
+        {
+          "choice": "DEFER",
+          "label": "Preserve adapter literals unchanged",
+          "outcome": "No new code may rely on them as canonical business vocabulary.",
+          "candidate_effects": [{"candidate_id": "CR-015", "action": "KEEP"}],
+          "impacts": {"product": "Vocabulary debt persists.", "domain": "No owner.", "application": "No authoritative transitions.", "api": "No exposure.", "sqlite": "Unchanged and unverified.", "migration": "None.", "tests": "Existing coverage only.", "security": "Fail-closed ownership default."}
+        }
+      ]
+    },
+    {
+      "decision_id": "OD-07",
+      "title": "READ-15 version_ref/include scope",
+      "decision_statement": "Decide whether the deferred options are deprecated, retained as an explicit future contract, or implemented later.",
+      "source_finding_ids": ["BRF-014"],
+      "source_candidate_ids": ["CR-009"],
+      "status": "UNRESOLVED",
+      "dependency_class": "DEPENDENT",
+      "depends_on": ["OD-01"],
+      "external_schema_evidence_required": true,
+      "external_schema_evidence_note": "Required for OPTION_C implementation because version/include storage semantics cannot be inferred from adapter queries.",
+      "evidence_required": ["OD-01 authority boundary", "Consumer need for version/include", "External schema evidence before OPTION_C"],
+      "recommendation": {
+        "option": "OPTION_A",
+        "confidence": "MEDIUM",
+        "rationale": "Removing the deferred options from the active promise keeps the delivered READ-15 contract honest; future needs can open a versioned use case."
+      },
+      "options": [
+        {
+          "choice": "OPTION_A",
+          "label": "Deprecate from active READ-15 scope",
+          "outcome": "Record version_ref/include as non-goals of the current use case and require a new contract for future support.",
+          "candidate_effects": [{"candidate_id": "CR-009", "action": "DEPRECATE"}, {"candidate_id": "CR-009", "action": "REWRITE"}, {"candidate_id": "CR-009", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Clear current capability boundary.", "domain": "No speculative version model.", "application": "Current request remains one-field.", "api": "No unsupported query options.", "sqlite": "No new mapping.", "migration": "None.", "tests": "Contract rejects or omits deprecated options.", "security": "Smaller input surface."}
+        },
+        {
+          "choice": "OPTION_B",
+          "label": "Retain an explicitly deferred contract",
+          "outcome": "Keep the names as future reserved options with mandatory fail-closed rejection today.",
+          "candidate_effects": [{"candidate_id": "CR-009", "action": "KEEP"}, {"candidate_id": "CR-009", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Signals roadmap intent.", "domain": "No current semantics.", "application": "Explicit unsupported-input rule.", "api": "May reserve names but must reject them.", "sqlite": "No mapping claim.", "migration": "None.", "tests": "Negative tests for every reserved option.", "security": "Fail-closed parsing."}
+        },
+        {
+          "choice": "OPTION_C",
+          "label": "Approve future implementation",
+          "outcome": "Define version and include semantics in a separate authorized slice after schema evidence and consumer requirements.",
+          "candidate_effects": [{"candidate_id": "CR-009", "action": "IMPLEMENT"}, {"candidate_id": "CR-009", "action": "ALIGN_DATA_MODEL"}, {"candidate_id": "CR-009", "action": "ALIGN_API"}, {"candidate_id": "CR-009", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Adds richer resource retrieval.", "domain": "Needs version/include concepts.", "application": "New or expanded use case contract.", "api": "New validated query surface.", "sqlite": "EXTERNAL_SCHEMA_EVIDENCE_REQUIRED.", "migration": "Conditional on missing structures.", "tests": "Version selection, include allowlist and compatibility tests.", "security": "Include must be strictly allowlisted and bounded."}
+        },
+        {
+          "choice": "DEFER",
+          "label": "Keep current ambiguity bounded",
+          "outcome": "Do not claim support and do not alter the current contract.",
+          "candidate_effects": [{"candidate_id": "CR-009", "action": "KEEP"}],
+          "impacts": {"product": "No new functionality.", "domain": "No change.", "application": "Existing one-field request only.", "api": "No options.", "sqlite": "No access.", "migration": "None.", "tests": "Gap remains.", "security": "Current narrow surface retained."}
+        }
+      ]
+    },
+    {
+      "decision_id": "OD-08",
+      "title": "Durable calibration governance boundary",
+      "decision_statement": "Separate durable calibration rules from V4/V5.x historical controls and define the process for any future release threshold.",
+      "source_finding_ids": ["BRF-008", "BRF-016"],
+      "source_candidate_ids": ["CR-036", "CR-037", "CR-038", "CR-039"],
+      "status": "UNRESOLVED",
+      "dependency_class": "INDEPENDENT_ROOT",
+      "depends_on": [],
+      "external_schema_evidence_required": false,
+      "evidence_required": ["Phase 12.16 immutable history and final configuration", "ADR-P12-063 and ADR-P12-066", "Consumed live-authorization evidence"],
+      "recommendation": {
+        "option": "OPTION_A",
+        "confidence": "HIGH",
+        "rationale": "General blind/provider-neutral/lineage rules remain useful while consumed authorizations and incident-specific mechanics belong to immutable history."
+      },
+      "options": [
+        {
+          "choice": "OPTION_A",
+          "label": "Generalize policy and archive version-specific controls",
+          "outcome": "Keep blind scoring, strong-only semantics, exact authorization and certified lineage; archive V4/V5.x mechanics as non-runtime history; threshold remains NONE.",
+          "candidate_effects": [{"candidate_id": "CR-036", "action": "KEEP"}, {"candidate_id": "CR-037", "action": "KEEP"}, {"candidate_id": "CR-038", "action": "REWRITE"}, {"candidate_id": "CR-038", "action": "CONSOLIDATE"}, {"candidate_id": "CR-039", "action": "KEEP"}, {"candidate_id": "CR-038", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Clarifies that calibration is evidence, not release authority.", "domain": "No production domain coupling.", "application": "No runtime route change.", "api": "No provider or threshold endpoint.", "sqlite": "No database dependency.", "migration": "None.", "tests": "General policy and immutable-history tests.", "security": "Exact authorization and minimized transfer remain fail-closed."}
+        },
+        {
+          "choice": "OPTION_B",
+          "label": "Keep all V4/V5.x controls canonical",
+          "outcome": "Retain every version-specific live, carry-forward and output-bound rule as active canonical policy.",
+          "candidate_effects": [{"candidate_id": "CR-038", "action": "KEEP"}, {"candidate_id": "CR-039", "action": "KEEP"}, {"candidate_id": "CR-038", "action": "ADD_TESTS"}],
+          "impacts": {"product": "Maximum forensic continuity but high policy complexity.", "domain": "Still outside production domain.", "application": "Calibration tooling remains specialized.", "api": "No runtime API.", "sqlite": "None.", "migration": "None.", "tests": "All historical contract variants remain maintained.", "security": "Strong guards retained, larger policy surface."}
+        },
+        {
+          "choice": "OPTION_C",
+          "label": "Deprecate live calibration capability",
+          "outcome": "Preserve all evidence read-only but remove live provider execution from future supported scope; threshold remains NONE.",
+          "candidate_effects": [{"candidate_id": "CR-038", "action": "DEPRECATE"}, {"candidate_id": "CR-039", "action": "KEEP"}, {"candidate_id": "CR-036", "action": "REWRITE"}],
+          "impacts": {"product": "No future live recalibration path.", "domain": "No impact.", "application": "Offline analysis only.", "api": "No provider surface.", "sqlite": "None.", "migration": "None.", "tests": "Archive/read-only integrity tests.", "security": "Eliminates future provider transfer risk."}
+        },
+        {
+          "choice": "DEFER",
+          "label": "Preserve current closure unchanged",
+          "outcome": "Live authorization remains consumed/false, threshold NONE and runtime route unchanged.",
+          "candidate_effects": [{"candidate_id": "CR-036", "action": "KEEP"}, {"candidate_id": "CR-037", "action": "KEEP"}, {"candidate_id": "CR-038", "action": "KEEP"}, {"candidate_id": "CR-039", "action": "KEEP"}],
+          "impacts": {"product": "No release-policy change.", "domain": "None.", "application": "None.", "api": "None.", "sqlite": "None.", "migration": "None.", "tests": "Historical suite remains.", "security": "No provider authorization."}
+        }
+      ]
+    }
+  ]
+}

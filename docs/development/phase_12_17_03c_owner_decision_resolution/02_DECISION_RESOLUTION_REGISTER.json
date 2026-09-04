@@ -1,0 +1,109 @@
+{
+  "schema_version": "12.17.3c-owner-decision-resolution-v1",
+  "baseline": {
+    "required_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+    "observed_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+    "submitted_attestation_binding_present": true,
+    "verification": "PASS"
+  },
+  "decision_register": {
+    "required_sha256": "43985ca2cffc4979d59b32466654d541f9084465b7f06b5e00bf81be33cad8f4",
+    "observed_sha256": "43985ca2cffc4979d59b32466654d541f9084465b7f06b5e00bf81be33cad8f4",
+    "submitted_attestation_binding_present": true,
+    "verification": "PASS"
+  },
+  "attestation": {
+    "bundle_sha256": "9763168564e83863ebc8ac1bf0511f90d122baf5eaf9f25d0f9b6065ca4a8127",
+    "file": "01_OWNER_ATTESTATION_REBOUND.md",
+    "owner_decision_resolution_declared": "APPROVED",
+    "owner_name_or_role": "PROJECT_OWNER",
+    "owner_attestation": "APPROVED",
+    "owner_attestation_timestamp": "2026-09-02T17:25:40+02:00",
+    "owner_attestation_timestamp_utc": "2026-09-02T15:25:40Z",
+    "declared_sha256": "f2f0893c2e2b8b5f8033f142de769cb8193d42d3d7208cd8c6499d2819d1d6f7",
+    "observed_sha256": "f2f0893c2e2b8b5f8033f142de769cb8193d42d3d7208cd8c6499d2819d1d6f7",
+    "hash_verification": "PASS",
+    "bundle_manifest_verification": "PASS_5_OF_5",
+    "bundle_state_json_verification": "PASS",
+    "application_status": "APPLIED"
+  },
+  "counts": {
+    "required": 8,
+    "submitted": 8,
+    "allowed": 8,
+    "recommendation_matches": 8,
+    "resolved": 8,
+    "unresolved": 0
+  },
+  "decisions": [
+    {
+      "decision_id": "OD-01",
+      "submitted_choice": "OPTION_A",
+      "registered_recommendation": "OPTION_A",
+      "choice_allowed": true,
+      "recommendation_match": true,
+      "application_status": "RESOLVED"
+    },
+    {
+      "decision_id": "OD-02",
+      "submitted_choice": "OPTION_A",
+      "registered_recommendation": "OPTION_A",
+      "choice_allowed": true,
+      "recommendation_match": true,
+      "application_status": "RESOLVED"
+    },
+    {
+      "decision_id": "OD-03",
+      "submitted_choice": "OPTION_A",
+      "registered_recommendation": "OPTION_A",
+      "choice_allowed": true,
+      "recommendation_match": true,
+      "application_status": "RESOLVED"
+    },
+    {
+      "decision_id": "OD-04",
+      "submitted_choice": "OPTION_A",
+      "registered_recommendation": "OPTION_A",
+      "choice_allowed": true,
+      "recommendation_match": true,
+      "application_status": "RESOLVED"
+    },
+    {
+      "decision_id": "OD-05",
+      "submitted_choice": "OPTION_A",
+      "registered_recommendation": "OPTION_A",
+      "choice_allowed": true,
+      "recommendation_match": true,
+      "external_schema_evidence_required": true,
+      "application_status": "RESOLVED"
+    },
+    {
+      "decision_id": "OD-06",
+      "submitted_choice": "OPTION_A",
+      "registered_recommendation": "OPTION_A",
+      "choice_allowed": true,
+      "recommendation_match": true,
+      "external_schema_evidence_required": true,
+      "application_status": "RESOLVED"
+    },
+    {
+      "decision_id": "OD-07",
+      "submitted_choice": "OPTION_A",
+      "registered_recommendation": "OPTION_A",
+      "choice_allowed": true,
+      "recommendation_match": true,
+      "external_schema_evidence_required_for_selected_option": false,
+      "application_status": "RESOLVED"
+    },
+    {
+      "decision_id": "OD-08",
+      "submitted_choice": "OPTION_A",
+      "registered_recommendation": "OPTION_A",
+      "choice_allowed": true,
+      "recommendation_match": true,
+      "application_status": "RESOLVED"
+    }
+  ],
+  "external_schema_evidence": "MISSING",
+  "phase_12_17_4_rationalization_design_gate": "BLOCKED_EXTERNAL_SQLITE_EVIDENCE"
+}

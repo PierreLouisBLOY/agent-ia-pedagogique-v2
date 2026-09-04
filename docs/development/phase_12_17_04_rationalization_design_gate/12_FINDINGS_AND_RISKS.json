@@ -1,0 +1,221 @@
+{
+  "schema_version": "12.17.4-rationalization-design-findings-v1",
+  "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+  "phase_status": "PASS",
+  "counts": {
+    "active_runtime_files": 659,
+    "active_tooling_files": 30,
+    "historical_hash_linked_paths": 40,
+    "historical_immutable_files": 40,
+    "exact_historical_hash_matches": 33,
+    "pre_existing_superseded_path_hashes": 7,
+    "misplaced_implementation_files": 2,
+    "runner_parser_generations": 7,
+    "target_active_generations": 1,
+    "residual_mypy_diagnostics": 15,
+    "mapped_mypy_diagnostics": 15,
+    "root_changes": 9,
+    "sqlite_vocabulary_families": 10,
+    "migration_required_true": 0,
+    "migration_required_unknown_candidates": 2,
+    "execution_batches": 9,
+    "historical_hashes_expected_unchanged": 40
+  },
+  "decisions": {
+    "provider_target_architecture": "TOP_LEVEL_CALIBRATION_TOOLING_WITH_PROVIDER_NEUTRAL_HARNESS",
+    "active_provider_location": "calibration_tooling/adapters/anthropic",
+    "active_runner_location": "calibration_tooling/runtime/runner.py",
+    "active_entrypoint_location": "calibration_tooling/runtime/cli.py",
+    "openai_product_adapters_retained": "backend/adapters/outbound/openai plus generation/openai and review/openai",
+    "historical_v4_v5_imported_by_active_graph": false,
+    "legacy_sources_modified": false,
+    "data_path_target": "OS_RESOLVED_PROJET_V2_DATA_DIR_WITH_EXPLICIT_CANONICAL_AND_RUNTIME_DB_OVERRIDES",
+    "seed_policy": "IMMUTABLE_READ_ONLY",
+    "runtime_policy": "FRESH_DERIVED_COPY_MIGRATED_SEPARATELY",
+    "release_threshold": "NONE",
+    "provider_calls_authorized_for_execution": false
+  },
+  "pre_existing_hash_deltas": [
+    {
+      "path": "tests/calibration/pedagogical/protocol.py",
+      "historical_sha256_prefix": "13c520",
+      "current_sha256": "ab01dfdd6b1b0e704d8465d56a30e686f40f4b5a054780710db3cd55cce6e887",
+      "attribution": "12.17.2A commit 6d0d66380757d7502fd967cd0246c5b6ff91d5f8"
+    },
+    {
+      "path": "tests/calibration/pedagogical/repair_tranche_v4_2.py",
+      "historical_sha256_prefix": "35e859",
+      "current_sha256": "d1e5b40dd1437aad38f5da0db4797e2670da953ee554f09f4aa1b1f078e9a6b6",
+      "attribution": "12.17.2A commit 6d0d66380757d7502fd967cd0246c5b6ff91d5f8"
+    },
+    {
+      "path": "tests/calibration/pedagogical/review_contract_v4_2.py",
+      "historical_sha256_prefix": "60cc9e",
+      "current_sha256": "81cc15e087169290133c7ecd79ba7c7043935673522229a1d861e86e28ef1a9e",
+      "attribution": "12.17.2A commit 6d0d66380757d7502fd967cd0246c5b6ff91d5f8"
+    },
+    {
+      "path": "tests/calibration/pedagogical/semantic_gate_v5_2.py",
+      "historical_sha256_prefix": "e7cf1c",
+      "current_sha256": "f4eaddf64eb255edcfdd011a763cefe83afe96c97a47f90519952ae2bfe02bb3",
+      "attribution": "12.17.2A commit 6d0d66380757d7502fd967cd0246c5b6ff91d5f8"
+    },
+    {
+      "path": "tests/calibration/pedagogical/semantic_integration_v5.py",
+      "historical_sha256_prefix": "2e4a75",
+      "current_sha256": "4347094a9fa31787ca8fc7eb31c848151506a5197457e1ffc4d6e114031b8ca4",
+      "attribution": "12.17.2A commit 6d0d66380757d7502fd967cd0246c5b6ff91d5f8"
+    },
+    {
+      "path": "tests/calibration/pedagogical/semantic_mini_pilot_v5_1.py",
+      "historical_sha256_prefix": "0c9db6",
+      "current_sha256": "33eb2a9e085238f88f7f36ae3ca3f51d08301e4accbc4eafad4fc5aaf6c19a1c",
+      "attribution": "12.17.2A commit 6d0d66380757d7502fd967cd0246c5b6ff91d5f8"
+    },
+    {
+      "path": "tests/calibration/pedagogical/semantic_pilot_freeze_v5.py",
+      "historical_sha256_prefix": "49288d",
+      "current_sha256": "eaed483486a00a7937832795f26b29b1adbc344c4578385fcab33189c5c4a2c1",
+      "attribution": "12.17.2A commit 6d0d66380757d7502fd967cd0246c5b6ff91d5f8"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "RAT-001",
+      "severity": "HIGH",
+      "status": "DESIGN_READY",
+      "title": "Anthropic operational tooling is located under tests",
+      "evidence": [
+        "tests/providers/anthropic/transport.py",
+        "tests/providers/anthropic/scorer.py"
+      ],
+      "disposition": "Create an independent active adapter under calibration_tooling; preserve both historical files."
+    },
+    {
+      "finding_id": "RAT-002",
+      "severity": "HIGH",
+      "status": "DESIGN_READY",
+      "title": "Historical calibration mechanics must not remain an active dependency",
+      "evidence": [
+        "tests/calibration/pedagogical",
+        "12.16 closure manifests"
+      ],
+      "disposition": "Isolate the active import graph and retain V4/V5.x as historical evidence."
+    },
+    {
+      "finding_id": "RAT-003",
+      "severity": "MEDIUM",
+      "status": "ACCEPTED_PRE_EXISTING",
+      "title": "Seven current paths supersede hashes recorded by older 12.16 manifests",
+      "evidence": [
+        "git history at 6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+        "seven entries in pre_existing_hash_deltas"
+      ],
+      "disposition": "Keep older manifests immutable and freeze the seven current hashes as the 12.17.4 execution baseline."
+    },
+    {
+      "finding_id": "RAT-004",
+      "severity": "MEDIUM",
+      "status": "DESIGN_READY",
+      "title": "Seven runner/parser generations coexist",
+      "evidence": [
+        "live_runner.py through pairwise_output_contract_v5_2_4.py"
+      ],
+      "disposition": "Use one active runner generation and retain the seven old generations as historical."
+    },
+    {
+      "finding_id": "RAT-005",
+      "severity": "HIGH",
+      "status": "MAPPED_15_OF_15",
+      "title": "Residual mypy debt is confined to the historical import traversal",
+      "evidence": [
+        "15 errors in 10 files",
+        "backend 0 errors in 659 files"
+      ],
+      "disposition": "Make the active import-driven graph clean without ignores, stubs or historical mutations."
+    },
+    {
+      "finding_id": "SQLITE_SIDECAR_ATTRIBUTION_UNDETERMINED",
+      "severity": "HIGH",
+      "status": "OPEN_TRACEABILITY_FINDING",
+      "title": "Seed WAL/SHM post-state cannot be attributed without a pre-snapshot",
+      "evidence": [
+        "12.17.3D POST WAL size 0",
+        "12.17.3D POST SHM size 32768",
+        "12.17.3D PRE state NOT_CAPTURED"
+      ],
+      "disposition": "Capture PRE/POST identity and never delete seed sidecars automatically."
+    },
+    {
+      "finding_id": "RAT-007",
+      "severity": "MEDIUM",
+      "status": "DESIGN_READY",
+      "title": "The observed Desktop seed locator is not a portable product default",
+      "evidence": [
+        "<CANONICAL_SEED_PATH>"
+      ],
+      "disposition": "Use OS-resolved data directory and explicit seed/runtime overrides."
+    },
+    {
+      "finding_id": "RAT-008",
+      "severity": "HIGH",
+      "status": "REQUIRES_LATER_OWNER_EVIDENCE",
+      "title": "Two vocabulary families have unknown migration need",
+      "evidence": [
+        "resource identity_status ACTIVE versus CANONICAL semantics",
+        "context origin encoded in notes"
+      ],
+      "disposition": "Do not migrate in 12.17.4E; specify owners/mappers, then decide separately."
+    },
+    {
+      "finding_id": "RAT-009",
+      "severity": "MEDIUM",
+      "status": "DESIGN_READY",
+      "title": "Required docs/legacy-review trace is absent",
+      "evidence": [
+        "README.md",
+        "PHASE_12_15_C0_SQLITE_RUNTIME_INTEGRATION_BASELINE.md"
+      ],
+      "disposition": "Create an explicitly retrospective and non-retroactive trace in batch B09."
+    },
+    {
+      "finding_id": "RAT-010",
+      "severity": "MEDIUM",
+      "status": "DEFERRED_TO_12_17_5",
+      "title": "No /api/v2 endpoint is materialized",
+      "evidence": [
+        "backend/adapters/inbound/api/__init__.py"
+      ],
+      "disposition": "Propagate Resource READ-15-only scope; do not implement API in 12.17.4E."
+    },
+    {
+      "finding_id": "RAT-011",
+      "severity": "HIGH",
+      "status": "EXECUTION_PRECONDITION",
+      "title": "A new top-level calibration tooling boundary requires an ADR",
+      "evidence": [
+        "AGENTS.md rule 9",
+        "ADR-P12-049",
+        "ADR-P12-058"
+      ],
+      "disposition": "Accept the boundary ADR before any implementation file is created."
+    }
+  ],
+  "blockers": {
+    "design_gate": [],
+    "future_execution_preconditions": [
+      "Accept the calibration_tooling boundary ADR.",
+      "Snapshot and guard all 40 current historical paths.",
+      "Keep the two UNKNOWN migration candidates outside implementation until separately decided."
+    ]
+  },
+  "scope_evidence": {
+    "code_files_modified": 0,
+    "source_rules_modified": 0,
+    "sqlite_modified": 0,
+    "provider_calls": 0,
+    "commit": "NONE",
+    "push": "NONE",
+    "implementation_started": false
+  }
+}

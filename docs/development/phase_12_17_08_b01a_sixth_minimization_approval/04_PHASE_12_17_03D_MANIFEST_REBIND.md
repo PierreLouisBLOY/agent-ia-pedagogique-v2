@@ -1,0 +1,14 @@
+# Phase 12.17.8-B01A — 12.17.3D manifest rebind
+
+```text
+MANIFEST_PATH = docs/development/phase_12_17_03d_external_sqlite_evidence/MANIFEST_SHA256.txt
+MANIFEST_PRE_SHA256 = 600a4bee4b1b536c93a30eeae0aa02a80ae2e37956b47ee5533cbbb306b63b9a
+MANIFEST_POST_SHA256 = cbca0428240ffd278ea0c2a10a700d83e1e682885b239b74c2a341578e8a0f5e
+MANIFEST_ENTRY_COUNT_PRE = 8
+MANIFEST_ENTRY_COUNT_POST = 8
+TARGET_ENTRY_CHANGED_COUNT = 1
+OTHER_MANIFEST_ENTRIES_CHANGED_COUNT = 0
+MANIFEST_VERIFICATION_MISMATCHES = 0
+```
+
+The sole replacement is the `PHYSICAL_EVIDENCE.json` hash, from `aa2acedd0e88c092cbfe02f49a926cf743ab7c1c1fdb1992f664fb284d3f4c13` to `46b4b07679693b6aeb91369c83b6c5c1bdcc33f09ec94e20fcdc42bbb3318206`. Reversing that one line reconstructs the exact PRE manifest SHA-256.

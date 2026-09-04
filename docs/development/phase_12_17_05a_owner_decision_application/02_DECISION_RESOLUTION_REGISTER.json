@@ -1,0 +1,57 @@
+{
+  "phase": "12.17.5A",
+  "resolution_status": "APPROVED",
+  "resolution_applied": true,
+  "baseline_commit": "576d6bd6dcf5082740c4192842b7c87ccbc1f246",
+  "source_decision_register": {
+    "path": "docs/development/phase_12_17_05a_blocking_remediation_design/05_OWNER_DECISION_REGISTER.json",
+    "sha256": "f987ce8a601275630bf2ec0298eb2c868d38411b3fad88d6e44082e3102551d1"
+  },
+  "owner_attestation": {
+    "path": "docs/development/phase_12_17_05a_owner_decision_application/01_OWNER_ATTESTATION_APPLIED.md",
+    "sha256": "224c2de87e75ce7c1aa50df246a9d7aa0b76edb053e91bfca6ff86a90d939b1e",
+    "owner_name_or_role": "PROJECT_OWNER",
+    "status": "APPROVED",
+    "timestamp": "2026-09-03T21:08:17+02:00",
+    "timestamp_utc": "2026-09-03T19:08:17Z"
+  },
+  "decisions": [
+    {
+      "decision_id": "DM-01",
+      "selected_option": "OPTION_A",
+      "source_option_id": "A",
+      "blocking_findings": [
+        "DMAPI-001",
+        "DMAPI-002",
+        "DMAPI-009"
+      ],
+      "effect": "KEEP_001_IMMUTABLE_GENERALIZE_ORDERED_RUNNER_THEN_ADD_002"
+    },
+    {
+      "decision_id": "DM-02",
+      "selected_option": "OPTION_A",
+      "source_option_id": "A",
+      "blocking_findings": [
+        "DMAPI-003"
+      ],
+      "effect": "RESOURCE_OWNED_SAFE_OPAQUE_IDENTIFIER_REGEX"
+    },
+    {
+      "decision_id": "DM-03",
+      "selected_option": "OPTION_B",
+      "source_option_id": "B",
+      "blocking_findings": [
+        "DMAPI-004"
+      ],
+      "effect": "SEPARATE_AVAILABILITY_LIFECYCLE_FROM_CANONICALITY"
+    }
+  ],
+  "owner_decisions_resolved": "3/3",
+  "context_origin": {
+    "status": "UNKNOWN",
+    "migration_authorized": false
+  },
+  "phase_12_17_05b_entry_gate": "READY",
+  "phase_12_17_05b_started": false,
+  "phase_12_17_6_started": false
+}

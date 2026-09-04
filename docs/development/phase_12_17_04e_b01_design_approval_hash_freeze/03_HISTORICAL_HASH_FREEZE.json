@@ -1,0 +1,756 @@
+{
+  "schema_version": "12.17.4e-b01-historical-hash-freeze-v1",
+  "phase": "12.17.4E-B01",
+  "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+  "owner_approval_binding": "PASS",
+  "adr": {
+    "id": "ADR-P12-068",
+    "path": "architecture/adr/ADR-P12-068-active-calibration-tooling-boundary.md",
+    "status": "ACCEPTED",
+    "sha256": "4cac693a66d09bf5708b050eceeb82f9e249dbd1f32537d6b312cba8c4a6ffbd"
+  },
+  "sqlite_seed_sha256_invariant_only": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134",
+  "entry_count": 40,
+  "preexisting_drift_count": 7,
+  "entries": [
+    {
+      "historical_id": "HIST-001",
+      "path": "tests/calibration/pedagogical/anchor_corpus_v2.py",
+      "sha256_current": "bd0c5eff43be20b4f578b99321e076471804f8a3e0e197858b08a3701800be76",
+      "historical_reference_sha256": "bd0c5eff43be20b4f578b99321e076471804f8a3e0e197858b08a3701800be76",
+      "historical_manifest_refs": [
+        "tests/architecture/test_anchor_corpus_v3_fitness.py"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-002",
+      "path": "tests/calibration/pedagogical/anchor_corpus_v4.py",
+      "sha256_current": "b0a86640502db4ab1d0b623e50faffa45178d9e93b0a24976df3312d460662be",
+      "historical_reference_sha256": "b0a86640502db4ab1d0b623e50faffa45178d9e93b0a24976df3312d460662be",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_3_metric_discrimination_analysis/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v5_scorer_contract_redesign_offline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-003",
+      "path": "tests/calibration/pedagogical/call_plan.py",
+      "sha256_current": "1272776fb72545cd4ca840d7088c26d7e272d6cc05100eb2344394df3e3b6df6",
+      "historical_reference_sha256": "1272776fb72545cd4ca840d7088c26d7e272d6cc05100eb2344394df3e3b6df6",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_implementation_readiness/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-004",
+      "path": "tests/calibration/pedagogical/call_plan_v4_1.py",
+      "sha256_current": "93f996be10af46fe6313bf49c873bbd752001bd0d816de79c2079cb3f71eb1b2",
+      "historical_reference_sha256": "93f996be10af46fe6313bf49c873bbd752001bd0d816de79c2079cb3f71eb1b2",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_1_corrective_baseline_git_freeze/01_POST_APPROVAL_DRIFT_AUDIT.md"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-005",
+      "path": "tests/calibration/pedagogical/legacy_call_plan.py",
+      "sha256_current": "cb7a92ec9fc8d214975cb3ad68f27ab1328866132ca63686b636264e21d31e3a",
+      "historical_reference_sha256": "cb7a92ec9fc8d214975cb3ad68f27ab1328866132ca63686b636264e21d31e3a",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-006",
+      "path": "tests/calibration/pedagogical/live_runner.py",
+      "sha256_current": "8c7f88726f270d65c2080110d25bb421c42da56cd930d43f646343b3e463ba40",
+      "historical_reference_sha256": "8c7f88726f270d65c2080110d25bb421c42da56cd930d43f646343b3e463ba40",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_implementation_readiness/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-007",
+      "path": "tests/calibration/pedagogical/live_runner_v4_1.py",
+      "sha256_current": "bf354170c3c9a864b715ec5c7094e76ef87a1dcb9a20dbb069c3e91be9ee0dca",
+      "historical_reference_sha256": "bf354170c3c9a864b715ec5c7094e76ef87a1dcb9a20dbb069c3e91be9ee0dca",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_1_corrective_baseline_git_freeze/01_POST_APPROVAL_DRIFT_AUDIT.md"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-008",
+      "path": "tests/calibration/pedagogical/metrics.py",
+      "sha256_current": "fd58c668eb32d259f40f05a374db5a952b1d11eaa72f767966888ed2825720a8",
+      "historical_reference_sha256": "fd58c668eb32d259f40f05a374db5a952b1d11eaa72f767966888ed2825720a8",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_3_metric_discrimination_analysis/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-009",
+      "path": "tests/calibration/pedagogical/offline_calibration_v5.py",
+      "sha256_current": "328d10c3ef8e3041e0d2dd9919267092dfcf53463c9f725cb432333ea6a23d04",
+      "historical_reference_sha256": "328d10c3ef8e3041e0d2dd9919267092dfcf53463c9f725cb432333ea6a23d04",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v5_scorer_contract_redesign_offline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v5_semantic_validation_integration_offline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-010",
+      "path": "tests/calibration/pedagogical/pairwise_output_contract_v5_2_3.py",
+      "sha256_current": "bde7afa85eaaf0ec0fee4beae9752e4511ae048b79afce26e56c8d8abef023ec",
+      "historical_reference_sha256": "bde7afa85eaaf0ec0fee4beae9752e4511ae048b79afce26e56c8d8abef023ec",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v5_2_3_technical_freeze/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-011",
+      "path": "tests/calibration/pedagogical/pairwise_output_contract_v5_2_4.py",
+      "sha256_current": "3f47351e8d188ddd7ed465a3d139cad8fd55c03c274ae259a385eaaf3a953a56",
+      "historical_reference_sha256": "3f47351e8d188ddd7ed465a3d139cad8fd55c03c274ae259a385eaaf3a953a56",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v5_2_4_technical_freeze/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-012",
+      "path": "tests/calibration/pedagogical/pairwise_runner_v5_2_2.py",
+      "sha256_current": "ec72fd6d0e8ed7aa3fff0b8d05ce678148041e2be7de8b86478855cbfc57ecf0",
+      "historical_reference_sha256": "ec72fd6d0e8ed7aa3fff0b8d05ce678148041e2be7de8b86478855cbfc57ecf0",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v5_2_2_technical_freeze/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-013",
+      "path": "tests/calibration/pedagogical/pricing.py",
+      "sha256_current": "fbfa2b166d473b5f036da8005896f986e1af52db11764faf853163129b0c2e40",
+      "historical_reference_sha256": "fbfa2b166d473b5f036da8005896f986e1af52db11764faf853163129b0c2e40",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_implementation_readiness/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-014",
+      "path": "tests/calibration/pedagogical/protocol.py",
+      "sha256_current": "ab01dfdd6b1b0e704d8465d56a30e686f40f4b5a054780710db3cd55cce6e887",
+      "historical_reference_sha256": "13c52073886016a564d36a5a942ce8c8bd21615530b222910375b713669a69e3",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_implementation_readiness/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v4_3_metric_discrimination_analysis/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": true,
+      "drift_origin": "12.17.2A typing remediation",
+      "retroactive_repair": "FORBIDDEN",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE_WITH_PREEXISTING_DRIFT"
+    },
+    {
+      "historical_id": "HIST-015",
+      "path": "tests/calibration/pedagogical/r2a_diagnostic.py",
+      "sha256_current": "49a6e436619807a60d0adc4cd3290cf4a0ef43b8213c76fb6610c544a9294868",
+      "historical_reference_sha256": "49a6e436619807a60d0adc4cd3290cf4a0ef43b8213c76fb6610c544a9294868",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-016",
+      "path": "tests/calibration/pedagogical/r3a_plan.py",
+      "sha256_current": "e04bd7a6805d0f07570515aac7434accf614f407ccc001a2dbd66bc5e1ef0497",
+      "historical_reference_sha256": "e04bd7a6805d0f07570515aac7434accf614f407ccc001a2dbd66bc5e1ef0497",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-017",
+      "path": "tests/calibration/pedagogical/r3b_r1_diagnostic.py",
+      "sha256_current": "0d05a17548a0b12c8ced1c2f52f0ff1a3614474ee7e972f37e2abea91ba9a371",
+      "historical_reference_sha256": "0d05a17548a0b12c8ced1c2f52f0ff1a3614474ee7e972f37e2abea91ba9a371",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-018",
+      "path": "tests/calibration/pedagogical/r3b_r3_plan.py",
+      "sha256_current": "3b99dfcc85668e7659182a49b5cc694bd3ce55c51c7681f33eda73064cf1b6c3",
+      "historical_reference_sha256": "3b99dfcc85668e7659182a49b5cc694bd3ce55c51c7681f33eda73064cf1b6c3",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-019",
+      "path": "tests/calibration/pedagogical/r4_r1_policy.py",
+      "sha256_current": "ace00ca77da871fd7b7862e571a750641f601d3a06f32152e173527ce0c4f960",
+      "historical_reference_sha256": "ace00ca77da871fd7b7862e571a750641f601d3a06f32152e173527ce0c4f960",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-020",
+      "path": "tests/calibration/pedagogical/repair_tranche_v4_2.py",
+      "sha256_current": "d1e5b40dd1437aad38f5da0db4797e2670da953ee554f09f4aa1b1f078e9a6b6",
+      "historical_reference_sha256": "35e8598a6fedaac79d0f4ffba9db47a84056900db3f36aceb837b6eb8c4897a1",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_2_repair_tranche_offline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v5_semantic_validation_integration_offline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": true,
+      "drift_origin": "12.17.2A typing remediation",
+      "retroactive_repair": "FORBIDDEN",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE_WITH_PREEXISTING_DRIFT"
+    },
+    {
+      "historical_id": "HIST-021",
+      "path": "tests/calibration/pedagogical/reuse_audit.py",
+      "sha256_current": "015e59877624682da8461be0333852dda6caa2469936e7dac23c6cc3d554eeba",
+      "historical_reference_sha256": "015e59877624682da8461be0333852dda6caa2469936e7dac23c6cc3d554eeba",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-022",
+      "path": "tests/calibration/pedagogical/review_contract_v4_2.py",
+      "sha256_current": "81cc15e087169290133c7ecd79ba7c7043935673522229a1d861e86e28ef1a9e",
+      "historical_reference_sha256": "60cc9e407fe1010f089ee38a7ef06719e15fc4ad84e6f3c7c568fa66859aaba5",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_2_repair_tranche_offline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v4_3_metric_discrimination_analysis/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": true,
+      "drift_origin": "12.17.2A typing remediation",
+      "retroactive_repair": "FORBIDDEN",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE_WITH_PREEXISTING_DRIFT"
+    },
+    {
+      "historical_id": "HIST-023",
+      "path": "tests/calibration/pedagogical/scorer_contract_v5.py",
+      "sha256_current": "85797a5c2be668444bf5720153d94a01cd8bdf4e1789154874865ecd4d07d4a4",
+      "historical_reference_sha256": "85797a5c2be668444bf5720153d94a01cd8bdf4e1789154874865ecd4d07d4a4",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v5_scorer_contract_redesign_offline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v5_semantic_pilot_freeze_and_transfer_scope/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v5_semantic_validation_integration_offline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-024",
+      "path": "tests/calibration/pedagogical/semantic_gate_v5_2.py",
+      "sha256_current": "f4eaddf64eb255edcfdd011a763cefe83afe96c97a47f90519952ae2bfe02bb3",
+      "historical_reference_sha256": "e7cf1c4b0386f0b5134de5f9647616e972c1e6dcccf4c887a0ecf35bb9a20a15",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v5_2_semantic_gate_correction_offline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v5_2_1_final_git_freeze/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": true,
+      "drift_origin": "12.17.2A typing remediation",
+      "retroactive_repair": "FORBIDDEN",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE_WITH_PREEXISTING_DRIFT"
+    },
+    {
+      "historical_id": "HIST-025",
+      "path": "tests/calibration/pedagogical/semantic_integration_v5.py",
+      "sha256_current": "4347094a9fa31787ca8fc7eb31c848151506a5197457e1ffc4d6e114031b8ca4",
+      "historical_reference_sha256": "2e4a7539cc92765421293068f5d621ed05e6e8855cd66e66ff9332579938c011",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v5_semantic_pilot_freeze_and_transfer_scope/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v5_semantic_validation_integration_offline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": true,
+      "drift_origin": "12.17.2A typing remediation",
+      "retroactive_repair": "FORBIDDEN",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE_WITH_PREEXISTING_DRIFT"
+    },
+    {
+      "historical_id": "HIST-026",
+      "path": "tests/calibration/pedagogical/semantic_micro_canary_v5_1.py",
+      "sha256_current": "d3ae157dada67046dc0999b0b13d24dc8be02e14e0471d4a37fc9f4df25b77e4",
+      "historical_reference_sha256": "d3ae157dada67046dc0999b0b13d24dc8be02e14e0471d4a37fc9f4df25b77e4",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v5_1_micro_canary_baseline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-027",
+      "path": "tests/calibration/pedagogical/semantic_mini_pilot_v5_1.py",
+      "sha256_current": "33eb2a9e085238f88f7f36ae3ca3f51d08301e4accbc4eafad4fc5aaf6c19a1c",
+      "historical_reference_sha256": "0c9db6612b2995291d294593906ba8c1361b7c73068d3a60da8fcc7dc2d1280b",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v5_1_mini_pilot_preparation_offline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": true,
+      "drift_origin": "12.17.2A typing remediation",
+      "retroactive_repair": "FORBIDDEN",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE_WITH_PREEXISTING_DRIFT"
+    },
+    {
+      "historical_id": "HIST-028",
+      "path": "tests/calibration/pedagogical/semantic_parser_adapter_v5_1.py",
+      "sha256_current": "4788eac744537c7c0b229abef9d440b4b470a1f1279ceff4f9e68e41955e2115",
+      "historical_reference_sha256": "4788eac744537c7c0b229abef9d440b4b470a1f1279ceff4f9e68e41955e2115",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v5_1_micro_canary_baseline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v5_1_parser_compatibility_remediation_offline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-029",
+      "path": "tests/calibration/pedagogical/semantic_pilot_freeze_v5.py",
+      "sha256_current": "eaed483486a00a7937832795f26b29b1adbc344c4578385fcab33189c5c4a2c1",
+      "historical_reference_sha256": "49288def5b1d0a512a544c222fa85941a979e4693671090318b2c926191c627b",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v5_semantic_pilot_freeze_and_transfer_scope/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": true,
+      "drift_origin": "12.17.2A typing remediation",
+      "retroactive_repair": "FORBIDDEN",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE_WITH_PREEXISTING_DRIFT"
+    },
+    {
+      "historical_id": "HIST-030",
+      "path": "tests/calibration/pedagogical/test_v4_corrective_attestation_closure.py",
+      "sha256_current": "d5d55942059d5f58160868de6c242fbcc3f0c32c3914e245f78dc549b88a035f",
+      "historical_reference_sha256": "d5d55942059d5f58160868de6c242fbcc3f0c32c3914e245f78dc549b88a035f",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_implementation_readiness/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE_TEST",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-031",
+      "path": "tests/calibration/pedagogical/test_v4_human_disposition_pairwise_reconciliation.py",
+      "sha256_current": "2e819fd11f6ebddb70ce4d27e8498de432453514491a5d144a2e199e3d803e54",
+      "historical_reference_sha256": "2e819fd11f6ebddb70ce4d27e8498de432453514491a5d144a2e199e3d803e54",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE_TEST",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-032",
+      "path": "tests/calibration/pedagogical/test_v4_provider_recalibration_implementation_readiness.py",
+      "sha256_current": "bcae37cb478d0b1eeedc49463f30157a412b76764a9f2c391dcb22d4b0e34435",
+      "historical_reference_sha256": "bcae37cb478d0b1eeedc49463f30157a412b76764a9f2c391dcb22d4b0e34435",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_implementation_readiness/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE_TEST",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-033",
+      "path": "tests/calibration/pedagogical/test_v4_provider_recalibration_plan_readiness.py",
+      "sha256_current": "d8fb3909bebee55e9aa4351a6550fb7715864bcf41cac04ff3cc5504b94824f6",
+      "historical_reference_sha256": "d8fb3909bebee55e9aa4351a6550fb7715864bcf41cac04ff3cc5504b94824f6",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_implementation_readiness/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE_TEST",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-034",
+      "path": "tests/calibration/pedagogical/v4_human_disposition_pairwise_reconciliation.py",
+      "sha256_current": "2502e5b872924b400bef4090e25e66126bd1ec1b88072c628fe774c143630e91",
+      "historical_reference_sha256": "2502e5b872924b400bef4090e25e66126bd1ec1b88072c628fe774c143630e91",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-035",
+      "path": "tests/calibration/pedagogical/v4_provider_recalibration_implementation_readiness.py",
+      "sha256_current": "5299c018d7b25050b0ee9cb626b3cd561dba59d38fde7b30c9fe7e70858c6ba9",
+      "historical_reference_sha256": "5299c018d7b25050b0ee9cb626b3cd561dba59d38fde7b30c9fe7e70858c6ba9",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_implementation_readiness/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-036",
+      "path": "tests/calibration/pedagogical/v4_provider_recalibration_plan_readiness.py",
+      "sha256_current": "34b0c26e69be928eb22b2364adce4880d147f0ad5325f6bf2e4ddc03254e7a8f",
+      "historical_reference_sha256": "34b0c26e69be928eb22b2364adce4880d147f0ad5325f6bf2e4ddc03254e7a8f",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_final_baseline/MANIFEST_SHA256.txt",
+        "docs/development/phase_12_16_g2_v4_provider_recalibration_implementation_readiness/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-037",
+      "path": "tests/providers/anthropic/contracts.py",
+      "sha256_current": "668fa89013fe053201dd971060cd8a1036378f8f863085a8e80ac5baef4e90f8",
+      "historical_reference_sha256": "668fa89013fe053201dd971060cd8a1036378f8f863085a8e80ac5baef4e90f8",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_3_metric_discrimination_analysis/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-038",
+      "path": "tests/providers/anthropic/mapping.py",
+      "sha256_current": "970da3e243b7241b858c5ad3d33a01bdb30815b753008a208790b0d9b2e9a633",
+      "historical_reference_sha256": "970da3e243b7241b858c5ad3d33a01bdb30815b753008a208790b0d9b2e9a633",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_3_metric_discrimination_analysis/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-039",
+      "path": "tests/providers/anthropic/scorer.py",
+      "sha256_current": "3be22f3a4ee19a3e2095f52f459b30d0b204a7e37437b2e5b33ab0ee03a76119",
+      "historical_reference_sha256": "3be22f3a4ee19a3e2095f52f459b30d0b204a7e37437b2e5b33ab0ee03a76119",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_3_metric_discrimination_analysis/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    },
+    {
+      "historical_id": "HIST-040",
+      "path": "tests/providers/anthropic/transport.py",
+      "sha256_current": "15ecf4b27ac8840dc503201864614a304917d3d43132b159da6a520044787b5b",
+      "historical_reference_sha256": "15ecf4b27ac8840dc503201864614a304917d3d43132b159da6a520044787b5b",
+      "historical_manifest_refs": [
+        "docs/development/phase_12_16_g2_v4_3_metric_discrimination_analysis/MANIFEST_SHA256.txt"
+      ],
+      "classification": "HISTORICAL_EVIDENCE",
+      "immutable": true,
+      "allowed_operation": "READ_ONLY",
+      "known_preexisting_drift": false,
+      "drift_origin": null,
+      "retroactive_repair": "NOT_APPLICABLE",
+      "baseline_commit": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "freeze_timestamp": "2026-09-02T17:17:45.3647865Z",
+      "status": "FROZEN_CURRENT_BASELINE"
+    }
+  ]
+}

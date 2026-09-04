@@ -1,0 +1,114 @@
+{
+  "schema_version": "12.17.6-observability-gap-matrix-v1",
+  "overall_readiness": "PARTIAL",
+  "events": [
+    {
+      "event": "startup",
+      "logged": "NO",
+      "structured": "NO",
+      "sensitive_data_risk": "LOW",
+      "sufficient_for_diagnosis": false,
+      "evidence": "No application startup composition root exists.",
+      "gap": "Define a closed startup summary and sink health event."
+    },
+    {
+      "event": "shutdown",
+      "logged": "NO",
+      "structured": "NO",
+      "sensitive_data_risk": "LOW",
+      "sufficient_for_diagnosis": false,
+      "evidence": "No application shutdown or sink flush composition exists.",
+      "gap": "Define bounded flush and shutdown outcome events."
+    },
+    {
+      "event": "HTTP request",
+      "logged": "NOT_APPLICABLE",
+      "structured": "NOT_APPLICABLE",
+      "sensitive_data_risk": "LOW_CURRENT_SURFACE",
+      "sufficient_for_diagnosis": true,
+      "evidence": "No HTTP server or route is implemented.",
+      "gap": "Add request/correlation events before HTTP materialization."
+    },
+    {
+      "event": "validation error",
+      "logged": "PARTIAL",
+      "structured": "YES_CONTRACT_ONLY",
+      "sensitive_data_risk": "LOW",
+      "sufficient_for_diagnosis": false,
+      "evidence": "Closed error envelopes and security event mappers exist; no production sink is wired.",
+      "gap": "Emit closed validation codes at the composition boundary."
+    },
+    {
+      "event": "DB bootstrap",
+      "logged": "NO",
+      "structured": "YES_RETURN_REPORT_ONLY",
+      "sensitive_data_risk": "MEDIUM_IF_PATH_LOGGED",
+      "sufficient_for_diagnosis": false,
+      "evidence": "RuntimeProvisioningReport is returned but not emitted.",
+      "gap": "Emit path-free bootstrap status, schema version and closed error code."
+    },
+    {
+      "event": "migration",
+      "logged": "NO",
+      "structured": "YES_RESULT_ONLY",
+      "sensitive_data_risk": "LOW",
+      "sufficient_for_diagnosis": false,
+      "evidence": "Migration sequence and checksums are validated but not sent to a sink.",
+      "gap": "Emit migration start/result with version and checksum only."
+    },
+    {
+      "event": "backup/recovery",
+      "logged": "PARTIAL",
+      "structured": "YES_REPORTS_AND_AGENT_SPANS",
+      "sensitive_data_risk": "MEDIUM_IF_PATH_LOGGED",
+      "sufficient_for_diagnosis": false,
+      "evidence": "SQLite reports and agent recovery spans exist; SQLite operations are not wired to a sink.",
+      "gap": "Emit path-free backup/restore status and authentication result."
+    },
+    {
+      "event": "provider attempt",
+      "logged": "PARTIAL",
+      "structured": "YES_CALIBRATION_RUN_LEVEL",
+      "sensitive_data_risk": "LOW",
+      "sufficient_for_diagnosis": false,
+      "evidence": "Calibration STARTED exists at run level; default sink is null and OpenAI has no wired attempt event.",
+      "gap": "Emit one path/payload-free event per authorized call."
+    },
+    {
+      "event": "provider success",
+      "logged": "PARTIAL",
+      "structured": "YES_CALIBRATION_RUN_LEVEL",
+      "sensitive_data_risk": "LOW",
+      "sufficient_for_diagnosis": false,
+      "evidence": "Closed completion and cost data exist, but the default sink discards them.",
+      "gap": "Persist bounded usage, duration and call identity without prompts/responses."
+    },
+    {
+      "event": "provider failure",
+      "logged": "PARTIAL",
+      "structured": "YES_CLOSED_CODES",
+      "sensitive_data_risk": "LOW",
+      "sufficient_for_diagnosis": false,
+      "evidence": "Provider errors are closed and calibration FAILED exists; no production destination is configured.",
+      "gap": "Wire closed failure codes and sink health."
+    },
+    {
+      "event": "security-relevant rejection",
+      "logged": "PARTIAL",
+      "structured": "YES_CONTRACT_ONLY",
+      "sensitive_data_risk": "LOW",
+      "sufficient_for_diagnosis": false,
+      "evidence": "Security mappers and wrappers exist and avoid rejected values; no production sink wiring exists.",
+      "gap": "Emit boundary, closed reason and correlation ID."
+    },
+    {
+      "event": "unhandled exception",
+      "logged": "NO",
+      "structured": "NO",
+      "sensitive_data_risk": "HIGH_IF_RAW_EXCEPTION_USED",
+      "sufficient_for_diagnosis": false,
+      "evidence": "No top-level application exception boundary is materialized.",
+      "gap": "Add a top-level closed-code handler without stack or payload disclosure."
+    }
+  ]
+}

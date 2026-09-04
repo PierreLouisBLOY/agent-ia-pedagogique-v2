@@ -1,0 +1,25 @@
+# Phase 12.17.5C — Liaison de l'approbation propriétaire
+
+L'autorisation est liée à la baseline et au périmètre exacts suivants :
+
+```text
+OWNER_CONSOLIDATION_12_17_05C = APPROVED
+BASELINE_COMMIT = 576d6bd6dcf5082740c4192842b7c87ccbc1f246
+APPROVED_SCOPE = B02_TO_B07_EXACT_APPROVED_DIFF
+HISTORICAL_GUARD_MODIFICATION = FORBIDDEN
+SQLITE_MODIFICATION = FORBIDDEN
+PROVIDER_CALLS = 0
+OWNER_NAME_OR_ROLE = PROJECT_OWNER
+OWNER_ATTESTATION = APPROVED
+OWNER_ATTESTATION_TIMESTAMP = 2026-09-04T15:20:21+02:00
+```
+
+Le fichier d'approbation EOF séparé autorise exclusivement la suppression d'un LF
+terminal dans `backend/modules/resource_library/domain/errors/resource_ref.py`.
+
+```text
+OWNER_APPROVAL_STATUS = PASS
+OWNER_APPROVAL_FILE_SHA256 = 3bf6151740de4ddbd1fa90975cdecbd338388b549d159bbb1951524b27dc776e
+EOF_SHA256_TRANSITION = 1cfcb2cf12bca7d81ee8039982ebffb413afc6285d8b3610aab08a0dc2864d4d -> b43a71ed52be78126a066d9414f0f714cd40deb6498d24907b1aebe253a0199b
+SCOPE_EXPANSION = NONE
+```

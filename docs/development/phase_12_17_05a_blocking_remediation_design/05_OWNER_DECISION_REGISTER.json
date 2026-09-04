@@ -1,0 +1,110 @@
+{
+  "phase": "12.17.5A",
+  "baseline_commit": "576d6bd6dcf5082740c4192842b7c87ccbc1f246",
+  "status": "AWAITING_OWNER_DECISIONS",
+  "decisions": [
+    {
+      "decision_id": "DM-01",
+      "subject": "Strategy for restoring the five document invariants lost by migration 001",
+      "blocking_findings": [
+        "DMAPI-001",
+        "DMAPI-002",
+        "DMAPI-009"
+      ],
+      "options": [
+        {
+          "option_id": "A",
+          "label": "Keep 001 immutable, generalize the ordered migration runner, then add corrective migration 002",
+          "migration_required": true
+        },
+        {
+          "option_id": "B",
+          "label": "Create a newly versioned canonical seed and use an explicitly approved runtime reprovisioning strategy",
+          "migration_required": "CONDITIONAL_FOR_EXISTING_RUNTIMES"
+        },
+        {
+          "option_id": "C",
+          "label": "Defer remediation and keep persistence and phase 12.17.6 blocked",
+          "migration_required": false
+        }
+      ],
+      "recommendation": "A",
+      "recommendation_confidence": "HIGH",
+      "owner_selection": null,
+      "approval_status": "AWAITING_OWNER"
+    },
+    {
+      "decision_id": "DM-02",
+      "subject": "Domain and API contract for resource_ref length and safe syntax",
+      "blocking_findings": [
+        "DMAPI-003"
+      ],
+      "options": [
+        {
+          "option_id": "A",
+          "label": "Approve a resource-owned safe opaque identifier matching ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "migration_required": false
+        },
+        {
+          "option_id": "B",
+          "label": "Approve a closed, versioned union of known identifier families",
+          "migration_required": "CONDITIONAL_ON_DISCOVERED_LEGACY_VALUES"
+        },
+        {
+          "option_id": "C",
+          "label": "Approve only a 1..128 length bound plus rejection of path, query, fragment, whitespace and control characters",
+          "migration_required": false
+        },
+        {
+          "option_id": "D",
+          "label": "Defer the contract and keep READ-15 blocked",
+          "migration_required": false
+        }
+      ],
+      "recommendation": "A",
+      "recommendation_confidence": "MEDIUM",
+      "owner_selection": null,
+      "approval_status": "AWAITING_OWNER"
+    },
+    {
+      "decision_id": "DM-03",
+      "subject": "Semantic relationship between ACTIVE and CANONICAL resource identity values",
+      "blocking_findings": [
+        "DMAPI-004"
+      ],
+      "options": [
+        {
+          "option_id": "A",
+          "label": "Define ACTIVE and CANONICAL as exclusive states in one explicit lifecycle",
+          "migration_required": "CONDITIONAL"
+        },
+        {
+          "option_id": "B",
+          "label": "Separate availability lifecycle from canonicality and define independent authority and transitions",
+          "migration_required": "LIKELY_BUT_REQUIRES_SEPARATE_DESIGN"
+        },
+        {
+          "option_id": "C",
+          "label": "Deprecate CANONICAL and retain ACTIVE as the persisted lifecycle state",
+          "migration_required": "CONDITIONAL"
+        },
+        {
+          "option_id": "D",
+          "label": "Defer semantics and keep identity_status out of the public READ-15 contract",
+          "migration_required": false
+        }
+      ],
+      "recommendation": "B",
+      "recommendation_confidence": "MEDIUM",
+      "owner_selection": null,
+      "approval_status": "AWAITING_OWNER"
+    }
+  ],
+  "context_origin": {
+    "semantics": "UNKNOWN",
+    "migration_required": false,
+    "owner_decision_requested_in_this_batch": false
+  },
+  "automatic_selection_performed": false,
+  "phase_12_17_6_gate": "BLOCKED"
+}

@@ -1,0 +1,85 @@
+{
+  "schema_version": "12.17.8-b01-minimization-pre-post-v1",
+  "baseline_commit": "e2c43184a272491371b73131170db488cf3157d6",
+  "owner_decision": "OPTION_A_MINIMIZE_FIVE_AND_CONSOLIDATE_165",
+  "corrective_rebound": {
+    "owner_b01_sixth_minimization": "APPROVED",
+    "owner_timestamp": "2026-09-04T19:26:36+02:00",
+    "b01a_manifest_sha256": "34389ad799ef00356181a8d5ffb58c11fa6a58250488cced1a34e7bbc0456d8b"
+  },
+  "eof18_rebound": {
+    "owner_b01_eof18_normalization": "APPROVED",
+    "owner_timestamp": "2026-09-04T19:47:02+02:00",
+    "b01b_manifest_sha256": "2999474ac0e3a8ccace184d1a8ea5d58b3ee6de60af8d92098d4573db163ce99",
+    "files_normalized": 18,
+    "manifests_rebound": 4,
+    "non_eof_content_changes": 0,
+    "non_target_manifest_entries_changed": 0
+  },
+  "target_count": 6,
+  "targets": [
+    {
+      "id": "MIN-01",
+      "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/10_DESKTOP_PROJECT_V2_DISCOVERY.md",
+      "pre_sha256": "e3209757a7473176fa758c9a3b60313b282007f234e0a5d61ac665a85ba38f7b",
+      "post_sha256": "7b93d46b169856abd40717d8fa264f3232eb7f1572e25d4bf9a7e0fa33edd581",
+      "equivalence": "PASS"
+    },
+    {
+      "id": "MIN-02",
+      "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/12_READ_ONLY_INTEGRITY_EVIDENCE.md",
+      "pre_sha256": "72f400f711613a090cd34b7a868ec2b86b0e16d533d86ca557997b3c1a4e8e37",
+      "post_sha256": "523fe9cce71f0b745888f86bd378021868a57f1f0144016db54a81ee0a5865ac",
+      "equivalence": "PASS"
+    },
+    {
+      "id": "MIN-03",
+      "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/14_IMMUTABILITY_PRE_POST.md",
+      "pre_sha256": "c1ae2ff9b34cb8ccc9488a3f41454acfd36f02f958c58c1ba4cd0be784fc7ecd",
+      "post_sha256": "22dbe9ce1996f9a2ae07e5ebe552369a2fd1e73518727bda8950e8c39a5d0b84",
+      "equivalence": "PASS"
+    },
+    {
+      "id": "MIN-04",
+      "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/16_FINAL_HANDOFF.md",
+      "pre_sha256": "774781732408e8486bf8a92aab869a338c39fce95a3e0301dc221a8c50c3c6fb",
+      "post_sha256": "dceb2896fc19f02a862c94eab2fa18550e636e4e6ec18c554ab97b87e7a216c1",
+      "equivalence": "PASS"
+    },
+    {
+      "id": "MIN-05",
+      "path": "docs/development/phase_12_17_04_rationalization_design_gate/12_FINDINGS_AND_RISKS.json",
+      "pre_sha256": "08dc0d8da4dd2e9684cf64e04098674a8ea4234a3b5e84e9e7e7385ed6ba9999",
+      "post_sha256": "abc0bcef43daf9102122f9677b1d68f5780f3b026b35cd30166338c40c7af5b6",
+      "equivalence": "PASS"
+    },
+    {
+      "id": "MIN-06",
+      "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/PHYSICAL_EVIDENCE.json",
+      "pre_sha256": "aa2acedd0e88c092cbfe02f49a926cf743ab7c1c1fdb1992f664fb284d3f4c13",
+      "post_sha256": "46b4b07679693b6aeb91369c83b6c5c1bdcc33f09ec94e20fcdc42bbb3318206",
+      "equivalence": "PASS"
+    }
+  ],
+  "manifest_transitions": [
+    {
+      "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/MANIFEST_SHA256.txt",
+      "pre_sha256": "600a4bee4b1b536c93a30eeae0aa02a80ae2e37956b47ee5533cbbb306b63b9a",
+      "b01a_sha256": "cbca0428240ffd278ea0c2a10a700d83e1e682885b239b74c2a341578e8a0f5e",
+      "post_minimization_sha256": "3ffbd2fb82d2da538f2db1a9ddb04fd8fe944b1db9839652c4db6e3cb30bb312",
+      "post_b01b_sha256": "def554827543ad01d9bb45a35c7d72893216a2caff12b8960714ac8726d5aafa",
+      "entry_count": 8,
+      "mismatches": 0
+    },
+    {
+      "path": "docs/development/phase_12_17_04_rationalization_design_gate/MANIFEST_SHA256.txt",
+      "pre_sha256": "1aba15a7e56a15b97b35485f5dc1ba523a5e421f7fcc2644c2c051c7299c71b5",
+      "post_sha256": "5807f59131911902a7b8d1d828b25946682fbbdfd5f1dae379def999fb1d570b",
+      "entry_count": 13,
+      "mismatches": 0
+    }
+  ],
+  "personal_locators_remaining": 0,
+  "sqlite_writes": 0,
+  "provider_calls": 0
+}

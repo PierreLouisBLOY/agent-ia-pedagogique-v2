@@ -23,6 +23,7 @@ from calibration_tooling.contracts.models import CalibrationPlan, CalibrationRun
 from calibration_tooling.contracts.parser import CanonicalCalibrationOutputParser
 from calibration_tooling.contracts.policy import DurableCalibrationPolicy
 from calibration_tooling.observability.events import (
+    CalibrationCallTelemetryEmitter,
     CalibrationEventState,
     CalibrationTelemetryEvent,
     CalibrationTelemetrySink,
@@ -186,6 +187,12 @@ def compose_calibration_runtime(
         OneShotAuthorizationGuard(),
         BudgetGuard(),
         dependencies.ledger,
+        CalibrationCallTelemetryEmitter(
+            sink=selected_telemetry,
+            clock=dependencies.clock,
+            provider_code=configuration.provider_code.value,
+            model_code=anthropic.model,
+        ),
     )
     return CalibrationRuntime(
         configuration=configuration,

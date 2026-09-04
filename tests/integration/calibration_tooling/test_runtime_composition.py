@@ -243,9 +243,17 @@ def test_composed_runtime_reaches_injected_fake_client_once() -> None:
     assert scenario.client.call_count == 1
     assert [event.state for event in scenario.telemetry.events] == [
         CalibrationEventState.STARTED,
+        CalibrationEventState.STARTED,
+        CalibrationEventState.COMPLETED,
         CalibrationEventState.COMPLETED,
     ]
     assert scenario.telemetry.events[-1].measured_cost_usd == Decimal("0.000600")
+    call_events = [
+        event for event in scenario.telemetry.events if event.call_ref is not None
+    ]
+    assert call_events[-1].input_tokens == 100
+    assert call_events[-1].cached_input_tokens == 0
+    assert call_events[-1].output_tokens == 20
 
 
 def test_allowlist_and_budget_block_before_the_fake_client() -> None:

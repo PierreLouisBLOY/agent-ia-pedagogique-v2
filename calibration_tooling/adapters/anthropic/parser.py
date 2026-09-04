@@ -32,6 +32,12 @@ def parse_anthropic_response(
         fail_contract(CalibrationErrorCode.RESPONSE_INVALID)
     if type(pricing) is not AnthropicTokenPricing:
         raise TypeError("pricing must be AnthropicTokenPricing")
+    input_tokens = (
+        response.usage.uncached_input_tokens
+        + response.usage.cache_creation_input_tokens
+        + response.usage.cache_read_input_tokens
+    )
+    cached_input_tokens = response.usage.cache_read_input_tokens
     if response.stop_reason is AnthropicStopReason.MAX_TOKENS:
         output_text = response.text_blocks[0] if len(response.text_blocks) == 1 else ""
         return RawProviderResponse(
@@ -39,6 +45,9 @@ def parse_anthropic_response(
             output_text=output_text,
             measured_cost_usd=measure_anthropic_cost(response.usage, pricing),
             complete=False,
+            input_tokens=input_tokens,
+            cached_input_tokens=cached_input_tokens,
+            output_tokens=response.usage.output_tokens,
         )
     if response.stop_reason not in {
         AnthropicStopReason.END_TURN,
@@ -52,6 +61,9 @@ def parse_anthropic_response(
         output_text=response.text_blocks[0],
         measured_cost_usd=measure_anthropic_cost(response.usage, pricing),
         complete=True,
+        input_tokens=input_tokens,
+        cached_input_tokens=cached_input_tokens,
+        output_tokens=response.usage.output_tokens,
     )
 
 

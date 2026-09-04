@@ -20,6 +20,10 @@ from calibration_tooling.contracts.models import (
     RunStatus,
 )
 from calibration_tooling.contracts.policy import DurableCalibrationPolicy
+from calibration_tooling.observability.events import (
+    CalibrationCallTelemetryPort,
+    NullCalibrationCallTelemetry,
+)
 from calibration_tooling.runtime.authorization import (
     ExecutionAuthorization,
     OneShotAuthorizationGuard,
@@ -38,11 +42,13 @@ class CanonicalCalibrationRunner:
         authorization_guard: OneShotAuthorizationGuard,
         budget_guard: BudgetGuard,
         ledger: CallLedgerPort,
+        call_telemetry: CalibrationCallTelemetryPort | None = None,
     ) -> None:
         self._service = service
         self._authorization_guard = authorization_guard
         self._budget_guard = budget_guard
         self._ledger = ledger
+        self._call_telemetry = call_telemetry or NullCalibrationCallTelemetry()
 
     def run(
         self,
@@ -66,18 +72,41 @@ class CanonicalCalibrationRunner:
                 measured_cost,
             )
             self._ledger.reserve(spec.call_ref)
+            self._call_telemetry.started(
+                run_ref=plan.run_ref,
+                call_ref=spec.call_ref,
+                authorization_ref=authorization.authorization_ref,
+            )
             try:
                 scored_call = self._service.evaluate(spec)
             except CalibrationContractError as error:
                 self._ledger.fail(spec.call_ref, error.code)
+                self._call_telemetry.failed(
+                    run_ref=plan.run_ref,
+                    call_ref=spec.call_ref,
+                    authorization_ref=authorization.authorization_ref,
+                    error_code=error.code,
+                )
                 raise
-            except CalibrationExecutionError:
+            except CalibrationExecutionError as error:
+                self._call_telemetry.failed(
+                    run_ref=plan.run_ref,
+                    call_ref=spec.call_ref,
+                    authorization_ref=authorization.authorization_ref,
+                    error_code=error.code,
+                )
                 raise
             if scored_call.result.call_ref != spec.call_ref:
                 self._ledger.fail(
                     spec.call_ref,
                     CalibrationErrorCode.IDENTITY_MISMATCH,
                     scored_call.measured_cost_usd,
+                )
+                self._call_telemetry.failed(
+                    run_ref=plan.run_ref,
+                    call_ref=spec.call_ref,
+                    authorization_ref=authorization.authorization_ref,
+                    error_code=CalibrationErrorCode.IDENTITY_MISMATCH,
                 )
                 fail_execution(CalibrationErrorCode.IDENTITY_MISMATCH)
             if (
@@ -90,6 +119,12 @@ class CanonicalCalibrationRunner:
                     spec.call_ref,
                     CalibrationErrorCode.RESULT_MISMATCH,
                     scored_call.measured_cost_usd,
+                )
+                self._call_telemetry.failed(
+                    run_ref=plan.run_ref,
+                    call_ref=spec.call_ref,
+                    authorization_ref=authorization.authorization_ref,
+                    error_code=CalibrationErrorCode.RESULT_MISMATCH,
                 )
                 fail_execution(CalibrationErrorCode.RESULT_MISMATCH)
             try:
@@ -105,8 +140,24 @@ class CanonicalCalibrationRunner:
                     error.code,
                     scored_call.measured_cost_usd,
                 )
+                self._call_telemetry.failed(
+                    run_ref=plan.run_ref,
+                    call_ref=spec.call_ref,
+                    authorization_ref=authorization.authorization_ref,
+                    error_code=error.code,
+                )
                 raise
             self._ledger.complete(scored_call.result, scored_call.measured_cost_usd)
+            if scored_call.input_tokens is not None and scored_call.output_tokens is not None:
+                self._call_telemetry.completed(
+                    run_ref=plan.run_ref,
+                    call_ref=spec.call_ref,
+                    authorization_ref=authorization.authorization_ref,
+                    input_tokens=scored_call.input_tokens,
+                    cached_input_tokens=scored_call.cached_input_tokens or 0,
+                    output_tokens=scored_call.output_tokens,
+                    measured_cost_usd=scored_call.measured_cost_usd,
+                )
             results.append(scored_call.result)
 
         return CalibrationRunOutput(

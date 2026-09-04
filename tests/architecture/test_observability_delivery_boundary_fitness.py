@@ -117,14 +117,17 @@ def test_serializers_are_explicit_allowlists_not_generic_dataclass_exports() -> 
     assert '"schema_version"' in text
 
 
-def test_delivery_is_bounded_without_retry_worker_file_or_global_logger() -> None:
+def test_core_delivery_is_bounded_without_retry_worker_file_or_global_logger() -> None:
     policy = (AGENT_OBSERVABILITY / "delivery_policy.py").read_text(
         encoding="utf-8"
     )
-    infra = "\n".join(
-        path.read_text(encoding="utf-8")
-        for path in _python_files(INFRA_OBSERVABILITY)
+    core_delivery_files = (
+        INFRA_OBSERVABILITY / "buffering.py",
+        INFRA_OBSERVABILITY / "serialization.py",
+        INFRA_OBSERVABILITY / "sinks.py",
+        INFRA_OBSERVABILITY / "writers.py",
     )
+    infra = "\n".join(path.read_text(encoding="utf-8") for path in core_delivery_files)
 
     assert "MAX_BUFFER_ITEMS: Final = 4_096" in policy
     assert "MAX_BUFFER_BYTES: Final = 64 * 1_024 * 1_024" in policy

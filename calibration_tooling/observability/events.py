@@ -9,7 +9,7 @@ from enum import StrEnum
 from typing import Final, Protocol
 
 from calibration_tooling.contracts.errors import CalibrationErrorCode
-from calibration_tooling.contracts.models import CallRef, RunRef
+from calibration_tooling.contracts.models import AuthorizationRef, CallRef, RunRef
 
 _SAFE_CODE: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 _MAX_DURATION_MILLISECONDS: Final = 604_800_000
@@ -32,6 +32,8 @@ class CalibrationTelemetryEvent:
     state: CalibrationEventState
     duration_milliseconds: int
     call_ref: CallRef | None = None
+    authorization_ref: AuthorizationRef | None = None
+    attempt_number: int | None = None
     input_tokens: int | None = None
     cached_input_tokens: int | None = None
     output_tokens: int | None = None
@@ -43,6 +45,12 @@ class CalibrationTelemetryEvent:
             raise TypeError("run_ref must be a RunRef")
         if self.call_ref is not None and type(self.call_ref) is not CallRef:
             raise TypeError("call_ref must be a CallRef or None")
+        if self.authorization_ref is not None and type(self.authorization_ref) is not AuthorizationRef:
+            raise TypeError("authorization_ref must be an AuthorizationRef or None")
+        if self.attempt_number is not None and (
+            type(self.attempt_number) is not int or self.attempt_number != 1
+        ):
+            raise ValueError("attempt_number must be exactly one")
         _require_safe_code(self.provider_code, "provider_code")
         _require_safe_code(self.model_code, "model_code")
         if not isinstance(self.state, CalibrationEventState):
@@ -73,15 +81,212 @@ class CalibrationTelemetryEvent:
             or self.error_code is not None
         ):
             raise ValueError("a started event cannot contain terminal fields")
+        if self.call_ref is not None and (
+            self.authorization_ref is None or self.attempt_number != 1
+        ):
+            raise ValueError("call telemetry requires authorization and one attempt")
+        if self.call_ref is None and (
+            self.authorization_ref is not None or self.attempt_number is not None
+        ):
+            raise ValueError("run telemetry cannot contain call authorization fields")
         if self.state is CalibrationEventState.COMPLETED and (
             self.measured_cost_usd is None or self.error_code is not None
         ):
             raise ValueError("a completed event requires cost and no error")
+        if self.call_ref is not None and self.state is CalibrationEventState.COMPLETED and (
+            self.input_tokens is None or self.output_tokens is None
+        ):
+            raise ValueError("completed call telemetry requires usage counters")
         if self.state in {
             CalibrationEventState.BLOCKED,
             CalibrationEventState.FAILED,
         } and self.error_code is None:
             raise ValueError("a blocked or failed event requires a closed error")
+
+
+class CalibrationCallTelemetryPort(Protocol):
+    def started(
+        self,
+        *,
+        run_ref: RunRef,
+        call_ref: CallRef,
+        authorization_ref: AuthorizationRef,
+    ) -> None: ...
+
+    def completed(
+        self,
+        *,
+        run_ref: RunRef,
+        call_ref: CallRef,
+        authorization_ref: AuthorizationRef,
+        input_tokens: int,
+        cached_input_tokens: int,
+        output_tokens: int,
+        measured_cost_usd: Decimal,
+    ) -> None: ...
+
+    def failed(
+        self,
+        *,
+        run_ref: RunRef,
+        call_ref: CallRef,
+        authorization_ref: AuthorizationRef,
+        error_code: CalibrationErrorCode,
+    ) -> None: ...
+
+
+class NullCalibrationCallTelemetry:
+    def started(
+        self,
+        *,
+        run_ref: RunRef,
+        call_ref: CallRef,
+        authorization_ref: AuthorizationRef,
+    ) -> None:
+        del run_ref, call_ref, authorization_ref
+
+    def completed(
+        self,
+        *,
+        run_ref: RunRef,
+        call_ref: CallRef,
+        authorization_ref: AuthorizationRef,
+        input_tokens: int,
+        cached_input_tokens: int,
+        output_tokens: int,
+        measured_cost_usd: Decimal,
+    ) -> None:
+        del (
+            run_ref,
+            call_ref,
+            authorization_ref,
+            input_tokens,
+            cached_input_tokens,
+            output_tokens,
+            measured_cost_usd,
+        )
+
+    def failed(
+        self,
+        *,
+        run_ref: RunRef,
+        call_ref: CallRef,
+        authorization_ref: AuthorizationRef,
+        error_code: CalibrationErrorCode,
+    ) -> None:
+        del run_ref, call_ref, authorization_ref, error_code
+
+
+class CalibrationCallTelemetryEmitter:
+    """Emit one payload-free observation around each authorized provider call."""
+
+    def __init__(
+        self,
+        *,
+        sink: CalibrationTelemetrySink,
+        clock: TelemetryClock,
+        provider_code: str,
+        model_code: str,
+    ) -> None:
+        self._sink = sink
+        self._clock = clock
+        _require_safe_code(provider_code, "provider_code")
+        _require_safe_code(model_code, "model_code")
+        self._provider_code = provider_code
+        self._model_code = model_code
+        self._started: dict[CallRef, int] = {}
+
+    def started(
+        self,
+        *,
+        run_ref: RunRef,
+        call_ref: CallRef,
+        authorization_ref: AuthorizationRef,
+    ) -> None:
+        self._started[call_ref] = self._now()
+        self._safe_emit(
+            CalibrationTelemetryEvent(
+                run_ref=run_ref,
+                call_ref=call_ref,
+                authorization_ref=authorization_ref,
+                attempt_number=1,
+                provider_code=self._provider_code,
+                model_code=self._model_code,
+                state=CalibrationEventState.STARTED,
+                duration_milliseconds=0,
+            )
+        )
+
+    def completed(
+        self,
+        *,
+        run_ref: RunRef,
+        call_ref: CallRef,
+        authorization_ref: AuthorizationRef,
+        input_tokens: int,
+        cached_input_tokens: int,
+        output_tokens: int,
+        measured_cost_usd: Decimal,
+    ) -> None:
+        self._safe_emit(
+            CalibrationTelemetryEvent(
+                run_ref=run_ref,
+                call_ref=call_ref,
+                authorization_ref=authorization_ref,
+                attempt_number=1,
+                provider_code=self._provider_code,
+                model_code=self._model_code,
+                state=CalibrationEventState.COMPLETED,
+                duration_milliseconds=self._duration(call_ref),
+                input_tokens=input_tokens,
+                cached_input_tokens=cached_input_tokens,
+                output_tokens=output_tokens,
+                measured_cost_usd=measured_cost_usd,
+            )
+        )
+
+    def failed(
+        self,
+        *,
+        run_ref: RunRef,
+        call_ref: CallRef,
+        authorization_ref: AuthorizationRef,
+        error_code: CalibrationErrorCode,
+    ) -> None:
+        self._safe_emit(
+            CalibrationTelemetryEvent(
+                run_ref=run_ref,
+                call_ref=call_ref,
+                authorization_ref=authorization_ref,
+                attempt_number=1,
+                provider_code=self._provider_code,
+                model_code=self._model_code,
+                state=CalibrationEventState.FAILED,
+                duration_milliseconds=self._duration(call_ref),
+                error_code=error_code,
+            )
+        )
+
+    def _now(self) -> int:
+        value = self._clock.now_milliseconds()
+        if type(value) is not int or value < 0:
+            return 0
+        return value
+
+    def _duration(self, call_ref: CallRef) -> int:
+        ended = self._now()
+        started = self._started.pop(call_ref, ended)
+        return max(0, min(ended - started, _MAX_DURATION_MILLISECONDS))
+
+    def _safe_emit(self, event: CalibrationTelemetryEvent) -> None:
+        try:
+            self._sink.emit(event)
+        except Exception:
+            return
+
+
+class TelemetryClock(Protocol):
+    def now_milliseconds(self) -> int: ...
 
 
 class CalibrationTelemetrySink(Protocol):

@@ -211,6 +211,9 @@ class RawProviderResponse:
     output_text: str = field(repr=False)
     measured_cost_usd: Decimal
     complete: bool
+    input_tokens: int | None = None
+    cached_input_tokens: int | None = None
+    output_tokens: int | None = None
 
     def __post_init__(self) -> None:
         _require_exact_type(self.call_ref, CallRef, "call_ref")
@@ -219,6 +222,20 @@ class RawProviderResponse:
         _require_money(self.measured_cost_usd, positive=False)
         if type(self.complete) is not bool:
             raise TypeError("complete must be a bool")
+        for value in (
+            self.input_tokens,
+            self.cached_input_tokens,
+            self.output_tokens,
+        ):
+            if value is not None and (
+                type(value) is not int or not 0 <= value <= 10**12
+            ):
+                raise ValueError("provider usage must be bounded non-negative integers")
+        if self.cached_input_tokens is not None and (
+            self.input_tokens is None
+            or self.cached_input_tokens > self.input_tokens
+        ):
+            raise ValueError("cached input usage cannot exceed total input usage")
 
 
 @dataclass(frozen=True, slots=True)
@@ -264,11 +281,28 @@ type CalibrationObservationResult = AbsoluteObservationResult | PairwiseObservat
 class ScoredCall:
     result: CalibrationObservationResult
     measured_cost_usd: Decimal
+    input_tokens: int | None = None
+    cached_input_tokens: int | None = None
+    output_tokens: int | None = None
 
     def __post_init__(self) -> None:
         if type(self.result) not in (AbsoluteObservationResult, PairwiseObservationResult):
             raise TypeError("result must be a calibration observation result")
         _require_money(self.measured_cost_usd, positive=False)
+        for value in (
+            self.input_tokens,
+            self.cached_input_tokens,
+            self.output_tokens,
+        ):
+            if value is not None and (
+                type(value) is not int or not 0 <= value <= 10**12
+            ):
+                raise ValueError("provider usage must be bounded non-negative integers")
+        if self.cached_input_tokens is not None and (
+            self.input_tokens is None
+            or self.cached_input_tokens > self.input_tokens
+        ):
+            raise ValueError("cached input usage cannot exceed total input usage")
 
 
 @dataclass(frozen=True, slots=True)

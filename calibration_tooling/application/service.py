@@ -39,4 +39,10 @@ class CalibrationService:
             raise
         except Exception:
             fail_execution(CalibrationErrorCode.PROVIDER_UNAVAILABLE)
-        return ScoredCall(result=result, measured_cost_usd=response.measured_cost_usd)
+        return ScoredCall(
+            result=result,
+            measured_cost_usd=response.measured_cost_usd,
+            input_tokens=response.input_tokens,
+            cached_input_tokens=response.cached_input_tokens,
+            output_tokens=response.output_tokens,
+        )

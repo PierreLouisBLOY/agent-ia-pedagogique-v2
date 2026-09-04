@@ -96,10 +96,18 @@ def test_later_provider_work_preserves_phase_f_backend_owners() -> None:
         "backend/infrastructure/filesystem/__init__.py",
         "backend/infrastructure/filesystem/security.py",
     }
+    b03_observability_files = {
+        "backend/infrastructure/composition/bootstrap/__init__.py",
+        "backend/infrastructure/composition/bootstrap/observability.py",
+        "backend/infrastructure/observability/__init__.py",
+        "backend/infrastructure/observability/local.py",
+        "backend/infrastructure/observability/operational.py",
+    }
     assert all(
         path.startswith(allowed)
         or path in f2a_retrieval_files
         or path in b02_local_boundary_files
+        or path in b03_observability_files
         for path in changed
     )
 

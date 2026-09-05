@@ -1,0 +1,60 @@
+{
+  "schema_version": "b07-seed-test-correction-v1",
+  "baseline_reference": "0404852a3be77381bf7b7c903ee6309e2547487e",
+  "test_nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_seed_gate_is_exact_and_read_only",
+  "test_pre_sha256": "f62f11f7a44a5c11bd4b5844b9bf43b703be6449c8dacc55b84e673a549836f0",
+  "test_post_sha256": "ab7bfe37360c70449e4032116fa236962eee8d1b1ec5105066643215e9e4c902",
+  "regression_path": "tests/unit/test_seed_read_only_gate_regression.py",
+  "regression_sha256": "e63e22dfd6b9731144650193f43315696b6370eb43bed70cfe1fc8b31789b662",
+  "regression_cases": 8,
+  "targeted_total_passed": 20,
+  "targeted_duration_seconds": 9.85,
+  "real_corrected_test_passed": 1,
+  "real_duration_seconds": 177.47,
+  "real_exit_code": 0,
+  "immutable_readonly_uri_verified": true,
+  "hash_before_sqlite_verified": true,
+  "seed_not_migrated_or_provisioned_verified": true,
+  "main_and_sidecars_pre_post_identical": true,
+  "seed_snapshot": {
+    "main": {
+      "exists": true,
+      "size_bytes": 105553920,
+      "sha256": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134"
+    },
+    "wal": {
+      "exists": true,
+      "size_bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "shm": {
+      "exists": true,
+      "size_bytes": 32768,
+      "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+    },
+    "journal": {
+      "exists": false,
+      "size_bytes": null,
+      "sha256": null
+    }
+  },
+  "myPy": {
+    "files": 2,
+    "diagnostics": 0
+  },
+  "historical": {
+    "freeze": 40,
+    "separate_refs": 2,
+    "protected_migrations_locks_local_evidence": 48,
+    "drift": 0
+  },
+  "application_code_modified": 0,
+  "seed_writes": 0,
+  "user_runtime_access": 0,
+  "user_runtime_writes": 0,
+  "persistent_configuration_changes": 0,
+  "provider_calls": 0,
+  "dependency_network_calls": 0,
+  "phase_12_18_started": false,
+  "prior_b07_manifest_sha256": "8d16ea5340d792c9123dfec1b5c4f0ba0c7ff8f6eca720c9a80002597dda3f8d"
+}

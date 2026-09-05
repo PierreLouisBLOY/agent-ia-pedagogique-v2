@@ -4,6 +4,7 @@ import os
 import shutil
 import sqlite3
 from collections.abc import Iterator
+from contextlib import closing
 from pathlib import Path
 
 import pytest
@@ -14,9 +15,11 @@ from backend.adapters.outbound.persistence.migrations import (
     CANONICAL_SEED_SIZE,
     MigrationArtifact,
     MigrationChecksumMismatch,
+    SQLiteFileSetSnapshot,
     apply_migration,
     inspect_database,
     provision_runtime,
+    snapshot_sqlite_files,
 )
 from backend.adapters.outbound.persistence.sqlite import ConcurrencyConflict, connect_sqlite
 from backend.adapters.outbound.persistence.vocabulary import decode_resource
@@ -137,10 +140,15 @@ def seed_path() -> Path:
 
 @pytest.fixture(scope="module", autouse=True)
 def seed_remains_immutable(seed_path: Path) -> Iterator[None]:
+    files_before = _authenticated_seed_snapshot(seed_path)
     before = inspect_database(seed_path, authenticate_seed=True)
-    yield
-    after = inspect_database(seed_path, authenticate_seed=True)
-    assert after == before
+    try:
+        yield
+    finally:
+        assert _authenticated_seed_snapshot(seed_path) == files_before
+        after = inspect_database(seed_path, authenticate_seed=True)
+        assert after == before
+        assert snapshot_sqlite_files(seed_path) == files_before
 
 
 @pytest.fixture(scope="module")
@@ -157,16 +165,30 @@ def runtime_copy(runtime_template: Path, tmp_path: Path) -> Path:
     return path
 
 
+def _authenticated_seed_snapshot(seed_path: Path) -> SQLiteFileSetSnapshot:
+    """Authenticate bytes before any test-side SQLite connection to the seed."""
+    snapshot = snapshot_sqlite_files(seed_path)
+    assert snapshot.main.exists
+    assert snapshot.main.size_bytes == CANONICAL_SEED_SIZE
+    assert snapshot.main.sha256 == CANONICAL_SEED_SHA256
+    return snapshot
+
+
 def test_seed_gate_is_exact_and_read_only(seed_path: Path) -> None:
+    files_before = _authenticated_seed_snapshot(seed_path)
     before = inspect_database(seed_path, authenticate_seed=True)
-    with connect_sqlite(seed_path, readonly=True) as connection:
-        with pytest.raises(sqlite3.OperationalError):
-            connection.execute("CREATE TABLE forbidden_seed_write(id INTEGER)")
+    try:
+        with closing(connect_sqlite(seed_path, readonly=True, immutable=True)) as connection:
+            with pytest.raises(sqlite3.OperationalError):
+                connection.execute("CREATE TABLE forbidden_seed_write(id INTEGER)")
+    finally:
+        assert snapshot_sqlite_files(seed_path) == files_before
     after = inspect_database(seed_path, authenticate_seed=True)
 
     assert before == after
     assert before.size_bytes == CANONICAL_SEED_SIZE
     assert before.sha256 == CANONICAL_SEED_SHA256
+    assert snapshot_sqlite_files(seed_path) == files_before
 
 
 def test_runtime_provisioning_applies_exact_migration(

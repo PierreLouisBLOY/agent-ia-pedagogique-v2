@@ -1,0 +1,261 @@
+{
+  "contract_id": "SEARCH-HTTP-LOCAL-1.0",
+  "scope": "H2_LOCAL_LEXICAL_SEARCH_V1",
+  "roadmap_milestone": "R1",
+  "next_priority": "R2_CONVERSATIONAL_PEDAGOGICAL_GENERATION",
+  "status": "APPROVED_FOR_BOUNDED_IMPLEMENTATION",
+  "baseline_commit": "3f724ca81843b5d45ac534e9654ff16281c55713",
+  "owner_approval_source": "EXPLICIT_USER_MESSAGE_AUTHORIZING_R1_IN_THIS_TASK",
+  "owner_attestation_timestamp": null,
+  "decision_package_manifest_sha256": "7e210975e1c64ecc29aa73bbbaf48c2e4b099501625fd061f33f0ef13d8f15f4",
+  "read15_manifest_sha256": "0b21d5ed85751b89c8bd55182392a2de99507b817d351a8211ba9834f54eddb7",
+  "roadmap_sha256": "10c7fc1114c4203948cc7be476864810cb5a39fceb66e47851bf57826aea12a4",
+  "rules_source": "docs/development/phase_12_18_h2_recherche_locale_preparation/02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+  "rules_source_sha256": "664df97c350324af087597f7d17ec4e71ab837129a871959ee3305d61e7ebf0b",
+  "approved_rules": "P01-P15_WITH_INHERITED_H01-H05",
+  "routes": [
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/resources/{resource_ref}",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/search",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/",
+      "asset": "index.html"
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/assets/app.js",
+      "asset": "app.js"
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/assets/styles.css",
+      "asset": "styles.css"
+    }
+  ],
+  "approved_inventory": [
+    "architecture/adr/ADR-local-lexical-search-product-boundary.md",
+    "backend/adapters/inbound/api/routes.py",
+    "backend/adapters/inbound/api/search.py",
+    "backend/adapters/inbound/api/server.py",
+    "backend/adapters/inbound/application/local_search.py",
+    "backend/adapters/outbound/search/local.py",
+    "backend/infrastructure/composition/factories/local_browser.py",
+    "backend/modules/resource_library/application/dto/input/search_local.py",
+    "backend/modules/resource_library/application/dto/output/local_search_view.py",
+    "backend/modules/resource_library/application/queries/search_local.py",
+    "backend/modules/resource_library/domain/value_objects/search_text.py",
+    "backend/modules/resource_library/ports/inbound/local_search.py",
+    "backend/modules/resource_library/ports/outbound/local_search.py",
+    "docs/development/phase_12_18_h2_local_search/IMPLEMENTATION_EVIDENCE.md",
+    "docs/development/phase_12_18_h2_local_search/MANIFEST_SHA256.txt",
+    "docs/development/phase_12_18_h2_local_search/SEARCH_HTTP_LOCAL_V1.json",
+    "frontend/app.js",
+    "frontend/index.html",
+    "frontend/styles.css",
+    "tests/architecture/test_local_browser_product_boundary.py",
+    "tests/architecture/test_local_search_product_boundary.py",
+    "tests/architecture/test_resource_ref_contract_fitness.py",
+    "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+    "tests/integration/test_local_search_http.py",
+    "tests/integration/test_local_search_sqlite.py",
+    "tests/unit/test_local_browser_product_routes.py",
+    "tests/unit/test_local_search_application.py",
+    "tests/unit/test_local_search_http_projection.py",
+    "tests/unit/test_local_search_routes.py",
+    "tests/unit/test_local_search_text.py"
+  ],
+  "protected_documents": [
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/01_BASELINE_ET_PERIMETRE.md",
+      "sha256": "1a220b89864c0b01634996b04b4784e38faee5fe7fea596f65c51ce8d0d9cecb"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/02_MATRICE_CUMULATIVE_12_1_12_17.json",
+      "sha256": "3f1120df875476dc1f140ae394de27831d517c8b4d49ec07c8271075c42029b3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/03_ETAT_INTEGRATION_PRODUIT.md",
+      "sha256": "1d844c64b5e44dd798de3fb81807b1a8a7098f4cc7fa9d5eeeabf87432b8f811"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/04_ECARTS_ET_PREPARATION_RECETTE.json",
+      "sha256": "af7e112116448cb076244349bf1de9cdd823ed2071ddeadda84bda4c7821d282"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/LIVRABLE_12_18_H1_AUDIT_CUMULATIF.md",
+      "sha256": "c2723ab6f9d943397cc7eb8d36642f76ee555ea36d1ebe96bf31b28a84bfaefd"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/MANIFEST_SHA256.txt",
+      "sha256": "259a50779d6c75231e3a3cad8f5d78dc69442b696613719c128fcb4320674ab3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/01_SOURCES_ET_ECARTS_RECONCILIES.json",
+      "sha256": "a8dd8edc13d505e504a3983bf5598a834f2fb57ba4fead0d3545f1d2848448d3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/02_PROPOSITION_EVOLUTION_GUARD.md",
+      "sha256": "f019d1e74e079ca2ecfc48f77da8ef3bee6904affa59346b48b59d8d9840a80c"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/03_PAQUET_DECISION_ET_PLAN_H2.md",
+      "sha256": "2e90d55cd1600f71032f197c3aaa61c8aaebb291e792fea5d27a7b89e50a1dad"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/LIVRABLE_H1A_SOURCES_ET_GUARD.md",
+      "sha256": "398a6e2b68e4deb0c720cb309d33ef41c12644c2b49951749739e3b224afc998"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/MANIFEST_SHA256.txt",
+      "sha256": "2c7f3d2b93e4852f9243f6d6631492fc1d413bfb3ab0df4141672fa1ccd932a8"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/01_BASELINE_ET_REUTILISATION.md",
+      "sha256": "86916ecaf2fbfc2f0d98d39ae18636264c2f02049e7e4dae8ff3d254a3f8c31e"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+      "sha256": "664df97c350324af087597f7d17ec4e71ab837129a871959ee3305d61e7ebf0b"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/03_INVENTAIRE_FICHIERS_ET_GUARDS.json",
+      "sha256": "856c7017b6f943c8575895a3844bfa62053c7574272422be3e8e1bbedb53606a"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/04_DECISION_ET_PLAN_IMPLEMENTATION.md",
+      "sha256": "777e86b5584eebc59990568b4e82985e89901ea6a2e6b58cf4f032b4eda7df4b"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/LIVRABLE_PROPOSITION_RECHERCHE_LOCALE.md",
+      "sha256": "b03bbb1be99b2698dff717b864ee59e968f3abe2d366e9e7c658aab60ac450d4"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/MANIFEST_SHA256.txt",
+      "sha256": "7e210975e1c64ecc29aa73bbbaf48c2e4b099501625fd061f33f0ef13d8f15f4"
+    }
+  ],
+  "request": {
+    "parameters": [
+      "q",
+      "limit"
+    ],
+    "q_required": true,
+    "q_max_codepoints": 256,
+    "max_tokens": 12,
+    "max_token_codepoints": 64,
+    "default_limit": 10,
+    "max_limit": 20,
+    "body_allowed": false,
+    "raw_target_max_bytes": 8192,
+    "read15_query_allowed": false,
+    "decode_once": true,
+    "normalization": "NFC_Z_SEPARATORS_COLLAPSED",
+    "fts": "ALL_QUOTED_LITERAL_TOKENS_AND"
+  },
+  "retrieval": {
+    "channel": "LEXICAL",
+    "candidate_limit": 100,
+    "admission": "F2A_INDEPENDENT",
+    "source_policy": {
+      "kinds": [
+        "canonical"
+      ]
+    },
+    "filters": {
+      "active": true
+    },
+    "scope": {},
+    "required_authority": {
+      "basis": "canonical-registry"
+    },
+    "ordering": [
+      "bm25 ASC",
+      "search_chunk.id ASC"
+    ],
+    "pagination": false,
+    "exhaustive": false,
+    "provider": false,
+    "snapshot": "SINGLE_QUERY_ONLY_READ_TRANSACTION"
+  },
+  "response": {
+    "max_excerpt_codepoints": 320,
+    "max_utf8_bytes": 65536,
+    "top_fields": [
+      "data",
+      "meta"
+    ],
+    "data_fields": [
+      "items",
+      "window_full",
+      "more_admitted_in_window"
+    ],
+    "opening": "RESOURCE_AND_VALID_RESOURCEREF_AND_EXACT_APPLICATION_READ",
+    "score_is_quality": false
+  },
+  "guard_changes": [
+    {
+      "id": "G01",
+      "path": "tests/architecture/test_local_browser_product_boundary.py",
+      "sha256_pre": "9f3f8ea7b596e8e0b07baeea7d89ad17a82b238b02fc568258059c88efe6677d"
+    },
+    {
+      "id": "G02",
+      "path": "tests/architecture/test_local_browser_product_boundary.py",
+      "sha256_pre": "9f3f8ea7b596e8e0b07baeea7d89ad17a82b238b02fc568258059c88efe6677d"
+    },
+    {
+      "id": "G03",
+      "path": "tests/architecture/test_resource_ref_contract_fitness.py",
+      "sha256_pre": "66b6b6bfafc300c5298d722417c80a483f39fafb4aa6b158b54aedfda8e11f6f"
+    },
+    {
+      "id": "G04",
+      "path": "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+      "sha256_pre": "0ef6c9e275406fe450976588fce3face0461eeb69616b69a171d81a624d4c7e8"
+    }
+  ],
+  "unit_changes": [
+    {
+      "id": "U01",
+      "path": "tests/unit/test_local_browser_product_routes.py",
+      "sha256_pre": "c5b3db9a0559d9314eddc1007a7ad596bc034ecaa43ac6edffbb4aa9cf4a0b38"
+    }
+  ],
+  "execution_scope": {
+    "data": "SYNTHETIC_ONLY_EXTERNAL_TEMP",
+    "network": "LOOPBACK_ONLY",
+    "suite": "SYNTHETIC_AUTHORIZED",
+    "sole_exclusion": "tests/non_functional/test_retrieval_quality_real_gate.py",
+    "real_seed_gate": "NOT_RUN / NOT_PASS",
+    "provider_calls": 0,
+    "user_data_access": false,
+    "user_data_metadata_access": false,
+    "dependencies": "EXISTING_ONLY",
+    "one_local_commit_after_validation": true,
+    "push": false,
+    "merge": false,
+    "H3": false
+  },
+  "historical_guard_baseline": "24b7a9850bc4644391dee2307c8a8a31036cd503"
+}

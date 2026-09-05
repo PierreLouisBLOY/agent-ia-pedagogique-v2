@@ -9,10 +9,13 @@ from pathlib import Path
 
 from backend.adapters.inbound.api.read15 import Read15Endpoint, Read15ValidationRejected
 from backend.adapters.inbound.api.routes import ASSET_NAMES
+from backend.adapters.inbound.api.search import SearchEndpoint, SearchValidationRejected
 from backend.adapters.inbound.api.server import LocalRead15Server, LocalRead15Service
+from backend.adapters.inbound.application.local_search import LocalSearchUseCaseInbound
 from backend.adapters.inbound.application.resource_library import ResourceLibraryUseCaseInbound
 from backend.adapters.outbound.persistence.sqlite import connect_sqlite
 from backend.adapters.outbound.resource_library.sqlite import SQLiteResourceStoreAdapter
+from backend.adapters.outbound.search.local import SQLiteLocalSearchAdapter
 from backend.agent_runtime.contracts import (
     AGENT_CONTRACT_SCHEMA_V1_0,
     ActorKind,
@@ -34,9 +37,15 @@ from backend.infrastructure.filesystem import (
     hash_file_nofollow,
     read_file_nofollow,
 )
+from backend.modules.resource_library.application.dto.input.search_local import SearchLocalRequest
 from backend.modules.resource_library.application.queries import GetResourceQuery
+from backend.modules.resource_library.application.queries.search_local import SearchLocalQuery
 from backend.modules.resource_library.domain.errors import InvalidResourceRefError
 from backend.modules.resource_library.domain.value_objects import ResourceRef
+from backend.modules.resource_library.domain.value_objects.search_text import (
+    InvalidSearchTextError,
+    SearchText,
+)
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.time import Instant
 
@@ -119,6 +128,41 @@ def _application_reader(target: Read15RuntimeTarget) -> Read15Endpoint:
     return Read15Endpoint(invoke)
 
 
+def _application_searcher(target: Read15RuntimeTarget) -> SearchEndpoint:
+    def invoke(text: str, limit: int, correlation: str) -> UseCaseResult[object, object]:
+        # Validate the Application-owned intention before any target metadata access.
+        try:
+            typed = SearchLocalRequest(SearchText(text), limit)
+        except InvalidSearchTextError:
+            raise SearchValidationRejected("SEARCH_REQUEST_REJECTED") from None
+        target.validate()
+        connection = connect_sqlite(
+            target.runtime_path, readonly=True, allowed_root=target.data_root,
+        )
+        try:
+            search = SQLiteLocalSearchAdapter(connection)
+            resources = GetResourceQuery(SQLiteResourceStoreAdapter(connection))
+            inbound = LocalSearchUseCaseInbound(SearchLocalQuery(search, resources))
+            correlation_id = CorrelationId(correlation)
+            request = UseCaseRequest(
+                meta=ContractMeta(
+                    schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
+                    run_id="local-search", step_id="local-search-read", parent_step_id=None,
+                    correlation_id=correlation_id, created_at=Instant(datetime.now(UTC)),
+                    actor=ActorRef(ActorKind.APPLICATION, "local-search"),
+                    status=InvocationStatus.PLANNED,
+                ),
+                use_case_id="application.search_local_passages",
+                payload={"q": typed.text.value, "limit": typed.limit},
+                actor_context=UseCaseContext(correlation_id),
+            )
+            with search.read_snapshot():
+                return inbound.invoke(request=request)
+        finally:
+            connection.close()
+    return SearchEndpoint(invoke)
+
+
 def build_local_read15(
     configuration: LocalBrowserHttpConfiguration, target: Read15RuntimeTarget,
 ) -> LocalRead15Composition:
@@ -138,7 +182,10 @@ def build_local_read15(
     }
     observability = build_local_observability_session(target.data_root)
     try:
-        service = LocalRead15Service(configuration, _application_reader(target), observability, assets)
+        service = LocalRead15Service(
+            configuration, _application_reader(target), observability, assets,
+            search_endpoint=_application_searcher(target),
+        )
         server = LocalRead15Server(service)
     except Exception:
         observability.shutdown()

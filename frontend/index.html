@@ -16,10 +16,27 @@
     <section class="intro" aria-labelledby="page-title">
       <p class="eyebrow">Bibliothèque · READ-15</p>
       <h1 id="page-title">Retrouver une ressource.</h1>
-      <p class="lede">Consultez une référence exacte depuis l'application locale.
+      <p class="lede">Recherchez des passages indexés ou consultez une référence exacte.
         Cette interface ne crée ni ne modifie de contenu.</p>
       <p class="scope-note">Incrément H2 · Validation sur données synthétiques uniquement.
         La bibliothèque utilisateur n'est pas raccordée dans ce lot.</p>
+    </section>
+    <section class="workspace search-workspace" aria-labelledby="search-heading">
+      <h2 id="search-heading">Rechercher des passages</h2>
+      <p id="search-help">Recherche lexicale dans les passages indexés ; certains résultats
+        ne sont pas des ressources ouvrables. Tous les mots sont recherchés ensemble.</p>
+      <form id="search-form">
+        <label for="search-q">Mots à rechercher</label>
+        <div class="input-row">
+          <input id="search-q" name="q" type="text" required autocomplete="off"
+            aria-describedby="search-help" placeholder="fractions proportionnelles">
+          <button type="submit">Rechercher</button>
+        </div>
+      </form>
+      <p id="search-status" role="status" aria-live="polite">Aucune recherche effectuée.</p>
+      <p id="search-window" class="scope-note" hidden>Fenêtre de recherche bornée : précisez
+        ou reformulez les mots. Cette liste n'est pas un inventaire complet de la bibliothèque.</p>
+      <ol id="search-results" aria-label="Passages trouvés"></ol>
     </section>
     <section class="workspace" aria-label="Consultation">
       <form id="resource-form">

@@ -14,7 +14,59 @@ ROOT = Path(__file__).resolve().parents[2]
 BASELINE = "24b7a9850bc4644391dee2307c8a8a31036cd503"
 SERVER_PATH = "backend/adapters/inbound/api/server.py"
 ROUTES_PATH = "backend/adapters/inbound/api/routes.py"
-_CONTRACT = "docs/development/phase_12_18_h2_local_read15/READ15_HTTP_LOCAL_V1.json"
+_CONTRACT = "docs/development/phase_12_18_h2_local_search/SEARCH_HTTP_LOCAL_V1.json"
+_SEARCH_BASELINE = "3f724ca81843b5d45ac534e9654ff16281c55713"
+EXPECTED_SEARCH_INVENTORY = (
+    "architecture/adr/ADR-local-lexical-search-product-boundary.md",
+    "backend/adapters/inbound/api/routes.py",
+    "backend/adapters/inbound/api/search.py",
+    "backend/adapters/inbound/api/server.py",
+    "backend/adapters/inbound/application/local_search.py",
+    "backend/adapters/outbound/search/local.py",
+    "backend/infrastructure/composition/factories/local_browser.py",
+    "backend/modules/resource_library/application/dto/input/search_local.py",
+    "backend/modules/resource_library/application/dto/output/local_search_view.py",
+    "backend/modules/resource_library/application/queries/search_local.py",
+    "backend/modules/resource_library/domain/value_objects/search_text.py",
+    "backend/modules/resource_library/ports/inbound/local_search.py",
+    "backend/modules/resource_library/ports/outbound/local_search.py",
+    "docs/development/phase_12_18_h2_local_search/IMPLEMENTATION_EVIDENCE.md",
+    "docs/development/phase_12_18_h2_local_search/MANIFEST_SHA256.txt",
+    "docs/development/phase_12_18_h2_local_search/SEARCH_HTTP_LOCAL_V1.json",
+    "frontend/app.js",
+    "frontend/index.html",
+    "frontend/styles.css",
+    "tests/architecture/test_local_browser_product_boundary.py",
+    "tests/architecture/test_local_search_product_boundary.py",
+    "tests/architecture/test_resource_ref_contract_fitness.py",
+    "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+    "tests/integration/test_local_search_http.py",
+    "tests/integration/test_local_search_sqlite.py",
+    "tests/unit/test_local_browser_product_routes.py",
+    "tests/unit/test_local_search_application.py",
+    "tests/unit/test_local_search_http_projection.py",
+    "tests/unit/test_local_search_routes.py",
+    "tests/unit/test_local_search_text.py",
+)
+EXPECTED_PROTECTED_DOCUMENTS = (
+    ("docs/development/phase_12_18_h1_audit_cumulatif/01_BASELINE_ET_PERIMETRE.md", "1a220b89864c0b01634996b04b4784e38faee5fe7fea596f65c51ce8d0d9cecb"),
+    ("docs/development/phase_12_18_h1_audit_cumulatif/02_MATRICE_CUMULATIVE_12_1_12_17.json", "3f1120df875476dc1f140ae394de27831d517c8b4d49ec07c8271075c42029b3"),
+    ("docs/development/phase_12_18_h1_audit_cumulatif/03_ETAT_INTEGRATION_PRODUIT.md", "1d844c64b5e44dd798de3fb81807b1a8a7098f4cc7fa9d5eeeabf87432b8f811"),
+    ("docs/development/phase_12_18_h1_audit_cumulatif/04_ECARTS_ET_PREPARATION_RECETTE.json", "af7e112116448cb076244349bf1de9cdd823ed2071ddeadda84bda4c7821d282"),
+    ("docs/development/phase_12_18_h1_audit_cumulatif/LIVRABLE_12_18_H1_AUDIT_CUMULATIF.md", "c2723ab6f9d943397cc7eb8d36642f76ee555ea36d1ebe96bf31b28a84bfaefd"),
+    ("docs/development/phase_12_18_h1_audit_cumulatif/MANIFEST_SHA256.txt", "259a50779d6c75231e3a3cad8f5d78dc69442b696613719c128fcb4320674ab3"),
+    ("docs/development/phase_12_18_h1a_sources_et_evolution_guard/01_SOURCES_ET_ECARTS_RECONCILIES.json", "a8dd8edc13d505e504a3983bf5598a834f2fb57ba4fead0d3545f1d2848448d3"),
+    ("docs/development/phase_12_18_h1a_sources_et_evolution_guard/02_PROPOSITION_EVOLUTION_GUARD.md", "f019d1e74e079ca2ecfc48f77da8ef3bee6904affa59346b48b59d8d9840a80c"),
+    ("docs/development/phase_12_18_h1a_sources_et_evolution_guard/03_PAQUET_DECISION_ET_PLAN_H2.md", "2e90d55cd1600f71032f197c3aaa61c8aaebb291e792fea5d27a7b89e50a1dad"),
+    ("docs/development/phase_12_18_h1a_sources_et_evolution_guard/LIVRABLE_H1A_SOURCES_ET_GUARD.md", "398a6e2b68e4deb0c720cb309d33ef41c12644c2b49951749739e3b224afc998"),
+    ("docs/development/phase_12_18_h1a_sources_et_evolution_guard/MANIFEST_SHA256.txt", "2c7f3d2b93e4852f9243f6d6631492fc1d413bfb3ab0df4141672fa1ccd932a8"),
+    ("docs/development/phase_12_18_h2_recherche_locale_preparation/01_BASELINE_ET_REUTILISATION.md", "86916ecaf2fbfc2f0d98d39ae18636264c2f02049e7e4dae8ff3d254a3f8c31e"),
+    ("docs/development/phase_12_18_h2_recherche_locale_preparation/02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md", "664df97c350324af087597f7d17ec4e71ab837129a871959ee3305d61e7ebf0b"),
+    ("docs/development/phase_12_18_h2_recherche_locale_preparation/03_INVENTAIRE_FICHIERS_ET_GUARDS.json", "856c7017b6f943c8575895a3844bfa62053c7574272422be3e8e1bbedb53606a"),
+    ("docs/development/phase_12_18_h2_recherche_locale_preparation/04_DECISION_ET_PLAN_IMPLEMENTATION.md", "777e86b5584eebc59990568b4e82985e89901ea6a2e6b58cf4f032b4eda7df4b"),
+    ("docs/development/phase_12_18_h2_recherche_locale_preparation/LIVRABLE_PROPOSITION_RECHERCHE_LOCALE.md", "b03bbb1be99b2698dff717b864ee59e968f3abe2d366e9e7c658aab60ac450d4"),
+    ("docs/development/phase_12_18_h2_recherche_locale_preparation/MANIFEST_SHA256.txt", "7e210975e1c64ecc29aa73bbbaf48c2e4b099501625fd061f33f0ef13d8f15f4"),
+)
 _FORBIDDEN = ("aiohttp", "fastapi", "flask", "hypercorn", "starlette", "uvicorn")
 _API_FORBIDDEN = (
     "anthropic", "backend.adapters.outbound", "backend.modules",
@@ -22,6 +74,7 @@ _API_FORBIDDEN = (
 )
 _EXPECTED_ROUTES = (
     (("GET",), "/api/v2/resources/{resource_ref}", None),
+    (("GET",), "/api/v2/search", None),
     (("GET", "HEAD"), "/", "index.html"),
     (("GET", "HEAD"), "/assets/app.js", "app.js"),
     (("GET", "HEAD"), "/assets/styles.css", "styles.css"),
@@ -134,7 +187,7 @@ def route_contract_violations(root: Path) -> list[str]:
     constants: dict[str, object] = {}
     for node in ast.parse((root / ROUTES_PATH).read_text(encoding="utf-8")).body:
         if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.value:
-            if node.target.id in {"READ15_TEMPLATE", "_RESOURCE_PREFIX", "ROUTE_SPECS"}:
+            if node.target.id in {"READ15_TEMPLATE", "SEARCH_TEMPLATE", "_RESOURCE_PREFIX", "ROUTE_SPECS"}:
                 constants[node.target.id] = _literal(node.value, constants)
     from backend.adapters.inbound.api.routes import ROUTE_SPECS
     contract = json.loads((root / _CONTRACT).read_text(encoding="utf-8"))
@@ -183,11 +236,12 @@ def observability_server_violations(source: str) -> list[str]:
 
 def inventory_violations(root: Path, changed: set[str] | None = None) -> list[str]:
     contract = json.loads((root / _CONTRACT).read_text(encoding="utf-8"))
-    assert contract["baseline_commit"] == BASELINE
+    assert contract["baseline_commit"] == _SEARCH_BASELINE
+    assert contract["approved_inventory"] == list(EXPECTED_SEARCH_INVENTORY)
     if changed is None:
         changed = set()
         for arguments in (
-            ["diff", "--name-only", BASELINE, "--"],
+            ["diff", "--name-only", _SEARCH_BASELINE, "--"],
             ["ls-files", "--others", "--exclude-standard"],
         ):
             result = subprocess.run(
@@ -195,7 +249,8 @@ def inventory_violations(root: Path, changed: set[str] | None = None) -> list[st
             )
             changed.update(result.stdout.splitlines())
     protected = {item["path"]: item["sha256"] for item in contract["protected_documents"]}
-    allowed = set(contract["approved_inventory"])
+    assert protected == dict(EXPECTED_PROTECTED_DOCUMENTS)
+    allowed = set(EXPECTED_SEARCH_INVENTORY)
     violations = sorted(changed - allowed - set(protected))
     for name, digest in protected.items():
         path = root / name

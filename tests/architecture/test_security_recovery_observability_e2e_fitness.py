@@ -115,6 +115,17 @@ def test_later_provider_work_preserves_phase_f_backend_owners() -> None:
     }
     from tests.architecture.test_local_browser_product_boundary import inventory_violations
 
+    h2_local_search_owner_files = {
+        "backend/modules/resource_library/domain/value_objects/search_text.py",
+        "backend/modules/resource_library/application/dto/input/search_local.py",
+        "backend/modules/resource_library/application/dto/output/local_search_view.py",
+        "backend/modules/resource_library/application/queries/search_local.py",
+        "backend/modules/resource_library/ports/inbound/local_search.py",
+        "backend/modules/resource_library/ports/outbound/local_search.py",
+        "backend/adapters/inbound/application/local_search.py",
+        "backend/adapters/inbound/api/search.py",
+    }
+
     assert all(
         path.startswith(allowed)
         or path in f2a_retrieval_files
@@ -122,6 +133,7 @@ def test_later_provider_work_preserves_phase_f_backend_owners() -> None:
         or path in b03_observability_files
         or path in b04_http_contract_files
         or path in h2_read15_inbound_files
+        or path in h2_local_search_owner_files
         for path in changed
     ) and inventory_violations(ROOT) == []
 

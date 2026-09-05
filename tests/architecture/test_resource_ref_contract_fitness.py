@@ -87,6 +87,7 @@ def test_read15_keeps_one_field_and_deprecations_without_http_implementation() -
     assert deprecation["include"] == "DEPRECATED_FOR_ACTIVE_READ15"
     assert ROUTE_SPECS == (
         (("GET",), "/api/v2/resources/{resource_ref}", None),
+        (("GET",), "/api/v2/search", None),
         (("GET", "HEAD"), "/", "index.html"),
         (("GET", "HEAD"), "/assets/app.js", "app.js"),
         (("GET", "HEAD"), "/assets/styles.css", "styles.css"),

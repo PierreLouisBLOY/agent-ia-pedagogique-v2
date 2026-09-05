@@ -20,9 +20,11 @@ from backend.adapters.inbound.api.read15 import Read15Endpoint, public_error
 from backend.adapters.inbound.api.routes import (
     ASSET_NAMES,
     MAX_TARGET_BYTES,
+    SEARCH_TEMPLATE,
     RouteRejected,
     resolve_route,
 )
+from backend.adapters.inbound.api.search import SearchEndpoint, public_search_error
 from backend.infrastructure.config.schemas.http import LocalBrowserHttpConfiguration
 
 MAX_HEADER_BYTES: Final = 64 * 1_024
@@ -47,6 +49,7 @@ class LocalRead15Service:
     def __init__(
         self, configuration: LocalBrowserHttpConfiguration, endpoint: Read15Endpoint,
         observability: HttpObservabilityPort, assets: Mapping[str, bytes],
+        *, search_endpoint: SearchEndpoint | None = None,
     ) -> None:
         if configuration.cors_enabled:
             raise ValueError("CORS must remain disabled for READ15-HTTP-LOCAL-1.0")
@@ -54,6 +57,7 @@ class LocalRead15Service:
             raise ValueError("asset inventory mismatch")
         self.configuration = configuration
         self.endpoint = endpoint
+        self.search_endpoint = search_endpoint
         self.observability = observability
         self.security = LocalBrowserHttpSecurityContract(configuration, observability)
         self.assets = MappingProxyType(dict(assets))
@@ -76,6 +80,18 @@ class LocalRead15Service:
             return self.error(error.code, correlation_id)
         if match.asset_name is not None:
             return 200, _MEDIA[match.asset_name], self.assets[match.asset_name], match.template
+        if match.template == SEARCH_TEMPLATE:
+            if (self.search_endpoint is None or match.search_text is None
+                    or match.search_limit is None):
+                return self.error("INTERNAL_ERROR", correlation_id)
+            search_projection = self.search_endpoint.get(
+                match.search_text, match.search_limit, correlation_id,
+            )
+            return (
+                search_projection.status, "application/json; charset=utf-8",
+                json.dumps(dict(search_projection.payload), ensure_ascii=False).encode("utf-8"),
+                match.template,
+            )
         if match.resource_ref is None:
             return self.error("INTERNAL_ERROR", correlation_id)
         projection = self.endpoint.get(match.resource_ref, correlation_id)
@@ -88,7 +104,8 @@ class LocalRead15Service:
     def error(self, code: str, correlation_id: str) -> tuple[int, str, bytes, str]:
         if code == "INTERNAL_ERROR":
             code = self.security.internal_error(correlation_id=correlation_id).error_code.value
-        projection = public_error(code, correlation_id)
+        projection = (public_search_error(code, correlation_id)
+                      if code == "SEARCH_REQUEST_REJECTED" else public_error(code, correlation_id))
         return (
             projection.status, "application/json; charset=utf-8",
             json.dumps(dict(projection.payload)).encode("utf-8"), "/{unmatched}",

@@ -40,6 +40,13 @@ dd { margin: 0; font-size: .94rem; overflow-wrap: anywhere; }
 .result-note, .correlation { color: var(--muted); font-size: .78rem; line-height: 1.5; overflow-wrap: anywhere; }
 footer { padding: 1.5rem clamp(1.25rem, 6vw, 6rem); border-top: 1px solid var(--line); color: var(--muted); font-size: .78rem; }
 [hidden] { display: none !important; }
+.search-workspace { margin-bottom: 1.5rem; }
+#search-help, #search-status { color: var(--muted); line-height: 1.6; }
+#search-results { padding: 0; list-style: none; }
+#search-results li { border-top: 1px solid var(--line); padding: 1.2rem 0; overflow-wrap: anywhere; }
+#search-results h3 { margin: .2rem 0 .7rem; }
+#search-results .provenance { font-size: .8rem; color: var(--muted); }
+#search-results button { margin-top: .6rem; }
 @media (max-width: 560px) {
   .masthead { align-items: flex-start; }
   .brand span { display: block; margin: .3rem 0 0; font-size: .76rem; }

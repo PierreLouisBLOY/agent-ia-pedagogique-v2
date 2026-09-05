@@ -13,6 +13,8 @@ from backend.infrastructure.config.loaders.sqlite import (
     LEGACY_RUNTIME_PATH_ENV,
     LEGACY_SEED_PATH_ENV,
     RUNTIME_DB_ENV,
+    RUNTIME_PATH_ENV,
+    SEED_PATH_ENV,
     USER_HOME_ENV,
     WINDOWS_DATA_HOME_ENV,
     XDG_DATA_HOME_ENV,
@@ -70,47 +72,20 @@ def test_explicit_data_root_derives_non_repository_subdirectories(tmp_path: Path
     assert paths.runtime_directory == tmp_path / "runtime"
 
 
-def test_legacy_names_remain_accepted_during_compatibility_window(tmp_path: Path) -> None:
-    seed = tmp_path / "external-seed.sqlite"
-    runtime = tmp_path / "external-runtime.sqlite"
-    paths = load_sqlite_paths(
-        {
-            DATA_DIR_ENV: str(tmp_path),
-            LEGACY_SEED_PATH_ENV: str(seed),
-            LEGACY_RUNTIME_PATH_ENV: str(runtime),
-        }
-    )
-
-    assert paths.canonical_seed_path == seed
-    assert paths.runtime_database_path == runtime
-
-
-def test_equal_new_and_legacy_values_are_accepted(tmp_path: Path) -> None:
-    seed = tmp_path / "seed.sqlite"
-    runtime = tmp_path / "runtime.sqlite"
-    paths = load_sqlite_paths(
-        {
-            DATA_DIR_ENV: str(tmp_path),
-            CANONICAL_DB_ENV: str(seed),
-            LEGACY_SEED_PATH_ENV: str(seed),
-            RUNTIME_DB_ENV: str(runtime),
-            LEGACY_RUNTIME_PATH_ENV: str(runtime),
-        }
-    )
-
-    assert paths.canonical_seed_path == seed
-    assert paths.runtime_database_path == runtime
+def test_public_path_setting_names_are_v2_only() -> None:
+    assert SEED_PATH_ENV == CANONICAL_DB_ENV
+    assert RUNTIME_PATH_ENV == RUNTIME_DB_ENV
 
 
 @pytest.mark.parametrize(
-    ("new_name", "legacy_name"),
+    ("legacy_name", "new_name"),
     (
-        (CANONICAL_DB_ENV, LEGACY_SEED_PATH_ENV),
-        (RUNTIME_DB_ENV, LEGACY_RUNTIME_PATH_ENV),
+        (LEGACY_SEED_PATH_ENV, CANONICAL_DB_ENV),
+        (LEGACY_RUNTIME_PATH_ENV, RUNTIME_DB_ENV),
     ),
 )
-def test_different_new_and_legacy_values_fail_closed(
-    tmp_path: Path, new_name: str, legacy_name: str
+def test_legacy_settings_fail_closed_with_migration_code(
+    tmp_path: Path, legacy_name: str, new_name: str
 ) -> None:
     environment = {
         DATA_DIR_ENV: str(tmp_path),
@@ -121,7 +96,19 @@ def test_different_new_and_legacy_values_fail_closed(
     with pytest.raises(SQLitePathConfigurationError) as raised:
         load_sqlite_paths(environment)
 
-    assert raised.value.code is SQLitePathErrorCode.LEGACY_SETTING_CONFLICT
+    assert raised.value.code is SQLitePathErrorCode.LEGACY_SETTING_FORBIDDEN
+
+
+@pytest.mark.parametrize(
+    "legacy_name", (LEGACY_SEED_PATH_ENV, LEGACY_RUNTIME_PATH_ENV)
+)
+def test_legacy_only_setting_is_rejected(tmp_path: Path, legacy_name: str) -> None:
+    with pytest.raises(SQLitePathConfigurationError) as raised:
+        load_sqlite_paths(
+            {DATA_DIR_ENV: str(tmp_path), legacy_name: str(tmp_path / "legacy.sqlite")}
+        )
+
+    assert raised.value.code is SQLitePathErrorCode.LEGACY_SETTING_FORBIDDEN
 
 
 def test_empty_or_relative_settings_are_rejected(tmp_path: Path) -> None:
@@ -171,7 +158,6 @@ def test_configuration_errors_never_disclose_local_path_values(tmp_path: Path) -
         load_sqlite_paths(
             {
                 DATA_DIR_ENV: str(tmp_path),
-                CANONICAL_DB_ENV: str(private_seed),
                 LEGACY_SEED_PATH_ENV: str(private_legacy),
             }
         )

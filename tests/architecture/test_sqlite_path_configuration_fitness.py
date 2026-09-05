@@ -6,17 +6,25 @@ SCHEMA = ROOT / "backend/infrastructure/config/schemas/sqlite.py"
 COMPOSITION = ROOT / "backend/infrastructure/composition/factories/sqlite.py"
 
 
-def test_portable_configuration_declares_new_and_legacy_names() -> None:
+def test_portable_configuration_uses_v2_names_and_rejects_retired_names() -> None:
     source = LOADER.read_text(encoding="utf-8")
 
     for setting in (
         "PROJET_V2_DATA_DIR",
         "PROJET_V2_CANONICAL_DB",
         "PROJET_V2_RUNTIME_DB",
+    ):
+        assert setting in source
+
+    for retired_setting in (
         "PEDAGOGICAL_CANONICAL_SEED_PATH",
         "PEDAGOGICAL_RUNTIME_DATABASE_PATH",
     ):
-        assert setting in source
+        assert retired_setting in source
+    assert "SEED_PATH_ENV = CANONICAL_DB_ENV" in source
+    assert "RUNTIME_PATH_ENV = RUNTIME_DB_ENV" in source
+    assert "LEGACY_SETTING_FORBIDDEN" in source
+    assert "_compatible_setting" not in source
 
 
 def test_configuration_contains_no_private_or_nominative_default() -> None:

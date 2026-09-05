@@ -21,13 +21,10 @@ from backend.infrastructure.composition.factories.sqlite import (
 from backend.infrastructure.config.loaders.sqlite import (
     CANONICAL_DB_ENV,
     DATA_DIR_ENV,
-    LEGACY_SEED_PATH_ENV,
     RUNTIME_DB_ENV,
 )
 
-SEED_VALUE = os.environ.get(CANONICAL_DB_ENV) or os.environ.get(
-    LEGACY_SEED_PATH_ENV
-)
+SEED_VALUE = os.environ.get(CANONICAL_DB_ENV)
 pytestmark = pytest.mark.skipif(
     SEED_VALUE is None, reason="canonical SQLite seed is not configured"
 )

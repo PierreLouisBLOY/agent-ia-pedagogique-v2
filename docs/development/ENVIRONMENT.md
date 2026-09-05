@@ -10,7 +10,8 @@ Verifier que Python 3.12 est installe, puis executer :
 py -3.12 --version
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements-dev.txt
+python -m pip install --require-hashes --no-deps -r requirements/lock/dev-py312-win.txt
+python -m pip install --require-hashes --no-deps -r requirements/lock/calibration-py312-win.txt
 ```
 
 Si `python.exe` 3.12 est disponible directement, il peut remplacer `py -3.12` pour la creation du venv.
@@ -21,7 +22,7 @@ Si `python.exe` 3.12 est disponible directement, il peut remplacer `py -3.12` po
 python3.12 --version
 python3.12 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements-dev.txt
+echo "Les locks actuels ciblent win_amd64 ; regenerer un lock approuve pour cette plateforme."
 ```
 
 ## Validation locale
@@ -30,14 +31,32 @@ Depuis le venv active et la racine du depot :
 
 ```text
 python --version
-python -m pip install -r requirements-dev.txt
+python -m pip install --require-hashes --no-deps -r requirements/lock/dev-py312-win.txt
+python -m pip install --require-hashes --no-deps -r requirements/lock/calibration-py312-win.txt
 python -m compileall backend
 python -m pytest -q
 python -m ruff check .
 python -m mypy backend
 ```
 
-Les seules dependances directes de developpement sont `pytest`, `ruff` et `mypy`, epinglees dans `requirements-dev.txt`. La seule dependance runtime directe est le SDK Python officiel `openai`, borne a la version majeure calibree dans `pyproject.toml`.
+## Ensembles de dependances reproductibles
+
+`pyproject.toml` reste l'autorite des bornes semantiques : le runtime depend directement de `openai>=3.5,<4`, et l'extra `calibration` ajoute exclusivement `anthropic>=1.2,<2`. `requirements-dev.txt` conserve les trois outils directs et epingles `pytest`, `ruff` et `mypy`.
+
+Les resolutions Python 3.12 / Windows AMD64 sont versionnees separement :
+
+- `requirements/lock/runtime-py312-win.txt` : runtime OpenAI et transitives ;
+- `requirements/lock/calibration-py312-win.txt` : runtime plus extra Anthropic de calibration ;
+- `requirements/lock/dev-py312-win.txt` : runtime plus outils de validation, sans Anthropic.
+
+Chaque exigence est epinglee et porte le SHA-256 du wheel approuve. Installer un ensemble avec `--require-hashes --no-deps`; pour une validation sans reseau, ajouter `--no-index --find-links <wheelhouse-prive>`. Les locks refusent les sdists. Les wheels et environnements restent hors du depot. Une autre version Python, architecture ou plateforme exige une resolution et une revue distinctes.
+
+Le SDK Anthropic n'est pas une dependance du produit. Installer le lock de calibration ne constitue ni une autorisation de credential ni une autorisation d'appel fournisseur.
+Le lock dev seul suffit aux validations hors calibration ; la suite complete du depot exige l'installation successive des locks dev et calibration.
+
+## Configuration SQLite V2
+
+Les seuls noms de configuration acceptes sont `PROJET_V2_DATA_DIR`, `PROJET_V2_CANONICAL_DB` et `PROJET_V2_RUNTIME_DB`. Les anciens noms `PEDAGOGICAL_CANONICAL_SEED_PATH` et `PEDAGOGICAL_RUNTIME_DATABASE_PATH` sont retires : leur presence echoue avec le code ferme `LEGACY_SETTING_FORBIDDEN`, sans exposer leur valeur. Migrer la configuration locale vers les noms V2 ; aucun chemin local prive ne doit etre inscrit dans Git.
 
 Ne placer aucun secret dans un fichier suivi par Git. Les fichiers `.env*`, bases runtime, logs, exports et artefacts d'execution sont ignores et doivent rester hors du source tree.
 

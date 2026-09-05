@@ -65,3 +65,20 @@ Ne placer aucun secret dans un fichier suivi par Git. Les fichiers `.env*`, base
 L'observabilite operationnelle utilise exclusivement la racine locale privee injectee par `PROJET_V2_DATA_DIR`. Le journal actif est `logs/observability.ndjson`, sous cette racine et obligatoirement hors du depot. La politique canonique `OBS_A_LOCAL_ROTATING_NDJSON_5MIB_X5_14D_FLUSH_2S` impose une rotation a 5 MiB, cinq fichiers au maximum, une retention de 14 jours et un flush synchrone borne a deux secondes lors de l'arret.
 
 Les evenements suivent un schema ferme et ne doivent contenir ni secret, credential, token, chemin personnel, payload complet, prompt brut, reponse fournisseur brute, contenu pedagogique, message d'exception ni stack trace. Une panne du sink degrade uniquement son etat de sante et ne doit pas interrompre le flux metier. Les tests doivent injecter une racine sous le repertoire temporaire du systeme ; ils ne doivent jamais ecrire dans le depot, la base seed canonique ou la base runtime utilisateur.
+
+## Hygiene locale et retention non destructive (12.17.8-B06)
+
+Les tests d'hygiene inventorient les fichiers suivis et les candidats non ignores via Git. Les clones de test, environnements et caches ignores ne font pas partie du source tree ; un fichier interdit force dans l'index reste detecte. Les parcours applicatifs de sources restent distincts de l'inventaire des artefacts locaux.
+
+Les quatre familles locales ignorees supplementaires sont les backups et leurs manifests (`*.bak`, `*.backup`, `*.bak.manifest.json`, `*.backup.manifest.json`), les temporaires (`*.tmp`), les index en construction (`*.building`) et les journaux structures (`*.jsonl`). Les preuves JSON/Markdown, manifests canoniques et migrations restent visibles.
+
+Les anciens `.tmp`, caches et artefacts sont conserves. Ni leur age, ni leur nom, ni leur exclusion Git ne prouvent qu'ils sont supprimables. Le dry-run suivant collecte seulement les metadonnees, sans lire leur contenu ni suivre les liens/jonctions, et ne propose aucune commande de suppression :
+
+```powershell
+$env:PYTHONDONTWRITEBYTECODE = '1'
+python -m tests.support.repository_hygiene --older-than-days 30
+```
+
+Pour conserver le rapport prive, utiliser `--output <nouveau-fichier-hors-depot>` ; un fichier existant ou une destination dans le depot est refuse. Les erreurs d'acces sont marquees `RETAIN_UNKNOWN`, jamais assimilees a une absence. Une suppression ulterieure exige un scope et une autorisation proprietaire distincts, avec controle de provenance et d'utilite runtime.
+
+Pour les validations, utiliser le temp systeme, `PYTHONDONTWRITEBYTECODE=1`, `pytest -p no:cacheprovider`, `ruff --no-cache` et un `--cache-dir` mypy hors depot. Un `pytest --basetemp` dans le depot est refuse avant la creation de fixtures. Pour `compileall`, definir `PYTHONPYCACHEPREFIX` vers un nouveau sous-repertoire du temp systeme. Ne pas reutiliser le reseau de resolution B05 ni activer les credentials ou les gates SQLite reels dans un lot strictement hors seed.

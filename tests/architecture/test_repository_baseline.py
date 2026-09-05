@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import importlib
-import os
 import subprocess
 import tomllib
 from pathlib import Path
+
+from tests.support.repository_hygiene import forbidden_source_paths, repository_paths
 
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND = ROOT / "backend"
@@ -151,27 +152,7 @@ def test_modules_do_not_contain_adapters_or_infrastructure() -> None:
 
 
 def test_source_tree_contains_no_runtime_database() -> None:
-    ignored_dirs = {
-        ".git",
-        ".venv",
-        ".pytest_cache",
-        ".ruff_cache",
-        ".mypy_cache",
-        "__pycache__",
-    }
-    forbidden_suffixes = {".sqlite", ".sqlite3", ".db"}
-    database_files: list[str] = []
-
-    for current, directories, filenames in os.walk(ROOT):
-        directories[:] = [name for name in directories if name not in ignored_dirs]
-        current_path = Path(current)
-        for filename in filenames:
-            candidate = current_path / filename
-            lower_name = filename.lower()
-            if candidate.suffix.lower() in forbidden_suffixes or lower_name.endswith(("-wal", "-shm")):
-                database_files.append(candidate.relative_to(ROOT).as_posix())
-
-    assert database_files == []
+    assert forbidden_source_paths(repository_paths(ROOT)) == ()
 
 
 def test_structural_packages_are_importable() -> None:

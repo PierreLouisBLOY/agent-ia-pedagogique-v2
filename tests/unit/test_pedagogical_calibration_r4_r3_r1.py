@@ -337,17 +337,34 @@ def test_generated_documents_and_ignored_artifacts_match_renderers() -> None:
         assert _sha(recovery_path) == summary["ledger_final_sha256"]
 
 
-def test_writing_r1_outputs_does_not_mutate_historical_proofs() -> None:
+def test_writing_r1_outputs_does_not_mutate_historical_proofs(tmp_path: Path) -> None:
+    for directory in ("12.16-g2", "12.16-g2-r4-r2", "12.16-g2-r4-r3", "12.16-g2-r4-r4"):
+        shutil.copytree(
+            ROOT / "artifacts/calibration" / directory,
+            tmp_path / "artifacts/calibration" / directory,
+        )
     protected = (
-        ROOT / R2_LEDGER_RELATIVE_PATH,
-        ROOT / R3_LEDGER_RELATIVE_PATH,
-        ROOT / "artifacts/calibration/12.16-g2-r4-r2/summary.json",
-        ROOT / "artifacts/calibration/12.16-g2-r4-r3/summary.json",
-        ROOT / "artifacts/calibration/12.16-g2-r4-r3/transfer_manifest.json",
-        ROOT / RECOVERY_LEDGER_RELATIVE_PATH,
+        tmp_path / R2_LEDGER_RELATIVE_PATH,
+        tmp_path / R3_LEDGER_RELATIVE_PATH,
+        tmp_path / "artifacts/calibration/12.16-g2-r4-r2/summary.json",
+        tmp_path / "artifacts/calibration/12.16-g2-r4-r3/summary.json",
+        tmp_path / "artifacts/calibration/12.16-g2-r4-r3/transfer_manifest.json",
+        tmp_path / RECOVERY_LEDGER_RELATIVE_PATH,
     )
     before = {path: _sha(path) for path in protected}
+    original_paths = (
+        ROOT / BASELINE_RELATIVE_PATH,
+        ROOT / PLAN_MARKDOWN_RELATIVE_PATH,
+        ROOT / PLAN_JSON_RELATIVE_PATH,
+        ROOT / REUSABLE_MANIFEST_RELATIVE_PATH,
+        *(ROOT / path.relative_to(tmp_path) for path in protected),
+    )
+    original_before = {path: (_sha(path), path.stat().st_mtime_ns) for path in original_paths}
 
-    write_r1_outputs(ROOT)
+    write_r1_outputs(tmp_path)
 
     assert {path: _sha(path) for path in protected} == before
+    assert {path: (_sha(path), path.stat().st_mtime_ns) for path in original_paths} == original_before
+    assert json.loads((tmp_path / REUSABLE_MANIFEST_RELATIVE_PATH).read_text(encoding="utf-8")) == (
+        build_reusable_manifest(tmp_path)
+    )

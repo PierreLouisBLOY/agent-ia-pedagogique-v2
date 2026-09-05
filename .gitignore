@@ -35,6 +35,13 @@ htmlcov/
 
 # Runtime output
 *.log
+*.jsonl
+*.tmp
+*.building
+*.bak
+*.backup
+*.bak.manifest.json
+*.backup.manifest.json
 /logs/
 /runtime/
 /exports/

@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from tests.support.repository_hygiene import forbidden_source_paths, repository_paths
+
 ROOT = Path(__file__).parents[2]
 
 
@@ -19,8 +21,7 @@ def test_no_generic_repository_or_database_binary_is_introduced() -> None:
         for path in (ROOT / "backend" / "adapters" / "outbound").rglob("*.py")
     )
     assert "GenericRepository" not in sources
-    assert not tuple(ROOT.rglob("*.sqlite"))
-    assert not tuple(ROOT.rglob("*.sqlite3"))
+    assert forbidden_source_paths(repository_paths(ROOT)) == ()
 
 
 def test_phase7_migration_is_kept_in_the_adapter_owned_migration_directory() -> None:

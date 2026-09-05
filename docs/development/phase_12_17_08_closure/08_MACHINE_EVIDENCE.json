@@ -1,0 +1,4129 @@
+{
+  "schema_version": "12.17.8-b07-machine-evidence-v1",
+  "baseline_commit": "0404852a3be77381bf7b7c903ee6309e2547487e",
+  "bundle_sha256": "ff3cb131d9f78b936f8f3fb19919fd8a8468ca2ca0ba8fdec19943376f6f60b7",
+  "configuration": {
+    "initial_v2_names_present": 0,
+    "initial_legacy_seed_alias_present": true,
+    "initial_error": "LEGACY_SETTING_FORBIDDEN",
+    "owner_answer": "Oui, uniquement pour la validation B07",
+    "rebind_scope": "PROCESS_ONLY_SAME_SEED_VALUE_TEMPORARY_RUNTIME",
+    "persistent_changes": 0,
+    "provider_credentials_resolved": 0,
+    "provider_calls": [],
+    "provider_live_authorization": false
+  },
+  "batches": [
+    {
+      "id": "B01",
+      "canonical_title": "Consolidation de provenance",
+      "scope": "CF-REPO-001 ; 172+7+7+10+13 chemins et six minimisations autorisées.",
+      "commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+      "manifest": "docs/development/phase_12_17_08_b01_consolidation_de_provenance/MANIFEST_SHA256.txt",
+      "manifest_sha256": "c739a667279b8fb2051528e75ca577ed3314c2b920dc586b1eb08cd161b0ff12",
+      "status": "PASS",
+      "proof_reuse": "verified existing manifest and commit ancestor",
+      "downstream": "all -> B07",
+      "limits": "Six minimisations et EOF18 autorisés ; pas de réécriture historique."
+    },
+    {
+      "id": "B02",
+      "canonical_title": "Frontière locale fichiers et SQLite",
+      "scope": "CF-FILE-001, CF-SQLITE-HARDEN-001 ; résolution physique, permissions et no-follow.",
+      "commit": "2a0ec8f6e24d61e05228119869791999277bfef4",
+      "manifest": "docs/development/phase_12_17_08_b02_local_file_sqlite_boundary/MANIFEST_SHA256.txt",
+      "manifest_sha256": "9fbf8d4427cdd7acfceb1d10270ca5db1dc847c4b1c21ef3133b319519995000",
+      "status": "PASS",
+      "proof_reuse": "verified existing manifest and commit ancestor",
+      "downstream": "all -> B07",
+      "limits": "Aucune migration de la runtime utilisateur."
+    },
+    {
+      "id": "B03",
+      "canonical_title": "Observabilité minimale locale",
+      "scope": "CF-OBS-001 ; douze signaux, NDJSON local, 5 MiB × 5, 14 jours, flush ≤ 2 s.",
+      "commit": "2650ae7616fc7067e6c6341f854a10efee633d6f",
+      "manifest": "docs/development/phase_12_17_08_b03_minimal_local_observability/MANIFEST_SHA256.txt",
+      "manifest_sha256": "06508235f5f6cb952c827268ce03cb07a029f5d5d64181cdf912fa4c7e657d5c",
+      "status": "PASS",
+      "proof_reuse": "verified existing manifest and commit ancestor",
+      "downstream": "all -> B07",
+      "limits": "Signaux de contrat/composition ; ne prouve pas une application lancée."
+    },
+    {
+      "id": "B04",
+      "canonical_title": "Contrat HTTP local-browser fail-closed",
+      "scope": "CF-HTTP-001 ; contrat pur loopback, port explicite, aucun serveur ou route.",
+      "commit": "b63a1463046141512739e4c8f4618ab967002c78",
+      "manifest": "docs/development/phase_12_17_08_b04_local_browser_http_fail_closed/MANIFEST_SHA256.txt",
+      "manifest_sha256": "bfc6beb34750ea7cb4cf24c2b1b996862f00d045f9e6749d3a937e67aeba5dad",
+      "status": "PASS",
+      "proof_reuse": "verified existing manifest and commit ancestor",
+      "downstream": "all -> B07",
+      "limits": "Contrat sans serveur ni endpoint."
+    },
+    {
+      "id": "B05",
+      "canonical_title": "Dépendances, environnement et alias de configuration",
+      "scope": "CF-DEPENDENCY-001, CF-DOC-001, CF-LEGACY-001 ; trois locks et configuration V2.",
+      "commit": "313d574cc0aca15529978db622939ed648d0c1c7",
+      "manifest": "docs/development/phase_12_17_08_b05_dependencies_environment_config_aliases/MANIFEST_SHA256.txt",
+      "manifest_sha256": "2d0fb2e98f1a1d3f341e1f29dddeca06f66b163613f6c73e8a1f88c7b9cacd87",
+      "status": "PASS",
+      "proof_reuse": "verified existing manifest and commit ancestor",
+      "downstream": "all -> B07",
+      "limits": "Réseau B05 one-shot non réutilisé ; configuration persistante non corrigée par B07."
+    },
+    {
+      "id": "B06",
+      "canonical_title": "`.gitignore`, tests déterministes et rétention locale",
+      "scope": "CF-TEMP-LOCAL-001, CF-GITIGNORE-001 ; quatre familles, parcours Git, 203 ensembles conservés.",
+      "commit": "0404852a3be77381bf7b7c903ee6309e2547487e",
+      "manifest": "docs/development/phase_12_17_08_b06_gitignore_tests_deterministes_retention_locale/MANIFEST_SHA256.txt",
+      "manifest_sha256": "03c76d3f32e03b6850e928333e8d2cfe3e93cffb3b35b94d9691dfda659c5088",
+      "status": "PASS",
+      "proof_reuse": "verified existing manifest and commit ancestor",
+      "downstream": "all -> B07",
+      "limits": "203 ensembles conservés sans certificat de supprimabilité."
+    },
+    {
+      "id": "B07",
+      "canonical_title": "Ré-audit transverse et clôture",
+      "scope": "Huit must-fix, seize gates transverses ; aucune modification fonctionnelle.",
+      "commit": null,
+      "manifest": "docs/development/phase_12_17_08_closure/MANIFEST_SHA256.txt",
+      "manifest_sha256": null,
+      "status": "FAIL",
+      "proof_reuse": "new transverse evidence",
+      "downstream": "12.18 gate evaluated separately; not started",
+      "limits": "Suite interrompue ; aucun commit de clôture ; 12.18 bloquée."
+    }
+  ],
+  "manifests": {
+    "source_manifest_count": 23,
+    "source_entries_verified": 254,
+    "records": [
+      {
+        "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/MANIFEST_SHA256.txt",
+        "sha256": "def554827543ad01d9bb45a35c7d72893216a2caff12b8960714ac8726d5aafa",
+        "entries": 8,
+        "errors": [],
+        "last_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f"
+      },
+      {
+        "path": "docs/development/phase_12_17_05b_b02_multi_version_migration_runner/MANIFEST_SHA256.txt",
+        "sha256": "085035b8a3fc637252bb918301f1bf6fe93efcfce1b95a97b641da0a06be1635",
+        "entries": 11,
+        "errors": [],
+        "last_commit": "e2c43184a272491371b73131170db488cf3157d6"
+      },
+      {
+        "path": "docs/development/phase_12_17_05b_b03_corrective_migration_002/MANIFEST_SHA256.txt",
+        "sha256": "83b01fb534a591a3e4509cc35adfdf43cd9beff2a6ccff88566571ac8d33147c",
+        "entries": 13,
+        "errors": [],
+        "last_commit": "e2c43184a272491371b73131170db488cf3157d6"
+      },
+      {
+        "path": "docs/development/phase_12_17_05b_b04_real_chain_recovery/MANIFEST_SHA256.txt",
+        "sha256": "ec27bac6cc1f3879b1db2fca7b1f1dc00535aff64ae3094970239bbdca0d3fb8",
+        "entries": 14,
+        "errors": [],
+        "last_commit": "e2c43184a272491371b73131170db488cf3157d6"
+      },
+      {
+        "path": "docs/development/phase_12_17_05b_b05_resource_ref_contract/MANIFEST_SHA256.txt",
+        "sha256": "d8b26c52889da83ef4137f7b8b55956d5b12eaebccf0553e7bcc0cae80174c3a",
+        "entries": 13,
+        "errors": [],
+        "last_commit": "e2c43184a272491371b73131170db488cf3157d6"
+      },
+      {
+        "path": "docs/development/phase_12_17_05b_b06_active_canonical_semantics/MANIFEST_SHA256.txt",
+        "sha256": "494ad2bfa766dee0a43ddd40eb08cb6289bb11aa32091074a5742998542a89e1",
+        "entries": 14,
+        "errors": [],
+        "last_commit": "e2c43184a272491371b73131170db488cf3157d6"
+      },
+      {
+        "path": "docs/development/phase_12_17_05b_b07_final_reaudit_gate/MANIFEST_SHA256.txt",
+        "sha256": "644ac8e1dfe86e633437d1d9dbe6bab45e7d487eb5cff9eb62e4cffedc5d3693",
+        "entries": 13,
+        "errors": [],
+        "last_commit": "e2c43184a272491371b73131170db488cf3157d6"
+      },
+      {
+        "path": "docs/development/phase_12_17_05c_b02_b07_consolidation/MANIFEST_SHA256.txt",
+        "sha256": "eec96d69a697d7a3c9d298ab66ac71ca8c6a8eb9334418ca49709e3c82076fcb",
+        "entries": 10,
+        "errors": [],
+        "last_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f"
+      },
+      {
+        "path": "docs/development/phase_12_17_07_prioritized_rationalization_plan/MANIFEST_SHA256.txt",
+        "sha256": "937644fb779b6b860e7d677a3b17c1065feabbb7723e48017fc0b74a1893db8b",
+        "entries": 12,
+        "errors": [],
+        "last_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f"
+      },
+      {
+        "path": "docs/development/phase_12_17_07a_owner_decision_gate/MANIFEST_SHA256.txt",
+        "sha256": "00cdce8cf4a230bbe3e5c39a56c7f19a1039b00a7d7488cef1f2cdb657012945",
+        "entries": 6,
+        "errors": [],
+        "last_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f"
+      },
+      {
+        "path": "docs/development/phase_12_17_07b_owner_attestation_inventory_rebound/MANIFEST_SHA256.txt",
+        "sha256": "cb45f7f0d91b8e5fa0dd70e2a625aa52f81b262cd3542c4ed43a4d5bdf1065d7",
+        "entries": 6,
+        "errors": [],
+        "last_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f"
+      },
+      {
+        "path": "docs/development/phase_12_17_08_b01_consolidation_de_provenance/MANIFEST_SHA256.txt",
+        "sha256": "c739a667279b8fb2051528e75ca577ed3314c2b920dc586b1eb08cd161b0ff12",
+        "entries": 12,
+        "errors": [],
+        "last_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f"
+      },
+      {
+        "path": "docs/development/phase_12_17_08_b01a_sixth_minimization_approval/MANIFEST_SHA256.txt",
+        "sha256": "34389ad799ef00356181a8d5ffb58c11fa6a58250488cced1a34e7bbc0456d8b",
+        "entries": 6,
+        "errors": [],
+        "last_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f"
+      },
+      {
+        "path": "docs/development/phase_12_17_08_b01b_eof18_manifest_rebind/MANIFEST_SHA256.txt",
+        "sha256": "2999474ac0e3a8ccace184d1a8ea5d58b3ee6de60af8d92098d4573db163ce99",
+        "entries": 9,
+        "errors": [],
+        "last_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f"
+      },
+      {
+        "path": "docs/development/phase_12_17_08_b02_local_file_sqlite_boundary/MANIFEST_SHA256.txt",
+        "sha256": "9fbf8d4427cdd7acfceb1d10270ca5db1dc847c4b1c21ef3133b319519995000",
+        "entries": 12,
+        "errors": [],
+        "last_commit": "2a0ec8f6e24d61e05228119869791999277bfef4"
+      },
+      {
+        "path": "docs/development/phase_12_17_08_b03_minimal_local_observability/MANIFEST_SHA256.txt",
+        "sha256": "06508235f5f6cb952c827268ce03cb07a029f5d5d64181cdf912fa4c7e657d5c",
+        "entries": 13,
+        "errors": [],
+        "last_commit": "2650ae7616fc7067e6c6341f854a10efee633d6f"
+      },
+      {
+        "path": "docs/development/phase_12_17_08_b04_local_browser_http_fail_closed/MANIFEST_SHA256.txt",
+        "sha256": "bfc6beb34750ea7cb4cf24c2b1b996862f00d045f9e6749d3a937e67aeba5dad",
+        "entries": 12,
+        "errors": [],
+        "last_commit": "b63a1463046141512739e4c8f4618ab967002c78"
+      },
+      {
+        "path": "docs/development/phase_12_17_08_b05_dependencies_environment_config_aliases/MANIFEST_SHA256.txt",
+        "sha256": "2d0fb2e98f1a1d3f341e1f29dddeca06f66b163613f6c73e8a1f88c7b9cacd87",
+        "entries": 12,
+        "errors": [],
+        "last_commit": "313d574cc0aca15529978db622939ed648d0c1c7"
+      },
+      {
+        "path": "docs/development/phase_12_17_08_b06_gitignore_tests_deterministes_retention_locale/MANIFEST_SHA256.txt",
+        "sha256": "03c76d3f32e03b6850e928333e8d2cfe3e93cffb3b35b94d9691dfda659c5088",
+        "entries": 11,
+        "errors": [],
+        "last_commit": "0404852a3be77381bf7b7c903ee6309e2547487e"
+      },
+      {
+        "path": "docs/development/phase_12_17_03_business_rule_audit/MANIFEST_SHA256.txt",
+        "sha256": "be3357f92cf71c6f52725118959e3200428f46e16c9d523f53eb76001d47b5a0",
+        "entries": 12,
+        "errors": [],
+        "last_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f"
+      },
+      {
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/MANIFEST_SHA256.txt",
+        "sha256": "5807f59131911902a7b8d1d828b25946682fbbdfd5f1dae379def999fb1d570b",
+        "entries": 13,
+        "errors": [],
+        "last_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f"
+      },
+      {
+        "path": "docs/development/phase_12_17_04e_b01_design_approval_hash_freeze/MANIFEST_SHA256.txt",
+        "sha256": "2bdb3e6caa3624986ac1577104f93a6c39800e94af0369b6154ceb5f66663ad4",
+        "entries": 8,
+        "errors": [],
+        "last_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f"
+      },
+      {
+        "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/MANIFEST_SHA256.txt",
+        "sha256": "ff41ed09f507c98fce01b333378b9c51f6696846d5ac930e28823d0a2553f4c7",
+        "entries": 14,
+        "errors": [],
+        "last_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f"
+      }
+    ]
+  },
+  "provenance": {
+    "source126_count": 126,
+    "evidence05c_count": 11,
+    "b01_allowlist_count": 209,
+    "blobs_verified": 137,
+    "changed_since_b01": 0,
+    "records": [
+      {
+        "scope": "126",
+        "path": "architecture/adr/ADR-P12-068-active-calibration-tooling-boundary.md",
+        "tracked": true,
+        "sha256": "4cac693a66d09bf5708b050eceeb82f9e249dbd1f32537d6b312cba8c4a6ffbd",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03_business_rule_audit/01_BUSINESS_RULE_SOURCE_CATALOG.md",
+        "tracked": true,
+        "sha256": "f39b2839d8d41774d7ea9c63933d1aeff40e4f3936422c80deb8b65779122713",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03_business_rule_audit/02_BUSINESS_RULE_REGISTER.json",
+        "tracked": true,
+        "sha256": "49c9eb753dab16129671b76006e43f62a8f3dc86ff1092e38c7249a32598ecc8",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03_business_rule_audit/03_DUPLICATE_AND_OVERLAP_AUDIT.md",
+        "tracked": true,
+        "sha256": "e01ca22ec43c531324b8eb8c7c6c00fe2bfc524e5993100c951b08020a537004",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03_business_rule_audit/04_CONTRADICTION_AUDIT.md",
+        "tracked": true,
+        "sha256": "4c8bb582ee772bbc3eac0bb59ccb9b3eae9f191452e565be9b6376c95d2ca07d",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03_business_rule_audit/05_EXCEPTION_AUDIT.md",
+        "tracked": true,
+        "sha256": "658fb40e9fa5bf6e47d5dc36081b7549f12de060eb53eb4f5169a47466683b79",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03_business_rule_audit/06_DATA_MODEL_TRANSLATION_AUDIT.md",
+        "tracked": true,
+        "sha256": "d9fcbe2c4799d862460ec0af19a517b78bbcf11495c205bf567447e444547867",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03_business_rule_audit/07_API_AND_TEST_COVERAGE_AUDIT.md",
+        "tracked": true,
+        "sha256": "e4cc985c98298362d0c9680d8bea967c916f296faf5abe3955e14e4afb3f20bd",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03_business_rule_audit/08_CANONICAL_RULESET_CANDIDATE.json",
+        "tracked": true,
+        "sha256": "3e3ee4ef92071fe482632e929aae3b53fb9189847c888d17b939816052e4cd49",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03_business_rule_audit/09_FINDINGS_REGISTER.json",
+        "tracked": true,
+        "sha256": "2756b9479d4e52836f33ac528fab095d8344bc5b682dd9ff5139c0de37072f67",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03_business_rule_audit/10_PRIORITIZATION_AND_OWNER_DECISIONS.md",
+        "tracked": true,
+        "sha256": "5201cd29ee6e808dbdd1965a398b4b8c830e79b9194daf0d0d96474521cc7a21",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03_business_rule_audit/11_NEXT_SUBSTEP_RECOMMENDATION.md",
+        "tracked": true,
+        "sha256": "04714387c087ec327625899d3c8fa522de426a6088d4b6917b93215b1ecdb924",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03_business_rule_audit/12_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "0986ed870a8ba6c239e12a873c7cb8175cca135c6c87ef2dbfa47418b7dc909a",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03_business_rule_audit/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "be3357f92cf71c6f52725118959e3200428f46e16c9d523f53eb76001d47b5a0",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03a_owner_decision_gate/01_OWNER_DECISION_INDEX.md",
+        "tracked": true,
+        "sha256": "ba7094ded6defa0e53b24b3d13cca099f001ae4885909075358757ebe815e35d",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03a_owner_decision_gate/02_OWNER_DECISION_REGISTER.json",
+        "tracked": true,
+        "sha256": "43985ca2cffc4979d59b32466654d541f9084465b7f06b5e00bf81be33cad8f4",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03a_owner_decision_gate/03_OPTIONS_AND_IMPACT_ANALYSIS.md",
+        "tracked": true,
+        "sha256": "96b2aa4be0cb7e5b2cfe4e47213af5039f8ca9b5e0379e987ba3d286388c91cc",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03a_owner_decision_gate/04_DECISION_DEPENDENCY_GRAPH.md",
+        "tracked": true,
+        "sha256": "7005776b131052e3a154d6d1b4a64341299f8ca40c892219be02742330b552ce",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03a_owner_decision_gate/05_TECHNICAL_RECOMMENDATIONS.md",
+        "tracked": true,
+        "sha256": "74f1011f7b99f9b457a40e1cc78eb2cf98ecb6ced37b75a58c08966c066bf7b2",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03a_owner_decision_gate/06_EXTERNAL_EVIDENCE_REQUIREMENTS.md",
+        "tracked": true,
+        "sha256": "26468112a76b97da09683988db927442562be480fee99e5b7064b7120778e37a",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03a_owner_decision_gate/07_OWNER_DECISION_ATTESTATION.md",
+        "tracked": true,
+        "sha256": "05a74c147ed5dfd03155dfe96243169ea2cbd8f4080391425d3b75011f389bde",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03a_owner_decision_gate/08_12_17_4_READINESS.md",
+        "tracked": true,
+        "sha256": "a966465595ee5378497907d546df486a7df9c68b9a542f7b342a6c2a2bff69e5",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03a_owner_decision_gate/09_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "01c8a46d9679f516f79dabb246ebe10434c8f1f79145ef0ebaa006f348793482",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03a_owner_decision_gate/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "668bf7c08bd60daf5b84d143366fab1c681088c3a82c1fc32cd2d4e386a03af5",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03b_owner_decision_resolution/01_DECISION_PRESENTATION.md",
+        "tracked": true,
+        "sha256": "15d0c5b81951417279bd8addc24b8b4e180bd82519aae98f657989797aed5cd9",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03b_owner_decision_resolution/02_SQLITE_EXTERNAL_EVIDENCE.md",
+        "tracked": true,
+        "sha256": "2bed0504032447e1985d1c1334256729a8b9d1a83e93c3e2b70de7c702f8f9ad",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03b_owner_decision_resolution/03_OWNER_DECISION_WORKSHEET.md",
+        "tracked": true,
+        "sha256": "0a73f56f2f3fda21d37d3ea8b6c1fb420997e7e937ccab78e32dc8c528c1f3c7",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03b_owner_decision_resolution/04_12_17_4_GATE_STATUS.md",
+        "tracked": true,
+        "sha256": "959c5b1e6383c98528ead35fd349c67b1cac6b51974abf7de3ff329a987fdec3",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03b_owner_decision_resolution/05_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "eb999b94f08f5365a62981f44534d4a4edaeb551868d749179337a44f1021172",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03b_owner_decision_resolution/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "1e6cb8e35132221e9b54efcf5e4ae1cf082b06432ec24cb6350e2a5762d05575",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03c_owner_decision_recommendation/01_BUNDLE_INTEGRITY_AUDIT.md",
+        "tracked": true,
+        "sha256": "fb323b2fcd043ab7e41697bd553cb824e6357bfcc8b8785f5f1e7b3ee40a31d4",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03c_owner_decision_recommendation/02_EVIDENCE_RECONCILIATION.md",
+        "tracked": true,
+        "sha256": "95bcb089a11ed9ac307f70e16fd28e3e6e941d575f781e310a6d78bb87e087e8",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03c_owner_decision_recommendation/03_RECOMMENDATION_RECONCILIATION.md",
+        "tracked": true,
+        "sha256": "ce812444ee6216587838bb8e02100551761efdb804b65e77e6c7b0bdfdc5a59e",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03c_owner_decision_recommendation/04_OWNER_ATTESTATION_REQUIRED.md",
+        "tracked": true,
+        "sha256": "f6e87ee7251a0c4705093747ddb50efee26cc16e09d9f86a35b5f1a6e9c9323d",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03c_owner_decision_recommendation/05_GATE_STATUS.md",
+        "tracked": true,
+        "sha256": "4fcdad7cdd1ca5a94166a94addf59040430299321304a2a9d7fe2f6e337bbec5",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03c_owner_decision_recommendation/06_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "26d83f231ce0ce6e7b695021bce7a3a8af719d51286309cdd257eebdc8031406",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03c_owner_decision_recommendation/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "e8305ebf48cfc5f73d5de65e67d41fc5c2403b3f0ee44b35c625e7c7fb690b71",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03c_owner_decision_resolution/01_OWNER_ATTESTATION_APPLIED.md",
+        "tracked": true,
+        "sha256": "1ce0cd5c58d0fa688d87b8b638105e5084892620f28f21b65ae0c7c3c8d1a10f",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03c_owner_decision_resolution/02_DECISION_RESOLUTION_REGISTER.json",
+        "tracked": true,
+        "sha256": "0e9691a32ffe19cc025686f55847cde3afcc4b4f85a39e8b1253a0c689f8fc56",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03c_owner_decision_resolution/03_SQLITE_EVIDENCE_STATUS.md",
+        "tracked": true,
+        "sha256": "26bf005fa2f8fe7a39fe739d04f62e9dab3bc2e7bacb82135bd98fd73d36a599",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03c_owner_decision_resolution/04_12_17_4_GATE_RECALCULATION.md",
+        "tracked": true,
+        "sha256": "be6211d47c4cdf5b5069dec4121ff53610a6a809594b0c0754a8c96978254650",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03c_owner_decision_resolution/05_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "96258e93537d3e856ba46ec9ce874e57b1bb2d5c3b0305a964560223a19ab2d1",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03c_owner_decision_resolution/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "372bd870c81fea51d994b00a5d7d52240d7048c1ed4af659181f3d824abd591b",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/10_DESKTOP_PROJECT_V2_DISCOVERY.md",
+        "tracked": true,
+        "sha256": "7b93d46b169856abd40717d8fa264f3232eb7f1572e25d4bf9a7e0fa33edd581",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/11_PHYSICAL_IDENTITY_EVIDENCE.md",
+        "tracked": true,
+        "sha256": "77e389766f54ccb99d8e4bb2464c1d3c36d3e0e7003e6527ec41f2bab5b0780d",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/12_READ_ONLY_INTEGRITY_EVIDENCE.md",
+        "tracked": true,
+        "sha256": "523fe9cce71f0b745888f86bd378021868a57f1f0144016db54a81ee0a5865ac",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/13_OD05_OD06_SCHEMA_EVIDENCE.md",
+        "tracked": true,
+        "sha256": "279e43eec2d852f1d328da5516544ee7da75f9fe379ea4fcea29cf57015d8fff",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/14_IMMUTABILITY_PRE_POST.md",
+        "tracked": true,
+        "sha256": "22dbe9ce1996f9a2ae07e5ebe552369a2fd1e73518727bda8950e8c39a5d0b84",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/15_GATE_RECALCULATION.md",
+        "tracked": true,
+        "sha256": "2731d68f0d9c3e3abad97e6e0962e391f75e8cdc97136c5728320781c0f42796",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/16_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "dceb2896fc19f02a862c94eab2fa18550e636e4e6ec18c554ab97b87e7a216c1",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "def554827543ad01d9bb45a35c7d72893216a2caff12b8960714ac8726d5aafa",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/PHYSICAL_EVIDENCE.json",
+        "tracked": true,
+        "sha256": "46b4b07679693b6aeb91369c83b6c5c1bdcc33f09ec94e20fcdc42bbb3318206",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/01_ACTIVE_RUNTIME_AND_TOOLING_GRAPH.md",
+        "tracked": true,
+        "sha256": "6334bab897543d51dd4391d894c3de665222fb1d1b2eb72dad0678e7c6551b36",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/02_HISTORICAL_IMMUTABILITY_MAP.md",
+        "tracked": true,
+        "sha256": "287897819cbc19e851148311f33c4a013e994c419d24fa866fcba62f9231b560",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/03_PROVIDER_ARCHITECTURE_TARGET.md",
+        "tracked": true,
+        "sha256": "1a082c557d404f3ffdd95306a59c2495a1622b785758588c0d9c14a6a75efbbf",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/04_RUNNER_PARSER_RATIONALIZATION.md",
+        "tracked": true,
+        "sha256": "40b7a4102fccaef7ec935961b4f2c714d9e0ae59b99bd0e75c0e44c0cb07b2c1",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/05_RESIDUAL_MYPY_TO_ROOT_CHANGE_MAP.md",
+        "tracked": true,
+        "sha256": "98e1df33cea8979e42fdbc76be1bde4808ddc8a3f47d0c2088dd84011d08daa1",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/06_SQLITE_VOCABULARY_OWNERSHIP_DESIGN.md",
+        "tracked": true,
+        "sha256": "5d13359fb65e4647a34baa61c5b60f477aece53b30d55eaafc089570120b09b9",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/07_LOCAL_DATA_PATH_AND_SEED_RUNTIME_DESIGN.md",
+        "tracked": true,
+        "sha256": "44bc49d4c485124aeee0b0b277d022f773ebad364e130bb4e07996e972f42ac9",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/08_LEGACY_REVIEW_DESIGN.md",
+        "tracked": true,
+        "sha256": "ba84323dadcc7214e99487bd2c30daca7dd4352ff65bc157c6614d01b5987194",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/09_API_APPLICATION_DOWNSTREAM_CONSTRAINTS.md",
+        "tracked": true,
+        "sha256": "6d48ce826bf63bb7667172f8202fa42e8ee93287f3dae7786afeea8a86e15307",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/10_EXECUTION_BATCH_PLAN.md",
+        "tracked": true,
+        "sha256": "48175d300eb290832543edfb7fed6d7fc60092a9c1a544032f74f2a0cd8bb1df",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/11_EXECUTION_GATES.md",
+        "tracked": true,
+        "sha256": "c1e8e920f50d10c15c953f1499904e67f34cfee4bf1d2d5a325207d228d1345f",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/12_FINDINGS_AND_RISKS.json",
+        "tracked": true,
+        "sha256": "abc0bcef43daf9102122f9677b1d68f5780f3b026b35cd30166338c40c7af5b6",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/13_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "a1d758b8f95b7479bfd7f032ccb53fc4168ce4f7884286728ad4a334be75ba62",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04_rationalization_design_gate/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "5807f59131911902a7b8d1d828b25946682fbbdfd5f1dae379def999fb1d570b",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04e_b01_design_approval_hash_freeze/01_OWNER_DESIGN_APPROVAL_BINDING.md",
+        "tracked": true,
+        "sha256": "8ab73e08612d75d1e13aa79b92c8d09f4099eb4aec45f6bb9bf1836f3dbb6c20",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04e_b01_design_approval_hash_freeze/02_ADR_P12_068_BINDING.md",
+        "tracked": true,
+        "sha256": "cdcc93e1262a5b1eff48ad8657c37e59f6946c16a83a0af549b39265da5d1162",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04e_b01_design_approval_hash_freeze/03_HISTORICAL_HASH_FREEZE.json",
+        "tracked": true,
+        "sha256": "b3083ee1cc8bfdde863ba812eb10fa97d10a69863a49af8527ada8e9b818878b",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04e_b01_design_approval_hash_freeze/04_PRE_POST_HASH_EVIDENCE.md",
+        "tracked": true,
+        "sha256": "b46fce19d1761d539b7d326899c04eca8094f8b6610e3dceaee30ef0d2bf7847",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04e_b01_design_approval_hash_freeze/05_PREEXISTING_DRIFT_REGISTER.md",
+        "tracked": true,
+        "sha256": "c61232e951511794528b8c1fbdac2c7ff2d03b6d8f58f7f0f5181abfab7d29cc",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04e_b01_design_approval_hash_freeze/06_B01_VALIDATION.md",
+        "tracked": true,
+        "sha256": "67eca7eab5bd9c443e721a028660a033dce3c1aa423592170e6134954a82f65e",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04e_b01_design_approval_hash_freeze/07_B02_ENTRY_GATE.md",
+        "tracked": true,
+        "sha256": "90ce6484122af4e3c403735bbfead5cd52a515e79909bf428305ca6cc3b891c8",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04e_b01_design_approval_hash_freeze/08_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "259eb63591a8fcdf20c6403c891626535eef2a5cc4407f6495d8ace7dbb80889",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_04e_b01_design_approval_hash_freeze/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "2bdb3e6caa3624986ac1577104f93a6c39800e94af0369b6154ceb5f66663ad4",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/01_AUDIT_SCOPE_AND_BASELINE.md",
+        "tracked": true,
+        "sha256": "13113c7c22ac75a469c01192cdb34f4e172e2ab0efd11c669a89bff1ad02ed68",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/02_RULE_DOMAIN_APPLICATION_DATA_API_TRACEABILITY.json",
+        "tracked": true,
+        "sha256": "df160a03e2c4e72c71487d2d8c9290a0461847aa1b2dfaa130669714bef3792e",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/03_READ15_END_TO_END_AUDIT.md",
+        "tracked": true,
+        "sha256": "ea7c28753996dc2a8bef17336c98f645daa6f2f952c742f5cf6a23b152be480f",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/04_CAP_R02_A01_A02_AUDIT.md",
+        "tracked": true,
+        "sha256": "2facab21f81fca1b8b2836f8344b8b47af32369b55589465a8a6d31797217fb6",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/05_SQLITE_VOCABULARY_10_FAMILIES_AUDIT.md",
+        "tracked": true,
+        "sha256": "687900b38a3a745728ff32c97c52c6dfc1ad1505427fd1574a247beea396a747",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/06_SEED_RUNTIME_SCHEMA_COMPARISON.md",
+        "tracked": true,
+        "sha256": "6e8540e42fe65210a453b6ea1d737b3a619cc132e26efbaa5579dacc5b0cf7e2",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/07_UNKNOWN_RESOLUTION_AUDIT.md",
+        "tracked": true,
+        "sha256": "a7857a44aa7bf2c5d953a1ce8b226b636d327e29c328d8b7fbf92315fde4ef1b",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/08_API_HANDOFF_COMPLETENESS_AUDIT.md",
+        "tracked": true,
+        "sha256": "e02568c2e6a22a774e8ce27a63697e93273dc22406d0ccca6d3298518219ee78",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/09_API_IMPLEMENTATION_STATUS.md",
+        "tracked": true,
+        "sha256": "a61531060c9824fed146bd556670cc69d9328f0cc84355a0d4f18da1cb2a1746",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/10_TEST_COVERAGE_AUDIT.md",
+        "tracked": true,
+        "sha256": "15eda0d051c0aacda58cc296392a2ecf7b4c2b2c79b716a3176022f481a960a1",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/11_FINDINGS_REGISTER.json",
+        "tracked": true,
+        "sha256": "1fbef442477534f21d6db367e0cacaa49792b20730f1edb4d3dc115dd305ec39",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/12_12_17_6_ENTRY_GATE.md",
+        "tracked": true,
+        "sha256": "277a44ca6ae592e062bb9fec6cacab5ee37fec8a4083446de9858830471b5fb3",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/13_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "2fa9e5b23adef4f9e81585084cec9c81cbee206071b651b191656e5ebf6b1176",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05_data_model_api_audit/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "55accce1d06d3dc7a108abfe4aeb90eabe150d80b0cb13136d3d8e4141c06b3f",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_blocking_remediation_design/01_MIGRATION_001_ROOT_CAUSE.md",
+        "tracked": true,
+        "sha256": "7de95f65f77d316c8e865e132219db7d08b7416b9bc9223dbe5911f6e1264994",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_blocking_remediation_design/02_CORRECTIVE_MIGRATION_DESIGN.md",
+        "tracked": true,
+        "sha256": "e4260a3eb1e6a3dc9c9e910dd6e1384526e5fa481da56a3d3ea2201fe53fad73",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_blocking_remediation_design/03_RESOURCE_REF_BOUND_ANALYSIS.md",
+        "tracked": true,
+        "sha256": "0e17469337c866bfa66527795163630b94de0046398815406ca9ad2fb2e4d4cd",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_blocking_remediation_design/04_ACTIVE_CANONICAL_SEMANTIC_ANALYSIS.md",
+        "tracked": true,
+        "sha256": "4921a0efef6d23ec918e9d66dee143d486fd220ac14fbcbdd6157c7083913470",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_blocking_remediation_design/05_OWNER_DECISION_REGISTER.json",
+        "tracked": true,
+        "sha256": "f987ce8a601275630bf2ec0298eb2c868d38411b3fad88d6e44082e3102551d1",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_blocking_remediation_design/06_BLOCKING_FINDINGS_RESOLUTION_MAP.md",
+        "tracked": true,
+        "sha256": "8e0380d702d5d17f3ef7885f7d7132bfaea30cec9468f9457fe03358456d8f1d",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_blocking_remediation_design/07_12_17_05B_EXECUTION_PLAN.md",
+        "tracked": true,
+        "sha256": "a6401ba4055b1755b3d8bf758861478f12371cbc82ceb922be67b8def427c387",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_blocking_remediation_design/08_12_17_6_GATE_REQUIREMENTS.md",
+        "tracked": true,
+        "sha256": "a15f87df24171923dcc23e489099da459b4e990f82f07ee3018982c3259f6c2b",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_blocking_remediation_design/09_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "be4fde14da50e132efb452fe0c1fc502eb28771df3f34ebddc254f12e5a53d49",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_blocking_remediation_design/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "4c87ceb92bf1752ee3dec88c13e8455d19ac8431b3face8876c330b079d8450b",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_application/01_OWNER_ATTESTATION_APPLIED.md",
+        "tracked": true,
+        "sha256": "224c2de87e75ce7c1aa50df246a9d7aa0b76edb053e91bfca6ff86a90d939b1e",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_application/02_DECISION_RESOLUTION_REGISTER.json",
+        "tracked": true,
+        "sha256": "383020ec92292fb0fdf2d5780977cbc846c665a112876fbe87eeb9f2a4c44cdc",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_application/03_BINDING_VERIFICATION.md",
+        "tracked": true,
+        "sha256": "36df5383a2078629eae1da146b4da20842b6dcf4c549a48aa3ab48b97c1b0207",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_application/04_12_17_05B_GATE_RECALCULATION.md",
+        "tracked": true,
+        "sha256": "64384f6ad84eb6536f7a76952533e0501d2f5e8981b6f078ef8177c2587fbe20",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_application/05_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "a82853df647c7597a984b00093be7d4c207db5449f5e9cd423424e2ce283fa96",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_application/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "cfc100817b80c56e0c232f628e20608ae4df01a3a671a9190dd220658c6938f7",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_resolution/01_DECISION_REGISTER_BINDING.md",
+        "tracked": true,
+        "sha256": "e2023cf2ce0b7a00ce4babf9b16a939ee14ad38bd8790847269a6f80f4a37900",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_resolution/02_BLOCKER_TO_DECISION_MAPPING.md",
+        "tracked": true,
+        "sha256": "9c3924b0f39426ef5df95aa8479b9100a8d430a82015e05f9b72f17e6e4bb58a",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_resolution/03_DM01_MIGRATION_DECISION.md",
+        "tracked": true,
+        "sha256": "5d6990217c836f3d4758284b846e632707e9f65ed0e65dae82ba6de0380b642c",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_resolution/04_DM02_RESOURCE_REF_DECISION.md",
+        "tracked": true,
+        "sha256": "86ee29f89208875e1650591fc708a8194ee3593c0de5e4fd2af63fc67ddb9a78",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_resolution/05_DM03_ACTIVE_CANONICAL_DECISION.md",
+        "tracked": true,
+        "sha256": "7970ad4a1890cc35a466aced9024c151b09a9c886deabd0ce27f0a6c2a8e7c46",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_resolution/06_CONTEXT_ORIGIN_STATUS.md",
+        "tracked": true,
+        "sha256": "8b402a31a458b8311cfebe120da3d2a65cc7915c0b72ab0d6332e9e98e41c4a4",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_resolution/07_OWNER_DECISION_ATTESTATION_TEMPLATE.md",
+        "tracked": true,
+        "sha256": "159e1cb1c864707010d73019c3828e7a8a5ca826d92f773eef16b91b5c62b285",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_resolution/08_12_17_05B_GATE_STATUS.md",
+        "tracked": true,
+        "sha256": "cbe9c6f3de9ed30b19da20c45ed162d852c088704288cca2fcee2912021b9185",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_resolution/09_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "084ed5651705225e1c352d9b9b6740d6efba40f6ac5719ba7f34715bd6a5e493",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05a_owner_decision_resolution/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "5b1eaf392642d0b4850c0ade8edb1c7e660500e5b4d8f8488e472a5e7a323286",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05b_b01_attestation_proprietaire_et_gel_des_identites/01_SEVEN_BATCH_EXECUTION_PLAN_FREEZE.md",
+        "tracked": true,
+        "sha256": "b6b4db93d852045339d4f339977b75061530649a8bc638ff395a1e1af4876ab3",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05b_b01_attestation_proprietaire_et_gel_des_identites/02_B01_CANONICAL_SCOPE_RESOLUTION.md",
+        "tracked": true,
+        "sha256": "7e8369eea19c6d470d14bdd6579d1e2ae435e724d453c2f51024a0ccd39213b3",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05b_b01_attestation_proprietaire_et_gel_des_identites/03_ENTRY_EVIDENCE.md",
+        "tracked": true,
+        "sha256": "e0e15eb433b0423ede6a434177abf57f730b5e1041620e76b6ea6c65ba7c727f",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05b_b01_attestation_proprietaire_et_gel_des_identites/04_IMPLEMENTATION_EVIDENCE.md",
+        "tracked": true,
+        "sha256": "655e2d1989f5e38ab5af2a51bcb4403ddaea71dd07e2774edebb7aa3757406fd",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05b_b01_attestation_proprietaire_et_gel_des_identites/06_TYPING_ARCHITECTURE_TEST_EVIDENCE.md",
+        "tracked": true,
+        "sha256": "a1d9fa82f080e3c81a44b596a6455d804a51ff81b6b66199e03cabf9a5240433",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05b_b01_attestation_proprietaire_et_gel_des_identites/07_OWNER_DECISION_CONFORMANCE.md",
+        "tracked": true,
+        "sha256": "8547d0983453942ebfe314e48fe7cc1c5d9c9fdcaeac70b1d462bd9c74872e27",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05b_b01_attestation_proprietaire_et_gel_des_identites/08_DIFF_AND_COMMIT_EVIDENCE.md",
+        "tracked": true,
+        "sha256": "9804ce5f0c5d6b5f137cf45a66bd927402563dd36c4434d11ed6480f219622c5",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05b_b01_attestation_proprietaire_et_gel_des_identites/09_B02_ENTRY_GATE.md",
+        "tracked": true,
+        "sha256": "2f15282f7e920b9876536a85cefaf2f2be6a1b5e41adf28c60b3166951964ff3",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05b_b01_attestation_proprietaire_et_gel_des_identites/10_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "807a5c6a287e834ccdbd2fdbd32a640f6850b118050fd9c86080aff6a7fe3a1b",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "docs/development/phase_12_17_05b_b01_attestation_proprietaire_et_gel_des_identites/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "8cbda66b980d2486ce0a9bee74fe41084babe49412ea8ab3e31dae1154e904b4",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "126",
+        "path": "tests/architecture/test_calibration_tooling_boundary.py",
+        "tracked": true,
+        "sha256": "43f91d0ea1d631588b76c9646edb8ddba16a771393694d4aa8cda95b2c2e2309",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "05C",
+        "path": "docs/development/phase_12_17_05c_b02_b07_consolidation/01_OWNER_APPROVAL_BINDING.md",
+        "tracked": true,
+        "sha256": "3612764255013e474bb96e04f0ea53cca137ea65ee5cc130bfb51a06ed2855d1",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "05C",
+        "path": "docs/development/phase_12_17_05c_b02_b07_consolidation/02_B02_B07_FILE_PROVENANCE_MATRIX.md",
+        "tracked": true,
+        "sha256": "f2bac03959345c5497b12f54401e19202c927fa1b0e95d03f9385d0b847fbcb4",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "05C",
+        "path": "docs/development/phase_12_17_05c_b02_b07_consolidation/03_MANIFEST_REVALIDATION.md",
+        "tracked": true,
+        "sha256": "7c248e942e068d84237aa24703e465031d5fb7ee5ea3be245e661a28cd568ef7",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "05C",
+        "path": "docs/development/phase_12_17_05c_b02_b07_consolidation/04_STAGING_EXACTNESS.md",
+        "tracked": true,
+        "sha256": "b588bc668732c8ffd7e5edb8402b4fe7982392d77a4a0539f09541d8468782ea",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "05C",
+        "path": "docs/development/phase_12_17_05c_b02_b07_consolidation/05_PRECOMMIT_VALIDATION.md",
+        "tracked": true,
+        "sha256": "3bfa8f51a2dfbaab9b834e85ec3b1f87cd05df9880a9f95c5b9cd5f43572d031",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "05C",
+        "path": "docs/development/phase_12_17_05c_b02_b07_consolidation/06_CONSOLIDATION_COMMIT_EVIDENCE.md",
+        "tracked": true,
+        "sha256": "6aba4ddfa12e45df6d2a3807d12eda509677643383432581d1b25dd973c96e33",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "05C",
+        "path": "docs/development/phase_12_17_05c_b02_b07_consolidation/07_GIT_GUARD_REPLAY.md",
+        "tracked": true,
+        "sha256": "691d42efb6de093f85d86624b6b81dffb28f65dafa4b5b763ff58483ded8beba",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "05C",
+        "path": "docs/development/phase_12_17_05c_b02_b07_consolidation/08_GLOBAL_SUITE_REPLAY.md",
+        "tracked": true,
+        "sha256": "f46d6e4f8790806b6e943f10395dd8719a9c9d5397e08130a71f0c9d77098214",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "05C",
+        "path": "docs/development/phase_12_17_05c_b02_b07_consolidation/09_12_17_6_GATE_RECALCULATION.md",
+        "tracked": true,
+        "sha256": "fe93b33fc5b0bf07344527f1804418c074562ec73d86a20776acf2b3a37a7312",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "05C",
+        "path": "docs/development/phase_12_17_05c_b02_b07_consolidation/10_FINAL_HANDOFF.md",
+        "tracked": true,
+        "sha256": "be071d05cb60cf5ba04e625561ca919fbdc2fe0a0a8ec78a46775dbd04119416",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      },
+      {
+        "scope": "05C",
+        "path": "docs/development/phase_12_17_05c_b02_b07_consolidation/MANIFEST_SHA256.txt",
+        "tracked": true,
+        "sha256": "eec96d69a697d7a3c9d298ab66ac71ca8c6a8eb9334418ca49709e3c82076fcb",
+        "evidence_commit": "d20428d2c3060546a2c40fc59f0e8b7026be707f",
+        "current_bytes_equal_b01": true
+      }
+    ]
+  },
+  "collection": {
+    "exit_code": 0,
+    "collected": 4944,
+    "unique": 4944,
+    "sorted_nodeids_sha256": "1549f3caf56cc11e7ed1bb13fb266c84ce534c0838d0293a91631388d4cb56a1",
+    "architecture_count": 872,
+    "real_seed_nodeids": [
+      "tests/integration/test_canonical_pedagogical_full_suite_real_gate.py::test_canonical_suite_is_reproducible_over_two_fresh_sqlite_runtimes",
+      "tests/integration/test_generation_transformation_sqlite_e2e_real_gate.py::test_scn_04_runs_real_sqlite_evidence_before_real_transformation_owner",
+      "tests/integration/test_sqlite_resource_application_e2e_real_gate.py::test_scn_01_runs_full_harness_through_wf0_application_and_op03",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_composition_root_binds_migrated_runtime",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_existing_resource_rows_preserve_only_observed_availability",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_migration_replay_is_idempotent_and_checksum_mismatch_stops",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_op01_knowledge_store_contract",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_op02_document_store_contract",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_op03_resource_store_contract",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_op04_context_store_contract",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_op05_work_store_contract_and_expected_version",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_op06_validation_append_read_contract",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_op07_quality_append_read_contract",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_op08_lifecycle_contract",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_op09_audit_append_read_contract",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_op10_commit_rollback_operation_ref_and_reconciliation",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_op11_real_fts_read_is_stable_and_non_authoritative",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_op12_projection_is_real_and_non_owner",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_op13_real_read_exposes_only_logical_fragments",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_runtime_provisioning_applies_exact_migration",
+      "tests/integration/test_sqlite_runtime_real_gate.py::test_seed_gate_is_exact_and_read_only",
+      "tests/integration/test_sqlite_search_rag_e2e_real_gate.py::test_scn_02_runs_full_harness_over_fresh_migrated_sqlite",
+      "tests/integration/test_sqlite_seed_runtime_lifecycle_real_gate.py::test_real_seed_runtime_sidecars_backup_and_restore",
+      "tests/non_functional/test_retrieval_quality_real_gate.py::test_retrieval_quality_real_gate_is_reproducible_on_two_fresh_runtimes"
+    ],
+    "b06_never_collected": [
+      "tests/non_functional/test_retrieval_quality_real_gate.py::test_retrieval_quality_real_gate_is_reproducible_on_two_fresh_runtimes"
+    ],
+    "collection_output_tail": [
+      "4944 tests collected in 13.92s"
+    ]
+  },
+  "validations": {
+    "targeted": {
+      "passed": 122,
+      "skipped": 2,
+      "duration_seconds": 55.17,
+      "exit_code": 0
+    },
+    "active_mypy": {
+      "version": "2.3.1",
+      "files": 42,
+      "diagnostics": 0,
+      "exit_code": 0,
+      "files_checked": [
+        {
+          "path": "calibration_tooling/__init__.py",
+          "sha256": "ccd7ec2401bffbd3d8e8ae84d5f568ef1c26e7cf8b85f583a4b5614b6478a611"
+        },
+        {
+          "path": "calibration_tooling/adapters/__init__.py",
+          "sha256": "d13b264465b999c76c9d4432e23d801c68db64903650340a0515ce88863a0a62"
+        },
+        {
+          "path": "calibration_tooling/adapters/anthropic/__init__.py",
+          "sha256": "d50c733b96bc0983f2c6400e6828e70d1035ba710c8b510f474fed69d0032921"
+        },
+        {
+          "path": "calibration_tooling/adapters/anthropic/contracts.py",
+          "sha256": "779519e5ac06f9e8e8453642db561b9d9a2fccde5fca42c212fa9d60262f42bd"
+        },
+        {
+          "path": "calibration_tooling/adapters/anthropic/mapping.py",
+          "sha256": "4b7fe5c4bad8a26aac83e215a44e16daa9cf5e9b4e0b351b13b436cbcefbb902"
+        },
+        {
+          "path": "calibration_tooling/adapters/anthropic/parser.py",
+          "sha256": "e985e83837670cf4d474e7eeb4a597e3e9f456fbb61d7e854b8ffaeee10b801e"
+        },
+        {
+          "path": "calibration_tooling/adapters/anthropic/scorer.py",
+          "sha256": "6b09a1c2743b7bf2fcfbeb77417e156c5989b35424f86068c377b778da2b82d0"
+        },
+        {
+          "path": "calibration_tooling/adapters/anthropic/transport.py",
+          "sha256": "32e5d88c8736cb0c6902a9111f9e9dba2e804912c7f484d60df38deb488bf1c9"
+        },
+        {
+          "path": "calibration_tooling/application/__init__.py",
+          "sha256": "37e0c99091b0af787450f8161769f35ca283cc7bae7e6b6f740404c72b1d28f9"
+        },
+        {
+          "path": "calibration_tooling/application/ports.py",
+          "sha256": "80be141b71ed14a08beeb7fdfac14c711668cc64841eca61e455e3c82c8cb626"
+        },
+        {
+          "path": "calibration_tooling/application/service.py",
+          "sha256": "7df71a0df75460790646200055e098a072cdb0da664c76b9c6e1a8384431d367"
+        },
+        {
+          "path": "calibration_tooling/contracts/__init__.py",
+          "sha256": "ed1af61de29096a69b1f5075ff88771612bf4aaa2a29468deee75de18ec9c0a8"
+        },
+        {
+          "path": "calibration_tooling/contracts/errors.py",
+          "sha256": "a22577629c0138bc57b9883f0783bf0cf4e96d50f6924abad23ed8b60f055964"
+        },
+        {
+          "path": "calibration_tooling/contracts/models.py",
+          "sha256": "2ee3d6c24a6ac6b13102273edf3487f5ad0317e65e309c6bcafa5ffa610d0fbe"
+        },
+        {
+          "path": "calibration_tooling/contracts/parser.py",
+          "sha256": "f15974f6bcdcf85c1bf9ce1cc0c5ae2088b05a2e16df90e31630e723dbd1a4b6"
+        },
+        {
+          "path": "calibration_tooling/contracts/policy.py",
+          "sha256": "c0665d0aedee1211962274701e6d3d47bfd3589af8914fefdd7fd958d9bf8a85"
+        },
+        {
+          "path": "calibration_tooling/observability/__init__.py",
+          "sha256": "7ca68a6da95f5578bf399974ba0189c9c4feb8d58774062d55758dbd8302d2cf"
+        },
+        {
+          "path": "calibration_tooling/observability/events.py",
+          "sha256": "ed1f2d03a6d32db5a96dc929fd8f9e6a93520de0a1a3746ce2ae9ece5806b837"
+        },
+        {
+          "path": "calibration_tooling/observability/redaction.py",
+          "sha256": "6fa55bea9d8ddf7802e988ea7bbb8e13285a98fed7956f2342507c73c2286f0b"
+        },
+        {
+          "path": "calibration_tooling/runtime/__init__.py",
+          "sha256": "9f0b7350d026564b1fcd899dc7745abcde69d896193495341550bc04a75b5f46"
+        },
+        {
+          "path": "calibration_tooling/runtime/authorization.py",
+          "sha256": "ff4d3ef5a930a00208492fc91a72359d4af07f9e0aed7bae82ed5d41fff08f87"
+        },
+        {
+          "path": "calibration_tooling/runtime/budget.py",
+          "sha256": "f87ce56da279de3e3e18463d5b2a82238067839b54f87fe0a4b0344ae2f4c340"
+        },
+        {
+          "path": "calibration_tooling/runtime/cli.py",
+          "sha256": "fdb43faaddca8f6d0337df15f9ded7fe0bb1b17e92885422d5b0031b6418eeb8"
+        },
+        {
+          "path": "calibration_tooling/runtime/composition.py",
+          "sha256": "6770818d555b561e37276be451848d8d00c40961528f7d1da9d8dde308a4f141"
+        },
+        {
+          "path": "calibration_tooling/runtime/configuration.py",
+          "sha256": "db6af8dd8505d829f7216d6ba8ad7a922dbc916f57c6f0ba2da16240f45c041f"
+        },
+        {
+          "path": "calibration_tooling/runtime/ledger.py",
+          "sha256": "1765f4657f9c38e87f7be6d0cb7eb5d5ec24232fa6fc3554a161d3d7d1dae0b6"
+        },
+        {
+          "path": "calibration_tooling/runtime/runner.py",
+          "sha256": "9ca84d7324dd0636a3409c2fdaa12ead9e0815ee7036b03950ebdffc8630841f"
+        },
+        {
+          "path": "tests/architecture/test_calibration_tooling_imports.py",
+          "sha256": "9543f27d9d83563ec1a7874d5bff3b1bb7bd1e1aeee998eaeb78954b40e20ce7"
+        },
+        {
+          "path": "tests/integration/calibration_tooling/test_active_parity.py",
+          "sha256": "6ef7007b1ff33c13f1b8faa3d363a784a2b1821e6b85c891bf74dedbb507d525"
+        },
+        {
+          "path": "tests/integration/calibration_tooling/test_anthropic_adapter.py",
+          "sha256": "ccf45dade29fd030ee729797b90075b2e28b56d6f26052e623b996bd426b884a"
+        },
+        {
+          "path": "tests/integration/calibration_tooling/test_runner_service.py",
+          "sha256": "1e1c225a3b2252c5e96e72434c9196a756c41c3a61a5687f050ca504181f37f1"
+        },
+        {
+          "path": "tests/integration/calibration_tooling/test_runtime_composition.py",
+          "sha256": "f37a3d4c604f556a77d915ee881453159838acafdbf33d04da740702c44c5be6"
+        },
+        {
+          "path": "tests/unit/calibration_tooling/test_active_historical_parity.py",
+          "sha256": "eaa6c0ee347294faab110b04d251b296f26a29c6bc5fd5c2859f36a1148751fb"
+        },
+        {
+          "path": "tests/unit/calibration_tooling/test_anthropic_contracts_mapping.py",
+          "sha256": "7b9476b1a6a8976f0b8144e0d56dcf32651ac39263999800dc6098489ab154e3"
+        },
+        {
+          "path": "tests/unit/calibration_tooling/test_anthropic_scorer.py",
+          "sha256": "429f49d6cf42633ee68754d3bd2f201efe972d7bcdf49403f1c5b5415f960ba8"
+        },
+        {
+          "path": "tests/unit/calibration_tooling/test_anthropic_transport_parser.py",
+          "sha256": "6028191fe977b65dde877cd9710d1e85487230d152a6277a08f4abe0bd83e3a4"
+        },
+        {
+          "path": "tests/unit/calibration_tooling/test_authorization_budget.py",
+          "sha256": "3a7b8c6e4d32f9854e9304fec15e0f6acf0a13089efc586bb10a1ae05977fa7b"
+        },
+        {
+          "path": "tests/unit/calibration_tooling/test_contracts.py",
+          "sha256": "148ae2488c028bb45ed5106a1d470064487adbc8c0d7dc9650a9b728d2914460"
+        },
+        {
+          "path": "tests/unit/calibration_tooling/test_ledger.py",
+          "sha256": "db0c0108a3719ae9c569fdf27caa3eb0bcadb8827672b3940f96b24a37164dbb"
+        },
+        {
+          "path": "tests/unit/calibration_tooling/test_observability.py",
+          "sha256": "1d1e0c7081d6bdc6adeb19eeacd78eeb7511d6bd3a11739e25bc300a1ae3a24d"
+        },
+        {
+          "path": "tests/unit/calibration_tooling/test_parser.py",
+          "sha256": "5f583adcbc65abcada6184c5c32124700eee1d3a1a5e9cd30140badeb0d3227c"
+        },
+        {
+          "path": "tests/unit/calibration_tooling/test_runtime_configuration_cli.py",
+          "sha256": "8783f3d79f9f302f60852b79a9fb44776814bea6e5cc262025cee914e66a4951"
+        }
+      ]
+    },
+    "backend_mypy": {
+      "files": 683,
+      "diagnostics": 0,
+      "exit_code": 0,
+      "complete_stdout": "Success: no issues found in 683 source files"
+    },
+    "historical_mypy": {
+      "diagnostics": 15,
+      "files_with_errors": 10,
+      "roots_checked": 2,
+      "exit_code": 1,
+      "complete_stdout": "tests\\providers\\anthropic\\transport.py:88: error: Redundant cast to \"str\"  [redundant-cast]\r\ntests\\providers\\anthropic\\scorer.py:198: error: Item \"None\" of \"ProviderRouteConfig | None\" has no attribute \"primary_model_profile_id\"  [union-attr]\r\ntests\\providers\\anthropic\\scorer.py:208: error: Item \"None\" of \"ModelProfileConfig | None\" has no attribute \"provider_profile_id\"  [union-attr]\r\ntests\\providers\\anthropic\\scorer.py:215: error: Argument \"provider_profile\" to \"AnthropicEvaluationScorer\" has incompatible type \"ProviderProfileConfig | None\"; expected \"ProviderProfileConfig\"  [arg-type]\r\ntests\\providers\\anthropic\\scorer.py:216: error: Argument \"model_profile\" to \"AnthropicEvaluationScorer\" has incompatible type \"ModelProfileConfig | None\"; expected \"ModelProfileConfig\"  [arg-type]\r\ntests\\calibration\\pedagogical\\catalog.py:489: error: Argument \"ordered_anchor_ids\" to \"CriterionOrdering\" has incompatible type \"tuple[str, ...]\"; expected \"tuple[str, str, str]\"  [arg-type]\r\ntests\\calibration\\pedagogical\\anchor_corpus_v2.py:681: error: Argument \"ordered_anchor_ids\" to \"CriterionOrdering\" has incompatible type \"tuple[str, ...]\"; expected \"tuple[str, str, str]\"  [arg-type]\r\ntests\\calibration\\pedagogical\\anchor_corpus_v3.py:453: error: Argument \"ordered_anchor_ids\" to \"CriterionOrdering\" has incompatible type \"tuple[str, ...]\"; expected \"tuple[str, str, str]\"  [arg-type]\r\ntests\\calibration\\pedagogical\\anchor_corpus_v4.py:459: error: Argument \"ordered_anchor_ids\" to \"CriterionOrdering\" has incompatible type \"tuple[str, ...]\"; expected \"tuple[str, str, str]\"  [arg-type]\r\ntests\\calibration\\pedagogical\\call_plan.py:607: error: Unsupported operand types for > (\"Decimal\" and \"None\")  [operator]\r\ntests\\calibration\\pedagogical\\call_plan.py:607: note: Left operand is of type \"Decimal | None\"\r\ntests\\calibration\\pedagogical\\call_plan.py:609: error: Unsupported operand types for > (\"Decimal\" and \"None\")  [operator]\r\ntests\\calibration\\pedagogical\\call_plan.py:609: note: Right operand is of type \"Decimal | None\"\r\ntests\\calibration\\pedagogical\\call_plan_v4_1.py:218: error: Unsupported operand types for > (\"Decimal\" and \"None\")  [operator]\r\ntests\\calibration\\pedagogical\\call_plan_v4_1.py:218: note: Left operand is of type \"Decimal | None\"\r\ntests\\calibration\\pedagogical\\call_plan_v4_1.py:220: error: Unsupported operand types for > (\"Decimal\" and \"None\")  [operator]\r\ntests\\calibration\\pedagogical\\call_plan_v4_1.py:220: note: Right operand is of type \"Decimal | None\"\r\ntests\\calibration\\pedagogical\\review_contract_v4_2.py:20: error: Module \"tests.calibration.pedagogical.anchor_corpus_v4\" does not explicitly export attribute \"AnchorTier\"  [attr-defined]\r\ntests\\calibration\\pedagogical\\semantic_gate_v5_2.py:738: error: Incompatible types in assignment (expression has type \"V51MiniPilotCallSpec\", variable has type \"V51MicroCanarySpec\")  [assignment]\r\nFound 15 errors in 10 files (checked 2 source files)"
+    },
+    "ruff": {
+      "status": "PASS",
+      "exit_code": 0
+    },
+    "compileall": {
+      "status": "PASS",
+      "exit_code": 0
+    },
+    "architecture": {
+      "status": "PASS",
+      "proof_kind": "REUSED_B06_SAME_TECHNICAL_GRAPH",
+      "passed": 872,
+      "duration_seconds": 214.77,
+      "included_in_global_collection": true
+    },
+    "global": {
+      "status": "INTERRUPTED_PREVENTIVELY",
+      "run_count": 1,
+      "rerun_count": 0,
+      "process_exit_code": 1,
+      "final_counts": null,
+      "junit_final_exists": false,
+      "blocking_finding": "B07-SEED-RO-001",
+      "no_tests_skipped_or_removed_for_this_blocker": true
+    },
+    "b06_global_reused": {
+      "passed": 4915,
+      "skipped": 28,
+      "failed": 0,
+      "duration_seconds": 436.91,
+      "excluded_file": "tests/non_functional/test_retrieval_quality_real_gate.py",
+      "not_a_full_seed_validation": true
+    }
+  },
+  "seed": {
+    "pre": {
+      "main": {
+        "exists": true,
+        "size_bytes": 105553920,
+        "sha256": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134"
+      },
+      "wal": {
+        "exists": true,
+        "size_bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "shm": {
+        "exists": true,
+        "size_bytes": 32768,
+        "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+      },
+      "journal": {
+        "exists": false,
+        "size_bytes": null,
+        "sha256": null
+      }
+    },
+    "post": {
+      "main": {
+        "exists": true,
+        "size_bytes": 105553920,
+        "sha256": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134"
+      },
+      "wal": {
+        "exists": true,
+        "size_bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "shm": {
+        "exists": true,
+        "size_bytes": 32768,
+        "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+      },
+      "journal": {
+        "exists": false,
+        "size_bytes": null,
+        "sha256": null
+      }
+    },
+    "raw_snapshot_json_pre_post_identical": true,
+    "physical_identity_and_mtime_unchanged": true,
+    "new_sidecars": 0,
+    "sidecar_deletions": 0,
+    "observed_file_modification": 0,
+    "real_tests_status": "NOT_VALIDATED",
+    "user_runtime_access": 0,
+    "user_runtime_writes": 0,
+    "user_runtime_002_status": "NOT_APPLIED_LAST_ATTESTED_NOT_INSPECTED_B07"
+  },
+  "protection": {
+    "tracked_files": 2240,
+    "tracked_hash_changes": 0,
+    "historical_freeze_pass": 40,
+    "known_drifts_preserved": 7,
+    "separate_baseline_references_pass": 2,
+    "protected_pre_post": [
+      {
+        "path": "tests/calibration/pedagogical/anchor_corpus_v2.py",
+        "sha256_pre": "bd0c5eff43be20b4f578b99321e076471804f8a3e0e197858b08a3701800be76",
+        "sha256_post": "bd0c5eff43be20b4f578b99321e076471804f8a3e0e197858b08a3701800be76"
+      },
+      {
+        "path": "tests/calibration/pedagogical/anchor_corpus_v4.py",
+        "sha256_pre": "b0a86640502db4ab1d0b623e50faffa45178d9e93b0a24976df3312d460662be",
+        "sha256_post": "b0a86640502db4ab1d0b623e50faffa45178d9e93b0a24976df3312d460662be"
+      },
+      {
+        "path": "tests/calibration/pedagogical/call_plan.py",
+        "sha256_pre": "1272776fb72545cd4ca840d7088c26d7e272d6cc05100eb2344394df3e3b6df6",
+        "sha256_post": "1272776fb72545cd4ca840d7088c26d7e272d6cc05100eb2344394df3e3b6df6"
+      },
+      {
+        "path": "tests/calibration/pedagogical/call_plan_v4_1.py",
+        "sha256_pre": "93f996be10af46fe6313bf49c873bbd752001bd0d816de79c2079cb3f71eb1b2",
+        "sha256_post": "93f996be10af46fe6313bf49c873bbd752001bd0d816de79c2079cb3f71eb1b2"
+      },
+      {
+        "path": "tests/calibration/pedagogical/legacy_call_plan.py",
+        "sha256_pre": "cb7a92ec9fc8d214975cb3ad68f27ab1328866132ca63686b636264e21d31e3a",
+        "sha256_post": "cb7a92ec9fc8d214975cb3ad68f27ab1328866132ca63686b636264e21d31e3a"
+      },
+      {
+        "path": "tests/calibration/pedagogical/live_runner.py",
+        "sha256_pre": "8c7f88726f270d65c2080110d25bb421c42da56cd930d43f646343b3e463ba40",
+        "sha256_post": "8c7f88726f270d65c2080110d25bb421c42da56cd930d43f646343b3e463ba40"
+      },
+      {
+        "path": "tests/calibration/pedagogical/live_runner_v4_1.py",
+        "sha256_pre": "bf354170c3c9a864b715ec5c7094e76ef87a1dcb9a20dbb069c3e91be9ee0dca",
+        "sha256_post": "bf354170c3c9a864b715ec5c7094e76ef87a1dcb9a20dbb069c3e91be9ee0dca"
+      },
+      {
+        "path": "tests/calibration/pedagogical/metrics.py",
+        "sha256_pre": "fd58c668eb32d259f40f05a374db5a952b1d11eaa72f767966888ed2825720a8",
+        "sha256_post": "fd58c668eb32d259f40f05a374db5a952b1d11eaa72f767966888ed2825720a8"
+      },
+      {
+        "path": "tests/calibration/pedagogical/offline_calibration_v5.py",
+        "sha256_pre": "328d10c3ef8e3041e0d2dd9919267092dfcf53463c9f725cb432333ea6a23d04",
+        "sha256_post": "328d10c3ef8e3041e0d2dd9919267092dfcf53463c9f725cb432333ea6a23d04"
+      },
+      {
+        "path": "tests/calibration/pedagogical/pairwise_output_contract_v5_2_3.py",
+        "sha256_pre": "bde7afa85eaaf0ec0fee4beae9752e4511ae048b79afce26e56c8d8abef023ec",
+        "sha256_post": "bde7afa85eaaf0ec0fee4beae9752e4511ae048b79afce26e56c8d8abef023ec"
+      },
+      {
+        "path": "tests/calibration/pedagogical/pairwise_output_contract_v5_2_4.py",
+        "sha256_pre": "3f47351e8d188ddd7ed465a3d139cad8fd55c03c274ae259a385eaaf3a953a56",
+        "sha256_post": "3f47351e8d188ddd7ed465a3d139cad8fd55c03c274ae259a385eaaf3a953a56"
+      },
+      {
+        "path": "tests/calibration/pedagogical/pairwise_runner_v5_2_2.py",
+        "sha256_pre": "ec72fd6d0e8ed7aa3fff0b8d05ce678148041e2be7de8b86478855cbfc57ecf0",
+        "sha256_post": "ec72fd6d0e8ed7aa3fff0b8d05ce678148041e2be7de8b86478855cbfc57ecf0"
+      },
+      {
+        "path": "tests/calibration/pedagogical/pricing.py",
+        "sha256_pre": "fbfa2b166d473b5f036da8005896f986e1af52db11764faf853163129b0c2e40",
+        "sha256_post": "fbfa2b166d473b5f036da8005896f986e1af52db11764faf853163129b0c2e40"
+      },
+      {
+        "path": "tests/calibration/pedagogical/protocol.py",
+        "sha256_pre": "ab01dfdd6b1b0e704d8465d56a30e686f40f4b5a054780710db3cd55cce6e887",
+        "sha256_post": "ab01dfdd6b1b0e704d8465d56a30e686f40f4b5a054780710db3cd55cce6e887"
+      },
+      {
+        "path": "tests/calibration/pedagogical/r2a_diagnostic.py",
+        "sha256_pre": "49a6e436619807a60d0adc4cd3290cf4a0ef43b8213c76fb6610c544a9294868",
+        "sha256_post": "49a6e436619807a60d0adc4cd3290cf4a0ef43b8213c76fb6610c544a9294868"
+      },
+      {
+        "path": "tests/calibration/pedagogical/r3a_plan.py",
+        "sha256_pre": "e04bd7a6805d0f07570515aac7434accf614f407ccc001a2dbd66bc5e1ef0497",
+        "sha256_post": "e04bd7a6805d0f07570515aac7434accf614f407ccc001a2dbd66bc5e1ef0497"
+      },
+      {
+        "path": "tests/calibration/pedagogical/r3b_r1_diagnostic.py",
+        "sha256_pre": "0d05a17548a0b12c8ced1c2f52f0ff1a3614474ee7e972f37e2abea91ba9a371",
+        "sha256_post": "0d05a17548a0b12c8ced1c2f52f0ff1a3614474ee7e972f37e2abea91ba9a371"
+      },
+      {
+        "path": "tests/calibration/pedagogical/r3b_r3_plan.py",
+        "sha256_pre": "3b99dfcc85668e7659182a49b5cc694bd3ce55c51c7681f33eda73064cf1b6c3",
+        "sha256_post": "3b99dfcc85668e7659182a49b5cc694bd3ce55c51c7681f33eda73064cf1b6c3"
+      },
+      {
+        "path": "tests/calibration/pedagogical/r4_r1_policy.py",
+        "sha256_pre": "ace00ca77da871fd7b7862e571a750641f601d3a06f32152e173527ce0c4f960",
+        "sha256_post": "ace00ca77da871fd7b7862e571a750641f601d3a06f32152e173527ce0c4f960"
+      },
+      {
+        "path": "tests/calibration/pedagogical/repair_tranche_v4_2.py",
+        "sha256_pre": "d1e5b40dd1437aad38f5da0db4797e2670da953ee554f09f4aa1b1f078e9a6b6",
+        "sha256_post": "d1e5b40dd1437aad38f5da0db4797e2670da953ee554f09f4aa1b1f078e9a6b6"
+      },
+      {
+        "path": "tests/calibration/pedagogical/reuse_audit.py",
+        "sha256_pre": "015e59877624682da8461be0333852dda6caa2469936e7dac23c6cc3d554eeba",
+        "sha256_post": "015e59877624682da8461be0333852dda6caa2469936e7dac23c6cc3d554eeba"
+      },
+      {
+        "path": "tests/calibration/pedagogical/review_contract_v4_2.py",
+        "sha256_pre": "81cc15e087169290133c7ecd79ba7c7043935673522229a1d861e86e28ef1a9e",
+        "sha256_post": "81cc15e087169290133c7ecd79ba7c7043935673522229a1d861e86e28ef1a9e"
+      },
+      {
+        "path": "tests/calibration/pedagogical/scorer_contract_v5.py",
+        "sha256_pre": "85797a5c2be668444bf5720153d94a01cd8bdf4e1789154874865ecd4d07d4a4",
+        "sha256_post": "85797a5c2be668444bf5720153d94a01cd8bdf4e1789154874865ecd4d07d4a4"
+      },
+      {
+        "path": "tests/calibration/pedagogical/semantic_gate_v5_2.py",
+        "sha256_pre": "f4eaddf64eb255edcfdd011a763cefe83afe96c97a47f90519952ae2bfe02bb3",
+        "sha256_post": "f4eaddf64eb255edcfdd011a763cefe83afe96c97a47f90519952ae2bfe02bb3"
+      },
+      {
+        "path": "tests/calibration/pedagogical/semantic_integration_v5.py",
+        "sha256_pre": "4347094a9fa31787ca8fc7eb31c848151506a5197457e1ffc4d6e114031b8ca4",
+        "sha256_post": "4347094a9fa31787ca8fc7eb31c848151506a5197457e1ffc4d6e114031b8ca4"
+      },
+      {
+        "path": "tests/calibration/pedagogical/semantic_micro_canary_v5_1.py",
+        "sha256_pre": "d3ae157dada67046dc0999b0b13d24dc8be02e14e0471d4a37fc9f4df25b77e4",
+        "sha256_post": "d3ae157dada67046dc0999b0b13d24dc8be02e14e0471d4a37fc9f4df25b77e4"
+      },
+      {
+        "path": "tests/calibration/pedagogical/semantic_mini_pilot_v5_1.py",
+        "sha256_pre": "33eb2a9e085238f88f7f36ae3ca3f51d08301e4accbc4eafad4fc5aaf6c19a1c",
+        "sha256_post": "33eb2a9e085238f88f7f36ae3ca3f51d08301e4accbc4eafad4fc5aaf6c19a1c"
+      },
+      {
+        "path": "tests/calibration/pedagogical/semantic_parser_adapter_v5_1.py",
+        "sha256_pre": "4788eac744537c7c0b229abef9d440b4b470a1f1279ceff4f9e68e41955e2115",
+        "sha256_post": "4788eac744537c7c0b229abef9d440b4b470a1f1279ceff4f9e68e41955e2115"
+      },
+      {
+        "path": "tests/calibration/pedagogical/semantic_pilot_freeze_v5.py",
+        "sha256_pre": "eaed483486a00a7937832795f26b29b1adbc344c4578385fcab33189c5c4a2c1",
+        "sha256_post": "eaed483486a00a7937832795f26b29b1adbc344c4578385fcab33189c5c4a2c1"
+      },
+      {
+        "path": "tests/calibration/pedagogical/test_v4_corrective_attestation_closure.py",
+        "sha256_pre": "d5d55942059d5f58160868de6c242fbcc3f0c32c3914e245f78dc549b88a035f",
+        "sha256_post": "d5d55942059d5f58160868de6c242fbcc3f0c32c3914e245f78dc549b88a035f"
+      },
+      {
+        "path": "tests/calibration/pedagogical/test_v4_human_disposition_pairwise_reconciliation.py",
+        "sha256_pre": "2e819fd11f6ebddb70ce4d27e8498de432453514491a5d144a2e199e3d803e54",
+        "sha256_post": "2e819fd11f6ebddb70ce4d27e8498de432453514491a5d144a2e199e3d803e54"
+      },
+      {
+        "path": "tests/calibration/pedagogical/test_v4_provider_recalibration_implementation_readiness.py",
+        "sha256_pre": "bcae37cb478d0b1eeedc49463f30157a412b76764a9f2c391dcb22d4b0e34435",
+        "sha256_post": "bcae37cb478d0b1eeedc49463f30157a412b76764a9f2c391dcb22d4b0e34435"
+      },
+      {
+        "path": "tests/calibration/pedagogical/test_v4_provider_recalibration_plan_readiness.py",
+        "sha256_pre": "d8fb3909bebee55e9aa4351a6550fb7715864bcf41cac04ff3cc5504b94824f6",
+        "sha256_post": "d8fb3909bebee55e9aa4351a6550fb7715864bcf41cac04ff3cc5504b94824f6"
+      },
+      {
+        "path": "tests/calibration/pedagogical/v4_human_disposition_pairwise_reconciliation.py",
+        "sha256_pre": "2502e5b872924b400bef4090e25e66126bd1ec1b88072c628fe774c143630e91",
+        "sha256_post": "2502e5b872924b400bef4090e25e66126bd1ec1b88072c628fe774c143630e91"
+      },
+      {
+        "path": "tests/calibration/pedagogical/v4_provider_recalibration_implementation_readiness.py",
+        "sha256_pre": "5299c018d7b25050b0ee9cb626b3cd561dba59d38fde7b30c9fe7e70858c6ba9",
+        "sha256_post": "5299c018d7b25050b0ee9cb626b3cd561dba59d38fde7b30c9fe7e70858c6ba9"
+      },
+      {
+        "path": "tests/calibration/pedagogical/v4_provider_recalibration_plan_readiness.py",
+        "sha256_pre": "34b0c26e69be928eb22b2364adce4880d147f0ad5325f6bf2e4ddc03254e7a8f",
+        "sha256_post": "34b0c26e69be928eb22b2364adce4880d147f0ad5325f6bf2e4ddc03254e7a8f"
+      },
+      {
+        "path": "tests/providers/anthropic/contracts.py",
+        "sha256_pre": "668fa89013fe053201dd971060cd8a1036378f8f863085a8e80ac5baef4e90f8",
+        "sha256_post": "668fa89013fe053201dd971060cd8a1036378f8f863085a8e80ac5baef4e90f8"
+      },
+      {
+        "path": "tests/providers/anthropic/mapping.py",
+        "sha256_pre": "970da3e243b7241b858c5ad3d33a01bdb30815b753008a208790b0d9b2e9a633",
+        "sha256_post": "970da3e243b7241b858c5ad3d33a01bdb30815b753008a208790b0d9b2e9a633"
+      },
+      {
+        "path": "tests/providers/anthropic/scorer.py",
+        "sha256_pre": "3be22f3a4ee19a3e2095f52f459b30d0b204a7e37437b2e5b33ab0ee03a76119",
+        "sha256_post": "3be22f3a4ee19a3e2095f52f459b30d0b204a7e37437b2e5b33ab0ee03a76119"
+      },
+      {
+        "path": "tests/providers/anthropic/transport.py",
+        "sha256_pre": "15ecf4b27ac8840dc503201864614a304917d3d43132b159da6a520044787b5b",
+        "sha256_post": "15ecf4b27ac8840dc503201864614a304917d3d43132b159da6a520044787b5b"
+      },
+      {
+        "path": "tests/calibration/pedagogical/catalog.py",
+        "sha256_pre": "32339ade61085d999bb5cdcc85908b218288162f560f8ec815fa361d427ce191",
+        "sha256_post": "32339ade61085d999bb5cdcc85908b218288162f560f8ec815fa361d427ce191"
+      },
+      {
+        "path": "tests/calibration/pedagogical/anchor_corpus_v3.py",
+        "sha256_pre": "95e6a253f56b62596f12cfbd43c764288665f9ec264186956958d6ed5eab02da",
+        "sha256_post": "95e6a253f56b62596f12cfbd43c764288665f9ec264186956958d6ed5eab02da"
+      },
+      {
+        "path": "database/migrations/002_restore_document_invariants.sql",
+        "sha256_pre": "e43b6267a5c4e0686739d4c0ea68d22e74f354bd9cbffb3f89b673e5bd0fe893",
+        "sha256_post": "e43b6267a5c4e0686739d4c0ea68d22e74f354bd9cbffb3f89b673e5bd0fe893"
+      },
+      {
+        "path": "requirements/lock/runtime-py312-win.txt",
+        "sha256_pre": "47540b39687a39f627c76e138596abfa752792fa54cef439660c5daba9665a63",
+        "sha256_post": "47540b39687a39f627c76e138596abfa752792fa54cef439660c5daba9665a63"
+      },
+      {
+        "path": "requirements/lock/calibration-py312-win.txt",
+        "sha256_pre": "e044cdb328a65f0d24ad4e82868171c6f96f7ef1e6cbcd6be78d402e3e8d7960",
+        "sha256_post": "e044cdb328a65f0d24ad4e82868171c6f96f7ef1e6cbcd6be78d402e3e8d7960"
+      },
+      {
+        "path": "requirements/lock/dev-py312-win.txt",
+        "sha256_pre": "30a3ceec14d10432cd45f4ddddcd54868dd6da55001c8a74c6d125eac97a6c65",
+        "sha256_post": "30a3ceec14d10432cd45f4ddddcd54868dd6da55001c8a74c6d125eac97a6c65"
+      },
+      {
+        "path": "artifacts/calibration/12.16-g2-r4-r4/reusable_results_manifest.json",
+        "sha256_pre": "a8552e186af3f6773354b4a17d2204966b2923f9c2846ad84f87ef58c0ec8cc7",
+        "sha256_post": "a8552e186af3f6773354b4a17d2204966b2923f9c2846ad84f87ef58c0ec8cc7"
+      },
+      {
+        "path": "database/migrations/001_document_sha256_check.sql",
+        "sha256_pre": "5b4c603d19e9eb195ca1d0d19d5e6755d136d6d13399aeb33c0e90b5bb9b0102",
+        "sha256_post": "5b4c603d19e9eb195ca1d0d19d5e6755d136d6d13399aeb33c0e90b5bb9b0102"
+      }
+    ],
+    "eof18": {
+      "count": 18,
+      "all_pass": true,
+      "records": [
+        {
+          "path": "docs/development/phase_12_17_03_business_rule_audit/01_BUSINESS_RULE_SOURCE_CATALOG.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "f39b2839d8d41774d7ea9c63933d1aeff40e4f3936422c80deb8b65779122713"
+        },
+        {
+          "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/11_PHYSICAL_IDENTITY_EVIDENCE.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "77e389766f54ccb99d8e4bb2464c1d3c36d3e0e7003e6527ec41f2bab5b0780d"
+        },
+        {
+          "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/13_OD05_OD06_SCHEMA_EVIDENCE.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "279e43eec2d852f1d328da5516544ee7da75f9fe379ea4fcea29cf57015d8fff"
+        },
+        {
+          "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/15_GATE_RECALCULATION.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "2731d68f0d9c3e3abad97e6e0962e391f75e8cdc97136c5728320781c0f42796"
+        },
+        {
+          "path": "docs/development/phase_12_17_04e_b01_design_approval_hash_freeze/05_PREEXISTING_DRIFT_REGISTER.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "c61232e951511794528b8c1fbdac2c7ff2d03b6d8f58f7f0f5181abfab7d29cc"
+        },
+        {
+          "path": "docs/development/phase_12_17_04e_b01_design_approval_hash_freeze/07_B02_ENTRY_GATE.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "90ce6484122af4e3c403735bbfead5cd52a515e79909bf428305ca6cc3b891c8"
+        },
+        {
+          "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/02_RUNTIME_ATTACK_SURFACE.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "92cd0623228285e5e24f2dabdd149893946e7ee1453dd00ca22488f5655dd866"
+        },
+        {
+          "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/03_HTTP_LOCAL_BROWSER_SECURITY.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "92159347107209cbd98ed3e5594a85887fd0eb0953f41f46f8807d4ed9742caf"
+        },
+        {
+          "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/04_INPUT_FILESYSTEM_SECURITY.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "939cdffe67541f05f459ea15dfa124e47b18883e42170783aa68caee5e4459da"
+        },
+        {
+          "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/05_SQLITE_SECURITY_AUDIT.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "a7575dba6abbac1601a0c56a132e3d60310b74c8e3316e080c3d3d9a5bd64e0b"
+        },
+        {
+          "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/06_SECRET_PROVIDER_SECURITY.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "a840e06a983415a1948f519acbd34fb68bab781782a26394042a2a712c879a8b"
+        },
+        {
+          "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/07_LOGGING_OBSERVABILITY_AUDIT.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "dd9f91eeb24862dce78ca97c6a025759d22830c0bebfc9665e5724a88fab6f94"
+        },
+        {
+          "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/09_GITIGNORE_AND_PRIVATE_PATH_AUDIT.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "924617d4210f838eeb8efaa7c3d569b42288d389050cfc1f32324d195eb5bdaa"
+        },
+        {
+          "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/10_DEPENDENCY_CONFIG_AUDIT.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "00e0037f0a375e316646fab945cc5ddfddd211390e75e6402643c29ae322e840"
+        },
+        {
+          "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/11_OBSERVABILITY_GAP_MATRIX.json",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "ade83a55fd41def50380c8a1a0445d8851bfa5e3fce807bc8ddefd6021cb0722"
+        },
+        {
+          "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/12_FINDINGS_REGISTER.json",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "2e49f8887518319935acc9d4ee41211153eaad9953633844f5fa319828ecef34"
+        },
+        {
+          "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/13_12_17_7_ENTRY_GATE.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "5f3b4fb7b16638fe6f549b850c90c29d7b56740edabe546967e85ada6ed19669"
+        },
+        {
+          "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/14_FINAL_HANDOFF.md",
+          "pre_reconstruction_pass": true,
+          "current_sha256": "9ad89672acc88f52df4046ebf465b3c137a05265c90d6709d597ee8e187cff75"
+        }
+      ]
+    }
+  },
+  "retention": {
+    "assigned_dispositions": 207,
+    "retained_pre": 203,
+    "retained_post": 203,
+    "files": 20664,
+    "directories": 2994,
+    "tmp_immediate_items": 41,
+    "tmp_files": 4587,
+    "tmp_directories_excluding_container": 1673,
+    "deletions": 0,
+    "added_roots": 0,
+    "removed_roots": 0,
+    "changed_metadata_roots": [],
+    "context_reconciliation": "200 complete sandbox observations + 3 complete elevated metadata-only observations",
+    "previous_b06_artifacts_mtime_trace": "B06 initial inventory differs at artifacts; already documented by B06/04. B07 PRE/POST is identical.",
+    "records": [
+      {
+        "path": ".mypy_cache",
+        "git_status": "ignored",
+        "files": 18,
+        "directories": 2,
+        "metadata_pre": "62f387d0449b7fd39c501efc97d3a6764a051f74d1a26571ef216a74e0be0931",
+        "metadata_post": "62f387d0449b7fd39c501efc97d3a6764a051f74d1a26571ef216a74e0be0931",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".pytest_cache",
+        "git_status": "ignored",
+        "files": 5,
+        "directories": 3,
+        "metadata_pre": "c1c0c7817a88318ba68dd06abe64c06411e96a634250998e3ce553a307d51733",
+        "metadata_post": "c1c0c7817a88318ba68dd06abe64c06411e96a634250998e3ce553a307d51733",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".ruff_cache",
+        "git_status": "ignored",
+        "files": 21,
+        "directories": 2,
+        "metadata_pre": "b5674c7a221a3cc1d4a28d68733d45582aed92bcd9c21e0c8d84a24391befe81",
+        "metadata_post": "b5674c7a221a3cc1d4a28d68733d45582aed92bcd9c21e0c8d84a24391befe81",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/__pycache__",
+        "git_status": "ignored",
+        "files": 7,
+        "directories": 1,
+        "metadata_pre": "ad555654930daef676ac3e9a990f23338b5e230bef791a3f6ea1044ff155e9fc",
+        "metadata_post": "ad555654930daef676ac3e9a990f23338b5e230bef791a3f6ea1044ff155e9fc",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/live_micro_canary_v5_1.py",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 0,
+        "metadata_pre": "b03f0b60f5ab6925f5c8dd9134e25575fa6bb01abbdc8addc995bf2eae6015c3",
+        "metadata_post": "b03f0b60f5ab6925f5c8dd9134e25575fa6bb01abbdc8addc995bf2eae6015c3",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/live_mini_pilot_v5_1.py",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 0,
+        "metadata_pre": "390d7cbd443c1f7ade879c175f5a45d067fe7c7424aaf064c9694032994e9a78",
+        "metadata_post": "390d7cbd443c1f7ade879c175f5a45d067fe7c7424aaf064c9694032994e9a78",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/live_pairwise_v5_2_2.py",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 0,
+        "metadata_pre": "dbad931494a9a518b0de76006f9768d3e87245dcdf7126b1308a54e3f88276c8",
+        "metadata_post": "dbad931494a9a518b0de76006f9768d3e87245dcdf7126b1308a54e3f88276c8",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/live_pairwise_v5_2_3.py",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 0,
+        "metadata_pre": "c03b6492c0acaf715cd69423944d8ad583004643884cd7517fcd2fb3f7ea69a3",
+        "metadata_post": "c03b6492c0acaf715cd69423944d8ad583004643884cd7517fcd2fb3f7ea69a3",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/live_pairwise_v5_2_4.py",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 0,
+        "metadata_pre": "80dad32d977ba9656af24b1a6bb642c797697e7f83a601fe9e8a08b08c8a15e6",
+        "metadata_post": "80dad32d977ba9656af24b1a6bb642c797697e7f83a601fe9e8a08b08c8a15e6",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/live_semantic_pilot_v5.py",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 0,
+        "metadata_pre": "3251abe04f82913e2b7ab22fa94a9ddf9457734f52f7fee9e4518c97d4bac5aa",
+        "metadata_post": "3251abe04f82913e2b7ab22fa94a9ddf9457734f52f7fee9e4518c97d4bac5aa",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/live_v42_once.py",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 0,
+        "metadata_pre": "05d952991ab93f6837bd6e180601df86e347da93bcf4801b509ca857128e48ca",
+        "metadata_post": "05d952991ab93f6837bd6e180601df86e347da93bcf4801b509ca857128e48ca",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pycache-b01-pre-historical",
+        "git_status": "ignored",
+        "files": 331,
+        "directories": 60,
+        "metadata_pre": "e2222b0d221f6a4f36c9894a3d623e1c5278ff78f125c2743326eadd7fd42ed9",
+        "metadata_post": "e2222b0d221f6a4f36c9894a3d623e1c5278ff78f125c2743326eadd7fd42ed9",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-12-17-02a-20260902",
+        "git_status": "ignored",
+        "files": 22,
+        "directories": 33,
+        "metadata_pre": "570116997cf3aa78b8f7b48f8198c6b80969982eb7d60272c358e1e3fd7d577c",
+        "metadata_post": "570116997cf3aa78b8f7b48f8198c6b80969982eb7d60272c358e1e3fd7d577c",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-12-17-02a-diagnose-20260902",
+        "git_status": "ignored",
+        "files": 22,
+        "directories": 33,
+        "metadata_pre": "314eddceafcb9fa0403617fbcff5f5fc002032c9ef7f9e1eb0e2185111534db5",
+        "metadata_post": "314eddceafcb9fa0403617fbcff5f5fc002032c9ef7f9e1eb0e2185111534db5",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-12-17-02a-final-20260902",
+        "git_status": "ignored",
+        "files": 22,
+        "directories": 33,
+        "metadata_pre": "baf3536add9877621a78a0e1ea5ddfd4eb70fd5ff76b45264e7d5fa7cb58ff16",
+        "metadata_post": "baf3536add9877621a78a0e1ea5ddfd4eb70fd5ff76b45264e7d5fa7cb58ff16",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-12-17-5-contracts",
+        "git_status": "ignored",
+        "files": 0,
+        "directories": 1,
+        "metadata_pre": "23c66901be0e0565b18619681b8b52eb75826fe462b781bcdc4b1e9a5d5cbd7f",
+        "metadata_post": "23c66901be0e0565b18619681b8b52eb75826fe462b781bcdc4b1e9a5d5cbd7f",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-b07-cumulative",
+        "git_status": "ignored",
+        "files": 0,
+        "directories": 16,
+        "metadata_pre": "acea2447404709bb43d07851ebcbee5bc56a33c559e9e53876e6c7fa83dab519",
+        "metadata_post": "acea2447404709bb43d07851ebcbee5bc56a33c559e9e53876e6c7fa83dab519",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-b07-direct",
+        "git_status": "ignored",
+        "files": 0,
+        "directories": 16,
+        "metadata_pre": "9546744ce52c90d0f6bdd691697f4a70fd3dc2db7d02f13e02e0a8f13a29f1c5",
+        "metadata_post": "9546744ce52c90d0f6bdd691697f4a70fd3dc2db7d02f13e02e0a8f13a29f1c5",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-b07-final",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 16,
+        "metadata_pre": "c52aad29f15e0ce925b9e38dddec34f132e53041f632760a5f8b03ac736e303f",
+        "metadata_post": "c52aad29f15e0ce925b9e38dddec34f132e53041f632760a5f8b03ac736e303f",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-b07-final-direct",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 16,
+        "metadata_pre": "2bb716cbda77adba90a4fd4787cbbab6806825e5a80e5a5e9b21b6d6be24009c",
+        "metadata_post": "2bb716cbda77adba90a4fd4787cbbab6806825e5a80e5a5e9b21b6d6be24009c",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-r4-r3-r1-targeted",
+        "git_status": "ignored",
+        "files": 44,
+        "directories": 8,
+        "metadata_pre": "8ce377b951a2bee635d1bc6b075f4cc213e17b81186bad5177d2c549b297d747",
+        "metadata_post": "8ce377b951a2bee635d1bc6b075f4cc213e17b81186bad5177d2c549b297d747",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-r4-r3-r1-targeted-rerun",
+        "git_status": "ignored",
+        "files": 44,
+        "directories": 8,
+        "metadata_pre": "1e3ff253f84b9e8b97cec47b3244c44d04fc9190596f2fe10f621e4e8edb5125",
+        "metadata_post": "1e3ff253f84b9e8b97cec47b3244c44d04fc9190596f2fe10f621e4e8edb5125",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-r4-r4-postflight",
+        "git_status": "ignored",
+        "files": 44,
+        "directories": 8,
+        "metadata_pre": "8aefcb3c135e58492ed002c25e69b715c801bbe3a837e71b9502e777e8671697",
+        "metadata_post": "8aefcb3c135e58492ed002c25e69b715c801bbe3a837e71b9502e777e8671697",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-r4-r4-postflight-final",
+        "git_status": "ignored",
+        "files": 44,
+        "directories": 8,
+        "metadata_pre": "a330a17b1ff3f2681d886c32d107398aa3bf24942ddf4c01cdc459303d5f3003",
+        "metadata_post": "a330a17b1ff3f2681d886c32d107398aa3bf24942ddf4c01cdc459303d5f3003",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v3-human-final-a959",
+        "git_status": "ignored",
+        "files": 504,
+        "directories": 237,
+        "metadata_pre": "1131aaa6125460df5b85795ce578f1b16aca31e07f3c2da9d23a80eab21289df",
+        "metadata_post": "1131aaa6125460df5b85795ce578f1b16aca31e07f3c2da9d23a80eab21289df",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-3-metric-analysis",
+        "git_status": "ignored",
+        "files": 6,
+        "directories": 10,
+        "metadata_pre": "760357508871606c02a1058f0b0f91b1c6d181a8df59e4025d29fe3c2155f134",
+        "metadata_post": "760357508871606c02a1058f0b0f91b1c6d181a8df59e4025d29fe3c2155f134",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-architecture-targeted",
+        "git_status": "ignored",
+        "files": 313,
+        "directories": 82,
+        "metadata_pre": "a2ce2a075c7ab2ae07cd6763173f213c9ff0b47796b2c196858b9af23d968e65",
+        "metadata_post": "a2ce2a075c7ab2ae07cd6763173f213c9ff0b47796b2c196858b9af23d968e65",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-disposition",
+        "git_status": "ignored",
+        "files": 5,
+        "directories": 9,
+        "metadata_pre": "8f084d3d6c61b9004ce1abb2a2ed10b43e37589b320cd579a07c3ba00c5bb989",
+        "metadata_post": "8f084d3d6c61b9004ce1abb2a2ed10b43e37589b320cd579a07c3ba00c5bb989",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-final-global",
+        "git_status": "ignored",
+        "files": 616,
+        "directories": 276,
+        "metadata_pre": "ef464479821b7e006a015cf18ec2a4dd31102a7578288d83abd396da5f57072e",
+        "metadata_post": "ef464479821b7e006a015cf18ec2a4dd31102a7578288d83abd396da5f57072e",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-final-global-rerun",
+        "git_status": "ignored",
+        "files": 617,
+        "directories": 290,
+        "metadata_pre": "cd7d0240ae09b627f0453dbca9be40edf085670b92e77a395e7d9d4d4f9a5326",
+        "metadata_post": "cd7d0240ae09b627f0453dbca9be40edf085670b92e77a395e7d9d4d4f9a5326",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-human-reconciliation",
+        "git_status": "ignored",
+        "files": 13,
+        "directories": 21,
+        "metadata_pre": "13b4d43f48183274f1f06f7c36c56a5a458742e4741dc94a3325be5fe91fa82c",
+        "metadata_post": "13b4d43f48183274f1f06f7c36c56a5a458742e4741dc94a3325be5fe91fa82c",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-implementation-targeted",
+        "git_status": "ignored",
+        "files": 311,
+        "directories": 79,
+        "metadata_pre": "95e99cd84836ca54b434cf4f99962a4ebbc147082558deaf828de51233e3030f",
+        "metadata_post": "95e99cd84836ca54b434cf4f99962a4ebbc147082558deaf828de51233e3030f",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-implementation-unit",
+        "git_status": "ignored",
+        "files": 305,
+        "directories": 70,
+        "metadata_pre": "5b270c0daa0021d57b3c1390b3d46bbfd9411f7084a7f4249a612558c8cb8270",
+        "metadata_post": "5b270c0daa0021d57b3c1390b3d46bbfd9411f7084a7f4249a612558c8cb8270",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-implementation-v4",
+        "git_status": "ignored",
+        "files": 8,
+        "directories": 16,
+        "metadata_pre": "0ff3be87cf1e09a354014dc2a9f8b89963001c830ebd0397868cabd32d1d83b6",
+        "metadata_post": "0ff3be87cf1e09a354014dc2a9f8b89963001c830ebd0397868cabd32d1d83b6",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-legacy-debt",
+        "git_status": "ignored",
+        "files": 228,
+        "directories": 47,
+        "metadata_pre": "8557e5cd2795a3e0a015b383a4d64b451395bed60eb9707f838a1e7d0ca40874",
+        "metadata_post": "8557e5cd2795a3e0a015b383a4d64b451395bed60eb9707f838a1e7d0ca40874",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-legacy-debt-2",
+        "git_status": "ignored",
+        "files": 228,
+        "directories": 47,
+        "metadata_pre": "f368f7b654b7f5bdfb0a19a977809cdd368ec9127c21fd90d0e965495233b199",
+        "metadata_post": "f368f7b654b7f5bdfb0a19a977809cdd368ec9127c21fd90d0e965495233b199",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-owner-config-targeted",
+        "git_status": "ignored",
+        "files": 313,
+        "directories": 82,
+        "metadata_pre": "1171c654455ca5166881d9c1eaed5b7aa973c8d254d8e05a508062cde8c2458c",
+        "metadata_post": "1171c654455ca5166881d9c1eaed5b7aa973c8d254d8e05a508062cde8c2458c",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-owner-config-targeted-2",
+        "git_status": "ignored",
+        "files": 313,
+        "directories": 82,
+        "metadata_pre": "d455320cac786644229844d93cc9f52929b816e0df8c7fbab6ce2149b92e7700",
+        "metadata_post": "d455320cac786644229844d93cc9f52929b816e0df8c7fbab6ce2149b92e7700",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-provider-plan-final",
+        "git_status": "ignored",
+        "files": 206,
+        "directories": 38,
+        "metadata_pre": "1ed59d5b54191763bfbc3e4b2dbb14791cac8b78cb09ed201a971837727e4e05",
+        "metadata_post": "1ed59d5b54191763bfbc3e4b2dbb14791cac8b78cb09ed201a971837727e4e05",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v4-real-gates",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 20,
+        "metadata_pre": "a88e4c7e7e2b29fd1f66b616834469a27111f7cf1a971c58ace13d570cbdadd4",
+        "metadata_post": "a88e4c7e7e2b29fd1f66b616834469a27111f7cf1a971c58ace13d570cbdadd4",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/pytest-v5-scorer-redesign-reduced",
+        "git_status": "ignored",
+        "files": 6,
+        "directories": 10,
+        "metadata_pre": "03bc6ddaee20486074830eb3a2ca88e5e05494b8f2be805b809d600803cdc0e2",
+        "metadata_post": "03bc6ddaee20486074830eb3a2ca88e5e05494b8f2be805b809d600803cdc0e2",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/reconcile_live_semantic_pilot_v5.py",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 0,
+        "metadata_pre": "fd232d5d932b81ae3db4a296f305007357883b19e6b0931ac60b6f8ab248bff7",
+        "metadata_post": "fd232d5d932b81ae3db4a296f305007357883b19e6b0931ac60b6f8ab248bff7",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/restore_r4_r4_ledger_offline.py",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 0,
+        "metadata_pre": "d40959eb5f594de60cc1d5e99910f5986f7b82d9a2843a2c460eca090ac5aa79",
+        "metadata_post": "d40959eb5f594de60cc1d5e99910f5986f7b82d9a2843a2c460eca090ac5aa79",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".tmp/run_r4_r4_continuation.py",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 0,
+        "metadata_pre": "88f999a890cceb6f182691fabc4de5b58bd6e14a272072334d1c3a0a9ec23dd1",
+        "metadata_post": "88f999a890cceb6f182691fabc4de5b58bd6e14a272072334d1c3a0a9ec23dd1",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".venv",
+        "git_status": "ignored",
+        "files": 10277,
+        "directories": 684,
+        "metadata_pre": "3c7b20ce9ca388bb34aa1cf8fc67706ec064d8cf9ab1a09794bc5495d9e1b04e",
+        "metadata_post": "3c7b20ce9ca388bb34aa1cf8fc67706ec064d8cf9ab1a09794bc5495d9e1b04e",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": ".venv-validation",
+        "git_status": "ignored",
+        "files": 3783,
+        "directories": 315,
+        "metadata_pre": "cd21bcfc30120423eae97c3f004570e0183637bfe09c9ea932716796edd54cb8",
+        "metadata_post": "cd21bcfc30120423eae97c3f004570e0183637bfe09c9ea932716796edd54cb8",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "artifacts",
+        "git_status": "ignored",
+        "files": 747,
+        "directories": 157,
+        "metadata_pre": "719914853e4b593ad340509911a9d413e74a6fdc9a3a3d992d7c4fa1b9dee244",
+        "metadata_post": "719914853e4b593ad340509911a9d413e74a6fdc9a3a3d992d7c4fa1b9dee244",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "bf5fe71dcda36400a3300709d23f04a3966b50d4fcb4c98e122b3e443ba4f4df",
+        "metadata_post": "bf5fe71dcda36400a3300709d23f04a3966b50d4fcb4c98e122b3e443ba4f4df",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "1dfee820139daf2140e6905a4fa596fbeb0e743a07cf1cddd544146b1dfd086f",
+        "metadata_post": "1dfee820139daf2140e6905a4fa596fbeb0e743a07cf1cddd544146b1dfd086f",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/inbound/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "af97f3257796024649a1338bbfbaa3430115d359ab0f245088bc30bfb8cc6631",
+        "metadata_post": "af97f3257796024649a1338bbfbaa3430115d359ab0f245088bc30bfb8cc6631",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/inbound/api/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "f3d82fec5990d0dae5215ceea37abf7c049913a0bd17722ee129dae5e5fbba45",
+        "metadata_post": "f3d82fec5990d0dae5215ceea37abf7c049913a0bd17722ee129dae5e5fbba45",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/inbound/application/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "f0e842f9202238e2e1d2e2e346f95a40950d4d2695810f9878b70b8a0ec07155",
+        "metadata_post": "f0e842f9202238e2e1d2e2e346f95a40950d4d2695810f9878b70b8a0ec07155",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "9f6c2475baceea874316cf689e48ce6a937c54102e65981b08d1906e8945355e",
+        "metadata_post": "9f6c2475baceea874316cf689e48ce6a937c54102e65981b08d1906e8945355e",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/document_content/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "c116bc279a0b3db471a55d56ce7fa21d2b2c9cc5b51f0f3211cb8dadc2359bf1",
+        "metadata_post": "c116bc279a0b3db471a55d56ce7fa21d2b2c9cc5b51f0f3211cb8dadc2359bf1",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/evidence/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "2adcee37cf586744fd34ffc9c440069c869181f2d1dc62619b00aaaedeb547db",
+        "metadata_post": "2adcee37cf586744fd34ffc9c440069c869181f2d1dc62619b00aaaedeb547db",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/filesystem/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "8f3547832b78c8a917cd0563b215d4263ea93c9249c5172a84220d1a5160fcea",
+        "metadata_post": "8f3547832b78c8a917cd0563b215d4263ea93c9249c5172a84220d1a5160fcea",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/generation/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "b92ee828219734c3ab7bf3edb8596e9cb767f4993dbb5ae0a549d7374181d0e0",
+        "metadata_post": "b92ee828219734c3ab7bf3edb8596e9cb767f4993dbb5ae0a549d7374181d0e0",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/generation/openai/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "2298f9a9851ae90da80909afc032bdd9d451756aac60281834d7bda5ae7b07cb",
+        "metadata_post": "2298f9a9851ae90da80909afc032bdd9d451756aac60281834d7bda5ae7b07cb",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/openai/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "611924d5e67bfe321b2d643af580a9334ec9b7c3b29e6df30e625e86b832ed5d",
+        "metadata_post": "611924d5e67bfe321b2d643af580a9334ec9b7c3b29e6df30e625e86b832ed5d",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/persistence/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "e8014d66b920c083e71c8801e83fd43a132d43f90bab66f951a8bca7a0c04038",
+        "metadata_post": "e8014d66b920c083e71c8801e83fd43a132d43f90bab66f951a8bca7a0c04038",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/read_models/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "17f5f549a3241c25ebc50dd81846f472957035733dd0136e15b78a36b4383c6d",
+        "metadata_post": "17f5f549a3241c25ebc50dd81846f472957035733dd0136e15b78a36b4383c6d",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/resource_library/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "251be9456fb1e48b8ac2be894e39fbfb260ae87846c9f32373129c80f29a33e3",
+        "metadata_post": "251be9456fb1e48b8ac2be894e39fbfb260ae87846c9f32373129c80f29a33e3",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/review/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "7df78bf11f688d708e1deac8af07674430b73e8f04d4168b923d637bb3a25533",
+        "metadata_post": "7df78bf11f688d708e1deac8af07674430b73e8f04d4168b923d637bb3a25533",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/review/openai/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "544885b194fc92f98c470ba7fbfbeb31059fb789077570807701fbfb31e879a8",
+        "metadata_post": "544885b194fc92f98c470ba7fbfbeb31059fb789077570807701fbfb31e879a8",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/search/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "ad4d7e621c0d978c4eabc7d40f0a649b66482f971bd8c5a712640f612ed4f6d1",
+        "metadata_post": "ad4d7e621c0d978c4eabc7d40f0a649b66482f971bd8c5a712640f612ed4f6d1",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/semantic/__pycache__",
+        "git_status": "ignored",
+        "files": 5,
+        "directories": 1,
+        "metadata_pre": "cf6e250643f5566ae7e48bc667bc2dca39065f53a08ef43e54a3c90d2d6dcfd1",
+        "metadata_post": "cf6e250643f5566ae7e48bc667bc2dca39065f53a08ef43e54a3c90d2d6dcfd1",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/adapters/outbound/transaction/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "6fe85ec31592357d0bc2ba007c88b53cad807f54ad8a72be3aa189c2bdabab6b",
+        "metadata_post": "6fe85ec31592357d0bc2ba007c88b53cad807f54ad8a72be3aa189c2bdabab6b",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "a9f060995dc776a151cfb04d308adb0e4e609d7fa1837ce7f1ec5401caaa212f",
+        "metadata_post": "a9f060995dc776a151cfb04d308adb0e4e609d7fa1837ce7f1ec5401caaa212f",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/agents/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "0a589dec7571d913758a67d44a150e75b01912f359ceb6949db1ad6f6f37407c",
+        "metadata_post": "0a589dec7571d913758a67d44a150e75b01912f359ceb6949db1ad6f6f37407c",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/agents/evidence/__pycache__",
+        "git_status": "ignored",
+        "files": 11,
+        "directories": 1,
+        "metadata_pre": "98030ab78581e53434cc7360039caf44fbc948b848c3cbc8ae6bba1bb3d3b841",
+        "metadata_post": "98030ab78581e53434cc7360039caf44fbc948b848c3cbc8ae6bba1bb3d3b841",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/agents/generation/__pycache__",
+        "git_status": "ignored",
+        "files": 11,
+        "directories": 1,
+        "metadata_pre": "06f10b006deafe78a4cc25a8deec9ab07e48a626fcb69bc95673ee094264a41f",
+        "metadata_post": "06f10b006deafe78a4cc25a8deec9ab07e48a626fcb69bc95673ee094264a41f",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/agents/review/__pycache__",
+        "git_status": "ignored",
+        "files": 11,
+        "directories": 1,
+        "metadata_pre": "fc6c206bdd710cdbbbaf5999d1f061431410f6d320e85993689134083301efef",
+        "metadata_post": "fc6c206bdd710cdbbbaf5999d1f061431410f6d320e85993689134083301efef",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/application_routing/__pycache__",
+        "git_status": "ignored",
+        "files": 5,
+        "directories": 1,
+        "metadata_pre": "74a4f7a739b610a15c8ecbf3c833ca15f82280175de7bb08d56d889316f0a618",
+        "metadata_post": "74a4f7a739b610a15c8ecbf3c833ca15f82280175de7bb08d56d889316f0a618",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "5e57d65a4773868c823a5e5d2b5302b1983e978a521d791cb75b658bb2f9c9d1",
+        "metadata_post": "5e57d65a4773868c823a5e5d2b5302b1983e978a521d791cb75b658bb2f9c9d1",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/application/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "6f156a65fc04b86a466dd9575aee5e4ef5c7b5bc58f63c31c36877c5d49cd7cc",
+        "metadata_post": "6f156a65fc04b86a466dd9575aee5e4ef5c7b5bc58f63c31c36877c5d49cd7cc",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/common/__pycache__",
+        "git_status": "ignored",
+        "files": 7,
+        "directories": 1,
+        "metadata_pre": "8a025462e45aeb1f591c744b329f3a16620dc7ca30a5b7502fc86ad326356f2a",
+        "metadata_post": "8a025462e45aeb1f591c744b329f3a16620dc7ca30a5b7502fc86ad326356f2a",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/delegation/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "fa7031201eb8e56068ebf1cf6d4620658fcb97737fc61bceb5f6d4203f432e7a",
+        "metadata_post": "fa7031201eb8e56068ebf1cf6d4620658fcb97737fc61bceb5f6d4203f432e7a",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/errors/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "e9acaedc51d46507133d8b96783774a33ee68c74ba6907341c6dabd5deeef152",
+        "metadata_post": "e9acaedc51d46507133d8b96783774a33ee68c74ba6907341c6dabd5deeef152",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/events/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "dcd9153d0fd30cad8743c4eab9f92ad60dff82d3aae0e13d7eef50a12043b7ee",
+        "metadata_post": "dcd9153d0fd30cad8743c4eab9f92ad60dff82d3aae0e13d7eef50a12043b7ee",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/evidence/__pycache__",
+        "git_status": "ignored",
+        "files": 5,
+        "directories": 1,
+        "metadata_pre": "b881c1c3ad96b4a805d60f7b85d2ae821587ca635188e5c36e9a2ae7bf916f7c",
+        "metadata_post": "b881c1c3ad96b4a805d60f7b85d2ae821587ca635188e5c36e9a2ae7bf916f7c",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/gates/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "a9dd337123141c8faeb3063524a5a89cabfa3d3c07584577ce2238210fa3b50a",
+        "metadata_post": "a9dd337123141c8faeb3063524a5a89cabfa3d3c07584577ce2238210fa3b50a",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/invocation/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "b151ad3838d2406f6233106d703f489daed9e3b247d57e1dd700c8a184f33cdb",
+        "metadata_post": "b151ad3838d2406f6233106d703f489daed9e3b247d57e1dd700c8a184f33cdb",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/observability/__pycache__",
+        "git_status": "ignored",
+        "files": 6,
+        "directories": 1,
+        "metadata_pre": "b7c675fbd9af7f836b616fb88dcb6a571bd43dce792e26a4ffc1733dbe2abb66",
+        "metadata_post": "b7c675fbd9af7f836b616fb88dcb6a571bd43dce792e26a4ffc1733dbe2abb66",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/planning/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "4d1c945103df97411f51421a2e2d4192a1a9b9ba6a68841782a80ab10e9d3736",
+        "metadata_post": "4d1c945103df97411f51421a2e2d4192a1a9b9ba6a68841782a80ab10e9d3736",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/policy/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "c18d80881d2b77359a2653b4664e4bfcb9cd042a80cc46e61c1065f9f62b7018",
+        "metadata_post": "c18d80881d2b77359a2653b4664e4bfcb9cd042a80cc46e61c1065f9f62b7018",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/production/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "129e7b11a5d117501c656375a8e5e929fbe04092a266c99bc406e653ec4a82a9",
+        "metadata_post": "129e7b11a5d117501c656375a8e5e929fbe04092a266c99bc406e653ec4a82a9",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/review/__pycache__",
+        "git_status": "ignored",
+        "files": 7,
+        "directories": 1,
+        "metadata_pre": "e0e5c3cff467a5e307d4ea63212731cae3338313e62f9b1c5d3eff590a8b2ec9",
+        "metadata_post": "e0e5c3cff467a5e307d4ea63212731cae3338313e62f9b1c5d3eff590a8b2ec9",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/security/__pycache__",
+        "git_status": "ignored",
+        "files": 6,
+        "directories": 1,
+        "metadata_pre": "6fa434c6b0f4860ce7dea2b50849a9de5b52a37d8268bf6f264c0f35fe34b253",
+        "metadata_post": "6fa434c6b0f4860ce7dea2b50849a9de5b52a37d8268bf6f264c0f35fe34b253",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/contracts/tools/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "e41fd2ac3c3e086480542d444294190d5eecbfef0afe856efc66ada1c5660bfc",
+        "metadata_post": "e41fd2ac3c3e086480542d444294190d5eecbfef0afe856efc66ada1c5660bfc",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/gates/__pycache__",
+        "git_status": "ignored",
+        "files": 5,
+        "directories": 1,
+        "metadata_pre": "7d4b5dca4a7473b2ebed74d192675bdcd7b431195ade19c2f9bf479515b5a661",
+        "metadata_post": "7d4b5dca4a7473b2ebed74d192675bdcd7b431195ade19c2f9bf479515b5a661",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/observability/__pycache__",
+        "git_status": "ignored",
+        "files": 16,
+        "directories": 1,
+        "metadata_pre": "7b34d38118d1f33d895bd4035f399a156e0df2f9c0a10a36dc4a2585d2057443",
+        "metadata_post": "7b34d38118d1f33d895bd4035f399a156e0df2f9c0a10a36dc4a2585d2057443",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/orchestration/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "3d193c756638c0f2213800ef76d3cde800454c67a2f2ca954f384f09c63341d8",
+        "metadata_post": "3d193c756638c0f2213800ef76d3cde800454c67a2f2ca954f384f09c63341d8",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/orchestration/compilation/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "acd45e4ada175643a1c5a630dd00b51439652ca21c00f9b306a3f7d9d038e2ac",
+        "metadata_post": "acd45e4ada175643a1c5a630dd00b51439652ca21c00f9b306a3f7d9d038e2ac",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/orchestration/coordination/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "a81cab9c7ae8d392d175b2e7063950c02e2f34661561a64ec5e74002b62915a5",
+        "metadata_post": "a81cab9c7ae8d392d175b2e7063950c02e2f34661561a64ec5e74002b62915a5",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/orchestration/selection/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "1bbcae79754dfa7d168c7c24ceb444a5558aed304fbe4e8b1bcb0e3c7a288d6d",
+        "metadata_post": "1bbcae79754dfa7d168c7c24ceb444a5558aed304fbe4e8b1bcb0e3c7a288d6d",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/orchestration/workflows/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "9b346e0bcc562d4d0197865a7c937df7db663af857a039df24b6f99dc675551d",
+        "metadata_post": "9b346e0bcc562d4d0197865a7c937df7db663af857a039df24b6f99dc675551d",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/policy/__pycache__",
+        "git_status": "ignored",
+        "files": 9,
+        "directories": 1,
+        "metadata_pre": "8b6104229f75f3860b9ed8303e2cd93cc53439d497728f16ccef8a793e8ac6ef",
+        "metadata_post": "8b6104229f75f3860b9ed8303e2cd93cc53439d497728f16ccef8a793e8ac6ef",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/recovery/__pycache__",
+        "git_status": "ignored",
+        "files": 22,
+        "directories": 1,
+        "metadata_pre": "88a767c8ae03f6175f2d82e8c97a9566e6c2bfba2013a3912e47c96d8668ddeb",
+        "metadata_post": "88a767c8ae03f6175f2d82e8c97a9566e6c2bfba2013a3912e47c96d8668ddeb",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/registry/__pycache__",
+        "git_status": "ignored",
+        "files": 5,
+        "directories": 1,
+        "metadata_pre": "f2fa4e05140398157d1ec09b86911477d2353cce55b3fe1e88e629ce2c3b60d5",
+        "metadata_post": "f2fa4e05140398157d1ec09b86911477d2353cce55b3fe1e88e629ce2c3b60d5",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/runtime/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "a4de763c0ae7f595beaa07e57e65be7e9d90d1662c742c9bf1d6de56171d05b1",
+        "metadata_post": "a4de763c0ae7f595beaa07e57e65be7e9d90d1662c742c9bf1d6de56171d05b1",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/runtime/execution/__pycache__",
+        "git_status": "ignored",
+        "files": 5,
+        "directories": 1,
+        "metadata_pre": "8a168221a8ad10136a6c61752d224d501259e13df7d24ee7b85e48862eadb193",
+        "metadata_post": "8a168221a8ad10136a6c61752d224d501259e13df7d24ee7b85e48862eadb193",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/runtime/planning/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "70a3a00689432a0486ac861ab0a6173a9ce5112440e8e3562b92536d444be419",
+        "metadata_post": "70a3a00689432a0486ac861ab0a6173a9ce5112440e8e3562b92536d444be419",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/runtime/routing/__pycache__",
+        "git_status": "ignored",
+        "files": 7,
+        "directories": 1,
+        "metadata_pre": "96526e16ccf28c160c4e6ada8119086deb9df515dc92500351cab225aa967483",
+        "metadata_post": "96526e16ccf28c160c4e6ada8119086deb9df515dc92500351cab225aa967483",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/runtime/scheduling/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "0779b2ebf1150a7f342a3d4b5ca18c50974645b1f924446e10f99e2e273d0ce1",
+        "metadata_post": "0779b2ebf1150a7f342a3d4b5ca18c50974645b1f924446e10f99e2e273d0ce1",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/runtime/state/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "7540449cc875a885dc629e4798d2a1134a22d5f461f95584f7dc8a65a3db76fd",
+        "metadata_post": "7540449cc875a885dc629e4798d2a1134a22d5f461f95584f7dc8a65a3db76fd",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/sandbox/__pycache__",
+        "git_status": "ignored",
+        "files": 5,
+        "directories": 1,
+        "metadata_pre": "83b7b943cbbb1689b2685da78de680c9da82c646027b0c30868553043874a9ca",
+        "metadata_post": "83b7b943cbbb1689b2685da78de680c9da82c646027b0c30868553043874a9ca",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/security/__pycache__",
+        "git_status": "ignored",
+        "files": 7,
+        "directories": 1,
+        "metadata_pre": "580b5b22429c99d0fc0a8b436757ceef296360fc77fcaa8bab1331860797898e",
+        "metadata_post": "580b5b22429c99d0fc0a8b436757ceef296360fc77fcaa8bab1331860797898e",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/tools/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "4bc8ff56ec56df4da40f214dc5db2f39511cad34ab01d49ee04dbb139fd718f5",
+        "metadata_post": "4bc8ff56ec56df4da40f214dc5db2f39511cad34ab01d49ee04dbb139fd718f5",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/agent_runtime/versioning/__pycache__",
+        "git_status": "ignored",
+        "files": 5,
+        "directories": 1,
+        "metadata_pre": "2afec3a7ba92afb10f58ada65dd86ab09db7529c5d0fe665c4484e896e6f08a6",
+        "metadata_post": "2afec3a7ba92afb10f58ada65dd86ab09db7529c5d0fe665c4484e896e6f08a6",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/core_contracts/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "5c76aa159c9415a6ec50ad33ba4a219b526a6a1da24e5e477b3cfc72a8b0342f",
+        "metadata_post": "5c76aa159c9415a6ec50ad33ba4a219b526a6a1da24e5e477b3cfc72a8b0342f",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/core_contracts/capability/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "4403758f06d3e3d1a9a6d498ee92be1a04a8564017f7108608fc5c28508210d5",
+        "metadata_post": "4403758f06d3e3d1a9a6d498ee92be1a04a8564017f7108608fc5c28508210d5",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/core_contracts/invocation/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "f1d081b009c0a9d1c7392008fec4f2fe4c4b6286c40f2776a8a2fa5c0f6a497b",
+        "metadata_post": "f1d081b009c0a9d1c7392008fec4f2fe4c4b6286c40f2776a8a2fa5c0f6a497b",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/core_contracts/outcome/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "004786b88967fcf0c99d87482ae1c66976c4c31aa04e21eaf981738907eb65fb",
+        "metadata_post": "004786b88967fcf0c99d87482ae1c66976c4c31aa04e21eaf981738907eb65fb",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/infrastructure/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "543846f0357291b864f89991616be58cc34a4f573efc727303a0bf9b1c1a54f6",
+        "metadata_post": "543846f0357291b864f89991616be58cc34a4f573efc727303a0bf9b1c1a54f6",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/infrastructure/composition/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "3171efad46d59f4d7ada95e77aa60ca7b4c2d903c3eb59e69eede7f31038ddde",
+        "metadata_post": "3171efad46d59f4d7ada95e77aa60ca7b4c2d903c3eb59e69eede7f31038ddde",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/infrastructure/composition/bootstrap/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "845f196287eb7352f24a25ff34e737973198471b67d3e380253d492e6fd184e4",
+        "metadata_post": "845f196287eb7352f24a25ff34e737973198471b67d3e380253d492e6fd184e4",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/infrastructure/composition/factories/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "211042c7145183e11c5abd7b854fd3a21fda793caaad73e7689077284e478a74",
+        "metadata_post": "211042c7145183e11c5abd7b854fd3a21fda793caaad73e7689077284e478a74",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/infrastructure/config/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "79eee81ee3f745eb185c52f37f1a85bb5b1cd8c2d6538e71d7e7a77e075f16d6",
+        "metadata_post": "79eee81ee3f745eb185c52f37f1a85bb5b1cd8c2d6538e71d7e7a77e075f16d6",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/infrastructure/config/effective_config/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "93837639c7d1645d199b0a010e8fc05d9df629a595f2535e1b3565aca51aa490",
+        "metadata_post": "93837639c7d1645d199b0a010e8fc05d9df629a595f2535e1b3565aca51aa490",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/infrastructure/config/loaders/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "70e3299cf5dd8d01833c0e3a1a4d65d7d58d3df83ec65f2b991f0bba89326abe",
+        "metadata_post": "70e3299cf5dd8d01833c0e3a1a4d65d7d58d3df83ec65f2b991f0bba89326abe",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/infrastructure/config/schemas/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "81be19e6479c9c307577491a3603c0338bc375b36796e89b927789c44e678621",
+        "metadata_post": "81be19e6479c9c307577491a3603c0338bc375b36796e89b927789c44e678621",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/infrastructure/config/secrets/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "c7f24067311a3b0cafd87ab87aaaaf686b284b78b4fe66d5e6f851a9284d8fc3",
+        "metadata_post": "c7f24067311a3b0cafd87ab87aaaaf686b284b78b4fe66d5e6f851a9284d8fc3",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/infrastructure/filesystem/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "fbb3c22e733be65208a8383566a04c9f92fa521e2048dfd7f2d43444d220cdc3",
+        "metadata_post": "fbb3c22e733be65208a8383566a04c9f92fa521e2048dfd7f2d43444d220cdc3",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/infrastructure/observability/__pycache__",
+        "git_status": "ignored",
+        "files": 8,
+        "directories": 1,
+        "metadata_pre": "a387fdb6961804691be9ab83245ff79533d9af24cc27883c98222804481bebd3",
+        "metadata_post": "a387fdb6961804691be9ab83245ff79533d9af24cc27883c98222804481bebd3",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "b6607abfe2ce440f09fab8047adf31f9e8ea63ecd1043e79f4bfcb1f4aee279d",
+        "metadata_post": "b6607abfe2ce440f09fab8047adf31f9e8ea63ecd1043e79f4bfcb1f4aee279d",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/analysis_simulation/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "4d3a859e2798cb99542e71e8163289b745abc5a5f6127e724eee171f308b0303",
+        "metadata_post": "4d3a859e2798cb99542e71e8163289b745abc5a5f6127e724eee171f308b0303",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/audit_traceability/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "15466919f783700b713962879c7d91e0d1b03fdae4f5a522d1e7c663961e2ef9",
+        "metadata_post": "15466919f783700b713962879c7d91e0d1b03fdae4f5a522d1e7c663961e2ef9",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/audit_traceability/application/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "25a938bf8ecfb57dc37f044cd017c8fea981f8995e610f2ebfedaed52dc96be6",
+        "metadata_post": "25a938bf8ecfb57dc37f044cd017c8fea981f8995e610f2ebfedaed52dc96be6",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/audit_traceability/application/dto/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "0ffaa9c69ddb3a784875e6100925fa6b16b4663c9b031e1236ed502632da8fbb",
+        "metadata_post": "0ffaa9c69ddb3a784875e6100925fa6b16b4663c9b031e1236ed502632da8fbb",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/documents_provenance/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "e85e7c713ca9f54b9e3ad3e3b54f1f9be70d04c819f56f144a52497adaa7d654",
+        "metadata_post": "e85e7c713ca9f54b9e3ad3e3b54f1f9be70d04c819f56f144a52497adaa7d654",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/documents_provenance/domain/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "f3f3251d636aac549c47a78bd4f92e4e14a5d713f3bcaabbc16a1cd992cc159b",
+        "metadata_post": "f3f3251d636aac549c47a78bd4f92e4e14a5d713f3bcaabbc16a1cd992cc159b",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/documents_provenance/domain/value_objects/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "19bb2d471ff81dbc5853e14649d14a395a4ca1d43ba4188845803e5b86c5bbef",
+        "metadata_post": "19bb2d471ff81dbc5853e14649d14a395a4ca1d43ba4188845803e5b86c5bbef",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/knowledge_reference/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "0afdd2993ea60d07e8f19647a21b57758e9ee0c8b8f1fba7f728aef17279c2cb",
+        "metadata_post": "0afdd2993ea60d07e8f19647a21b57758e9ee0c8b8f1fba7f728aef17279c2cb",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/knowledge_reference/domain/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "d594d95b03543972c13d85d714e19f8d4b7c8d90c173557213aa5c57736fc285",
+        "metadata_post": "d594d95b03543972c13d85d714e19f8d4b7c8d90c173557213aa5c57736fc285",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/knowledge_reference/domain/value_objects/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "c3638c80e1faea24ebb70bd4b780bc71431a95a097f5199da2b65d5bbbe0ab6e",
+        "metadata_post": "c3638c80e1faea24ebb70bd4b780bc71431a95a097f5199da2b65d5bbbe0ab6e",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/lifecycle_promotion/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "46c7acde6a0b26e8809a80ae29f1d1d49dacb0efd89411ff779e3ee19b21bf73",
+        "metadata_post": "46c7acde6a0b26e8809a80ae29f1d1d49dacb0efd89411ff779e3ee19b21bf73",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/lifecycle_promotion/domain/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "f0e4f138d622409e6dd30619309f4d2fdfa39df683d396bad943f108d3180d4f",
+        "metadata_post": "f0e4f138d622409e6dd30619309f4d2fdfa39df683d396bad943f108d3180d4f",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/lifecycle_promotion/domain/value_objects/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "a8425cc810f71c88d294d45709b816cc14d682d43adb467d08df85ee9bf351dd",
+        "metadata_post": "a8425cc810f71c88d294d45709b816cc14d682d43adb467d08df85ee9bf351dd",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/materialization_export/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "6f052394d5de1c8a4abbd1ddd0df72cc40b1846c45d83bbf0e2cb22d2f78a124",
+        "metadata_post": "6f052394d5de1c8a4abbd1ddd0df72cc40b1846c45d83bbf0e2cb22d2f78a124",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/pedagogical_context/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "fa9e14f602b3b529718ae8a55f99c1f997e411da81fa84c0681aa269fae7c5de",
+        "metadata_post": "fa9e14f602b3b529718ae8a55f99c1f997e411da81fa84c0681aa269fae7c5de",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/pedagogical_context/application/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "2d3c396eb3a56844ae7b7844c189d33a934cab981231afef2f9b899a7e24d521",
+        "metadata_post": "2d3c396eb3a56844ae7b7844c189d33a934cab981231afef2f9b899a7e24d521",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/pedagogical_context/application/dto/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "4b9c852f0acfc8da2fc4cedad98be4bb474761011fb6e7ff22b1be00aca9428f",
+        "metadata_post": "4b9c852f0acfc8da2fc4cedad98be4bb474761011fb6e7ff22b1be00aca9428f",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/pedagogical_design/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "2212a217430059a70a9c032b3e0ebf622e74851ea4a81ed7e8f748a8256bdd19",
+        "metadata_post": "2212a217430059a70a9c032b3e0ebf622e74851ea4a81ed7e8f748a8256bdd19",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/quality_evaluation/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "db03183ca940e06d429588e9da72069ce6b9773f0f97c75a3e11ab69bdd5161b",
+        "metadata_post": "db03183ca940e06d429588e9da72069ce6b9773f0f97c75a3e11ab69bdd5161b",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/quality_evaluation/domain/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "d95e3d37234831354fea4db13b29a1d4a099fdf551143ec3b90856bf5786b461",
+        "metadata_post": "d95e3d37234831354fea4db13b29a1d4a099fdf551143ec3b90856bf5786b461",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/quality_evaluation/domain/value_objects/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "ec6f609347906b3a3dd7850d2c14703cd2b073f8c201e5bcfb6884c11163c8a6",
+        "metadata_post": "ec6f609347906b3a3dd7850d2c14703cd2b073f8c201e5bcfb6884c11163c8a6",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/resource_library/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "79cdd62ffcfdd0833ff42a3a4a5037e49eab55be1d6417bc05921e8b7a975470",
+        "metadata_post": "79cdd62ffcfdd0833ff42a3a4a5037e49eab55be1d6417bc05921e8b7a975470",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/resource_library/application/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "188d20acb73fbe1746ae84cc818b967b6eb32ea2ecbd468dabfbde5aaf140b4b",
+        "metadata_post": "188d20acb73fbe1746ae84cc818b967b6eb32ea2ecbd468dabfbde5aaf140b4b",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/resource_library/application/dto/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "209dd9adb23198aeb9e4dbcc4a46427cd3f8269e8ac0a8fe3bc8542329e90139",
+        "metadata_post": "209dd9adb23198aeb9e4dbcc4a46427cd3f8269e8ac0a8fe3bc8542329e90139",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/resource_library/application/dto/input/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "4f9ec406025a3eef4eb167e54b58378ff002a3c76d36cd68b4908cd4914e23ba",
+        "metadata_post": "4f9ec406025a3eef4eb167e54b58378ff002a3c76d36cd68b4908cd4914e23ba",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/resource_library/application/dto/output/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "55594ec75f73947679e5248faa282b44237dc5f4b0e4ff52547f7822c406fdc8",
+        "metadata_post": "55594ec75f73947679e5248faa282b44237dc5f4b0e4ff52547f7822c406fdc8",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/resource_library/application/queries/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "066685cff6dd57a8ea547de73c62ec6eb5c01707cc5456b87bbf6ab4df3c6973",
+        "metadata_post": "066685cff6dd57a8ea547de73c62ec6eb5c01707cc5456b87bbf6ab4df3c6973",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/resource_library/domain/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "7d2974d22b9afaaf4e15e6e45a340459d4b6c721fb45d4370acf1b66d5efbc14",
+        "metadata_post": "7d2974d22b9afaaf4e15e6e45a340459d4b6c721fb45d4370acf1b66d5efbc14",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/resource_library/domain/errors/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "4c028bede30fc801f544d0eca588dd865efc5d7b8092855e8bfd9bddddde61cb",
+        "metadata_post": "4c028bede30fc801f544d0eca588dd865efc5d7b8092855e8bfd9bddddde61cb",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/resource_library/domain/value_objects/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "9da6f9b0e6ef4e802506ca2aa30dcd9c896ed7bffe50833f50000c1f4cf9baca",
+        "metadata_post": "9da6f9b0e6ef4e802506ca2aa30dcd9c896ed7bffe50833f50000c1f4cf9baca",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/resource_library/ports/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "dd78839792ba20ac47a6942aab16cbba4579beac365941ff06f65a65eb876047",
+        "metadata_post": "dd78839792ba20ac47a6942aab16cbba4579beac365941ff06f65a65eb876047",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/resource_library/ports/inbound/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "5e328d9bf8d734e9ff72cdac9ddc3c9a5503c08f3681989ac3974d91d6593463",
+        "metadata_post": "5e328d9bf8d734e9ff72cdac9ddc3c9a5503c08f3681989ac3974d91d6593463",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/resource_library/ports/outbound/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "ad76ea506bfa2b30c28f386f75f973b3a86fc3a2df82765942e0daef0909e416",
+        "metadata_post": "ad76ea506bfa2b30c28f386f75f973b3a86fc3a2df82765942e0daef0909e416",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/transformation_assembly/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "88807ba3a337ff8d15936eecf4f53e500508aaad5723f86b8cb2d4a0a68876d3",
+        "metadata_post": "88807ba3a337ff8d15936eecf4f53e500508aaad5723f86b8cb2d4a0a68876d3",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/transformation_assembly/domain/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "43a9e8a4a5a69435aa69b1403afd2a382480781ed72ada7c821dd854c837d28b",
+        "metadata_post": "43a9e8a4a5a69435aa69b1403afd2a382480781ed72ada7c821dd854c837d28b",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/transformation_assembly/domain/value_objects/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "5f449bbb755c3634dcc3782907b634df99a96599b299f3bdede2c965d16fef0f",
+        "metadata_post": "5f449bbb755c3634dcc3782907b634df99a96599b299f3bdede2c965d16fef0f",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/validation_control/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "768768a42f9d32a7b86470c4535db5187c4de9e395fb80d68cb2eb148facc748",
+        "metadata_post": "768768a42f9d32a7b86470c4535db5187c4de9e395fb80d68cb2eb148facc748",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/validation_control/application/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "15dc46a755d85b0f98b115817696b5a9296a9672d43432324fd897881700efdc",
+        "metadata_post": "15dc46a755d85b0f98b115817696b5a9296a9672d43432324fd897881700efdc",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/validation_control/application/dto/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "7954be550d8787fb26c75412203fac7b5914a6dbf6fae5b60927d086bb337ccd",
+        "metadata_post": "7954be550d8787fb26c75412203fac7b5914a6dbf6fae5b60927d086bb337ccd",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/work_orchestration/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "7ce83b31ab9c95c6f560ee0303340c9c952e03560a8b3bcd5d35928135d0c630",
+        "metadata_post": "7ce83b31ab9c95c6f560ee0303340c9c952e03560a8b3bcd5d35928135d0c630",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/work_orchestration/application/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "52aca9f5b3cdc32e4539da28091e56acc944d16a786d3dda29cb7d559bcc2563",
+        "metadata_post": "52aca9f5b3cdc32e4539da28091e56acc944d16a786d3dda29cb7d559bcc2563",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/work_orchestration/application/dto/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "9ffbfc71bf957c7d28cc051427081e585d1bf1df3831570dd4ad8d60095504b0",
+        "metadata_post": "9ffbfc71bf957c7d28cc051427081e585d1bf1df3831570dd4ad8d60095504b0",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/work_orchestration/domain/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "b40fd6112b6043a1c14cdd6709c061921247557f7ee2079ff7b89b66395b9caf",
+        "metadata_post": "b40fd6112b6043a1c14cdd6709c061921247557f7ee2079ff7b89b66395b9caf",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/modules/work_orchestration/domain/value_objects/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "7d1a25a39d9cc62d10968dca69432d9ceea0c32b7ced3f262e289e773546ec41",
+        "metadata_post": "7d1a25a39d9cc62d10968dca69432d9ceea0c32b7ced3f262e289e773546ec41",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/shared_kernel/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "d62a6c4ccd8706158672eb89020086dd57b1be046aab82ae0f3cbcb200d5a6f7",
+        "metadata_post": "d62a6c4ccd8706158672eb89020086dd57b1be046aab82ae0f3cbcb200d5a6f7",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/shared_kernel/correlation/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "0a79958d7f4752937a5bfb1c8ec625269d45c0cd3c7e85b25abc760de68eca2f",
+        "metadata_post": "0a79958d7f4752937a5bfb1c8ec625269d45c0cd3c7e85b25abc760de68eca2f",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/shared_kernel/errors/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "a160daef1366107a644e112dbea6311822b890173f88ffad6f771f6b67b6c846",
+        "metadata_post": "a160daef1366107a644e112dbea6311822b890173f88ffad6f771f6b67b6c846",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/shared_kernel/identifiers/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "e552a8cb4203311e3fb1d032c7b123d9183c0f32d5ccb15f7c1fe81d095f9a12",
+        "metadata_post": "e552a8cb4203311e3fb1d032c7b123d9183c0f32d5ccb15f7c1fe81d095f9a12",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/shared_kernel/references/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "68514d97ca092efc7f4cde93e2d56fee5a8b00edcd2e87af352801763fc5d58e",
+        "metadata_post": "68514d97ca092efc7f4cde93e2d56fee5a8b00edcd2e87af352801763fc5d58e",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "backend/shared_kernel/time/__pycache__",
+        "git_status": "ignored",
+        "files": 2,
+        "directories": 1,
+        "metadata_pre": "aee977caf94628251f9edc70f2930b1b832c4eab0fa88d0fbec83c7cd45512e4",
+        "metadata_post": "aee977caf94628251f9edc70f2930b1b832c4eab0fa88d0fbec83c7cd45512e4",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "calibration_tooling/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "02faf94f9e2085346ee609be994740a8b931b6c0d5d3ea567a2bd17fb4f4ac0c",
+        "metadata_post": "02faf94f9e2085346ee609be994740a8b931b6c0d5d3ea567a2bd17fb4f4ac0c",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "calibration_tooling/adapters/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "31a19eb3425066fbee111fcd567aaab54fddd90118e2181dd18030a090843ca5",
+        "metadata_post": "31a19eb3425066fbee111fcd567aaab54fddd90118e2181dd18030a090843ca5",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "calibration_tooling/adapters/anthropic/__pycache__",
+        "git_status": "ignored",
+        "files": 6,
+        "directories": 1,
+        "metadata_pre": "757b83e75d9ba51c88fc5a25dc1c786293e4b2dbd79ed940bd70246b67b23824",
+        "metadata_post": "757b83e75d9ba51c88fc5a25dc1c786293e4b2dbd79ed940bd70246b67b23824",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "calibration_tooling/application/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "4ec076d25a1b067b2e975ec2403d1d30efb934a085706fc252dea47e59875d1c",
+        "metadata_post": "4ec076d25a1b067b2e975ec2403d1d30efb934a085706fc252dea47e59875d1c",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "calibration_tooling/contracts/__pycache__",
+        "git_status": "ignored",
+        "files": 5,
+        "directories": 1,
+        "metadata_pre": "eb5b91b99f4cdef2fe73538451b3e7881ee51708a8a82a330a7b32c9adcec814",
+        "metadata_post": "eb5b91b99f4cdef2fe73538451b3e7881ee51708a8a82a330a7b32c9adcec814",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "calibration_tooling/observability/__pycache__",
+        "git_status": "ignored",
+        "files": 3,
+        "directories": 1,
+        "metadata_pre": "fc3d1ed47801372c4fe4ca6f7252fe48ff9355c5a918b1150c08ef22951ba7ea",
+        "metadata_post": "fc3d1ed47801372c4fe4ca6f7252fe48ff9355c5a918b1150c08ef22951ba7ea",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "calibration_tooling/runtime/__pycache__",
+        "git_status": "ignored",
+        "files": 8,
+        "directories": 1,
+        "metadata_pre": "585b44e0f83c569bb43bbbef5d444395c67e9ca7fdbd161063816e8c70b02321",
+        "metadata_post": "585b44e0f83c569bb43bbbef5d444395c67e9ca7fdbd161063816e8c70b02321",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "evaluation_harness/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "7b5be3f439835f09644dbd9382d2e4ffad182464d2b4bc7e8dd61258c72d9c03",
+        "metadata_post": "7b5be3f439835f09644dbd9382d2e4ffad182464d2b4bc7e8dd61258c72d9c03",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "evaluation_harness/assertions/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "74533da49f56345efe7f1adf440c155135f86c51156b117b818ae019b22669d6",
+        "metadata_post": "74533da49f56345efe7f1adf440c155135f86c51156b117b818ae019b22669d6",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "evaluation_harness/contracts/__pycache__",
+        "git_status": "ignored",
+        "files": 11,
+        "directories": 1,
+        "metadata_pre": "b03e7e5ce9a6ef38b17b219dcb3a910ca3580fa15245c1ef9cfc4793f19d5430",
+        "metadata_post": "b03e7e5ce9a6ef38b17b219dcb3a910ca3580fa15245c1ef9cfc4793f19d5430",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "evaluation_harness/reporting/__pycache__",
+        "git_status": "ignored",
+        "files": 6,
+        "directories": 1,
+        "metadata_pre": "4c0525ba7952ffbb94bbeb3e09970c16289b18ccac51546f6e3d6f786c8fb455",
+        "metadata_post": "4c0525ba7952ffbb94bbeb3e09970c16289b18ccac51546f6e3d6f786c8fb455",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "evaluation_harness/runner/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "40b2f0dd7991367d4e36c032195e067f88881d01d18261500041c07f2b5ccc53",
+        "metadata_post": "40b2f0dd7991367d4e36c032195e067f88881d01d18261500041c07f2b5ccc53",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "evaluation_harness/scoring/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "bce6eb0ff9573e2c71a9b763d68afd9b16b7a8dc0bf702d99e1368ddd8893225",
+        "metadata_post": "bce6eb0ff9573e2c71a9b763d68afd9b16b7a8dc0bf702d99e1368ddd8893225",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "runtime",
+        "git_status": "ignored",
+        "files": 0,
+        "directories": 3,
+        "metadata_pre": "f127e40dfae73373155896838b66b60f928bc98fe12dbdce06b5fdf8b5489d15",
+        "metadata_post": "f127e40dfae73373155896838b66b60f928bc98fe12dbdce06b5fdf8b5489d15",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "temp",
+        "git_status": "ignored",
+        "files": 0,
+        "directories": 1,
+        "metadata_pre": "0533cad6527645fd9b42a04a604cd7a14ff93f07db2b4d034b20eea53ac2a135",
+        "metadata_post": "0533cad6527645fd9b42a04a604cd7a14ff93f07db2b4d034b20eea53ac2a135",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "tests/architecture/__pycache__",
+        "git_status": "ignored",
+        "files": 188,
+        "directories": 1,
+        "metadata_pre": "e6780c13a914c277ac13cddcb485476e0172c1b972efacb93f24947a8c96771d",
+        "metadata_post": "e6780c13a914c277ac13cddcb485476e0172c1b972efacb93f24947a8c96771d",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "tests/calibration/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "182f76822be4358e72d9a0eba72fc0370273aec64001e23bdd942c91da3360df",
+        "metadata_post": "182f76822be4358e72d9a0eba72fc0370273aec64001e23bdd942c91da3360df",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "tests/calibration/pedagogical/__pycache__",
+        "git_status": "ignored",
+        "files": 58,
+        "directories": 1,
+        "metadata_pre": "9f2bbe4e49257ca576610d13177067958e852876acea8d85a62fcb6eed8c58cf",
+        "metadata_post": "9f2bbe4e49257ca576610d13177067958e852876acea8d85a62fcb6eed8c58cf",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "tests/e2e/core/__pycache__",
+        "git_status": "ignored",
+        "files": 10,
+        "directories": 1,
+        "metadata_pre": "6fc9f1f0f408fb8c4b6abc87dd1992b12ae55ebd8e7106cbe5aeb779e8e68b82",
+        "metadata_post": "6fc9f1f0f408fb8c4b6abc87dd1992b12ae55ebd8e7106cbe5aeb779e8e68b82",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "tests/integration/__pycache__",
+        "git_status": "ignored",
+        "files": 144,
+        "directories": 1,
+        "metadata_pre": "e2231185fbf3fbb32cbbf004e5d1f1c4efef4a3c38282941b0e115fb0fa52a1e",
+        "metadata_post": "e2231185fbf3fbb32cbbf004e5d1f1c4efef4a3c38282941b0e115fb0fa52a1e",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "tests/integration/calibration_tooling/__pycache__",
+        "git_status": "ignored",
+        "files": 4,
+        "directories": 1,
+        "metadata_pre": "9d8b30a9bfa0c1d16ec8c2350ea950f0690df51b4ab7402c4796e62a84e9659a",
+        "metadata_post": "9d8b30a9bfa0c1d16ec8c2350ea950f0690df51b4ab7402c4796e62a84e9659a",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "tests/non_functional/__pycache__",
+        "git_status": "ignored",
+        "files": 8,
+        "directories": 1,
+        "metadata_pre": "69a42c3620c1e08bee8e3022cb284c90c789cc7cb5c08a19a6475f55adf79d5a",
+        "metadata_post": "69a42c3620c1e08bee8e3022cb284c90c789cc7cb5c08a19a6475f55adf79d5a",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "tests/providers/__pycache__",
+        "git_status": "ignored",
+        "files": 1,
+        "directories": 1,
+        "metadata_pre": "33ce33b26a0e7ab2034c95a7edafc9fea34318c10b5efdf836c6d5f77ed2e39e",
+        "metadata_post": "33ce33b26a0e7ab2034c95a7edafc9fea34318c10b5efdf836c6d5f77ed2e39e",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "tests/providers/anthropic/__pycache__",
+        "git_status": "ignored",
+        "files": 7,
+        "directories": 1,
+        "metadata_pre": "ab1565378bb301e0796dc8fedbea16e0c8c959399024817ccfcb5444b2b1d22f",
+        "metadata_post": "ab1565378bb301e0796dc8fedbea16e0c8c959399024817ccfcb5444b2b1d22f",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "tests/support/__pycache__",
+        "git_status": "ignored",
+        "files": 41,
+        "directories": 1,
+        "metadata_pre": "cb06919a96c13ace2ba44b667d5adc0cc7841029feb7e2d9463007f839b2330c",
+        "metadata_post": "cb06919a96c13ace2ba44b667d5adc0cc7841029feb7e2d9463007f839b2330c",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "tests/unit/__pycache__",
+        "git_status": "ignored",
+        "files": 321,
+        "directories": 1,
+        "metadata_pre": "a498ece4e6608c19271c7ac7eb162945dbca5cd2cc177e48782ce8597d3f55d8",
+        "metadata_post": "a498ece4e6608c19271c7ac7eb162945dbca5cd2cc177e48782ce8597d3f55d8",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "tests/unit/calibration_tooling/__pycache__",
+        "git_status": "ignored",
+        "files": 10,
+        "directories": 1,
+        "metadata_pre": "e55ee845a81165c6a899535617664d1cef9bed2760cf1af26ec2c4e50b14ab9d",
+        "metadata_post": "e55ee845a81165c6a899535617664d1cef9bed2760cf1af26ec2c4e50b14ab9d",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      },
+      {
+        "path": "tmp",
+        "git_status": "ignored",
+        "files": 0,
+        "directories": 1,
+        "metadata_pre": "86f52ab93727d41d444704ad513fb379f3b16fb4f0b2982d9d7aae94259cd611",
+        "metadata_post": "86f52ab93727d41d444704ad513fb379f3b16fb4f0b2982d9d7aae94259cd611",
+        "unchanged": true,
+        "disposition": "RETAIN_LOCAL_NO_DELETE_AUTHORITY"
+      }
+    ]
+  },
+  "product": {
+    "target": "LOCAL_BROWSER",
+    "server_implementation_found": false,
+    "launcher_found": false,
+    "frontend_found": false,
+    "api_v2_endpoints_found": 0,
+    "server_started": false,
+    "exe_msi_required": false,
+    "release_threshold": "NONE",
+    "provider_route_changed": false
+  },
+  "git": {
+    "head_pre": "0404852a3be77381bf7b7c903ee6309e2547487e",
+    "head_post": "0404852a3be77381bf7b7c903ee6309e2547487e",
+    "tracked_modifications": 0,
+    "staging": "NONE",
+    "commit": "NONE",
+    "push": "NONE",
+    "merge": "NONE",
+    "final_status": "B07_CANONICAL_DOCUMENTS_UNTRACKED_ONLY"
+  },
+  "privacy": {
+    "pre_scan": {
+      "source_candidate_count": 2240,
+      "signature_counts": {
+        "provider_key": 0,
+        "private_key": 0,
+        "aws_access_key": 0,
+        "github_token": 0
+      },
+      "affected_file_count": 0,
+      "forbidden_path_count": 0,
+      "values_printed": false
+    },
+    "raw_runtime_content_in_packet": false,
+    "private_absolute_paths_in_packet": false,
+    "final_candidate_scan": "PASS_BOUNDED_SIGNATURES_AND_FORBIDDEN_PATHS_NO_VALUES_PRINTED"
+  }
+}

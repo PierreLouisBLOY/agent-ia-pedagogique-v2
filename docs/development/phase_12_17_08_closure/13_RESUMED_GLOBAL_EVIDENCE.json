@@ -1,0 +1,3609 @@
+{
+  "schema_version": "12.17.8-b07-resumed-evidence-v1",
+  "date": "2026-09-05",
+  "baseline_reference": "0404852a3be77381bf7b7c903ee6309e2547487e",
+  "corrective_commit": "f28b29f0964d2642b74eb7098f90359d15fb4f0c",
+  "bundle_sha256": "a800457b1fb42e5ec0f18c49240b723eb9e3ec51f6c4ab76b2cf60f9f8500869",
+  "bundle_verified_manifest_entries": 4,
+  "authority": {
+    "source": "Approbation propriétaire explicite dans la conversation, puis bundle de reprise.",
+    "allowed": "Correctif de test + non-régression + preuves et commit bornés ; reprise globale B07.",
+    "forbidden": [
+      "application_code_changes",
+      "seed_or_sidecar_writes",
+      "user_runtime_access_or_migration",
+      "persistent_configuration",
+      "provider_calls",
+      "dependency_network",
+      "push",
+      "merge",
+      "phase_12_18_start"
+    ]
+  },
+  "prior_attempt": {
+    "baseline": "0404852a3be77381bf7b7c903ee6309e2547487e",
+    "pass": 14,
+    "fail": 2,
+    "failed_gates": [
+      5,
+      14
+    ],
+    "global": "INTERRUPTED_PREVENTIVELY_NOT_PASS",
+    "machine_evidence": "08_MACHINE_EVIDENCE.json",
+    "packet_manifest_sha256": "8d16ea5340d792c9123dfec1b5c4f0ba0c7ff8f6eca720c9a80002597dda3f8d"
+  },
+  "correction": {
+    "commit": "f28b29f0964d2642b74eb7098f90359d15fb4f0c",
+    "files": [
+      "tests/integration/test_sqlite_runtime_real_gate.py",
+      "tests/unit/test_seed_read_only_gate_regression.py",
+      "docs/development/phase_12_17_08_closure/11_SEED_TEST_CORRECTIVE_ADDENDUM.md",
+      "docs/development/phase_12_17_08_closure/12_SEED_TEST_CORRECTIVE_EVIDENCE.json"
+    ],
+    "evidence": "12_SEED_TEST_CORRECTIVE_EVIDENCE.json",
+    "targeted": {
+      "passed": 20,
+      "failed": 0,
+      "duration_seconds": 9.85
+    },
+    "real_targeted": {
+      "passed": 1,
+      "failed": 0,
+      "duration_seconds": 177.47
+    },
+    "mypy": {
+      "diagnostics": 0,
+      "files": 2
+    },
+    "no_application_change": true,
+    "no_skip_or_exclusion_added": true
+  },
+  "global": {
+    "baseline": "f28b29f0964d2642b74eb7098f90359d15fb4f0c",
+    "command": "python -m pytest -q -p no:cacheprovider --basetemp <B07_REPAIR_TEMP>/global-final --tb=short -rs --junitxml=<B07_REPAIR_TEMP>/global-final.xml",
+    "resumed_run_count": 1,
+    "interrupted_attempts_on_reference_baseline": 1,
+    "collection": 4952,
+    "passed": 4947,
+    "skipped": 5,
+    "failed": 0,
+    "errors": 0,
+    "exit_code": 0,
+    "pytest_duration_seconds": 1617.21,
+    "junit_suite_duration_seconds": 1616.979,
+    "junit_complete": true,
+    "junit_sha256": "673d1133b7010ae76f7f86b29201d9613fdc6244bcc9eaeab3fb8b707219ed1c",
+    "raw_junit_location": "SYSTEM_TEMP_OUTSIDE_REPOSITORY_NOT_VERSIONED",
+    "filters_or_exclusions_added": [],
+    "skips": [
+      {
+        "classname": "tests.non_functional.test_pedagogical_model_calibration_live_gate",
+        "name": "test_g2_live_calibration_executes_or_resumes_approved_matrix",
+        "seconds": 0,
+        "status": "SKIP",
+        "reason": "live gate requires RUN_PEDAGOGICAL_LIVE_CALIBRATION=1 and separate live owner authorization"
+      },
+      {
+        "classname": "tests.non_functional.test_semantic_retrieval_live_gate",
+        "name": "test_live_selected_semantic_model",
+        "seconds": 0.007,
+        "status": "SKIP",
+        "reason": "explicit live gate requires RUN_F2B_LIVE_SEMANTIC_BENCHMARK=1"
+      },
+      {
+        "classname": "tests.non_functional.test_semantic_retrieval_offline_r1_gate",
+        "name": "test_offline_r1_preserves_all_f2a_recoveries_with_canonical_aliases",
+        "seconds": 0.006,
+        "status": "SKIP",
+        "reason": "explicit offline gate requires RUN_F2B_OFFLINE_R1=1"
+      },
+      {
+        "classname": "tests.unit.test_local_filesystem_security",
+        "name": "test_symlink_file_and_parent_are_rejected_when_supported",
+        "seconds": 0.011,
+        "status": "SKIP",
+        "reason": "symbolic links are unavailable"
+      },
+      {
+        "classname": "tests.unit.test_sqlite_local_boundary",
+        "name": "test_runtime_symlink_is_rejected_by_configuration_and_connection",
+        "seconds": 0.009,
+        "status": "SKIP",
+        "reason": "symbolic links are unavailable"
+      }
+    ],
+    "real_seed_tests": [
+      {
+        "nodeid": "tests/integration/test_canonical_pedagogical_full_suite_real_gate.py::test_canonical_suite_is_reproducible_over_two_fresh_sqlite_runtimes",
+        "status": "PASS",
+        "seconds": 248.84
+      },
+      {
+        "nodeid": "tests/integration/test_generation_transformation_sqlite_e2e_real_gate.py::test_scn_04_runs_real_sqlite_evidence_before_real_transformation_owner",
+        "status": "PASS",
+        "seconds": 129.206
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_resource_application_e2e_real_gate.py::test_scn_01_runs_full_harness_through_wf0_application_and_op03",
+        "status": "PASS",
+        "seconds": 126.237
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_composition_root_binds_migrated_runtime",
+        "status": "PASS",
+        "seconds": 50.491
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_existing_resource_rows_preserve_only_observed_availability",
+        "status": "PASS",
+        "seconds": 0.066
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_migration_replay_is_idempotent_and_checksum_mismatch_stops",
+        "status": "PASS",
+        "seconds": 51.321
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_op01_knowledge_store_contract",
+        "status": "PASS",
+        "seconds": 0.264
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_op02_document_store_contract",
+        "status": "PASS",
+        "seconds": 0.234
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_op03_resource_store_contract",
+        "status": "PASS",
+        "seconds": 0.244
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_op04_context_store_contract",
+        "status": "PASS",
+        "seconds": 0.3
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_op05_work_store_contract_and_expected_version",
+        "status": "PASS",
+        "seconds": 0.261
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_op06_validation_append_read_contract",
+        "status": "PASS",
+        "seconds": 0.23
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_op07_quality_append_read_contract",
+        "status": "PASS",
+        "seconds": 0.221
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_op08_lifecycle_contract",
+        "status": "PASS",
+        "seconds": 0.277
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_op09_audit_append_read_contract",
+        "status": "PASS",
+        "seconds": 0.208
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_op10_commit_rollback_operation_ref_and_reconciliation",
+        "status": "PASS",
+        "seconds": 0.465
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_op11_real_fts_read_is_stable_and_non_authoritative",
+        "status": "PASS",
+        "seconds": 0.058
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_op12_projection_is_real_and_non_owner",
+        "status": "PASS",
+        "seconds": 0.056
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_op13_real_read_exposes_only_logical_fragments",
+        "status": "PASS",
+        "seconds": 0.052
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_runtime_provisioning_applies_exact_migration",
+        "status": "PASS",
+        "seconds": 41.053
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_runtime_real_gate.py::test_seed_gate_is_exact_and_read_only",
+        "status": "PASS",
+        "seconds": 92.995
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_search_rag_e2e_real_gate.py::test_scn_02_runs_full_harness_over_fresh_migrated_sqlite",
+        "status": "PASS",
+        "seconds": 68.468
+      },
+      {
+        "nodeid": "tests/integration/test_sqlite_seed_runtime_lifecycle_real_gate.py::test_real_seed_runtime_sidecars_backup_and_restore",
+        "status": "PASS",
+        "seconds": 44.118
+      },
+      {
+        "nodeid": "tests/non_functional/test_retrieval_quality_real_gate.py::test_retrieval_quality_real_gate_is_reproducible_on_two_fresh_runtimes",
+        "status": "PASS",
+        "seconds": 110.859
+      }
+    ],
+    "architecture": {
+      "total": 872,
+      "passed": 872,
+      "case_duration_seconds": 378.824,
+      "case_duration_is_sum_not_separate_run": true,
+      "included_in_global_total": true
+    },
+    "selected_tests": [
+      {
+        "classname": "tests.architecture.test_corrective_migration_002_fitness",
+        "name": "test_migration_identities_are_immutable_and_distinct",
+        "seconds": 0.002,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_corrective_migration_002_fitness",
+        "name": "test_002_contains_only_the_document_invariant_rebuild",
+        "seconds": 0.001,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_corrective_migration_002_fitness",
+        "name": "test_runner_registers_002_with_its_own_postcondition",
+        "seconds": 0.002,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_corrective_migration_002_fitness",
+        "name": "test_002_and_runner_contain_no_private_path_or_provider_dependency",
+        "seconds": 0.002,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_dependency_reproducibility_fitness",
+        "name": "test_exact_three_platform_locks_are_present_and_fully_hashed",
+        "seconds": 0.004,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_dependency_reproducibility_fitness",
+        "name": "test_lock_inputs_and_declared_bounds_have_not_drifted",
+        "seconds": 0.006,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_dependency_reproducibility_fitness",
+        "name": "test_runtime_calibration_and_dev_sets_are_partitioned",
+        "seconds": 0.003,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_dependency_reproducibility_fitness",
+        "name": "test_environment_documentation_matches_lock_and_alias_policy",
+        "seconds": 0.001,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_local_browser_http_boundary_fitness",
+        "name": "test_b04_adds_no_http_server_framework_or_route",
+        "seconds": 1.546,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_local_browser_http_boundary_fitness",
+        "name": "test_b04_contract_has_no_provider_database_repository_or_business_dependency",
+        "seconds": 0.009,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_local_browser_http_boundary_fitness",
+        "name": "test_loopback_and_fail_closed_defaults_are_encoded",
+        "seconds": 0.001,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_local_browser_http_boundary_fitness",
+        "name": "test_non_loopback_and_permissive_literals_are_rejection_only",
+        "seconds": 0.003,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_local_browser_http_boundary_fitness",
+        "name": "test_b04_reuses_b03_observability_contract_without_second_id_generator",
+        "seconds": 0.002,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_local_browser_http_boundary_fitness",
+        "name": "test_b04_adds_no_frontend_public_url_or_drive_runtime_dependency",
+        "seconds": 0.009,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_minimal_local_observability_fitness",
+        "name": "test_obs_a_constants_and_local_path_are_exact",
+        "seconds": 0.001,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_minimal_local_observability_fitness",
+        "name": "test_local_observability_has_no_network_provider_or_business_import",
+        "seconds": 0.022,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_minimal_local_observability_fitness",
+        "name": "test_domain_and_application_do_not_import_concrete_observability",
+        "seconds": 0.256,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_minimal_local_observability_fitness",
+        "name": "test_http_observability_adds_no_server_framework_or_route",
+        "seconds": 0.01,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_minimal_local_observability_fitness",
+        "name": "test_event_schema_is_an_explicit_allowlist_without_generic_export",
+        "seconds": 0.002,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_multi_version_migration_runner_fitness",
+        "name": "test_migration_001_remains_bit_for_bit_immutable",
+        "seconds": 0.003,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_multi_version_migration_runner_fitness",
+        "name": "test_runner_owns_an_ordered_checksum_registry_and_prefix_validation",
+        "seconds": 0.003,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_multi_version_migration_runner_fitness",
+        "name": "test_runner_rejects_seed_as_target_before_loading_migrations",
+        "seconds": 0.003,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_multi_version_migration_runner_fitness",
+        "name": "test_runner_contains_no_private_path_or_provider_dependency",
+        "seconds": 0.002,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_four_assigned_ignore_families[backup.bak]",
+        "seconds": 0.484,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_four_assigned_ignore_families[deep/backup.backup]",
+        "seconds": 0.386,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_four_assigned_ignore_families[backup.bak.manifest.json]",
+        "seconds": 0.34,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_four_assigned_ignore_families[deep/backup.backup.manifest.json]",
+        "seconds": 0.327,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_four_assigned_ignore_families[scratch.tmp]",
+        "seconds": 0.319,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_four_assigned_ignore_families[deep/index.building]",
+        "seconds": 0.344,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_four_assigned_ignore_families[deep/events.jsonl]",
+        "seconds": 0.329,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_ignore_does_not_mask_canonical_candidates[MANIFEST_SHA256.txt]",
+        "seconds": 0.411,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_ignore_does_not_mask_canonical_candidates[docs/evidence.json]",
+        "seconds": 0.363,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_ignore_does_not_mask_canonical_candidates[docs/manifest.json]",
+        "seconds": 0.357,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_ignore_does_not_mask_canonical_candidates[docs/backup_policy.md]",
+        "seconds": 0.442,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_ignore_does_not_mask_canonical_candidates[database/migrations/002_contract.sql]",
+        "seconds": 0.404,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_ignore_does_not_mask_canonical_candidates[backend/adapters/outbound/artifacts/__init__.py]",
+        "seconds": 0.339,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_ignore_does_not_mask_canonical_candidates[tests/test_log_policy.py]",
+        "seconds": 0.343,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_ignore_does_not_mask_canonical_candidates[pyproject.toml]",
+        "seconds": 0.348,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_ignore_does_not_mask_canonical_candidates[requirements/lock/dev-py312-win.txt]",
+        "seconds": 0.381,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_git_inventory_is_deterministic_with_ignored_nested_clone",
+        "seconds": 1.044,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_force_added_ignored_or_config_file_cannot_evade_guard[hidden.db]",
+        "seconds": 0.545,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_force_added_ignored_or_config_file_cannot_evade_guard[data.db-wal]",
+        "seconds": 0.485,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_force_added_ignored_or_config_file_cannot_evade_guard[backup.bak]",
+        "seconds": 0.427,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_force_added_ignored_or_config_file_cannot_evade_guard[.env]",
+        "seconds": 0.456,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_force_added_ignored_or_config_file_cannot_evade_guard[local.env]",
+        "seconds": 0.548,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_force_added_ignored_or_config_file_cannot_evade_guard[log.jsonl]",
+        "seconds": 0.573,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_force_added_ignored_or_config_file_cannot_evade_guard[index.building]",
+        "seconds": 0.462,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_force_added_ignored_or_config_file_cannot_evade_guard[out.tmp]",
+        "seconds": 0.395,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_git_failure_is_not_reported_as_clean",
+        "seconds": 0.082,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_temporary_output_inside_checkout_rejected[.]",
+        "seconds": 0.012,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_temporary_output_inside_checkout_rejected[.tmp/new]",
+        "seconds": 0.013,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_temporary_output_inside_checkout_rejected[tests/../tmp/new]",
+        "seconds": 0.013,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_system_temporary_output_allowed",
+        "seconds": 0.014,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_retention_is_metadata_only_and_never_removes_old_artifacts",
+        "seconds": 0.708,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_unreadable_subtree_is_explicitly_retained",
+        "seconds": 0.456,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_runtime_and_secrets_not_in_git_candidates",
+        "seconds": 0.241,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_all_canonical_tracked_evidence_is_not_masked",
+        "seconds": 0.473,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.architecture.test_repository_hygiene_b06",
+        "name": "test_b01_evidence_stays_tracked_and_historical_freeze_stays_intact",
+        "seconds": 0.198,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_canonical_pedagogical_full_suite_real_gate",
+        "name": "test_canonical_suite_is_reproducible_over_two_fresh_sqlite_runtimes",
+        "seconds": 248.84,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_generation_transformation_sqlite_e2e_real_gate",
+        "name": "test_scn_04_runs_real_sqlite_evidence_before_real_transformation_owner",
+        "seconds": 129.206,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_minimal_local_observability_signals",
+        "name": "test_all_twelve_minimum_signal_families_are_covered_without_raw_data",
+        "seconds": 0.005,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_minimal_local_observability_signals",
+        "name": "test_http_surface_remains_a_contract_without_server_or_raw_request",
+        "seconds": 0.001,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_minimal_local_observability_signals",
+        "name": "test_sqlite_composition_emits_bootstrap_migration_backup_and_recovery",
+        "seconds": 10.222,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_resource_application_e2e_real_gate",
+        "name": "test_scn_01_runs_full_harness_through_wf0_application_and_op03",
+        "seconds": 126.237,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_seed_gate_is_exact_and_read_only",
+        "seconds": 92.995,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_runtime_provisioning_applies_exact_migration",
+        "seconds": 41.053,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_migration_replay_is_idempotent_and_checksum_mismatch_stops",
+        "seconds": 51.321,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_op01_knowledge_store_contract",
+        "seconds": 0.264,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_op02_document_store_contract",
+        "seconds": 0.234,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_op03_resource_store_contract",
+        "seconds": 0.244,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_existing_resource_rows_preserve_only_observed_availability",
+        "seconds": 0.066,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_op04_context_store_contract",
+        "seconds": 0.3,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_op05_work_store_contract_and_expected_version",
+        "seconds": 0.261,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_op06_validation_append_read_contract",
+        "seconds": 0.23,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_op07_quality_append_read_contract",
+        "seconds": 0.221,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_op09_audit_append_read_contract",
+        "seconds": 0.208,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_op08_lifecycle_contract",
+        "seconds": 0.277,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_op10_commit_rollback_operation_ref_and_reconciliation",
+        "seconds": 0.465,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_op11_real_fts_read_is_stable_and_non_authoritative",
+        "seconds": 0.058,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_op12_projection_is_real_and_non_owner",
+        "seconds": 0.056,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_op13_real_read_exposes_only_logical_fragments",
+        "seconds": 0.052,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_runtime_real_gate",
+        "name": "test_composition_root_binds_migrated_runtime",
+        "seconds": 50.491,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_search_rag_e2e_real_gate",
+        "name": "test_scn_02_runs_full_harness_over_fresh_migrated_sqlite",
+        "seconds": 68.468,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.integration.test_sqlite_seed_runtime_lifecycle_real_gate",
+        "name": "test_real_seed_runtime_sidecars_backup_and_restore",
+        "seconds": 44.118,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.non_functional.test_retrieval_quality_real_gate",
+        "name": "test_retrieval_quality_real_gate_is_reproducible_on_two_fresh_runtimes",
+        "seconds": 110.859,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_corrective_migration_002",
+        "name": "test_fresh_seed_applies_001_then_002_and_preserves_rows",
+        "seconds": 0.069,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_corrective_migration_002",
+        "name": "test_existing_001_applies_only_002",
+        "seconds": 0.069,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_corrective_migration_002",
+        "name": "test_complete_runtime_replay_is_noop",
+        "seconds": 0.08,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_corrective_migration_002",
+        "name": "test_applied_002_checksum_mismatch_is_fail_closed",
+        "seconds": 0.066,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_corrective_migration_002",
+        "name": "test_failing_002_rebuild_rolls_back_and_does_not_mark_success",
+        "seconds": 0.071,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_multi_version_migration_runner",
+        "name": "test_approved_registry_discovers_immutable_001_and_002",
+        "seconds": 0.002,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_multi_version_migration_runner",
+        "name": "test_registry_sorts_multiple_migrations_before_execution",
+        "seconds": 0.051,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_multi_version_migration_runner",
+        "name": "test_registry_rejects_duplicate_version",
+        "seconds": 0.022,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_multi_version_migration_runner",
+        "name": "test_registry_rejects_invalid_identifier",
+        "seconds": 0.013,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_multi_version_migration_runner",
+        "name": "test_registry_rejects_order_or_version_gap[versions0-orders0-order must be contiguous]",
+        "seconds": 0.015,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_multi_version_migration_runner",
+        "name": "test_registry_rejects_order_or_version_gap[versions1-orders1-versions must be contiguous]",
+        "seconds": 0.014,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_multi_version_migration_runner",
+        "name": "test_registry_checksum_mismatch_fails_before_ledger_write",
+        "seconds": 0.031,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_multi_version_migration_runner",
+        "name": "test_applied_identical_migrations_are_skipped_idempotently",
+        "seconds": 0.043,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_multi_version_migration_runner",
+        "name": "test_applied_checksum_mismatch_is_fail_closed",
+        "seconds": 0.045,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_multi_version_migration_runner",
+        "name": "test_failure_rolls_back_and_stops_before_later_migration",
+        "seconds": 0.053,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_multi_version_migration_runner",
+        "name": "test_history_gap_is_rejected_before_missing_migration_runs",
+        "seconds": 0.041,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_multi_version_migration_runner",
+        "name": "test_unknown_history_version_is_rejected",
+        "seconds": 0.046,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_multi_version_migration_runner",
+        "name": "test_registered_non_applicable_migration_is_not_executed",
+        "seconds": 0.033,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_seed_read_only_gate_regression",
+        "name": "test_seed_identity_is_checked_before_any_sqlite_open[missing]",
+        "seconds": 0.001,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_seed_read_only_gate_regression",
+        "name": "test_seed_identity_is_checked_before_any_sqlite_open[size]",
+        "seconds": 0.001,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_seed_read_only_gate_regression",
+        "name": "test_seed_identity_is_checked_before_any_sqlite_open[sha256]",
+        "seconds": 0.001,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_seed_read_only_gate_regression",
+        "name": "test_seed_gate_uses_immutable_closes_and_detects_sidecar_drift[None]",
+        "seconds": 0.001,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_seed_read_only_gate_regression",
+        "name": "test_seed_gate_uses_immutable_closes_and_detects_sidecar_drift[wal]",
+        "seconds": 0.001,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_seed_read_only_gate_regression",
+        "name": "test_seed_gate_uses_immutable_closes_and_detects_sidecar_drift[shm]",
+        "seconds": 0.001,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_seed_read_only_gate_regression",
+        "name": "test_seed_gate_uses_immutable_closes_and_detects_sidecar_drift[journal]",
+        "seconds": 0.001,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_seed_read_only_gate_regression",
+        "name": "test_validated_reader_emits_immutable_uri_for_temporary_fixture",
+        "seconds": 0.286,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_sqlite_seed_runtime_lifecycle",
+        "name": "test_authenticated_seed_is_opened_without_mutating_main_or_sidecars",
+        "seconds": 0.429,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_sqlite_seed_runtime_lifecycle",
+        "name": "test_missing_seed_fails_before_runtime_creation",
+        "seconds": 0.211,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_sqlite_seed_runtime_lifecycle",
+        "name": "test_invalid_seed_identity_fails_before_runtime_creation",
+        "seconds": 0.527,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_sqlite_seed_runtime_lifecycle",
+        "name": "test_runtime_absent_is_copied_migrated_and_atomically_published",
+        "seconds": 2.212,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_sqlite_seed_runtime_lifecycle",
+        "name": "test_runtime_can_be_provisioned_from_an_explicit_registry",
+        "seconds": 2.251,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_sqlite_seed_runtime_lifecycle",
+        "name": "test_existing_runtime_is_not_overwritten_and_replay_is_idempotent",
+        "seconds": 4.098,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_sqlite_seed_runtime_lifecycle",
+        "name": "test_existing_001_runtime_is_advanced_only_to_002",
+        "seconds": 2.073,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_sqlite_seed_runtime_lifecycle",
+        "name": "test_seed_and_runtime_identity_must_be_distinct",
+        "seconds": 0.302,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_sqlite_seed_runtime_lifecycle",
+        "name": "test_non_allowlisted_migration_is_blocked_without_runtime",
+        "seconds": 0.503,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_sqlite_seed_runtime_lifecycle",
+        "name": "test_preexisting_seed_sidecars_are_attributed_and_preserved",
+        "seconds": 2.573,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_sqlite_seed_runtime_lifecycle",
+        "name": "test_publication_race_never_overwrites_the_winner",
+        "seconds": 1.484,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_sqlite_seed_runtime_lifecycle",
+        "name": "test_runtime_backup_and_fresh_restore_are_authenticated",
+        "seconds": 4.49,
+        "status": "PASS",
+        "reason": null
+      },
+      {
+        "classname": "tests.unit.test_sqlite_seed_runtime_lifecycle",
+        "name": "test_restore_to_seed_is_blocked",
+        "seconds": 3.565,
+        "status": "PASS",
+        "reason": null
+      }
+    ],
+    "overlap_policy": "Ciblés, architecture et tests réels sont des sous-ensembles : ne pas les additionner au total global."
+  },
+  "quality": {
+    "final_documentary_guards": {
+      "passed": 44,
+      "failed": 0,
+      "exit_code": 0,
+      "duration_seconds": 8.12,
+      "command": "python -m pytest -q -p no:cacheprovider tests/architecture/test_repository_hygiene_b06.py tests/architecture/test_dependency_reproducibility_fitness.py tests/architecture/test_calibration_tooling_boundary.py --basetemp <B07_REPAIR_TEMP>/final-doc-guards --tb=short",
+      "includes_runtime_writes": false,
+      "included_in_global_total": true
+    },
+    "final_packet_validation": {
+      "candidate_count": 2257,
+      "packet_files": 16,
+      "manifest_entries": 15,
+      "encoding_eof_json_links": "PASS",
+      "signature_findings": 0,
+      "forbidden_paths": 0,
+      "raw_values_printed": false,
+      "source_manifests_reverified": 23,
+      "source_entries_reverified": 254
+    },
+    "active_mypy": {
+      "exit_code": 0,
+      "files": 42,
+      "diagnostics": 0,
+      "stdout": "Success: no issues found in 42 source files"
+    },
+    "backend_mypy": {
+      "exit_code": 0,
+      "files": 683,
+      "diagnostics": 0,
+      "stdout": "Success: no issues found in 683 source files"
+    },
+    "historical_mypy": {
+      "exit_code": 1,
+      "diagnostics": 15,
+      "files_with_errors": 10,
+      "roots": 2,
+      "stdout": "tests\\providers\\anthropic\\transport.py:88: error: Redundant cast to \"str\"  [redundant-cast]\r\ntests\\providers\\anthropic\\scorer.py:198: error: Item \"None\" of \"ProviderRouteConfig | None\" has no attribute \"primary_model_profile_id\"  [union-attr]\r\ntests\\providers\\anthropic\\scorer.py:208: error: Item \"None\" of \"ModelProfileConfig | None\" has no attribute \"provider_profile_id\"  [union-attr]\r\ntests\\providers\\anthropic\\scorer.py:215: error: Argument \"provider_profile\" to \"AnthropicEvaluationScorer\" has incompatible type \"ProviderProfileConfig | None\"; expected \"ProviderProfileConfig\"  [arg-type]\r\ntests\\providers\\anthropic\\scorer.py:216: error: Argument \"model_profile\" to \"AnthropicEvaluationScorer\" has incompatible type \"ModelProfileConfig | None\"; expected \"ModelProfileConfig\"  [arg-type]\r\ntests\\calibration\\pedagogical\\catalog.py:489: error: Argument \"ordered_anchor_ids\" to \"CriterionOrdering\" has incompatible type \"tuple[str, ...]\"; expected \"tuple[str, str, str]\"  [arg-type]\r\ntests\\calibration\\pedagogical\\anchor_corpus_v2.py:681: error: Argument \"ordered_anchor_ids\" to \"CriterionOrdering\" has incompatible type \"tuple[str, ...]\"; expected \"tuple[str, str, str]\"  [arg-type]\r\ntests\\calibration\\pedagogical\\anchor_corpus_v3.py:453: error: Argument \"ordered_anchor_ids\" to \"CriterionOrdering\" has incompatible type \"tuple[str, ...]\"; expected \"tuple[str, str, str]\"  [arg-type]\r\ntests\\calibration\\pedagogical\\anchor_corpus_v4.py:459: error: Argument \"ordered_anchor_ids\" to \"CriterionOrdering\" has incompatible type \"tuple[str, ...]\"; expected \"tuple[str, str, str]\"  [arg-type]\r\ntests\\calibration\\pedagogical\\call_plan.py:607: error: Unsupported operand types for > (\"Decimal\" and \"None\")  [operator]\r\ntests\\calibration\\pedagogical\\call_plan.py:607: note: Left operand is of type \"Decimal | None\"\r\ntests\\calibration\\pedagogical\\call_plan.py:609: error: Unsupported operand types for > (\"Decimal\" and \"None\")  [operator]\r\ntests\\calibration\\pedagogical\\call_plan.py:609: note: Right operand is of type \"Decimal | None\"\r\ntests\\calibration\\pedagogical\\call_plan_v4_1.py:218: error: Unsupported operand types for > (\"Decimal\" and \"None\")  [operator]\r\ntests\\calibration\\pedagogical\\call_plan_v4_1.py:218: note: Left operand is of type \"Decimal | None\"\r\ntests\\calibration\\pedagogical\\call_plan_v4_1.py:220: error: Unsupported operand types for > (\"Decimal\" and \"None\")  [operator]\r\ntests\\calibration\\pedagogical\\call_plan_v4_1.py:220: note: Right operand is of type \"Decimal | None\"\r\ntests\\calibration\\pedagogical\\review_contract_v4_2.py:20: error: Module \"tests.calibration.pedagogical.anchor_corpus_v4\" does not explicitly export attribute \"AnchorTier\"  [attr-defined]\r\ntests\\calibration\\pedagogical\\semantic_gate_v5_2.py:738: error: Incompatible types in assignment (expression has type \"V51MiniPilotCallSpec\", variable has type \"V51MicroCanarySpec\")  [assignment]\r\nFound 15 errors in 10 files (checked 2 source files)",
+      "expected_debt_not_green": true
+    },
+    "ruff": "PASS",
+    "compileall": "PASS_EXTERNAL_BYTECODE",
+    "pip_check": "No broken requirements found."
+  },
+  "seed": {
+    "expected_sha256": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134",
+    "authentication_before_sqlite": true,
+    "pre": {
+      "main": {
+        "exists": true,
+        "size_bytes": 105553920,
+        "sha256": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134"
+      },
+      "wal": {
+        "exists": true,
+        "size_bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "shm": {
+        "exists": true,
+        "size_bytes": 32768,
+        "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+      },
+      "journal": {
+        "exists": false,
+        "size_bytes": null,
+        "sha256": null
+      }
+    },
+    "post": {
+      "main": {
+        "exists": true,
+        "size_bytes": 105553920,
+        "sha256": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134"
+      },
+      "wal": {
+        "exists": true,
+        "size_bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "shm": {
+        "exists": true,
+        "size_bytes": 32768,
+        "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+      },
+      "journal": {
+        "exists": false,
+        "size_bytes": null,
+        "sha256": null
+      }
+    },
+    "raw_snapshot_json_identical": true,
+    "comparison_includes": [
+      "exists",
+      "size_bytes",
+      "mtime_ns",
+      "sha256",
+      "device",
+      "inode"
+    ],
+    "observed_drift": 0,
+    "canonical_seed_writes": 0,
+    "user_runtime_read_or_write": 0,
+    "user_migration_002": false
+  },
+  "configuration": {
+    "validation_process_only": true,
+    "same_seed_value_rebound": true,
+    "persistent_changes": 0,
+    "post_process_present_names": [
+      "PEDAGOGICAL_CANONICAL_SEED_PATH"
+    ],
+    "post_user_present_names": [],
+    "post_machine_present_names": [],
+    "runtime_and_data": "SYSTEM_TEMP_OUTSIDE_REPOSITORY",
+    "provider_keys_removed_without_reading": true,
+    "opt_in_flags_removed": true
+  },
+  "protected": {
+    "files": 48,
+    "hashes_unchanged": 48,
+    "metadata_compared": 47,
+    "migration_001_pre_hash_only": true,
+    "records": [
+      {
+        "path": "tests/calibration/pedagogical/anchor_corpus_v2.py",
+        "sha256": "bd0c5eff43be20b4f578b99321e076471804f8a3e0e197858b08a3701800be76",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/anchor_corpus_v4.py",
+        "sha256": "b0a86640502db4ab1d0b623e50faffa45178d9e93b0a24976df3312d460662be",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/call_plan.py",
+        "sha256": "1272776fb72545cd4ca840d7088c26d7e272d6cc05100eb2344394df3e3b6df6",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/call_plan_v4_1.py",
+        "sha256": "93f996be10af46fe6313bf49c873bbd752001bd0d816de79c2079cb3f71eb1b2",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/legacy_call_plan.py",
+        "sha256": "cb7a92ec9fc8d214975cb3ad68f27ab1328866132ca63686b636264e21d31e3a",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/live_runner.py",
+        "sha256": "8c7f88726f270d65c2080110d25bb421c42da56cd930d43f646343b3e463ba40",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/live_runner_v4_1.py",
+        "sha256": "bf354170c3c9a864b715ec5c7094e76ef87a1dcb9a20dbb069c3e91be9ee0dca",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/metrics.py",
+        "sha256": "fd58c668eb32d259f40f05a374db5a952b1d11eaa72f767966888ed2825720a8",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/offline_calibration_v5.py",
+        "sha256": "328d10c3ef8e3041e0d2dd9919267092dfcf53463c9f725cb432333ea6a23d04",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/pairwise_output_contract_v5_2_3.py",
+        "sha256": "bde7afa85eaaf0ec0fee4beae9752e4511ae048b79afce26e56c8d8abef023ec",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/pairwise_output_contract_v5_2_4.py",
+        "sha256": "3f47351e8d188ddd7ed465a3d139cad8fd55c03c274ae259a385eaaf3a953a56",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/pairwise_runner_v5_2_2.py",
+        "sha256": "ec72fd6d0e8ed7aa3fff0b8d05ce678148041e2be7de8b86478855cbfc57ecf0",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/pricing.py",
+        "sha256": "fbfa2b166d473b5f036da8005896f986e1af52db11764faf853163129b0c2e40",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/protocol.py",
+        "sha256": "ab01dfdd6b1b0e704d8465d56a30e686f40f4b5a054780710db3cd55cce6e887",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/r2a_diagnostic.py",
+        "sha256": "49a6e436619807a60d0adc4cd3290cf4a0ef43b8213c76fb6610c544a9294868",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/r3a_plan.py",
+        "sha256": "e04bd7a6805d0f07570515aac7434accf614f407ccc001a2dbd66bc5e1ef0497",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/r3b_r1_diagnostic.py",
+        "sha256": "0d05a17548a0b12c8ced1c2f52f0ff1a3614474ee7e972f37e2abea91ba9a371",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/r3b_r3_plan.py",
+        "sha256": "3b99dfcc85668e7659182a49b5cc694bd3ce55c51c7681f33eda73064cf1b6c3",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/r4_r1_policy.py",
+        "sha256": "ace00ca77da871fd7b7862e571a750641f601d3a06f32152e173527ce0c4f960",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/repair_tranche_v4_2.py",
+        "sha256": "d1e5b40dd1437aad38f5da0db4797e2670da953ee554f09f4aa1b1f078e9a6b6",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/reuse_audit.py",
+        "sha256": "015e59877624682da8461be0333852dda6caa2469936e7dac23c6cc3d554eeba",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/review_contract_v4_2.py",
+        "sha256": "81cc15e087169290133c7ecd79ba7c7043935673522229a1d861e86e28ef1a9e",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/scorer_contract_v5.py",
+        "sha256": "85797a5c2be668444bf5720153d94a01cd8bdf4e1789154874865ecd4d07d4a4",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/semantic_gate_v5_2.py",
+        "sha256": "f4eaddf64eb255edcfdd011a763cefe83afe96c97a47f90519952ae2bfe02bb3",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/semantic_integration_v5.py",
+        "sha256": "4347094a9fa31787ca8fc7eb31c848151506a5197457e1ffc4d6e114031b8ca4",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/semantic_micro_canary_v5_1.py",
+        "sha256": "d3ae157dada67046dc0999b0b13d24dc8be02e14e0471d4a37fc9f4df25b77e4",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/semantic_mini_pilot_v5_1.py",
+        "sha256": "33eb2a9e085238f88f7f36ae3ca3f51d08301e4accbc4eafad4fc5aaf6c19a1c",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/semantic_parser_adapter_v5_1.py",
+        "sha256": "4788eac744537c7c0b229abef9d440b4b470a1f1279ceff4f9e68e41955e2115",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/semantic_pilot_freeze_v5.py",
+        "sha256": "eaed483486a00a7937832795f26b29b1adbc344c4578385fcab33189c5c4a2c1",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/test_v4_corrective_attestation_closure.py",
+        "sha256": "d5d55942059d5f58160868de6c242fbcc3f0c32c3914e245f78dc549b88a035f",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/test_v4_human_disposition_pairwise_reconciliation.py",
+        "sha256": "2e819fd11f6ebddb70ce4d27e8498de432453514491a5d144a2e199e3d803e54",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/test_v4_provider_recalibration_implementation_readiness.py",
+        "sha256": "bcae37cb478d0b1eeedc49463f30157a412b76764a9f2c391dcb22d4b0e34435",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/test_v4_provider_recalibration_plan_readiness.py",
+        "sha256": "d8fb3909bebee55e9aa4351a6550fb7715864bcf41cac04ff3cc5504b94824f6",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/v4_human_disposition_pairwise_reconciliation.py",
+        "sha256": "2502e5b872924b400bef4090e25e66126bd1ec1b88072c628fe774c143630e91",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/v4_provider_recalibration_implementation_readiness.py",
+        "sha256": "5299c018d7b25050b0ee9cb626b3cd561dba59d38fde7b30c9fe7e70858c6ba9",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/v4_provider_recalibration_plan_readiness.py",
+        "sha256": "34b0c26e69be928eb22b2364adce4880d147f0ad5325f6bf2e4ddc03254e7a8f",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/providers/anthropic/contracts.py",
+        "sha256": "668fa89013fe053201dd971060cd8a1036378f8f863085a8e80ac5baef4e90f8",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/providers/anthropic/mapping.py",
+        "sha256": "970da3e243b7241b858c5ad3d33a01bdb30815b753008a208790b0d9b2e9a633",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/providers/anthropic/scorer.py",
+        "sha256": "3be22f3a4ee19a3e2095f52f459b30d0b204a7e37437b2e5b33ab0ee03a76119",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/providers/anthropic/transport.py",
+        "sha256": "15ecf4b27ac8840dc503201864614a304917d3d43132b159da6a520044787b5b",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/catalog.py",
+        "sha256": "32339ade61085d999bb5cdcc85908b218288162f560f8ec815fa361d427ce191",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/anchor_corpus_v3.py",
+        "sha256": "95e6a253f56b62596f12cfbd43c764288665f9ec264186956958d6ed5eab02da",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "database/migrations/002_restore_document_invariants.sql",
+        "sha256": "e43b6267a5c4e0686739d4c0ea68d22e74f354bd9cbffb3f89b673e5bd0fe893",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "requirements/lock/runtime-py312-win.txt",
+        "sha256": "47540b39687a39f627c76e138596abfa752792fa54cef439660c5daba9665a63",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "requirements/lock/calibration-py312-win.txt",
+        "sha256": "e044cdb328a65f0d24ad4e82868171c6f96f7ef1e6cbcd6be78d402e3e8d7960",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "requirements/lock/dev-py312-win.txt",
+        "sha256": "30a3ceec14d10432cd45f4ddddcd54868dd6da55001c8a74c6d125eac97a6c65",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "artifacts/calibration/12.16-g2-r4-r4/reusable_results_manifest.json",
+        "sha256": "a8552e186af3f6773354b4a17d2204966b2923f9c2846ad84f87ef58c0ec8cc7",
+        "hash_unchanged": true,
+        "metadata_compared": true,
+        "metadata_unchanged": true
+      },
+      {
+        "path": "database/migrations/001_document_sha256_check.sql",
+        "sha256": "5b4c603d19e9eb195ca1d0d19d5e6755d136d6d13399aeb33c0e90b5bb9b0102",
+        "hash_unchanged": true,
+        "metadata_compared": false,
+        "metadata_unchanged": null
+      }
+    ],
+    "historical_freeze": 40,
+    "separate_references": 2,
+    "known_drifts_unchanged": 7,
+    "new_historical_drifts": 0
+  },
+  "source_manifests": [
+    {
+      "path": "docs/development/phase_12_17_03d_external_sqlite_evidence/MANIFEST_SHA256.txt",
+      "sha256": "def554827543ad01d9bb45a35c7d72893216a2caff12b8960714ac8726d5aafa",
+      "entries": 8,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_05b_b02_multi_version_migration_runner/MANIFEST_SHA256.txt",
+      "sha256": "085035b8a3fc637252bb918301f1bf6fe93efcfce1b95a97b641da0a06be1635",
+      "entries": 11,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_05b_b03_corrective_migration_002/MANIFEST_SHA256.txt",
+      "sha256": "83b01fb534a591a3e4509cc35adfdf43cd9beff2a6ccff88566571ac8d33147c",
+      "entries": 13,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_05b_b04_real_chain_recovery/MANIFEST_SHA256.txt",
+      "sha256": "ec27bac6cc1f3879b1db2fca7b1f1dc00535aff64ae3094970239bbdca0d3fb8",
+      "entries": 14,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_05b_b05_resource_ref_contract/MANIFEST_SHA256.txt",
+      "sha256": "d8b26c52889da83ef4137f7b8b55956d5b12eaebccf0553e7bcc0cae80174c3a",
+      "entries": 13,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_05b_b06_active_canonical_semantics/MANIFEST_SHA256.txt",
+      "sha256": "494ad2bfa766dee0a43ddd40eb08cb6289bb11aa32091074a5742998542a89e1",
+      "entries": 14,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_05b_b07_final_reaudit_gate/MANIFEST_SHA256.txt",
+      "sha256": "644ac8e1dfe86e633437d1d9dbe6bab45e7d487eb5cff9eb62e4cffedc5d3693",
+      "entries": 13,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_05c_b02_b07_consolidation/MANIFEST_SHA256.txt",
+      "sha256": "eec96d69a697d7a3c9d298ab66ac71ca8c6a8eb9334418ca49709e3c82076fcb",
+      "entries": 10,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_07_prioritized_rationalization_plan/MANIFEST_SHA256.txt",
+      "sha256": "937644fb779b6b860e7d677a3b17c1065feabbb7723e48017fc0b74a1893db8b",
+      "entries": 12,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_07a_owner_decision_gate/MANIFEST_SHA256.txt",
+      "sha256": "00cdce8cf4a230bbe3e5c39a56c7f19a1039b00a7d7488cef1f2cdb657012945",
+      "entries": 6,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_07b_owner_attestation_inventory_rebound/MANIFEST_SHA256.txt",
+      "sha256": "cb45f7f0d91b8e5fa0dd70e2a625aa52f81b262cd3542c4ed43a4d5bdf1065d7",
+      "entries": 6,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_08_b01_consolidation_de_provenance/MANIFEST_SHA256.txt",
+      "sha256": "c739a667279b8fb2051528e75ca577ed3314c2b920dc586b1eb08cd161b0ff12",
+      "entries": 12,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_08_b01a_sixth_minimization_approval/MANIFEST_SHA256.txt",
+      "sha256": "34389ad799ef00356181a8d5ffb58c11fa6a58250488cced1a34e7bbc0456d8b",
+      "entries": 6,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_08_b01b_eof18_manifest_rebind/MANIFEST_SHA256.txt",
+      "sha256": "2999474ac0e3a8ccace184d1a8ea5d58b3ee6de60af8d92098d4573db163ce99",
+      "entries": 9,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_08_b02_local_file_sqlite_boundary/MANIFEST_SHA256.txt",
+      "sha256": "9fbf8d4427cdd7acfceb1d10270ca5db1dc847c4b1c21ef3133b319519995000",
+      "entries": 12,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_08_b03_minimal_local_observability/MANIFEST_SHA256.txt",
+      "sha256": "06508235f5f6cb952c827268ce03cb07a029f5d5d64181cdf912fa4c7e657d5c",
+      "entries": 13,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_08_b04_local_browser_http_fail_closed/MANIFEST_SHA256.txt",
+      "sha256": "bfc6beb34750ea7cb4cf24c2b1b996862f00d045f9e6749d3a937e67aeba5dad",
+      "entries": 12,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_08_b05_dependencies_environment_config_aliases/MANIFEST_SHA256.txt",
+      "sha256": "2d0fb2e98f1a1d3f341e1f29dddeca06f66b163613f6c73e8a1f88c7b9cacd87",
+      "entries": 12,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_08_b06_gitignore_tests_deterministes_retention_locale/MANIFEST_SHA256.txt",
+      "sha256": "03c76d3f32e03b6850e928333e8d2cfe3e93cffb3b35b94d9691dfda659c5088",
+      "entries": 11,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_03_business_rule_audit/MANIFEST_SHA256.txt",
+      "sha256": "be3357f92cf71c6f52725118959e3200428f46e16c9d523f53eb76001d47b5a0",
+      "entries": 12,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_04_rationalization_design_gate/MANIFEST_SHA256.txt",
+      "sha256": "5807f59131911902a7b8d1d828b25946682fbbdfd5f1dae379def999fb1d570b",
+      "entries": 13,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_04e_b01_design_approval_hash_freeze/MANIFEST_SHA256.txt",
+      "sha256": "2bdb3e6caa3624986ac1577104f93a6c39800e94af0369b6154ceb5f66663ad4",
+      "entries": 8,
+      "errors": []
+    },
+    {
+      "path": "docs/development/phase_12_17_06_security_observability_repo_hygiene/MANIFEST_SHA256.txt",
+      "sha256": "ff41ed09f507c98fce01b333378b9c51f6696846d5ac930e28823d0a2553f4c7",
+      "entries": 14,
+      "errors": []
+    }
+  ],
+  "provenance": {
+    "reused_source": "08_MACHINE_EVIDENCE.json",
+    "historical": 126,
+    "phase_05c": 11,
+    "verified_unchanged": 137,
+    "b01_allowlist": 209
+  },
+  "retention": {
+    "roots_pre": 203,
+    "roots_post": 203,
+    "changed": [],
+    "removed": [],
+    "files": 20664,
+    "directories": 2994,
+    "deletions": 0,
+    "tmp_immediate": 41,
+    "tmp_files": 4587,
+    "tmp_directories_excluding_container": 1673,
+    "method": "200 sandbox + 3 complementary metadata-only observations; no content read or links followed",
+    "records": [
+      {
+        "path": ".mypy_cache",
+        "metadata_pre": "62f387d0449b7fd39c501efc97d3a6764a051f74d1a26571ef216a74e0be0931",
+        "metadata_post": "62f387d0449b7fd39c501efc97d3a6764a051f74d1a26571ef216a74e0be0931",
+        "files": 18,
+        "directories": 2,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".pytest_cache",
+        "metadata_pre": "c1c0c7817a88318ba68dd06abe64c06411e96a634250998e3ce553a307d51733",
+        "metadata_post": "c1c0c7817a88318ba68dd06abe64c06411e96a634250998e3ce553a307d51733",
+        "files": 5,
+        "directories": 3,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".ruff_cache",
+        "metadata_pre": "b5674c7a221a3cc1d4a28d68733d45582aed92bcd9c21e0c8d84a24391befe81",
+        "metadata_post": "b5674c7a221a3cc1d4a28d68733d45582aed92bcd9c21e0c8d84a24391befe81",
+        "files": 21,
+        "directories": 2,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/__pycache__",
+        "metadata_pre": "ad555654930daef676ac3e9a990f23338b5e230bef791a3f6ea1044ff155e9fc",
+        "metadata_post": "ad555654930daef676ac3e9a990f23338b5e230bef791a3f6ea1044ff155e9fc",
+        "files": 7,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/live_micro_canary_v5_1.py",
+        "metadata_pre": "b03f0b60f5ab6925f5c8dd9134e25575fa6bb01abbdc8addc995bf2eae6015c3",
+        "metadata_post": "b03f0b60f5ab6925f5c8dd9134e25575fa6bb01abbdc8addc995bf2eae6015c3",
+        "files": 1,
+        "directories": 0,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/live_mini_pilot_v5_1.py",
+        "metadata_pre": "390d7cbd443c1f7ade879c175f5a45d067fe7c7424aaf064c9694032994e9a78",
+        "metadata_post": "390d7cbd443c1f7ade879c175f5a45d067fe7c7424aaf064c9694032994e9a78",
+        "files": 1,
+        "directories": 0,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/live_pairwise_v5_2_2.py",
+        "metadata_pre": "dbad931494a9a518b0de76006f9768d3e87245dcdf7126b1308a54e3f88276c8",
+        "metadata_post": "dbad931494a9a518b0de76006f9768d3e87245dcdf7126b1308a54e3f88276c8",
+        "files": 1,
+        "directories": 0,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/live_pairwise_v5_2_3.py",
+        "metadata_pre": "c03b6492c0acaf715cd69423944d8ad583004643884cd7517fcd2fb3f7ea69a3",
+        "metadata_post": "c03b6492c0acaf715cd69423944d8ad583004643884cd7517fcd2fb3f7ea69a3",
+        "files": 1,
+        "directories": 0,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/live_pairwise_v5_2_4.py",
+        "metadata_pre": "80dad32d977ba9656af24b1a6bb642c797697e7f83a601fe9e8a08b08c8a15e6",
+        "metadata_post": "80dad32d977ba9656af24b1a6bb642c797697e7f83a601fe9e8a08b08c8a15e6",
+        "files": 1,
+        "directories": 0,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/live_semantic_pilot_v5.py",
+        "metadata_pre": "3251abe04f82913e2b7ab22fa94a9ddf9457734f52f7fee9e4518c97d4bac5aa",
+        "metadata_post": "3251abe04f82913e2b7ab22fa94a9ddf9457734f52f7fee9e4518c97d4bac5aa",
+        "files": 1,
+        "directories": 0,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/live_v42_once.py",
+        "metadata_pre": "05d952991ab93f6837bd6e180601df86e347da93bcf4801b509ca857128e48ca",
+        "metadata_post": "05d952991ab93f6837bd6e180601df86e347da93bcf4801b509ca857128e48ca",
+        "files": 1,
+        "directories": 0,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pycache-b01-pre-historical",
+        "metadata_pre": "e2222b0d221f6a4f36c9894a3d623e1c5278ff78f125c2743326eadd7fd42ed9",
+        "metadata_post": "e2222b0d221f6a4f36c9894a3d623e1c5278ff78f125c2743326eadd7fd42ed9",
+        "files": 331,
+        "directories": 60,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-12-17-02a-20260902",
+        "metadata_pre": "570116997cf3aa78b8f7b48f8198c6b80969982eb7d60272c358e1e3fd7d577c",
+        "metadata_post": "570116997cf3aa78b8f7b48f8198c6b80969982eb7d60272c358e1e3fd7d577c",
+        "files": 22,
+        "directories": 33,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-12-17-02a-diagnose-20260902",
+        "metadata_pre": "314eddceafcb9fa0403617fbcff5f5fc002032c9ef7f9e1eb0e2185111534db5",
+        "metadata_post": "314eddceafcb9fa0403617fbcff5f5fc002032c9ef7f9e1eb0e2185111534db5",
+        "files": 22,
+        "directories": 33,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-12-17-02a-final-20260902",
+        "metadata_pre": "baf3536add9877621a78a0e1ea5ddfd4eb70fd5ff76b45264e7d5fa7cb58ff16",
+        "metadata_post": "baf3536add9877621a78a0e1ea5ddfd4eb70fd5ff76b45264e7d5fa7cb58ff16",
+        "files": 22,
+        "directories": 33,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-12-17-5-contracts",
+        "metadata_pre": "23c66901be0e0565b18619681b8b52eb75826fe462b781bcdc4b1e9a5d5cbd7f",
+        "metadata_post": "23c66901be0e0565b18619681b8b52eb75826fe462b781bcdc4b1e9a5d5cbd7f",
+        "files": 0,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-b07-cumulative",
+        "metadata_pre": "acea2447404709bb43d07851ebcbee5bc56a33c559e9e53876e6c7fa83dab519",
+        "metadata_post": "acea2447404709bb43d07851ebcbee5bc56a33c559e9e53876e6c7fa83dab519",
+        "files": 0,
+        "directories": 16,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-b07-direct",
+        "metadata_pre": "9546744ce52c90d0f6bdd691697f4a70fd3dc2db7d02f13e02e0a8f13a29f1c5",
+        "metadata_post": "9546744ce52c90d0f6bdd691697f4a70fd3dc2db7d02f13e02e0a8f13a29f1c5",
+        "files": 0,
+        "directories": 16,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-b07-final",
+        "metadata_pre": "c52aad29f15e0ce925b9e38dddec34f132e53041f632760a5f8b03ac736e303f",
+        "metadata_post": "c52aad29f15e0ce925b9e38dddec34f132e53041f632760a5f8b03ac736e303f",
+        "files": 2,
+        "directories": 16,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-b07-final-direct",
+        "metadata_pre": "2bb716cbda77adba90a4fd4787cbbab6806825e5a80e5a5e9b21b6d6be24009c",
+        "metadata_post": "2bb716cbda77adba90a4fd4787cbbab6806825e5a80e5a5e9b21b6d6be24009c",
+        "files": 2,
+        "directories": 16,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-r4-r3-r1-targeted",
+        "metadata_pre": "8ce377b951a2bee635d1bc6b075f4cc213e17b81186bad5177d2c549b297d747",
+        "metadata_post": "8ce377b951a2bee635d1bc6b075f4cc213e17b81186bad5177d2c549b297d747",
+        "files": 44,
+        "directories": 8,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-r4-r3-r1-targeted-rerun",
+        "metadata_pre": "1e3ff253f84b9e8b97cec47b3244c44d04fc9190596f2fe10f621e4e8edb5125",
+        "metadata_post": "1e3ff253f84b9e8b97cec47b3244c44d04fc9190596f2fe10f621e4e8edb5125",
+        "files": 44,
+        "directories": 8,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-r4-r4-postflight",
+        "metadata_pre": "8aefcb3c135e58492ed002c25e69b715c801bbe3a837e71b9502e777e8671697",
+        "metadata_post": "8aefcb3c135e58492ed002c25e69b715c801bbe3a837e71b9502e777e8671697",
+        "files": 44,
+        "directories": 8,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-r4-r4-postflight-final",
+        "metadata_pre": "a330a17b1ff3f2681d886c32d107398aa3bf24942ddf4c01cdc459303d5f3003",
+        "metadata_post": "a330a17b1ff3f2681d886c32d107398aa3bf24942ddf4c01cdc459303d5f3003",
+        "files": 44,
+        "directories": 8,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v3-human-final-a959",
+        "metadata_pre": "1131aaa6125460df5b85795ce578f1b16aca31e07f3c2da9d23a80eab21289df",
+        "metadata_post": "1131aaa6125460df5b85795ce578f1b16aca31e07f3c2da9d23a80eab21289df",
+        "files": 504,
+        "directories": 237,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-3-metric-analysis",
+        "metadata_pre": "760357508871606c02a1058f0b0f91b1c6d181a8df59e4025d29fe3c2155f134",
+        "metadata_post": "760357508871606c02a1058f0b0f91b1c6d181a8df59e4025d29fe3c2155f134",
+        "files": 6,
+        "directories": 10,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-architecture-targeted",
+        "metadata_pre": "a2ce2a075c7ab2ae07cd6763173f213c9ff0b47796b2c196858b9af23d968e65",
+        "metadata_post": "a2ce2a075c7ab2ae07cd6763173f213c9ff0b47796b2c196858b9af23d968e65",
+        "files": 313,
+        "directories": 82,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-disposition",
+        "metadata_pre": "8f084d3d6c61b9004ce1abb2a2ed10b43e37589b320cd579a07c3ba00c5bb989",
+        "metadata_post": "8f084d3d6c61b9004ce1abb2a2ed10b43e37589b320cd579a07c3ba00c5bb989",
+        "files": 5,
+        "directories": 9,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-final-global",
+        "metadata_pre": "ef464479821b7e006a015cf18ec2a4dd31102a7578288d83abd396da5f57072e",
+        "metadata_post": "ef464479821b7e006a015cf18ec2a4dd31102a7578288d83abd396da5f57072e",
+        "files": 616,
+        "directories": 276,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-final-global-rerun",
+        "metadata_pre": "cd7d0240ae09b627f0453dbca9be40edf085670b92e77a395e7d9d4d4f9a5326",
+        "metadata_post": "cd7d0240ae09b627f0453dbca9be40edf085670b92e77a395e7d9d4d4f9a5326",
+        "files": 617,
+        "directories": 290,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-human-reconciliation",
+        "metadata_pre": "13b4d43f48183274f1f06f7c36c56a5a458742e4741dc94a3325be5fe91fa82c",
+        "metadata_post": "13b4d43f48183274f1f06f7c36c56a5a458742e4741dc94a3325be5fe91fa82c",
+        "files": 13,
+        "directories": 21,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-implementation-targeted",
+        "metadata_pre": "95e99cd84836ca54b434cf4f99962a4ebbc147082558deaf828de51233e3030f",
+        "metadata_post": "95e99cd84836ca54b434cf4f99962a4ebbc147082558deaf828de51233e3030f",
+        "files": 311,
+        "directories": 79,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-implementation-unit",
+        "metadata_pre": "5b270c0daa0021d57b3c1390b3d46bbfd9411f7084a7f4249a612558c8cb8270",
+        "metadata_post": "5b270c0daa0021d57b3c1390b3d46bbfd9411f7084a7f4249a612558c8cb8270",
+        "files": 305,
+        "directories": 70,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-implementation-v4",
+        "metadata_pre": "0ff3be87cf1e09a354014dc2a9f8b89963001c830ebd0397868cabd32d1d83b6",
+        "metadata_post": "0ff3be87cf1e09a354014dc2a9f8b89963001c830ebd0397868cabd32d1d83b6",
+        "files": 8,
+        "directories": 16,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-legacy-debt",
+        "metadata_pre": "8557e5cd2795a3e0a015b383a4d64b451395bed60eb9707f838a1e7d0ca40874",
+        "metadata_post": "8557e5cd2795a3e0a015b383a4d64b451395bed60eb9707f838a1e7d0ca40874",
+        "files": 228,
+        "directories": 47,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-legacy-debt-2",
+        "metadata_pre": "f368f7b654b7f5bdfb0a19a977809cdd368ec9127c21fd90d0e965495233b199",
+        "metadata_post": "f368f7b654b7f5bdfb0a19a977809cdd368ec9127c21fd90d0e965495233b199",
+        "files": 228,
+        "directories": 47,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-owner-config-targeted",
+        "metadata_pre": "1171c654455ca5166881d9c1eaed5b7aa973c8d254d8e05a508062cde8c2458c",
+        "metadata_post": "1171c654455ca5166881d9c1eaed5b7aa973c8d254d8e05a508062cde8c2458c",
+        "files": 313,
+        "directories": 82,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-owner-config-targeted-2",
+        "metadata_pre": "d455320cac786644229844d93cc9f52929b816e0df8c7fbab6ce2149b92e7700",
+        "metadata_post": "d455320cac786644229844d93cc9f52929b816e0df8c7fbab6ce2149b92e7700",
+        "files": 313,
+        "directories": 82,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-provider-plan-final",
+        "metadata_pre": "1ed59d5b54191763bfbc3e4b2dbb14791cac8b78cb09ed201a971837727e4e05",
+        "metadata_post": "1ed59d5b54191763bfbc3e4b2dbb14791cac8b78cb09ed201a971837727e4e05",
+        "files": 206,
+        "directories": 38,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v4-real-gates",
+        "metadata_pre": "a88e4c7e7e2b29fd1f66b616834469a27111f7cf1a971c58ace13d570cbdadd4",
+        "metadata_post": "a88e4c7e7e2b29fd1f66b616834469a27111f7cf1a971c58ace13d570cbdadd4",
+        "files": 1,
+        "directories": 20,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/pytest-v5-scorer-redesign-reduced",
+        "metadata_pre": "03bc6ddaee20486074830eb3a2ca88e5e05494b8f2be805b809d600803cdc0e2",
+        "metadata_post": "03bc6ddaee20486074830eb3a2ca88e5e05494b8f2be805b809d600803cdc0e2",
+        "files": 6,
+        "directories": 10,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/reconcile_live_semantic_pilot_v5.py",
+        "metadata_pre": "fd232d5d932b81ae3db4a296f305007357883b19e6b0931ac60b6f8ab248bff7",
+        "metadata_post": "fd232d5d932b81ae3db4a296f305007357883b19e6b0931ac60b6f8ab248bff7",
+        "files": 1,
+        "directories": 0,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/restore_r4_r4_ledger_offline.py",
+        "metadata_pre": "d40959eb5f594de60cc1d5e99910f5986f7b82d9a2843a2c460eca090ac5aa79",
+        "metadata_post": "d40959eb5f594de60cc1d5e99910f5986f7b82d9a2843a2c460eca090ac5aa79",
+        "files": 1,
+        "directories": 0,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".tmp/run_r4_r4_continuation.py",
+        "metadata_pre": "88f999a890cceb6f182691fabc4de5b58bd6e14a272072334d1c3a0a9ec23dd1",
+        "metadata_post": "88f999a890cceb6f182691fabc4de5b58bd6e14a272072334d1c3a0a9ec23dd1",
+        "files": 1,
+        "directories": 0,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".venv",
+        "metadata_pre": "3c7b20ce9ca388bb34aa1cf8fc67706ec064d8cf9ab1a09794bc5495d9e1b04e",
+        "metadata_post": "3c7b20ce9ca388bb34aa1cf8fc67706ec064d8cf9ab1a09794bc5495d9e1b04e",
+        "files": 10277,
+        "directories": 684,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": ".venv-validation",
+        "metadata_pre": "cd21bcfc30120423eae97c3f004570e0183637bfe09c9ea932716796edd54cb8",
+        "metadata_post": "cd21bcfc30120423eae97c3f004570e0183637bfe09c9ea932716796edd54cb8",
+        "files": 3783,
+        "directories": 315,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "artifacts",
+        "metadata_pre": "719914853e4b593ad340509911a9d413e74a6fdc9a3a3d992d7c4fa1b9dee244",
+        "metadata_post": "719914853e4b593ad340509911a9d413e74a6fdc9a3a3d992d7c4fa1b9dee244",
+        "files": 747,
+        "directories": 157,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/__pycache__",
+        "metadata_pre": "bf5fe71dcda36400a3300709d23f04a3966b50d4fcb4c98e122b3e443ba4f4df",
+        "metadata_post": "bf5fe71dcda36400a3300709d23f04a3966b50d4fcb4c98e122b3e443ba4f4df",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/__pycache__",
+        "metadata_pre": "1dfee820139daf2140e6905a4fa596fbeb0e743a07cf1cddd544146b1dfd086f",
+        "metadata_post": "1dfee820139daf2140e6905a4fa596fbeb0e743a07cf1cddd544146b1dfd086f",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/inbound/__pycache__",
+        "metadata_pre": "af97f3257796024649a1338bbfbaa3430115d359ab0f245088bc30bfb8cc6631",
+        "metadata_post": "af97f3257796024649a1338bbfbaa3430115d359ab0f245088bc30bfb8cc6631",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/inbound/api/__pycache__",
+        "metadata_pre": "f3d82fec5990d0dae5215ceea37abf7c049913a0bd17722ee129dae5e5fbba45",
+        "metadata_post": "f3d82fec5990d0dae5215ceea37abf7c049913a0bd17722ee129dae5e5fbba45",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/inbound/application/__pycache__",
+        "metadata_pre": "f0e842f9202238e2e1d2e2e346f95a40950d4d2695810f9878b70b8a0ec07155",
+        "metadata_post": "f0e842f9202238e2e1d2e2e346f95a40950d4d2695810f9878b70b8a0ec07155",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/__pycache__",
+        "metadata_pre": "9f6c2475baceea874316cf689e48ce6a937c54102e65981b08d1906e8945355e",
+        "metadata_post": "9f6c2475baceea874316cf689e48ce6a937c54102e65981b08d1906e8945355e",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/document_content/__pycache__",
+        "metadata_pre": "c116bc279a0b3db471a55d56ce7fa21d2b2c9cc5b51f0f3211cb8dadc2359bf1",
+        "metadata_post": "c116bc279a0b3db471a55d56ce7fa21d2b2c9cc5b51f0f3211cb8dadc2359bf1",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/evidence/__pycache__",
+        "metadata_pre": "2adcee37cf586744fd34ffc9c440069c869181f2d1dc62619b00aaaedeb547db",
+        "metadata_post": "2adcee37cf586744fd34ffc9c440069c869181f2d1dc62619b00aaaedeb547db",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/filesystem/__pycache__",
+        "metadata_pre": "8f3547832b78c8a917cd0563b215d4263ea93c9249c5172a84220d1a5160fcea",
+        "metadata_post": "8f3547832b78c8a917cd0563b215d4263ea93c9249c5172a84220d1a5160fcea",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/generation/__pycache__",
+        "metadata_pre": "b92ee828219734c3ab7bf3edb8596e9cb767f4993dbb5ae0a549d7374181d0e0",
+        "metadata_post": "b92ee828219734c3ab7bf3edb8596e9cb767f4993dbb5ae0a549d7374181d0e0",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/generation/openai/__pycache__",
+        "metadata_pre": "2298f9a9851ae90da80909afc032bdd9d451756aac60281834d7bda5ae7b07cb",
+        "metadata_post": "2298f9a9851ae90da80909afc032bdd9d451756aac60281834d7bda5ae7b07cb",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/openai/__pycache__",
+        "metadata_pre": "611924d5e67bfe321b2d643af580a9334ec9b7c3b29e6df30e625e86b832ed5d",
+        "metadata_post": "611924d5e67bfe321b2d643af580a9334ec9b7c3b29e6df30e625e86b832ed5d",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/persistence/__pycache__",
+        "metadata_pre": "e8014d66b920c083e71c8801e83fd43a132d43f90bab66f951a8bca7a0c04038",
+        "metadata_post": "e8014d66b920c083e71c8801e83fd43a132d43f90bab66f951a8bca7a0c04038",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/read_models/__pycache__",
+        "metadata_pre": "17f5f549a3241c25ebc50dd81846f472957035733dd0136e15b78a36b4383c6d",
+        "metadata_post": "17f5f549a3241c25ebc50dd81846f472957035733dd0136e15b78a36b4383c6d",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/resource_library/__pycache__",
+        "metadata_pre": "251be9456fb1e48b8ac2be894e39fbfb260ae87846c9f32373129c80f29a33e3",
+        "metadata_post": "251be9456fb1e48b8ac2be894e39fbfb260ae87846c9f32373129c80f29a33e3",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/review/__pycache__",
+        "metadata_pre": "7df78bf11f688d708e1deac8af07674430b73e8f04d4168b923d637bb3a25533",
+        "metadata_post": "7df78bf11f688d708e1deac8af07674430b73e8f04d4168b923d637bb3a25533",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/review/openai/__pycache__",
+        "metadata_pre": "544885b194fc92f98c470ba7fbfbeb31059fb789077570807701fbfb31e879a8",
+        "metadata_post": "544885b194fc92f98c470ba7fbfbeb31059fb789077570807701fbfb31e879a8",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/search/__pycache__",
+        "metadata_pre": "ad4d7e621c0d978c4eabc7d40f0a649b66482f971bd8c5a712640f612ed4f6d1",
+        "metadata_post": "ad4d7e621c0d978c4eabc7d40f0a649b66482f971bd8c5a712640f612ed4f6d1",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/semantic/__pycache__",
+        "metadata_pre": "cf6e250643f5566ae7e48bc667bc2dca39065f53a08ef43e54a3c90d2d6dcfd1",
+        "metadata_post": "cf6e250643f5566ae7e48bc667bc2dca39065f53a08ef43e54a3c90d2d6dcfd1",
+        "files": 5,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/adapters/outbound/transaction/__pycache__",
+        "metadata_pre": "6fe85ec31592357d0bc2ba007c88b53cad807f54ad8a72be3aa189c2bdabab6b",
+        "metadata_post": "6fe85ec31592357d0bc2ba007c88b53cad807f54ad8a72be3aa189c2bdabab6b",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/__pycache__",
+        "metadata_pre": "a9f060995dc776a151cfb04d308adb0e4e609d7fa1837ce7f1ec5401caaa212f",
+        "metadata_post": "a9f060995dc776a151cfb04d308adb0e4e609d7fa1837ce7f1ec5401caaa212f",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/agents/__pycache__",
+        "metadata_pre": "0a589dec7571d913758a67d44a150e75b01912f359ceb6949db1ad6f6f37407c",
+        "metadata_post": "0a589dec7571d913758a67d44a150e75b01912f359ceb6949db1ad6f6f37407c",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/agents/evidence/__pycache__",
+        "metadata_pre": "98030ab78581e53434cc7360039caf44fbc948b848c3cbc8ae6bba1bb3d3b841",
+        "metadata_post": "98030ab78581e53434cc7360039caf44fbc948b848c3cbc8ae6bba1bb3d3b841",
+        "files": 11,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/agents/generation/__pycache__",
+        "metadata_pre": "06f10b006deafe78a4cc25a8deec9ab07e48a626fcb69bc95673ee094264a41f",
+        "metadata_post": "06f10b006deafe78a4cc25a8deec9ab07e48a626fcb69bc95673ee094264a41f",
+        "files": 11,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/agents/review/__pycache__",
+        "metadata_pre": "fc6c206bdd710cdbbbaf5999d1f061431410f6d320e85993689134083301efef",
+        "metadata_post": "fc6c206bdd710cdbbbaf5999d1f061431410f6d320e85993689134083301efef",
+        "files": 11,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/application_routing/__pycache__",
+        "metadata_pre": "74a4f7a739b610a15c8ecbf3c833ca15f82280175de7bb08d56d889316f0a618",
+        "metadata_post": "74a4f7a739b610a15c8ecbf3c833ca15f82280175de7bb08d56d889316f0a618",
+        "files": 5,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/__pycache__",
+        "metadata_pre": "5e57d65a4773868c823a5e5d2b5302b1983e978a521d791cb75b658bb2f9c9d1",
+        "metadata_post": "5e57d65a4773868c823a5e5d2b5302b1983e978a521d791cb75b658bb2f9c9d1",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/application/__pycache__",
+        "metadata_pre": "6f156a65fc04b86a466dd9575aee5e4ef5c7b5bc58f63c31c36877c5d49cd7cc",
+        "metadata_post": "6f156a65fc04b86a466dd9575aee5e4ef5c7b5bc58f63c31c36877c5d49cd7cc",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/common/__pycache__",
+        "metadata_pre": "8a025462e45aeb1f591c744b329f3a16620dc7ca30a5b7502fc86ad326356f2a",
+        "metadata_post": "8a025462e45aeb1f591c744b329f3a16620dc7ca30a5b7502fc86ad326356f2a",
+        "files": 7,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/delegation/__pycache__",
+        "metadata_pre": "fa7031201eb8e56068ebf1cf6d4620658fcb97737fc61bceb5f6d4203f432e7a",
+        "metadata_post": "fa7031201eb8e56068ebf1cf6d4620658fcb97737fc61bceb5f6d4203f432e7a",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/errors/__pycache__",
+        "metadata_pre": "e9acaedc51d46507133d8b96783774a33ee68c74ba6907341c6dabd5deeef152",
+        "metadata_post": "e9acaedc51d46507133d8b96783774a33ee68c74ba6907341c6dabd5deeef152",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/events/__pycache__",
+        "metadata_pre": "dcd9153d0fd30cad8743c4eab9f92ad60dff82d3aae0e13d7eef50a12043b7ee",
+        "metadata_post": "dcd9153d0fd30cad8743c4eab9f92ad60dff82d3aae0e13d7eef50a12043b7ee",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/evidence/__pycache__",
+        "metadata_pre": "b881c1c3ad96b4a805d60f7b85d2ae821587ca635188e5c36e9a2ae7bf916f7c",
+        "metadata_post": "b881c1c3ad96b4a805d60f7b85d2ae821587ca635188e5c36e9a2ae7bf916f7c",
+        "files": 5,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/gates/__pycache__",
+        "metadata_pre": "a9dd337123141c8faeb3063524a5a89cabfa3d3c07584577ce2238210fa3b50a",
+        "metadata_post": "a9dd337123141c8faeb3063524a5a89cabfa3d3c07584577ce2238210fa3b50a",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/invocation/__pycache__",
+        "metadata_pre": "b151ad3838d2406f6233106d703f489daed9e3b247d57e1dd700c8a184f33cdb",
+        "metadata_post": "b151ad3838d2406f6233106d703f489daed9e3b247d57e1dd700c8a184f33cdb",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/observability/__pycache__",
+        "metadata_pre": "b7c675fbd9af7f836b616fb88dcb6a571bd43dce792e26a4ffc1733dbe2abb66",
+        "metadata_post": "b7c675fbd9af7f836b616fb88dcb6a571bd43dce792e26a4ffc1733dbe2abb66",
+        "files": 6,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/planning/__pycache__",
+        "metadata_pre": "4d1c945103df97411f51421a2e2d4192a1a9b9ba6a68841782a80ab10e9d3736",
+        "metadata_post": "4d1c945103df97411f51421a2e2d4192a1a9b9ba6a68841782a80ab10e9d3736",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/policy/__pycache__",
+        "metadata_pre": "c18d80881d2b77359a2653b4664e4bfcb9cd042a80cc46e61c1065f9f62b7018",
+        "metadata_post": "c18d80881d2b77359a2653b4664e4bfcb9cd042a80cc46e61c1065f9f62b7018",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/production/__pycache__",
+        "metadata_pre": "129e7b11a5d117501c656375a8e5e929fbe04092a266c99bc406e653ec4a82a9",
+        "metadata_post": "129e7b11a5d117501c656375a8e5e929fbe04092a266c99bc406e653ec4a82a9",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/review/__pycache__",
+        "metadata_pre": "e0e5c3cff467a5e307d4ea63212731cae3338313e62f9b1c5d3eff590a8b2ec9",
+        "metadata_post": "e0e5c3cff467a5e307d4ea63212731cae3338313e62f9b1c5d3eff590a8b2ec9",
+        "files": 7,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/security/__pycache__",
+        "metadata_pre": "6fa434c6b0f4860ce7dea2b50849a9de5b52a37d8268bf6f264c0f35fe34b253",
+        "metadata_post": "6fa434c6b0f4860ce7dea2b50849a9de5b52a37d8268bf6f264c0f35fe34b253",
+        "files": 6,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/contracts/tools/__pycache__",
+        "metadata_pre": "e41fd2ac3c3e086480542d444294190d5eecbfef0afe856efc66ada1c5660bfc",
+        "metadata_post": "e41fd2ac3c3e086480542d444294190d5eecbfef0afe856efc66ada1c5660bfc",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/gates/__pycache__",
+        "metadata_pre": "7d4b5dca4a7473b2ebed74d192675bdcd7b431195ade19c2f9bf479515b5a661",
+        "metadata_post": "7d4b5dca4a7473b2ebed74d192675bdcd7b431195ade19c2f9bf479515b5a661",
+        "files": 5,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/observability/__pycache__",
+        "metadata_pre": "7b34d38118d1f33d895bd4035f399a156e0df2f9c0a10a36dc4a2585d2057443",
+        "metadata_post": "7b34d38118d1f33d895bd4035f399a156e0df2f9c0a10a36dc4a2585d2057443",
+        "files": 16,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/orchestration/__pycache__",
+        "metadata_pre": "3d193c756638c0f2213800ef76d3cde800454c67a2f2ca954f384f09c63341d8",
+        "metadata_post": "3d193c756638c0f2213800ef76d3cde800454c67a2f2ca954f384f09c63341d8",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/orchestration/compilation/__pycache__",
+        "metadata_pre": "acd45e4ada175643a1c5a630dd00b51439652ca21c00f9b306a3f7d9d038e2ac",
+        "metadata_post": "acd45e4ada175643a1c5a630dd00b51439652ca21c00f9b306a3f7d9d038e2ac",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/orchestration/coordination/__pycache__",
+        "metadata_pre": "a81cab9c7ae8d392d175b2e7063950c02e2f34661561a64ec5e74002b62915a5",
+        "metadata_post": "a81cab9c7ae8d392d175b2e7063950c02e2f34661561a64ec5e74002b62915a5",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/orchestration/selection/__pycache__",
+        "metadata_pre": "1bbcae79754dfa7d168c7c24ceb444a5558aed304fbe4e8b1bcb0e3c7a288d6d",
+        "metadata_post": "1bbcae79754dfa7d168c7c24ceb444a5558aed304fbe4e8b1bcb0e3c7a288d6d",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/orchestration/workflows/__pycache__",
+        "metadata_pre": "9b346e0bcc562d4d0197865a7c937df7db663af857a039df24b6f99dc675551d",
+        "metadata_post": "9b346e0bcc562d4d0197865a7c937df7db663af857a039df24b6f99dc675551d",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/policy/__pycache__",
+        "metadata_pre": "8b6104229f75f3860b9ed8303e2cd93cc53439d497728f16ccef8a793e8ac6ef",
+        "metadata_post": "8b6104229f75f3860b9ed8303e2cd93cc53439d497728f16ccef8a793e8ac6ef",
+        "files": 9,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/recovery/__pycache__",
+        "metadata_pre": "88a767c8ae03f6175f2d82e8c97a9566e6c2bfba2013a3912e47c96d8668ddeb",
+        "metadata_post": "88a767c8ae03f6175f2d82e8c97a9566e6c2bfba2013a3912e47c96d8668ddeb",
+        "files": 22,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/registry/__pycache__",
+        "metadata_pre": "f2fa4e05140398157d1ec09b86911477d2353cce55b3fe1e88e629ce2c3b60d5",
+        "metadata_post": "f2fa4e05140398157d1ec09b86911477d2353cce55b3fe1e88e629ce2c3b60d5",
+        "files": 5,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/runtime/__pycache__",
+        "metadata_pre": "a4de763c0ae7f595beaa07e57e65be7e9d90d1662c742c9bf1d6de56171d05b1",
+        "metadata_post": "a4de763c0ae7f595beaa07e57e65be7e9d90d1662c742c9bf1d6de56171d05b1",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/runtime/execution/__pycache__",
+        "metadata_pre": "8a168221a8ad10136a6c61752d224d501259e13df7d24ee7b85e48862eadb193",
+        "metadata_post": "8a168221a8ad10136a6c61752d224d501259e13df7d24ee7b85e48862eadb193",
+        "files": 5,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/runtime/planning/__pycache__",
+        "metadata_pre": "70a3a00689432a0486ac861ab0a6173a9ce5112440e8e3562b92536d444be419",
+        "metadata_post": "70a3a00689432a0486ac861ab0a6173a9ce5112440e8e3562b92536d444be419",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/runtime/routing/__pycache__",
+        "metadata_pre": "96526e16ccf28c160c4e6ada8119086deb9df515dc92500351cab225aa967483",
+        "metadata_post": "96526e16ccf28c160c4e6ada8119086deb9df515dc92500351cab225aa967483",
+        "files": 7,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/runtime/scheduling/__pycache__",
+        "metadata_pre": "0779b2ebf1150a7f342a3d4b5ca18c50974645b1f924446e10f99e2e273d0ce1",
+        "metadata_post": "0779b2ebf1150a7f342a3d4b5ca18c50974645b1f924446e10f99e2e273d0ce1",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/runtime/state/__pycache__",
+        "metadata_pre": "7540449cc875a885dc629e4798d2a1134a22d5f461f95584f7dc8a65a3db76fd",
+        "metadata_post": "7540449cc875a885dc629e4798d2a1134a22d5f461f95584f7dc8a65a3db76fd",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/sandbox/__pycache__",
+        "metadata_pre": "83b7b943cbbb1689b2685da78de680c9da82c646027b0c30868553043874a9ca",
+        "metadata_post": "83b7b943cbbb1689b2685da78de680c9da82c646027b0c30868553043874a9ca",
+        "files": 5,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/security/__pycache__",
+        "metadata_pre": "580b5b22429c99d0fc0a8b436757ceef296360fc77fcaa8bab1331860797898e",
+        "metadata_post": "580b5b22429c99d0fc0a8b436757ceef296360fc77fcaa8bab1331860797898e",
+        "files": 7,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/tools/__pycache__",
+        "metadata_pre": "4bc8ff56ec56df4da40f214dc5db2f39511cad34ab01d49ee04dbb139fd718f5",
+        "metadata_post": "4bc8ff56ec56df4da40f214dc5db2f39511cad34ab01d49ee04dbb139fd718f5",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/agent_runtime/versioning/__pycache__",
+        "metadata_pre": "2afec3a7ba92afb10f58ada65dd86ab09db7529c5d0fe665c4484e896e6f08a6",
+        "metadata_post": "2afec3a7ba92afb10f58ada65dd86ab09db7529c5d0fe665c4484e896e6f08a6",
+        "files": 5,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/core_contracts/__pycache__",
+        "metadata_pre": "5c76aa159c9415a6ec50ad33ba4a219b526a6a1da24e5e477b3cfc72a8b0342f",
+        "metadata_post": "5c76aa159c9415a6ec50ad33ba4a219b526a6a1da24e5e477b3cfc72a8b0342f",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/core_contracts/capability/__pycache__",
+        "metadata_pre": "4403758f06d3e3d1a9a6d498ee92be1a04a8564017f7108608fc5c28508210d5",
+        "metadata_post": "4403758f06d3e3d1a9a6d498ee92be1a04a8564017f7108608fc5c28508210d5",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/core_contracts/invocation/__pycache__",
+        "metadata_pre": "f1d081b009c0a9d1c7392008fec4f2fe4c4b6286c40f2776a8a2fa5c0f6a497b",
+        "metadata_post": "f1d081b009c0a9d1c7392008fec4f2fe4c4b6286c40f2776a8a2fa5c0f6a497b",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/core_contracts/outcome/__pycache__",
+        "metadata_pre": "004786b88967fcf0c99d87482ae1c66976c4c31aa04e21eaf981738907eb65fb",
+        "metadata_post": "004786b88967fcf0c99d87482ae1c66976c4c31aa04e21eaf981738907eb65fb",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/infrastructure/__pycache__",
+        "metadata_pre": "543846f0357291b864f89991616be58cc34a4f573efc727303a0bf9b1c1a54f6",
+        "metadata_post": "543846f0357291b864f89991616be58cc34a4f573efc727303a0bf9b1c1a54f6",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/infrastructure/composition/__pycache__",
+        "metadata_pre": "3171efad46d59f4d7ada95e77aa60ca7b4c2d903c3eb59e69eede7f31038ddde",
+        "metadata_post": "3171efad46d59f4d7ada95e77aa60ca7b4c2d903c3eb59e69eede7f31038ddde",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/infrastructure/composition/bootstrap/__pycache__",
+        "metadata_pre": "845f196287eb7352f24a25ff34e737973198471b67d3e380253d492e6fd184e4",
+        "metadata_post": "845f196287eb7352f24a25ff34e737973198471b67d3e380253d492e6fd184e4",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/infrastructure/composition/factories/__pycache__",
+        "metadata_pre": "211042c7145183e11c5abd7b854fd3a21fda793caaad73e7689077284e478a74",
+        "metadata_post": "211042c7145183e11c5abd7b854fd3a21fda793caaad73e7689077284e478a74",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/infrastructure/config/__pycache__",
+        "metadata_pre": "79eee81ee3f745eb185c52f37f1a85bb5b1cd8c2d6538e71d7e7a77e075f16d6",
+        "metadata_post": "79eee81ee3f745eb185c52f37f1a85bb5b1cd8c2d6538e71d7e7a77e075f16d6",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/infrastructure/config/effective_config/__pycache__",
+        "metadata_pre": "93837639c7d1645d199b0a010e8fc05d9df629a595f2535e1b3565aca51aa490",
+        "metadata_post": "93837639c7d1645d199b0a010e8fc05d9df629a595f2535e1b3565aca51aa490",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/infrastructure/config/loaders/__pycache__",
+        "metadata_pre": "70e3299cf5dd8d01833c0e3a1a4d65d7d58d3df83ec65f2b991f0bba89326abe",
+        "metadata_post": "70e3299cf5dd8d01833c0e3a1a4d65d7d58d3df83ec65f2b991f0bba89326abe",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/infrastructure/config/schemas/__pycache__",
+        "metadata_pre": "81be19e6479c9c307577491a3603c0338bc375b36796e89b927789c44e678621",
+        "metadata_post": "81be19e6479c9c307577491a3603c0338bc375b36796e89b927789c44e678621",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/infrastructure/config/secrets/__pycache__",
+        "metadata_pre": "c7f24067311a3b0cafd87ab87aaaaf686b284b78b4fe66d5e6f851a9284d8fc3",
+        "metadata_post": "c7f24067311a3b0cafd87ab87aaaaf686b284b78b4fe66d5e6f851a9284d8fc3",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/infrastructure/filesystem/__pycache__",
+        "metadata_pre": "fbb3c22e733be65208a8383566a04c9f92fa521e2048dfd7f2d43444d220cdc3",
+        "metadata_post": "fbb3c22e733be65208a8383566a04c9f92fa521e2048dfd7f2d43444d220cdc3",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/infrastructure/observability/__pycache__",
+        "metadata_pre": "a387fdb6961804691be9ab83245ff79533d9af24cc27883c98222804481bebd3",
+        "metadata_post": "a387fdb6961804691be9ab83245ff79533d9af24cc27883c98222804481bebd3",
+        "files": 8,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/__pycache__",
+        "metadata_pre": "b6607abfe2ce440f09fab8047adf31f9e8ea63ecd1043e79f4bfcb1f4aee279d",
+        "metadata_post": "b6607abfe2ce440f09fab8047adf31f9e8ea63ecd1043e79f4bfcb1f4aee279d",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/analysis_simulation/__pycache__",
+        "metadata_pre": "4d3a859e2798cb99542e71e8163289b745abc5a5f6127e724eee171f308b0303",
+        "metadata_post": "4d3a859e2798cb99542e71e8163289b745abc5a5f6127e724eee171f308b0303",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/audit_traceability/__pycache__",
+        "metadata_pre": "15466919f783700b713962879c7d91e0d1b03fdae4f5a522d1e7c663961e2ef9",
+        "metadata_post": "15466919f783700b713962879c7d91e0d1b03fdae4f5a522d1e7c663961e2ef9",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/audit_traceability/application/__pycache__",
+        "metadata_pre": "25a938bf8ecfb57dc37f044cd017c8fea981f8995e610f2ebfedaed52dc96be6",
+        "metadata_post": "25a938bf8ecfb57dc37f044cd017c8fea981f8995e610f2ebfedaed52dc96be6",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/audit_traceability/application/dto/__pycache__",
+        "metadata_pre": "0ffaa9c69ddb3a784875e6100925fa6b16b4663c9b031e1236ed502632da8fbb",
+        "metadata_post": "0ffaa9c69ddb3a784875e6100925fa6b16b4663c9b031e1236ed502632da8fbb",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/documents_provenance/__pycache__",
+        "metadata_pre": "e85e7c713ca9f54b9e3ad3e3b54f1f9be70d04c819f56f144a52497adaa7d654",
+        "metadata_post": "e85e7c713ca9f54b9e3ad3e3b54f1f9be70d04c819f56f144a52497adaa7d654",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/documents_provenance/domain/__pycache__",
+        "metadata_pre": "f3f3251d636aac549c47a78bd4f92e4e14a5d713f3bcaabbc16a1cd992cc159b",
+        "metadata_post": "f3f3251d636aac549c47a78bd4f92e4e14a5d713f3bcaabbc16a1cd992cc159b",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/documents_provenance/domain/value_objects/__pycache__",
+        "metadata_pre": "19bb2d471ff81dbc5853e14649d14a395a4ca1d43ba4188845803e5b86c5bbef",
+        "metadata_post": "19bb2d471ff81dbc5853e14649d14a395a4ca1d43ba4188845803e5b86c5bbef",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/knowledge_reference/__pycache__",
+        "metadata_pre": "0afdd2993ea60d07e8f19647a21b57758e9ee0c8b8f1fba7f728aef17279c2cb",
+        "metadata_post": "0afdd2993ea60d07e8f19647a21b57758e9ee0c8b8f1fba7f728aef17279c2cb",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/knowledge_reference/domain/__pycache__",
+        "metadata_pre": "d594d95b03543972c13d85d714e19f8d4b7c8d90c173557213aa5c57736fc285",
+        "metadata_post": "d594d95b03543972c13d85d714e19f8d4b7c8d90c173557213aa5c57736fc285",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/knowledge_reference/domain/value_objects/__pycache__",
+        "metadata_pre": "c3638c80e1faea24ebb70bd4b780bc71431a95a097f5199da2b65d5bbbe0ab6e",
+        "metadata_post": "c3638c80e1faea24ebb70bd4b780bc71431a95a097f5199da2b65d5bbbe0ab6e",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/lifecycle_promotion/__pycache__",
+        "metadata_pre": "46c7acde6a0b26e8809a80ae29f1d1d49dacb0efd89411ff779e3ee19b21bf73",
+        "metadata_post": "46c7acde6a0b26e8809a80ae29f1d1d49dacb0efd89411ff779e3ee19b21bf73",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/lifecycle_promotion/domain/__pycache__",
+        "metadata_pre": "f0e4f138d622409e6dd30619309f4d2fdfa39df683d396bad943f108d3180d4f",
+        "metadata_post": "f0e4f138d622409e6dd30619309f4d2fdfa39df683d396bad943f108d3180d4f",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/lifecycle_promotion/domain/value_objects/__pycache__",
+        "metadata_pre": "a8425cc810f71c88d294d45709b816cc14d682d43adb467d08df85ee9bf351dd",
+        "metadata_post": "a8425cc810f71c88d294d45709b816cc14d682d43adb467d08df85ee9bf351dd",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/materialization_export/__pycache__",
+        "metadata_pre": "6f052394d5de1c8a4abbd1ddd0df72cc40b1846c45d83bbf0e2cb22d2f78a124",
+        "metadata_post": "6f052394d5de1c8a4abbd1ddd0df72cc40b1846c45d83bbf0e2cb22d2f78a124",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/pedagogical_context/__pycache__",
+        "metadata_pre": "fa9e14f602b3b529718ae8a55f99c1f997e411da81fa84c0681aa269fae7c5de",
+        "metadata_post": "fa9e14f602b3b529718ae8a55f99c1f997e411da81fa84c0681aa269fae7c5de",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/pedagogical_context/application/__pycache__",
+        "metadata_pre": "2d3c396eb3a56844ae7b7844c189d33a934cab981231afef2f9b899a7e24d521",
+        "metadata_post": "2d3c396eb3a56844ae7b7844c189d33a934cab981231afef2f9b899a7e24d521",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/pedagogical_context/application/dto/__pycache__",
+        "metadata_pre": "4b9c852f0acfc8da2fc4cedad98be4bb474761011fb6e7ff22b1be00aca9428f",
+        "metadata_post": "4b9c852f0acfc8da2fc4cedad98be4bb474761011fb6e7ff22b1be00aca9428f",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/pedagogical_design/__pycache__",
+        "metadata_pre": "2212a217430059a70a9c032b3e0ebf622e74851ea4a81ed7e8f748a8256bdd19",
+        "metadata_post": "2212a217430059a70a9c032b3e0ebf622e74851ea4a81ed7e8f748a8256bdd19",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/quality_evaluation/__pycache__",
+        "metadata_pre": "db03183ca940e06d429588e9da72069ce6b9773f0f97c75a3e11ab69bdd5161b",
+        "metadata_post": "db03183ca940e06d429588e9da72069ce6b9773f0f97c75a3e11ab69bdd5161b",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/quality_evaluation/domain/__pycache__",
+        "metadata_pre": "d95e3d37234831354fea4db13b29a1d4a099fdf551143ec3b90856bf5786b461",
+        "metadata_post": "d95e3d37234831354fea4db13b29a1d4a099fdf551143ec3b90856bf5786b461",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/quality_evaluation/domain/value_objects/__pycache__",
+        "metadata_pre": "ec6f609347906b3a3dd7850d2c14703cd2b073f8c201e5bcfb6884c11163c8a6",
+        "metadata_post": "ec6f609347906b3a3dd7850d2c14703cd2b073f8c201e5bcfb6884c11163c8a6",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/resource_library/__pycache__",
+        "metadata_pre": "79cdd62ffcfdd0833ff42a3a4a5037e49eab55be1d6417bc05921e8b7a975470",
+        "metadata_post": "79cdd62ffcfdd0833ff42a3a4a5037e49eab55be1d6417bc05921e8b7a975470",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/resource_library/application/__pycache__",
+        "metadata_pre": "188d20acb73fbe1746ae84cc818b967b6eb32ea2ecbd468dabfbde5aaf140b4b",
+        "metadata_post": "188d20acb73fbe1746ae84cc818b967b6eb32ea2ecbd468dabfbde5aaf140b4b",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/resource_library/application/dto/__pycache__",
+        "metadata_pre": "209dd9adb23198aeb9e4dbcc4a46427cd3f8269e8ac0a8fe3bc8542329e90139",
+        "metadata_post": "209dd9adb23198aeb9e4dbcc4a46427cd3f8269e8ac0a8fe3bc8542329e90139",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/resource_library/application/dto/input/__pycache__",
+        "metadata_pre": "4f9ec406025a3eef4eb167e54b58378ff002a3c76d36cd68b4908cd4914e23ba",
+        "metadata_post": "4f9ec406025a3eef4eb167e54b58378ff002a3c76d36cd68b4908cd4914e23ba",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/resource_library/application/dto/output/__pycache__",
+        "metadata_pre": "55594ec75f73947679e5248faa282b44237dc5f4b0e4ff52547f7822c406fdc8",
+        "metadata_post": "55594ec75f73947679e5248faa282b44237dc5f4b0e4ff52547f7822c406fdc8",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/resource_library/application/queries/__pycache__",
+        "metadata_pre": "066685cff6dd57a8ea547de73c62ec6eb5c01707cc5456b87bbf6ab4df3c6973",
+        "metadata_post": "066685cff6dd57a8ea547de73c62ec6eb5c01707cc5456b87bbf6ab4df3c6973",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/resource_library/domain/__pycache__",
+        "metadata_pre": "7d2974d22b9afaaf4e15e6e45a340459d4b6c721fb45d4370acf1b66d5efbc14",
+        "metadata_post": "7d2974d22b9afaaf4e15e6e45a340459d4b6c721fb45d4370acf1b66d5efbc14",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/resource_library/domain/errors/__pycache__",
+        "metadata_pre": "4c028bede30fc801f544d0eca588dd865efc5d7b8092855e8bfd9bddddde61cb",
+        "metadata_post": "4c028bede30fc801f544d0eca588dd865efc5d7b8092855e8bfd9bddddde61cb",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/resource_library/domain/value_objects/__pycache__",
+        "metadata_pre": "9da6f9b0e6ef4e802506ca2aa30dcd9c896ed7bffe50833f50000c1f4cf9baca",
+        "metadata_post": "9da6f9b0e6ef4e802506ca2aa30dcd9c896ed7bffe50833f50000c1f4cf9baca",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/resource_library/ports/__pycache__",
+        "metadata_pre": "dd78839792ba20ac47a6942aab16cbba4579beac365941ff06f65a65eb876047",
+        "metadata_post": "dd78839792ba20ac47a6942aab16cbba4579beac365941ff06f65a65eb876047",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/resource_library/ports/inbound/__pycache__",
+        "metadata_pre": "5e328d9bf8d734e9ff72cdac9ddc3c9a5503c08f3681989ac3974d91d6593463",
+        "metadata_post": "5e328d9bf8d734e9ff72cdac9ddc3c9a5503c08f3681989ac3974d91d6593463",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/resource_library/ports/outbound/__pycache__",
+        "metadata_pre": "ad76ea506bfa2b30c28f386f75f973b3a86fc3a2df82765942e0daef0909e416",
+        "metadata_post": "ad76ea506bfa2b30c28f386f75f973b3a86fc3a2df82765942e0daef0909e416",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/transformation_assembly/__pycache__",
+        "metadata_pre": "88807ba3a337ff8d15936eecf4f53e500508aaad5723f86b8cb2d4a0a68876d3",
+        "metadata_post": "88807ba3a337ff8d15936eecf4f53e500508aaad5723f86b8cb2d4a0a68876d3",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/transformation_assembly/domain/__pycache__",
+        "metadata_pre": "43a9e8a4a5a69435aa69b1403afd2a382480781ed72ada7c821dd854c837d28b",
+        "metadata_post": "43a9e8a4a5a69435aa69b1403afd2a382480781ed72ada7c821dd854c837d28b",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/transformation_assembly/domain/value_objects/__pycache__",
+        "metadata_pre": "5f449bbb755c3634dcc3782907b634df99a96599b299f3bdede2c965d16fef0f",
+        "metadata_post": "5f449bbb755c3634dcc3782907b634df99a96599b299f3bdede2c965d16fef0f",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/validation_control/__pycache__",
+        "metadata_pre": "768768a42f9d32a7b86470c4535db5187c4de9e395fb80d68cb2eb148facc748",
+        "metadata_post": "768768a42f9d32a7b86470c4535db5187c4de9e395fb80d68cb2eb148facc748",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/validation_control/application/__pycache__",
+        "metadata_pre": "15dc46a755d85b0f98b115817696b5a9296a9672d43432324fd897881700efdc",
+        "metadata_post": "15dc46a755d85b0f98b115817696b5a9296a9672d43432324fd897881700efdc",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/validation_control/application/dto/__pycache__",
+        "metadata_pre": "7954be550d8787fb26c75412203fac7b5914a6dbf6fae5b60927d086bb337ccd",
+        "metadata_post": "7954be550d8787fb26c75412203fac7b5914a6dbf6fae5b60927d086bb337ccd",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/work_orchestration/__pycache__",
+        "metadata_pre": "7ce83b31ab9c95c6f560ee0303340c9c952e03560a8b3bcd5d35928135d0c630",
+        "metadata_post": "7ce83b31ab9c95c6f560ee0303340c9c952e03560a8b3bcd5d35928135d0c630",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/work_orchestration/application/__pycache__",
+        "metadata_pre": "52aca9f5b3cdc32e4539da28091e56acc944d16a786d3dda29cb7d559bcc2563",
+        "metadata_post": "52aca9f5b3cdc32e4539da28091e56acc944d16a786d3dda29cb7d559bcc2563",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/work_orchestration/application/dto/__pycache__",
+        "metadata_pre": "9ffbfc71bf957c7d28cc051427081e585d1bf1df3831570dd4ad8d60095504b0",
+        "metadata_post": "9ffbfc71bf957c7d28cc051427081e585d1bf1df3831570dd4ad8d60095504b0",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/work_orchestration/domain/__pycache__",
+        "metadata_pre": "b40fd6112b6043a1c14cdd6709c061921247557f7ee2079ff7b89b66395b9caf",
+        "metadata_post": "b40fd6112b6043a1c14cdd6709c061921247557f7ee2079ff7b89b66395b9caf",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/modules/work_orchestration/domain/value_objects/__pycache__",
+        "metadata_pre": "7d1a25a39d9cc62d10968dca69432d9ceea0c32b7ced3f262e289e773546ec41",
+        "metadata_post": "7d1a25a39d9cc62d10968dca69432d9ceea0c32b7ced3f262e289e773546ec41",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/shared_kernel/__pycache__",
+        "metadata_pre": "d62a6c4ccd8706158672eb89020086dd57b1be046aab82ae0f3cbcb200d5a6f7",
+        "metadata_post": "d62a6c4ccd8706158672eb89020086dd57b1be046aab82ae0f3cbcb200d5a6f7",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/shared_kernel/correlation/__pycache__",
+        "metadata_pre": "0a79958d7f4752937a5bfb1c8ec625269d45c0cd3c7e85b25abc760de68eca2f",
+        "metadata_post": "0a79958d7f4752937a5bfb1c8ec625269d45c0cd3c7e85b25abc760de68eca2f",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/shared_kernel/errors/__pycache__",
+        "metadata_pre": "a160daef1366107a644e112dbea6311822b890173f88ffad6f771f6b67b6c846",
+        "metadata_post": "a160daef1366107a644e112dbea6311822b890173f88ffad6f771f6b67b6c846",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/shared_kernel/identifiers/__pycache__",
+        "metadata_pre": "e552a8cb4203311e3fb1d032c7b123d9183c0f32d5ccb15f7c1fe81d095f9a12",
+        "metadata_post": "e552a8cb4203311e3fb1d032c7b123d9183c0f32d5ccb15f7c1fe81d095f9a12",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/shared_kernel/references/__pycache__",
+        "metadata_pre": "68514d97ca092efc7f4cde93e2d56fee5a8b00edcd2e87af352801763fc5d58e",
+        "metadata_post": "68514d97ca092efc7f4cde93e2d56fee5a8b00edcd2e87af352801763fc5d58e",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "backend/shared_kernel/time/__pycache__",
+        "metadata_pre": "aee977caf94628251f9edc70f2930b1b832c4eab0fa88d0fbec83c7cd45512e4",
+        "metadata_post": "aee977caf94628251f9edc70f2930b1b832c4eab0fa88d0fbec83c7cd45512e4",
+        "files": 2,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "calibration_tooling/__pycache__",
+        "metadata_pre": "02faf94f9e2085346ee609be994740a8b931b6c0d5d3ea567a2bd17fb4f4ac0c",
+        "metadata_post": "02faf94f9e2085346ee609be994740a8b931b6c0d5d3ea567a2bd17fb4f4ac0c",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "calibration_tooling/adapters/__pycache__",
+        "metadata_pre": "31a19eb3425066fbee111fcd567aaab54fddd90118e2181dd18030a090843ca5",
+        "metadata_post": "31a19eb3425066fbee111fcd567aaab54fddd90118e2181dd18030a090843ca5",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "calibration_tooling/adapters/anthropic/__pycache__",
+        "metadata_pre": "757b83e75d9ba51c88fc5a25dc1c786293e4b2dbd79ed940bd70246b67b23824",
+        "metadata_post": "757b83e75d9ba51c88fc5a25dc1c786293e4b2dbd79ed940bd70246b67b23824",
+        "files": 6,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "calibration_tooling/application/__pycache__",
+        "metadata_pre": "4ec076d25a1b067b2e975ec2403d1d30efb934a085706fc252dea47e59875d1c",
+        "metadata_post": "4ec076d25a1b067b2e975ec2403d1d30efb934a085706fc252dea47e59875d1c",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "calibration_tooling/contracts/__pycache__",
+        "metadata_pre": "eb5b91b99f4cdef2fe73538451b3e7881ee51708a8a82a330a7b32c9adcec814",
+        "metadata_post": "eb5b91b99f4cdef2fe73538451b3e7881ee51708a8a82a330a7b32c9adcec814",
+        "files": 5,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "calibration_tooling/observability/__pycache__",
+        "metadata_pre": "fc3d1ed47801372c4fe4ca6f7252fe48ff9355c5a918b1150c08ef22951ba7ea",
+        "metadata_post": "fc3d1ed47801372c4fe4ca6f7252fe48ff9355c5a918b1150c08ef22951ba7ea",
+        "files": 3,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "calibration_tooling/runtime/__pycache__",
+        "metadata_pre": "585b44e0f83c569bb43bbbef5d444395c67e9ca7fdbd161063816e8c70b02321",
+        "metadata_post": "585b44e0f83c569bb43bbbef5d444395c67e9ca7fdbd161063816e8c70b02321",
+        "files": 8,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "evaluation_harness/__pycache__",
+        "metadata_pre": "7b5be3f439835f09644dbd9382d2e4ffad182464d2b4bc7e8dd61258c72d9c03",
+        "metadata_post": "7b5be3f439835f09644dbd9382d2e4ffad182464d2b4bc7e8dd61258c72d9c03",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "evaluation_harness/assertions/__pycache__",
+        "metadata_pre": "74533da49f56345efe7f1adf440c155135f86c51156b117b818ae019b22669d6",
+        "metadata_post": "74533da49f56345efe7f1adf440c155135f86c51156b117b818ae019b22669d6",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "evaluation_harness/contracts/__pycache__",
+        "metadata_pre": "b03e7e5ce9a6ef38b17b219dcb3a910ca3580fa15245c1ef9cfc4793f19d5430",
+        "metadata_post": "b03e7e5ce9a6ef38b17b219dcb3a910ca3580fa15245c1ef9cfc4793f19d5430",
+        "files": 11,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "evaluation_harness/reporting/__pycache__",
+        "metadata_pre": "4c0525ba7952ffbb94bbeb3e09970c16289b18ccac51546f6e3d6f786c8fb455",
+        "metadata_post": "4c0525ba7952ffbb94bbeb3e09970c16289b18ccac51546f6e3d6f786c8fb455",
+        "files": 6,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "evaluation_harness/runner/__pycache__",
+        "metadata_pre": "40b2f0dd7991367d4e36c032195e067f88881d01d18261500041c07f2b5ccc53",
+        "metadata_post": "40b2f0dd7991367d4e36c032195e067f88881d01d18261500041c07f2b5ccc53",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "evaluation_harness/scoring/__pycache__",
+        "metadata_pre": "bce6eb0ff9573e2c71a9b763d68afd9b16b7a8dc0bf702d99e1368ddd8893225",
+        "metadata_post": "bce6eb0ff9573e2c71a9b763d68afd9b16b7a8dc0bf702d99e1368ddd8893225",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "runtime",
+        "metadata_pre": "f127e40dfae73373155896838b66b60f928bc98fe12dbdce06b5fdf8b5489d15",
+        "metadata_post": "f127e40dfae73373155896838b66b60f928bc98fe12dbdce06b5fdf8b5489d15",
+        "files": 0,
+        "directories": 3,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "temp",
+        "metadata_pre": "0533cad6527645fd9b42a04a604cd7a14ff93f07db2b4d034b20eea53ac2a135",
+        "metadata_post": "0533cad6527645fd9b42a04a604cd7a14ff93f07db2b4d034b20eea53ac2a135",
+        "files": 0,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "tests/architecture/__pycache__",
+        "metadata_pre": "e6780c13a914c277ac13cddcb485476e0172c1b972efacb93f24947a8c96771d",
+        "metadata_post": "e6780c13a914c277ac13cddcb485476e0172c1b972efacb93f24947a8c96771d",
+        "files": 188,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "tests/calibration/__pycache__",
+        "metadata_pre": "182f76822be4358e72d9a0eba72fc0370273aec64001e23bdd942c91da3360df",
+        "metadata_post": "182f76822be4358e72d9a0eba72fc0370273aec64001e23bdd942c91da3360df",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "tests/calibration/pedagogical/__pycache__",
+        "metadata_pre": "9f2bbe4e49257ca576610d13177067958e852876acea8d85a62fcb6eed8c58cf",
+        "metadata_post": "9f2bbe4e49257ca576610d13177067958e852876acea8d85a62fcb6eed8c58cf",
+        "files": 58,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "tests/e2e/core/__pycache__",
+        "metadata_pre": "6fc9f1f0f408fb8c4b6abc87dd1992b12ae55ebd8e7106cbe5aeb779e8e68b82",
+        "metadata_post": "6fc9f1f0f408fb8c4b6abc87dd1992b12ae55ebd8e7106cbe5aeb779e8e68b82",
+        "files": 10,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "tests/integration/__pycache__",
+        "metadata_pre": "e2231185fbf3fbb32cbbf004e5d1f1c4efef4a3c38282941b0e115fb0fa52a1e",
+        "metadata_post": "e2231185fbf3fbb32cbbf004e5d1f1c4efef4a3c38282941b0e115fb0fa52a1e",
+        "files": 144,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "tests/integration/calibration_tooling/__pycache__",
+        "metadata_pre": "9d8b30a9bfa0c1d16ec8c2350ea950f0690df51b4ab7402c4796e62a84e9659a",
+        "metadata_post": "9d8b30a9bfa0c1d16ec8c2350ea950f0690df51b4ab7402c4796e62a84e9659a",
+        "files": 4,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "tests/non_functional/__pycache__",
+        "metadata_pre": "69a42c3620c1e08bee8e3022cb284c90c789cc7cb5c08a19a6475f55adf79d5a",
+        "metadata_post": "69a42c3620c1e08bee8e3022cb284c90c789cc7cb5c08a19a6475f55adf79d5a",
+        "files": 8,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "tests/providers/__pycache__",
+        "metadata_pre": "33ce33b26a0e7ab2034c95a7edafc9fea34318c10b5efdf836c6d5f77ed2e39e",
+        "metadata_post": "33ce33b26a0e7ab2034c95a7edafc9fea34318c10b5efdf836c6d5f77ed2e39e",
+        "files": 1,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "tests/providers/anthropic/__pycache__",
+        "metadata_pre": "ab1565378bb301e0796dc8fedbea16e0c8c959399024817ccfcb5444b2b1d22f",
+        "metadata_post": "ab1565378bb301e0796dc8fedbea16e0c8c959399024817ccfcb5444b2b1d22f",
+        "files": 7,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "tests/support/__pycache__",
+        "metadata_pre": "cb06919a96c13ace2ba44b667d5adc0cc7841029feb7e2d9463007f839b2330c",
+        "metadata_post": "cb06919a96c13ace2ba44b667d5adc0cc7841029feb7e2d9463007f839b2330c",
+        "files": 41,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "tests/unit/__pycache__",
+        "metadata_pre": "a498ece4e6608c19271c7ac7eb162945dbca5cd2cc177e48782ce8597d3f55d8",
+        "metadata_post": "a498ece4e6608c19271c7ac7eb162945dbca5cd2cc177e48782ce8597d3f55d8",
+        "files": 321,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "tests/unit/calibration_tooling/__pycache__",
+        "metadata_pre": "e55ee845a81165c6a899535617664d1cef9bed2760cf1af26ec2c4e50b14ab9d",
+        "metadata_post": "e55ee845a81165c6a899535617664d1cef9bed2760cf1af26ec2c4e50b14ab9d",
+        "files": 10,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      },
+      {
+        "path": "tmp",
+        "metadata_pre": "86f52ab93727d41d444704ad513fb379f3b16fb4f0b2982d9d7aae94259cd611",
+        "metadata_post": "86f52ab93727d41d444704ad513fb379f3b16fb4f0b2982d9d7aae94259cd611",
+        "files": 0,
+        "directories": 1,
+        "git_status": "ignored",
+        "unchanged": true
+      }
+    ]
+  },
+  "git": {
+    "tracked_pre": 2243,
+    "tracked_post": 2243,
+    "tracked_hash_changes": 0,
+    "application_dependency_migration_diff": [],
+    "corrective_commit_scope_verified": true,
+    "documentary_closure": {
+      "rule": "EFFECTIVE_ONLY_AFTER_DOCUMENTARY_COMMIT_AND_CLEAN_POSTCHECK",
+      "gate_14_is_postcondition": true,
+      "no_precommit_clean_claim": true,
+      "final_commit_identity": "Commit Git contenant ce paquet ; SHA non autoréférent, communiqué par le postcontrôle.",
+      "execution_graph_base": "f28b29f0964d2642b74eb7098f90359d15fb4f0c",
+      "documentation_only_successor_required": true,
+      "no_push": true,
+      "no_merge": true
+    }
+  },
+  "safety": {
+    "provider_calls": 0,
+    "credentials_resolved": 0,
+    "network_resolution": 0,
+    "push": 0,
+    "merge": 0,
+    "deletions": 0,
+    "repo_temp_pollution": 0,
+    "phase_12_18_started": false
+  },
+  "historical_and_deferred": {
+    "canonical_findings": 30,
+    "closed": 22,
+    "historical": 4,
+    "deferred": 4,
+    "must_fix_closed": 8,
+    "release_threshold": "NONE",
+    "user_runtime_002": "NOT_APPLIED_LAST_ATTESTED_NO_NEW_USER_INSPECTION",
+    "product_surface": "LOCAL_BROWSER_CONTRACTS_ONLY_NO_SERVER_OR_UI_ADDED"
+  }
+}

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Projet V2 — Consultation locale</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <a class="brand" href="/" aria-label="Projet V2, accueil">V2<span>Atelier pédagogique</span></a>
+    <span class="local-indicator">Exécution locale</span>
+  </header>
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <p class="eyebrow">Bibliothèque · READ-15</p>
+      <h1 id="page-title">Retrouver une ressource.</h1>
+      <p class="lede">Consultez une référence exacte depuis l'application locale.
+        Cette interface ne crée ni ne modifie de contenu.</p>
+      <p class="scope-note">Incrément H2 · Validation sur données synthétiques uniquement.
+        La bibliothèque utilisateur n'est pas raccordée dans ce lot.</p>
+    </section>
+    <section class="workspace" aria-label="Consultation">
+      <form id="resource-form">
+        <label for="resource-ref">Référence de la ressource</label>
+        <p id="reference-help">1 à 128 caractères : lettres, chiffres, point, tiret, deux-points ou underscore.</p>
+        <div class="input-row">
+          <input id="resource-ref" name="resource-ref" type="text" required
+            minlength="1" maxlength="128" pattern="[A-Za-z0-9][A-Za-z0-9._:\-]{0,127}"
+            autocomplete="off" spellcheck="false" aria-describedby="reference-help"
+            placeholder="resource:exemple">
+          <button type="submit" id="submit-button">Consulter <span aria-hidden="true">→</span></button>
+        </div>
+      </form>
+      <div id="request-status" role="status" aria-live="polite">Aucune consultation effectuée.</div>
+      <article id="resource-result" hidden aria-labelledby="result-title">
+        <p class="eyebrow">Ressource trouvée</p>
+        <h2 id="result-title"></h2>
+        <dl>
+          <div><dt>Référence</dt><dd id="result-ref"></dd></div>
+          <div><dt>Type</dt><dd id="result-type"></dd></div>
+          <div><dt>Disponibilité</dt><dd id="result-availability"></dd></div>
+        </dl>
+        <p class="result-note">La disponibilité ne constitue pas une décision de canonicalité.</p>
+      </article>
+      <p id="request-correlation" class="correlation" hidden></p>
+    </section>
+  </main>
+  <footer>Projet V2 <span>Lecture seule · Une référence, une consultation</span></footer>
+</body>
+</html>

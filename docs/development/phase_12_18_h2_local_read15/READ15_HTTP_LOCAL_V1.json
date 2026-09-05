@@ -1,0 +1,269 @@
+{
+  "contract_id": "READ15-HTTP-LOCAL-1.0",
+  "scope": "H2_READ15_LOCAL_STDLIB_V1",
+  "status": "APPROVED_FOR_BOUNDED_IMPLEMENTATION_NOT_FULL_V2_ACCEPTANCE",
+  "baseline_commit": "24b7a9850bc4644391dee2307c8a8a31036cd503",
+  "owner_approval_source": "EXPLICIT_USER_MESSAGE_IN_THIS_TASK",
+  "owner_a7_scope_extension": "APPROVED_BY_EXPLICIT_USER_MESSAGE_IN_THIS_TASK",
+  "owner_attestation_timestamp": null,
+  "source_reconciliation_sha256": "a8dd8edc13d505e504a3983bf5598a834f2fb57ba4fead0d3545f1d2848448d3",
+  "guard_proposal_sha256": "f019d1e74e079ca2ecfc48f77da8ef3bee6904affa59346b48b59d8d9840a80c",
+  "adr": "ADR-P12-069",
+  "routes": [
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/resources/{resource_ref}",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/",
+      "asset": "index.html"
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/assets/app.js",
+      "asset": "app.js"
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/assets/styles.css",
+      "asset": "styles.css"
+    }
+  ],
+  "request": {
+    "resource_ref_regex": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+    "validation_owner": "M03 ResourceRef via Application inbound",
+    "query_parameters": [],
+    "body_allowed": false,
+    "head_api_status": 405,
+    "deprecated_parameters_rejected": [
+      "version_ref",
+      "include"
+    ],
+    "unknown_route_status": 404
+  },
+  "response": {
+    "success_status": 200,
+    "envelope_keys": [
+      "data",
+      "meta"
+    ],
+    "data_fields": [
+      "resource_ref",
+      "resource_type",
+      "canonical_title",
+      "availability_status"
+    ],
+    "meta_fields": [
+      "correlation_id"
+    ],
+    "canonicality_inferred": false,
+    "error_envelope_keys": [
+      "error",
+      "meta"
+    ],
+    "error_fields": [
+      "category",
+      "code"
+    ],
+    "errors": [
+      [
+        "READ15_REQUEST_REJECTED",
+        400,
+        "validation"
+      ],
+      [
+        "RES_NOT_FOUND",
+        404,
+        "business"
+      ],
+      [
+        "ROUTE_NOT_FOUND",
+        404,
+        "transport"
+      ],
+      [
+        "METHOD_REJECTED",
+        405,
+        "transport"
+      ],
+      [
+        "HOST_REJECTED",
+        403,
+        "security"
+      ],
+      [
+        "ORIGIN_REJECTED",
+        403,
+        "security"
+      ],
+      [
+        "PREFLIGHT_REJECTED",
+        403,
+        "security"
+      ],
+      [
+        "INTERNAL_ERROR",
+        500,
+        "technical"
+      ]
+    ]
+  },
+  "transport": {
+    "stdlib_only": true,
+    "server_import_owner": "backend/adapters/inbound/api/server.py",
+    "default_bind": "127.0.0.1",
+    "allowed_binds": [
+      "127.0.0.1",
+      "::1"
+    ],
+    "explicit_port_required": true,
+    "cors_origins": [],
+    "http_response_version": "HTTP/1.0",
+    "connection_close": true,
+    "max_concurrent_requests": 1,
+    "max_target_bytes": 8192,
+    "max_header_bytes_including_crlf": 65536,
+    "socket_timeout_seconds": 5,
+    "absolute_input_deadline_seconds": 5,
+    "server_banner": false,
+    "raw_logging": false,
+    "correlation_owner": "B03 LocalObservabilitySession",
+    "correlation_inbound_header_policy": "GENERATE_WITH_B03_NO_UNTRUSTED_HEADER_IN_DIAGNOSTICS"
+  },
+  "data_scope": {
+    "validation": "SYNTHETIC_ONLY",
+    "user_runtime_access": false,
+    "canonical_seed_access": false,
+    "canonical_seed_sidecars_access": false,
+    "user_migration": false,
+    "copy_real_database_for_fixture": false,
+    "bootstrap_or_provision": false,
+    "runtime_reader": "EXISTING_READONLY_QUERY_ONLY_ADAPTER",
+    "explicit_runtime_digest_required": true,
+    "logs_and_fixtures": "SYSTEM_TEMP_OUTSIDE_REPOSITORY"
+  },
+  "execution_scope": {
+    "loopback_http_tests": true,
+    "external_network": false,
+    "provider_calls": 0,
+    "credentials": false,
+    "new_dependency": false,
+    "lock_change": false,
+    "persistent_configuration": false,
+    "bounded_local_commit_after_checks": true,
+    "push": false,
+    "merge": false,
+    "H3": false
+  },
+  "approved_inventory": [
+    "tests/architecture/test_local_browser_http_boundary_fitness.py",
+    "tests/architecture/test_minimal_local_observability_fitness.py",
+    "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+    "tests/architecture/test_resource_ref_contract_fitness.py",
+    "backend/adapters/inbound/api/server.py",
+    "backend/adapters/inbound/api/routes.py",
+    "backend/adapters/inbound/api/read15.py",
+    "backend/adapters/inbound/cli/local_browser.py",
+    "backend/infrastructure/composition/factories/local_browser.py",
+    "frontend/index.html",
+    "frontend/app.js",
+    "frontend/styles.css",
+    "tests/architecture/test_local_browser_product_boundary.py",
+    "tests/unit/test_local_browser_product_routes.py",
+    "tests/unit/test_local_browser_read15_http.py",
+    "tests/integration/test_local_browser_product_composition.py",
+    "tests/integration/test_local_browser_read15_http.py",
+    "architecture/adr/ADR-P12-069-local-browser-read15-product-boundary.md",
+    "docs/development/phase_12_18_h2_local_read15/READ15_HTTP_LOCAL_V1.json",
+    "docs/development/phase_12_18_h2_local_read15/IMPLEMENTATION_EVIDENCE.md",
+    "docs/development/phase_12_18_h2_local_read15/MANIFEST_SHA256.txt"
+  ],
+  "guard_pre": [
+    {
+      "path": "tests/architecture/test_local_browser_http_boundary_fitness.py",
+      "sha256": "d324d383351cce3039225a8439338f6059abbd2b34bebf286b0e29b8933d56e6",
+      "last_commit": "b63a1463046141512739e4c8f4618ab967002c78"
+    },
+    {
+      "path": "tests/architecture/test_minimal_local_observability_fitness.py",
+      "sha256": "87adef3498b85d2bf9f9c462b8b493b29b4d6a474c36976ba775297fde249d7e",
+      "last_commit": "2650ae7616fc7067e6c6341f854a10efee633d6f"
+    },
+    {
+      "path": "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+      "sha256": "9b7d9a25430a41dd5a1c6696b11d582dbfe37d7b5cf425ccc0946d6baf37b501",
+      "last_commit": "b63a1463046141512739e4c8f4618ab967002c78"
+    },
+    {
+      "path": "tests/architecture/test_resource_ref_contract_fitness.py",
+      "sha256": "3c06247fa39b27a7a015aee0431753406cf19a97113ecc5c7640e4685fcafdaf",
+      "last_commit": "e2c43184a272491371b73131170db488cf3157d6"
+    }
+  ],
+  "protected_documents": [
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/01_BASELINE_ET_PERIMETRE.md",
+      "sha256": "1a220b89864c0b01634996b04b4784e38faee5fe7fea596f65c51ce8d0d9cecb"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/02_MATRICE_CUMULATIVE_12_1_12_17.json",
+      "sha256": "3f1120df875476dc1f140ae394de27831d517c8b4d49ec07c8271075c42029b3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/03_ETAT_INTEGRATION_PRODUIT.md",
+      "sha256": "1d844c64b5e44dd798de3fb81807b1a8a7098f4cc7fa9d5eeeabf87432b8f811"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/04_ECARTS_ET_PREPARATION_RECETTE.json",
+      "sha256": "af7e112116448cb076244349bf1de9cdd823ed2071ddeadda84bda4c7821d282"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/LIVRABLE_12_18_H1_AUDIT_CUMULATIF.md",
+      "sha256": "c2723ab6f9d943397cc7eb8d36642f76ee555ea36d1ebe96bf31b28a84bfaefd"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/MANIFEST_SHA256.txt",
+      "sha256": "259a50779d6c75231e3a3cad8f5d78dc69442b696613719c128fcb4320674ab3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/01_SOURCES_ET_ECARTS_RECONCILIES.json",
+      "sha256": "a8dd8edc13d505e504a3983bf5598a834f2fb57ba4fead0d3545f1d2848448d3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/02_PROPOSITION_EVOLUTION_GUARD.md",
+      "sha256": "f019d1e74e079ca2ecfc48f77da8ef3bee6904affa59346b48b59d8d9840a80c"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/03_PAQUET_DECISION_ET_PLAN_H2.md",
+      "sha256": "2e90d55cd1600f71032f197c3aaa61c8aaebb291e792fea5d27a7b89e50a1dad"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/LIVRABLE_H1A_SOURCES_ET_GUARD.md",
+      "sha256": "398a6e2b68e4deb0c720cb309d33ef41c12644c2b49951749739e3b224afc998"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/MANIFEST_SHA256.txt",
+      "sha256": "2c7f3d2b93e4852f9243f6d6631492fc1d413bfb3ab0df4141672fa1ccd932a8"
+    }
+  ],
+  "known_limits": [
+    "First increment only, not closure of all H2 or V2",
+    "Phase 8 annexes and exact Phase 12.1 source remain missing",
+    "No actual user-data or seed readiness verified",
+    "No live provider acceptance or new release threshold",
+    "Browser interaction not implied by HTTP and static-asset tests"
+  ]
+}

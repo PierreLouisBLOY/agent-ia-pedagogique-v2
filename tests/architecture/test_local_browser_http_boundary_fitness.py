@@ -21,24 +21,17 @@ def _imports(path: Path) -> set[str]:
 
 
 def test_b04_adds_no_http_server_framework_or_route() -> None:
-    forbidden_imports = (
-        "aiohttp",
-        "fastapi",
-        "flask",
-        "http.server",
-        "hypercorn",
-        "starlette",
-        "uvicorn",
+    from tests.architecture.test_local_browser_product_boundary import (
+        route_contract_violations,
+        server_import_violations,
     )
-    imports: set[str] = set()
-    for path in BACKEND.rglob("*.py"):
-        imports.update(_imports(path))
 
-    assert not any(module.startswith(forbidden_imports) for module in imports)
-    assert not any(path.name in {"server.py", "routes.py"} for path in API.rglob("*.py"))
-    assert "/api/v2" not in "\n".join(
-        path.read_text(encoding="utf-8") for path in API.rglob("*.py")
-    )
+    assert server_import_violations(ROOT) == []
+    assert {
+        path.relative_to(ROOT).as_posix() for path in API.rglob("*.py")
+        if path.name in {"server.py", "routes.py"}
+    } == {"backend/adapters/inbound/api/server.py", "backend/adapters/inbound/api/routes.py"}
+    assert route_contract_violations(ROOT) == []
 
 
 def test_b04_contract_has_no_provider_database_repository_or_business_dependency() -> None:
@@ -100,7 +93,9 @@ def test_b04_adds_no_frontend_public_url_or_drive_runtime_dependency() -> None:
         for path in root.rglob("*.py")
     )
 
-    assert not (ROOT / "frontend").exists()
+    from tests.architecture.test_local_browser_product_boundary import frontend_violations
+
+    assert frontend_violations(ROOT) == []
     assert "google drive" not in source.casefold()
     assert "0.0.0.0" not in source
     assert "192.168." not in source

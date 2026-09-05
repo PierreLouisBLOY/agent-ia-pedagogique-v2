@@ -107,14 +107,23 @@ def test_later_provider_work_preserves_phase_f_backend_owners() -> None:
         "backend/adapters/inbound/api/__init__.py",
         "backend/adapters/inbound/api/local_browser.py",
     }
+    h2_read15_inbound_files = {
+        "backend/adapters/inbound/api/server.py",
+        "backend/adapters/inbound/api/routes.py",
+        "backend/adapters/inbound/api/read15.py",
+        "backend/adapters/inbound/cli/local_browser.py",
+    }
+    from tests.architecture.test_local_browser_product_boundary import inventory_violations
+
     assert all(
         path.startswith(allowed)
         or path in f2a_retrieval_files
         or path in b02_local_boundary_files
         or path in b03_observability_files
         or path in b04_http_contract_files
+        or path in h2_read15_inbound_files
         for path in changed
-    )
+    ) and inventory_violations(ROOT) == []
 
 
 def test_phase_f_binding_is_provider_network_and_runtime_storage_free() -> None:

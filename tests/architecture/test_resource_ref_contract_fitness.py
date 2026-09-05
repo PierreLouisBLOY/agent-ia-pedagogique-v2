@@ -73,6 +73,8 @@ def test_application_and_sqlite_adapter_consume_the_domain_contract() -> None:
 
 
 def test_read15_keeps_one_field_and_deprecations_without_http_implementation() -> None:
+    from backend.adapters.inbound.api.routes import ROUTE_SPECS
+
     handoff = json.loads(HANDOFF.read_text(encoding="utf-8"))
     http = handoff["http_handoff"]
     deprecation = handoff["read15_deprecation"]
@@ -83,7 +85,9 @@ def test_read15_keeps_one_field_and_deprecations_without_http_implementation() -
     assert http["endpoint_implemented"] is False
     assert deprecation["version_ref"] == "DEPRECATED_FOR_ACTIVE_READ15"
     assert deprecation["include"] == "DEPRECATED_FOR_ACTIVE_READ15"
-    assert not any(
-        "/api/v2/resources/{resource_ref}" in path.read_text(encoding="utf-8")
-        for path in (ROOT / "backend").rglob("*.py")
+    assert ROUTE_SPECS == (
+        (("GET",), "/api/v2/resources/{resource_ref}", None),
+        (("GET", "HEAD"), "/", "index.html"),
+        (("GET", "HEAD"), "/assets/app.js", "app.js"),
+        (("GET", "HEAD"), "/assets/styles.css", "styles.css"),
     )

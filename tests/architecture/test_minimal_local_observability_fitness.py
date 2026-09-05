@@ -77,7 +77,11 @@ def test_http_observability_adds_no_server_framework_or_route() -> None:
         not module.startswith(("fastapi", "flask", "starlette", "uvicorn"))
         for module in imports
     )
-    assert not (BACKEND / "adapters" / "inbound" / "api" / "server.py").exists()
+    from tests.architecture.test_local_browser_product_boundary import (
+        observability_server_violations,
+    )
+
+    assert observability_server_violations(source) == []
 
 
 def test_event_schema_is_an_explicit_allowlist_without_generic_export() -> None:

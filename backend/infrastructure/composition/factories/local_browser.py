@@ -30,6 +30,10 @@ from backend.infrastructure.composition.bootstrap.observability import (
     LocalObservabilitySession,
     build_local_observability_session,
 )
+from backend.infrastructure.composition.factories.conversation import (
+    ConversationComposition,
+    build_conversation,
+)
 from backend.infrastructure.config.schemas.http import LocalBrowserHttpConfiguration
 from backend.infrastructure.filesystem import (
     assert_local_data_root,
@@ -46,6 +50,7 @@ from backend.modules.resource_library.domain.value_objects.search_text import (
     InvalidSearchTextError,
     SearchText,
 )
+from backend.modules.work_orchestration.ports.outbound.generation_job import GenerationJobPort
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.time import Instant
 
@@ -77,6 +82,7 @@ class LocalRead15Composition:
     server: LocalRead15Server
     observability: LocalObservabilitySession
     _closed: bool = False
+    conversation: ConversationComposition | None = None
 
     @property
     def url(self) -> str:
@@ -94,7 +100,12 @@ class LocalRead15Composition:
             return 0.0
         self._closed = True
         self.server.stop()
-        return self.observability.shutdown()
+        try:
+            if self.conversation is not None:
+                self.conversation.service.close()
+        finally:
+            duration = self.observability.shutdown()
+        return duration
 
 
 def _application_reader(target: Read15RuntimeTarget) -> Read15Endpoint:
@@ -165,8 +176,11 @@ def _application_searcher(target: Read15RuntimeTarget) -> SearchEndpoint:
 
 def build_local_read15(
     configuration: LocalBrowserHttpConfiguration, target: Read15RuntimeTarget,
+    *, enable_conversation: bool = False, generation_jobs: GenerationJobPort | None = None,
 ) -> LocalRead15Composition:
     """Receive an explicit existing target; never read ambient environment settings."""
+    if generation_jobs is not None and not enable_conversation:
+        raise ValueError("R2_NOT_ENABLED")
     target.validate()
     # Verify that the authenticated supplied fixture can open as a query-only reader.
     connection = connect_sqlite(
@@ -181,16 +195,22 @@ def build_local_read15(
         for name in sorted(ASSET_NAMES)
     }
     observability = build_local_observability_session(target.data_root)
+    conversation = build_conversation(jobs=generation_jobs) if enable_conversation else None
     try:
         service = LocalRead15Service(
             configuration, _application_reader(target), observability, assets,
             search_endpoint=_application_searcher(target),
+            conversation_endpoint=conversation.endpoint if conversation else None,
+            production_endpoint=conversation.production if conversation else None,
+            harvest=conversation.service.poll if conversation else None,
         )
         server = LocalRead15Server(service)
     except Exception:
+        if conversation is not None:
+            conversation.service.close()
         observability.shutdown()
         raise
     observability.startup(
         app_version="v2.0", config_profile_id="local.read15", runtime_mode="LOCAL_BROWSER"
     )
-    return LocalRead15Composition(server, observability)
+    return LocalRead15Composition(server, observability, conversation=conversation)

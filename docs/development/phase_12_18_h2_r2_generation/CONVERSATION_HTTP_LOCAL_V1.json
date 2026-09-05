@@ -1,0 +1,820 @@
+{
+  "schema": "CONVERSATION-HTTP-LOCAL-1.0",
+  "scope": "H2_CONVERSATIONAL_GENERATION_V1",
+  "baseline_commit": "19c42bc9f4b0b1a97b9bd2d6b880acd7378459f7",
+  "source_manifest_sha256": "359b06ab34aa092831bd0d0eea909fc4b030776eef49414edbe7932f97eb9d6c",
+  "source_zip_sha256": "32da3affbff6c5f7f2ce699bf7b82422adc121c879b16a3e1f1ef4ba5ed93cdb",
+  "permission_record": {
+    "p_impl": "APPROVED",
+    "p_doc_network": "APPROVED",
+    "p_live": "NOT_AUTHORIZED",
+    "basis": "Explicit owner message in this task; no fabricated signature/timestamp.",
+    "approved_ceiling_usd": null
+  },
+  "routes": [
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/resources/{resource_ref}",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/search",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/conversation",
+      "asset": null
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v2/conversation/messages",
+      "asset": null
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v2/conversation/generations",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/productions/{production_ref}/versions/{version_ref}",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/",
+      "asset": "index.html"
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/assets/app.js",
+      "asset": "app.js"
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/assets/styles.css",
+      "asset": "styles.css"
+    }
+  ],
+  "approved_inventory": [
+    "backend/adapters/inbound/api/routes.py",
+    "backend/adapters/inbound/api/server.py",
+    "backend/adapters/inbound/api/local_browser.py",
+    "backend/adapters/inbound/api/conversation.py",
+    "backend/adapters/inbound/api/production.py",
+    "backend/adapters/inbound/application/conversation.py",
+    "backend/adapters/inbound/application/production.py",
+    "backend/modules/pedagogical_context/contracts/dto/conversation_context.py",
+    "backend/modules/pedagogical_context/application/services/conversation_context.py",
+    "backend/modules/pedagogical_design/contracts/dto/conversation_draft.py",
+    "backend/modules/pedagogical_design/ports/inbound/create_conversation_draft.py",
+    "backend/modules/pedagogical_design/ports/outbound/conversation_generation.py",
+    "backend/modules/pedagogical_design/application/commands/create_conversation_draft.py",
+    "backend/modules/work_orchestration/contracts/dto/conversation.py",
+    "backend/modules/work_orchestration/contracts/dto/production_read_view.py",
+    "backend/modules/work_orchestration/application/dto/input/read_production.py",
+    "backend/modules/work_orchestration/ports/inbound/conversation.py",
+    "backend/modules/work_orchestration/ports/inbound/production_read.py",
+    "backend/modules/work_orchestration/ports/outbound/conversation_store.py",
+    "backend/modules/work_orchestration/ports/outbound/production_store.py",
+    "backend/modules/work_orchestration/ports/outbound/generation_job.py",
+    "backend/modules/work_orchestration/application/services/conversation.py",
+    "backend/modules/work_orchestration/application/queries/read_production.py",
+    "backend/adapters/outbound/persistence/conversation_memory.py",
+    "backend/adapters/outbound/generation/conversation.py",
+    "backend/adapters/outbound/system/conversation_job.py",
+    "backend/infrastructure/composition/bindings/conversation_agents.py",
+    "backend/infrastructure/composition/bindings/conversation_routing.py",
+    "backend/infrastructure/composition/bootstrap/conversation_worker.py",
+    "backend/infrastructure/composition/factories/conversation.py",
+    "backend/infrastructure/composition/factories/local_browser.py",
+    "backend/adapters/outbound/generation/openai/mapping.py",
+    "backend/adapters/outbound/generation/openai/adapter.py",
+    "frontend/index.html",
+    "frontend/app.js",
+    "frontend/styles.css",
+    "tests/architecture/test_local_browser_product_boundary.py",
+    "tests/architecture/test_resource_ref_contract_fitness.py",
+    "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+    "tests/unit/test_local_browser_product_routes.py",
+    "tests/architecture/test_local_search_product_boundary.py",
+    "tests/unit/test_conversation_context.py",
+    "tests/unit/test_conversation_application.py",
+    "tests/unit/test_conversation_generation.py",
+    "tests/unit/test_production_read.py",
+    "tests/unit/test_conversation_routes_security.py",
+    "tests/integration/test_conversation_http.py",
+    "tests/integration/test_conversation_job_lifecycle.py",
+    "tests/integration/test_conversation_product.py",
+    "tests/unit/test_openai_conversation_mapping.py",
+    "tests/unit/test_conversation_assets.py",
+    "tests/architecture/test_conversation_product_boundary.py",
+    "tests/support/conversation_fakes.py",
+    "tests/support/conversation_synthetic.py",
+    "architecture/adr/ADR-conversational-generation-product-boundary.md",
+    "docs/development/phase_12_18_h2_r2_generation/CONVERSATION_HTTP_LOCAL_V1.json",
+    "docs/development/phase_12_18_h2_r2_generation/IMPLEMENTATION_EVIDENCE.md",
+    "docs/development/phase_12_18_h2_r2_generation/LIVE_GENERATION_SCOPE.json",
+    "docs/development/phase_12_18_h2_r2_generation/MANIFEST_SHA256.txt",
+    "backend/adapters/inbound/cli/local_browser.py",
+    "backend/agent_runtime/contracts/planning/delegation.py",
+    "tests/architecture/test_pedagogical_calibration_fitness.py",
+    "tests/calibration/pedagogical/repair_tranche_v4_2.py",
+    "tests/architecture/test_calibration_tooling_boundary.py",
+    "tests/architecture/test_repository_hygiene_b06.py"
+  ],
+  "pre_inventory": [
+    {
+      "path": "backend/adapters/inbound/api/routes.py",
+      "action": "MODIFY",
+      "sha256": "4d2a22e38c9e6667007eec99fd8696bea1bc9a680c1a7c56c25afaecfff1b73e"
+    },
+    {
+      "path": "backend/adapters/inbound/api/server.py",
+      "action": "MODIFY",
+      "sha256": "e1d71f396d4f3dffde4262075d528ae4797489ab7e0d65fb350796b5b3f50f66"
+    },
+    {
+      "path": "backend/adapters/inbound/api/local_browser.py",
+      "action": "MODIFY",
+      "sha256": "cc7ee88ebbb41d17feb301c9707d1ab05efe3d1fa3118be8612c1b4c735d1148"
+    },
+    {
+      "path": "backend/adapters/inbound/api/conversation.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/adapters/inbound/api/production.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/adapters/inbound/application/conversation.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/adapters/inbound/application/production.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/pedagogical_context/contracts/dto/conversation_context.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/pedagogical_context/application/services/conversation_context.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/pedagogical_design/contracts/dto/conversation_draft.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/pedagogical_design/ports/inbound/create_conversation_draft.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/pedagogical_design/ports/outbound/conversation_generation.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/pedagogical_design/application/commands/create_conversation_draft.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/work_orchestration/contracts/dto/conversation.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/work_orchestration/contracts/dto/production_read_view.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/work_orchestration/application/dto/input/read_production.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/work_orchestration/ports/inbound/conversation.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/work_orchestration/ports/inbound/production_read.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/work_orchestration/ports/outbound/conversation_store.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/work_orchestration/ports/outbound/production_store.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/work_orchestration/ports/outbound/generation_job.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/work_orchestration/application/services/conversation.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/modules/work_orchestration/application/queries/read_production.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/adapters/outbound/persistence/conversation_memory.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/adapters/outbound/generation/conversation.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/adapters/outbound/system/conversation_job.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/infrastructure/composition/bindings/conversation_agents.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/infrastructure/composition/bindings/conversation_routing.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/infrastructure/composition/bootstrap/conversation_worker.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/infrastructure/composition/factories/conversation.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/infrastructure/composition/factories/local_browser.py",
+      "action": "MODIFY",
+      "sha256": "29455fcb0703b33a24b531a146d757e8cc1d7dc054ef061084f4afeaee08acdd"
+    },
+    {
+      "path": "backend/adapters/outbound/generation/openai/mapping.py",
+      "action": "MODIFY",
+      "sha256": "77b9419d94c3b5bc6b9317c33dc7fc13bd31d44e44d993d7a41d93b374eabc99"
+    },
+    {
+      "path": "backend/adapters/outbound/generation/openai/adapter.py",
+      "action": "MODIFY",
+      "sha256": "9357224fa7b4c77e4dd0cd7184491597138dd4247bbb5ad75f346c22fbb66be1"
+    },
+    {
+      "path": "frontend/index.html",
+      "action": "MODIFY",
+      "sha256": "a413bbdbe3bc34384d716404eab8c6fbc705469e350625190b0ce85426a8f882"
+    },
+    {
+      "path": "frontend/app.js",
+      "action": "MODIFY",
+      "sha256": "1b5ca2e2a52d273712bd3d347511521a8f0556e8f57d749188d789477761a754"
+    },
+    {
+      "path": "frontend/styles.css",
+      "action": "MODIFY",
+      "sha256": "a03e599ccb62cadef19f1dc8998371395e0337a5084dcd159fa645fc41daed7e"
+    },
+    {
+      "path": "tests/architecture/test_local_browser_product_boundary.py",
+      "action": "MODIFY",
+      "sha256": "7873e130c4ffc52ba81feec9928572bb3658f14cd7c34c2f1460510ad2569d02"
+    },
+    {
+      "path": "tests/architecture/test_resource_ref_contract_fitness.py",
+      "action": "MODIFY",
+      "sha256": "df2b1ca3c7088dee44a36c7542859261fba4de49a1c7840b61b63f39678e68be"
+    },
+    {
+      "path": "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+      "action": "MODIFY",
+      "sha256": "6fc91a6245747d015afe0a197d9a21e3e33b6c9574cb9239d5d53285cc916584"
+    },
+    {
+      "path": "tests/unit/test_local_browser_product_routes.py",
+      "action": "MODIFY",
+      "sha256": "b2a02bf760161a6a2954e401896cf73f63ba3d64a68cb14d219d89ad77d993ee"
+    },
+    {
+      "path": "tests/architecture/test_local_search_product_boundary.py",
+      "action": "MODIFY",
+      "sha256": "82a70fd64ac1751ba5183ff1cc74ae1e25315341aa4e22a9513fa2e5f2df53d1"
+    },
+    {
+      "path": "tests/unit/test_conversation_context.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "tests/unit/test_conversation_application.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "tests/unit/test_conversation_generation.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "tests/unit/test_production_read.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "tests/unit/test_conversation_routes_security.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "tests/integration/test_conversation_http.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "tests/integration/test_conversation_job_lifecycle.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "tests/integration/test_conversation_product.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "tests/unit/test_openai_conversation_mapping.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "tests/unit/test_conversation_assets.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "tests/architecture/test_conversation_product_boundary.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "tests/support/conversation_fakes.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "tests/support/conversation_synthetic.py",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "architecture/adr/ADR-conversational-generation-product-boundary.md",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r2_generation/CONVERSATION_HTTP_LOCAL_V1.json",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r2_generation/IMPLEMENTATION_EVIDENCE.md",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r2_generation/LIVE_GENERATION_SCOPE.json",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r2_generation/MANIFEST_SHA256.txt",
+      "action": "CREATE",
+      "sha256": null
+    },
+    {
+      "path": "backend/adapters/inbound/cli/local_browser.py",
+      "action": "MODIFY",
+      "sha256": "f88bd7ea434fd821c1bbfc0c04c78f5514383b7886a7616cfa5d682b92b3f607"
+    },
+    {
+      "path": "backend/agent_runtime/contracts/planning/delegation.py",
+      "action": "MODIFY",
+      "sha256": "72254e9a36aaf267593b880712cb68b8d3e6d978291d83515d0374c926e8af8f"
+    },
+    {
+      "path": "tests/architecture/test_pedagogical_calibration_fitness.py",
+      "action": "MODIFY",
+      "sha256": "a04792416e81c09724ba3750836dde9327e177e4535c9deb29917f5d3e8c3ad8"
+    },
+    {
+      "path": "tests/calibration/pedagogical/repair_tranche_v4_2.py",
+      "action": "MODIFY",
+      "sha256": "d1e5b40dd1437aad38f5da0db4797e2670da953ee554f09f4aa1b1f078e9a6b6"
+    },
+    {
+      "path": "tests/architecture/test_calibration_tooling_boundary.py",
+      "action": "MODIFY",
+      "sha256": "43f91d0ea1d631588b76c9646edb8ddba16a771393694d4aa8cda95b2c2e2309"
+    },
+    {
+      "path": "tests/architecture/test_repository_hygiene_b06.py",
+      "action": "MODIFY",
+      "sha256": "1d854e51559244b52c3b062bdfbde410653b8fdeff223deead9334eef5d9acfc"
+    }
+  ],
+  "protected_documents": [
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/01_BASELINE_ET_PERIMETRE.md",
+      "sha256": "1a220b89864c0b01634996b04b4784e38faee5fe7fea596f65c51ce8d0d9cecb"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/02_MATRICE_CUMULATIVE_12_1_12_17.json",
+      "sha256": "3f1120df875476dc1f140ae394de27831d517c8b4d49ec07c8271075c42029b3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/03_ETAT_INTEGRATION_PRODUIT.md",
+      "sha256": "1d844c64b5e44dd798de3fb81807b1a8a7098f4cc7fa9d5eeeabf87432b8f811"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/04_ECARTS_ET_PREPARATION_RECETTE.json",
+      "sha256": "af7e112116448cb076244349bf1de9cdd823ed2071ddeadda84bda4c7821d282"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/LIVRABLE_12_18_H1_AUDIT_CUMULATIF.md",
+      "sha256": "c2723ab6f9d943397cc7eb8d36642f76ee555ea36d1ebe96bf31b28a84bfaefd"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/MANIFEST_SHA256.txt",
+      "sha256": "259a50779d6c75231e3a3cad8f5d78dc69442b696613719c128fcb4320674ab3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/01_SOURCES_ET_ECARTS_RECONCILIES.json",
+      "sha256": "a8dd8edc13d505e504a3983bf5598a834f2fb57ba4fead0d3545f1d2848448d3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/02_PROPOSITION_EVOLUTION_GUARD.md",
+      "sha256": "f019d1e74e079ca2ecfc48f77da8ef3bee6904affa59346b48b59d8d9840a80c"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/03_PAQUET_DECISION_ET_PLAN_H2.md",
+      "sha256": "2e90d55cd1600f71032f197c3aaa61c8aaebb291e792fea5d27a7b89e50a1dad"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/LIVRABLE_H1A_SOURCES_ET_GUARD.md",
+      "sha256": "398a6e2b68e4deb0c720cb309d33ef41c12644c2b49951749739e3b224afc998"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/MANIFEST_SHA256.txt",
+      "sha256": "2c7f3d2b93e4852f9243f6d6631492fc1d413bfb3ab0df4141672fa1ccd932a8"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/01_BASELINE_ET_REUTILISATION.md",
+      "sha256": "86916ecaf2fbfc2f0d98d39ae18636264c2f02049e7e4dae8ff3d254a3f8c31e"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+      "sha256": "664df97c350324af087597f7d17ec4e71ab837129a871959ee3305d61e7ebf0b"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/03_INVENTAIRE_FICHIERS_ET_GUARDS.json",
+      "sha256": "856c7017b6f943c8575895a3844bfa62053c7574272422be3e8e1bbedb53606a"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/04_DECISION_ET_PLAN_IMPLEMENTATION.md",
+      "sha256": "777e86b5584eebc59990568b4e82985e89901ea6a2e6b58cf4f032b4eda7df4b"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/LIVRABLE_PROPOSITION_RECHERCHE_LOCALE.md",
+      "sha256": "b03bbb1be99b2698dff717b864ee59e968f3abe2d366e9e7c658aab60ac450d4"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/MANIFEST_SHA256.txt",
+      "sha256": "7e210975e1c64ecc29aa73bbbaf48c2e4b099501625fd061f33f0ef13d8f15f4"
+    }
+  ],
+  "preparation_documents": [
+    "docs/development/phase_12_18_h2_r2_generation_preparation/01_CONTRAT_R2_GENERATION_CONVERSATIONNELLE.md",
+    "docs/development/phase_12_18_h2_r2_generation_preparation/02_INVENTAIRE_GUARDS_TESTS_PERMISSIONS_R2.json",
+    "docs/development/phase_12_18_h2_r2_generation_preparation/03_DECISION_ET_PLAN_EXECUTION_R2.md",
+    "docs/development/phase_12_18_h2_r2_generation_preparation/MANIFEST_SHA256.txt"
+  ],
+  "guard_nodes": [
+    {
+      "id": "G01",
+      "path": "tests/architecture/test_local_browser_product_boundary.py",
+      "node": "route_contract_violations"
+    },
+    {
+      "id": "G02",
+      "path": "tests/architecture/test_local_browser_product_boundary.py",
+      "node": "inventory_violations"
+    },
+    {
+      "id": "G03",
+      "path": "tests/architecture/test_local_browser_product_boundary.py",
+      "node": "test_existing_pure_contracts_and_original_guards_other_tests_preserved"
+    },
+    {
+      "id": "G04",
+      "path": "tests/architecture/test_resource_ref_contract_fitness.py",
+      "node": "test_read15_keeps_one_field_and_deprecations_without_http_implementation"
+    },
+    {
+      "id": "G05",
+      "path": "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+      "node": "test_later_provider_work_preserves_phase_f_backend_owners"
+    },
+    {
+      "id": "G06",
+      "path": "tests/unit/test_local_browser_product_routes.py",
+      "node": "test_registry_has_one_business_operation_and_three_assets"
+    },
+    {
+      "id": "G07",
+      "path": "tests/architecture/test_local_search_product_boundary.py",
+      "node": "test_exact_five_routes_preserve_read15"
+    },
+    {
+      "id": "G08",
+      "path": "tests/architecture/test_local_search_product_boundary.py",
+      "node": "test_exact_inventory_before_and_after_commit"
+    },
+    {
+      "id": "G09",
+      "path": "tests/architecture/test_local_search_product_boundary.py",
+      "node": "test_only_approved_guard_functions_change_and_old_assertions_remain"
+    },
+    {
+      "id": "G10",
+      "path": "tests/architecture/test_local_search_product_boundary.py",
+      "node": "test_reused_components_and_history_are_byte_identical"
+    }
+  ],
+  "real_seed_gate": "NOT_RUN_NOT_PASS",
+  "live_provider_calls": 0,
+  "active_contract_rules": "C01–C18 of the four source documents pinned above, unchanged.",
+  "result": "R2_SYNTHETIC_WIRING_ONLY",
+  "owner_amendment": {
+    "id": "R2-C03-1",
+    "approval": "APPROVED",
+    "basis": "Owner yes to the explicitly proposed 61st file, bounded exception, ADR/tests/inventory amendments.",
+    "additional_file_count": 1,
+    "marker": "R2-EVIDENCE-MANDATE-1.0",
+    "provider_authority_changed": false
+  },
+  "historical_source_amendment": {
+    "status": "OWNER_APPROVED_IMPLEMENTED_VALIDATED",
+    "paths": [
+      "tests/architecture/test_pedagogical_calibration_fitness.py",
+      "tests/calibration/pedagogical/repair_tranche_v4_2.py"
+    ],
+    "active_approved_total_files": 63,
+    "id": "R2-HISTORY-1",
+    "historical_generation_baseline": "a560d6ca1989ba3dd13c9d02eeb97ef3fff6238b",
+    "live_authority": false,
+    "initial_blocked_global_result": {
+      "passed": 5294,
+      "failed": 37,
+      "skipped": 28
+    },
+    "modified_node": "test_golden_harness_adapters_and_registries_remain_byte_exact"
+  },
+  "validation": {
+    "global_synthetic_authorized": {
+      "passed": 5456,
+      "failed": 0,
+      "skipped": 28,
+      "seconds": 719.85,
+      "junit_sha256": "cfec50fb6dc37d7e4737bab0b496fb4b302db45c64678f60e24dba36a937bf9c",
+      "total_cases": 5484
+    },
+    "targeted": {
+      "passed": 397,
+      "failed": 0,
+      "skipped": 0,
+      "seconds": 124.31,
+      "junit_sha256": "d6aae8265157c1e66b484ddb4f394cb41d42dea59aacca93228aa4ff651dd2c1",
+      "paths": [
+        "tests/architecture/test_local_browser_product_boundary.py",
+        "tests/architecture/test_resource_ref_contract_fitness.py",
+        "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+        "tests/unit/test_local_browser_product_routes.py",
+        "tests/architecture/test_local_search_product_boundary.py",
+        "tests/unit/test_conversation_context.py",
+        "tests/unit/test_conversation_application.py",
+        "tests/unit/test_conversation_generation.py",
+        "tests/unit/test_production_read.py",
+        "tests/unit/test_conversation_routes_security.py",
+        "tests/integration/test_conversation_http.py",
+        "tests/integration/test_conversation_job_lifecycle.py",
+        "tests/integration/test_conversation_product.py",
+        "tests/unit/test_openai_conversation_mapping.py",
+        "tests/unit/test_conversation_assets.py",
+        "tests/architecture/test_conversation_product_boundary.py",
+        "tests/architecture/test_pedagogical_calibration_fitness.py",
+        "tests/architecture/test_calibration_tooling_boundary.py",
+        "tests/architecture/test_repository_hygiene_b06.py",
+        "tests/unit/test_multi_agent_security_contracts.py"
+      ]
+    },
+    "reuse": {
+      "passed": 768,
+      "failed": 0,
+      "seconds": 63.55,
+      "junit_sha256": "5a5da0bf13d98366c0545de3d26ea8d119a2c1f43cdcf980c6489d491d0a8620",
+      "paths": [
+        "tests/unit/test_workflow_selector.py",
+        "tests/unit/test_plan_compiler.py",
+        "tests/unit/test_orchestration_coordinator.py",
+        "tests/architecture/test_deterministic_runtime_fitness.py",
+        "tests/architecture/test_phase_12_10_runtime_routing_fitness.py",
+        "tests/unit/test_routing_prelaunch_guard.py",
+        "tests/architecture/test_use_case_routing_boundary_fitness.py",
+        "tests/unit/test_capability_authorization_policy.py",
+        "tests/architecture/test_agent_registry_policy_fitness.py",
+        "tests/architecture/test_capability_authorization_policy_fitness.py",
+        "tests/unit/test_retrieval_coordinator.py",
+        "tests/architecture/test_evidence_agent_fitness.py",
+        "tests/integration/test_local_search_sqlite.py",
+        "tests/architecture/test_retrieval_admissibility_decoupling_fitness.py",
+        "tests/unit/test_generation_coordinator.py",
+        "tests/integration/test_generation_candidate_materialization.py",
+        "tests/unit/test_generation_guard.py",
+        "tests/architecture/test_generation_boundary_fitness.py",
+        "tests/architecture/test_generation_agent_fitness.py",
+        "tests/unit/test_budget_state.py",
+        "tests/integration/test_multi_agent_handoff_security.py",
+        "tests/unit/test_openai_generation_factory.py",
+        "tests/unit/test_openai_responses_transport.py",
+        "tests/architecture/test_provider_neutral_foundation_fitness.py",
+        "tests/unit/test_local_browser_http_contract.py",
+        "tests/integration/test_local_browser_http_observability.py",
+        "tests/architecture/test_sqlite_vocabulary_ownership.py",
+        "tests/architecture/test_canonical_contract_boundaries.py",
+        "tests/architecture/test_generation_coordination_fitness.py",
+        "tests/architecture/test_orchestration_coordinator_fitness.py",
+        "tests/architecture/test_local_browser_http_boundary_fitness.py",
+        "tests/architecture/test_minimal_local_observability_fitness.py",
+        "tests/architecture/test_openai_generation_adapter_fitness.py",
+        "tests/architecture/test_repository_baseline.py",
+        "tests/architecture/test_plan_compiler_fitness.py",
+        "tests/architecture/test_generation_guard_fitness.py"
+      ]
+    },
+    "index_counterexamples": {
+      "passed": 204,
+      "failed": 0,
+      "seconds": 38,
+      "junit_sha256": "a3cae894e194fbeb03cc3f6f8b46aeddd4127155326d94295b5e70ec4f514d6d"
+    },
+    "intermediate_global_before_index_hardening": {
+      "passed": 5453,
+      "failed": 0,
+      "skipped": 28,
+      "seconds": 741.97,
+      "junit_sha256": "0caef0f1d089fbb86ea997c1148fbcd893a9baf58e062d4498a5e2d600b3ec45"
+    },
+    "entry_global": {
+      "passed": 5351,
+      "failed": 2,
+      "skipped": 28,
+      "seconds": 860.44,
+      "junit_sha256": "050b57f006cc6f3780a14e7f5d18bb00f3a1c33b1df608f508c2eed55137f9db"
+    },
+    "ruff": "PASS",
+    "mypy": {
+      "status": "PASS",
+      "scope": "backend",
+      "files": 724
+    },
+    "compileall": {
+      "status": "PASS",
+      "scopes": [
+        "backend",
+        "calibration_tooling"
+      ],
+      "bytecode": "EXTERNAL_TEMP_ONLY"
+    },
+    "pip_check": "PASS_NO_BROKEN_REQUIREMENTS",
+    "javascript_syntax": "PASS",
+    "manual_browser": "PREVIOUS_SYNTHETIC_RECIPE_REUSED_UNCHANGED_APPLICATION_SOURCES",
+    "global_exclusions": [
+      "tests/non_functional/test_retrieval_quality_real_gate.py"
+    ],
+    "additional_test_exclusions": 0,
+    "new_skip_or_xfail_markers": 0,
+    "protected_sources": {
+      "documents": 17,
+      "preparation": 4,
+      "status": "PASS"
+    },
+    "no_external_network_for_history_2": true
+  },
+  "delivery": {
+    "evidence_capture_stage": "VALIDATED_PRE_COMMIT_SNAPSHOT",
+    "authorized_commit_scope": "ONE_COHERENT_LOCAL_COMMIT_OF_EXACT_65_PATHS",
+    "active_approved_file_count": 65,
+    "create": 45,
+    "modify": 20,
+    "commit_identity": "The Git commit containing this snapshot; no self-referential commit hash.",
+    "post_commit_checks_required": [
+      "fixed-baseline exact 65 paths with 45 A and 20 M",
+      "working/index content and manifest byte identities",
+      "21 protected/preparatory files unchanged and untracked",
+      "R2 and historical architecture guards"
+    ],
+    "technical_wiring": "R2_SYNTHETIC_WIRING_ONLY",
+    "live_product_complete": false,
+    "live_dispatch_enabled": false,
+    "real_seed_gate": "NOT_RUN_NOT_PASS",
+    "provider_calls": 0,
+    "credential_resolution": "FORBIDDEN_NOT_PERFORMED",
+    "r3_r4_h3": "NOT_STARTED"
+  },
+  "historical_freeze_amendment": {
+    "id": "R2-HISTORY-2",
+    "status": "OWNER_APPROVED_IMPLEMENTED_VALIDATED",
+    "additional_modify_count": 2,
+    "paths": [
+      {
+        "path": "tests/architecture/test_calibration_tooling_boundary.py",
+        "pre_sha256": "43f91d0ea1d631588b76c9646edb8ddba16a771393694d4aa8cda95b2c2e2309",
+        "node": "test_all_40_historical_files_are_byte_exact_and_read_only",
+        "post_sha256": "dfa0f3ad3e7db0c12a6b4ed349f76f722f3e1326133e02f451a28e9c6dd2b39a"
+      },
+      {
+        "path": "tests/architecture/test_repository_hygiene_b06.py",
+        "pre_sha256": "1d854e51559244b52c3b062bdfbde410653b8fdeff223deead9334eef5d9acfc",
+        "node": "test_b01_evidence_stays_tracked_and_historical_freeze_stays_intact",
+        "post_sha256": "8ceffb8d460a759ec90371e246aef43d346801ca6fc064c8ba2877d439ae51e9"
+      }
+    ],
+    "single_historical_entry": "HIST-020",
+    "other_current_entries_unchanged": 39,
+    "historical_freezes_manifests_and_shared_helper_unchanged": true,
+    "proof_and_regressions": "Existing R2 ADR, inventories and T11 only; no generic exemption.",
+    "active_approved_total_files": 65,
+    "zip_sha256": "9d006e13901f235dda2ac2c6a4dafe9f819daecf0cb91e79c9e08aed69a94d9b",
+    "zip_manifest_sha256": "20766a35b1caa5115ee661c3f9a179dd9f8524948ead4d51d6e1343de73b3d82",
+    "basis": "Explicit owner goal authorization; ZIP reviewed as supporting mandate, not as an owner signature.",
+    "historical_blob": {
+      "path": "tests/calibration/pedagogical/repair_tranche_v4_2.py",
+      "baseline": "6d0d66380757d7502fd967cd0246c5b6ff91d5f8",
+      "git_blob": "4e361d5fd497dbd5050f82293c58d0de270de47c",
+      "sha256": "d1e5b40dd1437aad38f5da0db4797e2670da953ee554f09f4aa1b1f078e9a6b6",
+      "active_sha256": "9b85e5496ed9177bfd11fff896b7bd9bd87b4bf919216c6327172a784cf952d9"
+    },
+    "unchanged_shared_helper_sha256": "95fedd65171033273b68c34ad8b9e50aaf0c6d6da1140ae7b9708b21483b903c"
+  }
+}

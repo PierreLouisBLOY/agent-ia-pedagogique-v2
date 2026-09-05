@@ -88,6 +88,10 @@ def test_read15_keeps_one_field_and_deprecations_without_http_implementation() -
     assert ROUTE_SPECS == (
         (("GET",), "/api/v2/resources/{resource_ref}", None),
         (("GET",), "/api/v2/search", None),
+        (("GET",), "/api/v2/conversation", None),
+        (("POST",), "/api/v2/conversation/messages", None),
+        (("POST",), "/api/v2/conversation/generations", None),
+        (("GET",), "/api/v2/productions/{production_ref}/versions/{version_ref}", None),
         (("GET", "HEAD"), "/", "index.html"),
         (("GET", "HEAD"), "/assets/app.js", "app.js"),
         (("GET", "HEAD"), "/assets/styles.css", "styles.css"),

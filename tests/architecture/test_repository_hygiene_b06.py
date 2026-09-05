@@ -154,7 +154,15 @@ def test_b01_evidence_stays_tracked_and_historical_freeze_stays_intact() -> None
     paths = {p.strip() for p in allowlist.read_text(encoding="utf-8").splitlines() if p.strip()}
     assert paths <= set(repository_paths(ROOT, tracked_only=True))
     freeze = json.loads((ROOT / B01_FREEZE).read_text(encoding="utf-8"))
-    assert_current_historical_hashes(ROOT, [entry["path"] for entry in freeze["entries"]])
+    from tests.architecture.test_conversation_product_boundary import (
+        r2_historical_entry_sha256,
+    )
+    evolved = "tests/calibration/pedagogical/repair_tranche_v4_2.py"
+    entries = [entry["path"] for entry in freeze["entries"]]
+    assert len(entries) == 40 and entries.count(evolved) == 1
+    entry = next(entry for entry in freeze["entries"] if entry["path"] == evolved)
+    assert r2_historical_entry_sha256(ROOT, evolved) == entry["sha256_current"]
+    assert_current_historical_hashes(ROOT, [path for path in entries if path != evolved])
     # The freeze manifest itself must stay byte-identical to the B06 entry baseline.
     baseline = _git(ROOT, "show", f"313d574cc0aca15529978db622939ed648d0c1c7:{B01_FREEZE.as_posix()}")
     current = (ROOT / B01_FREEZE).read_text(encoding="utf-8")

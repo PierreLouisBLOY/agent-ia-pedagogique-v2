@@ -7,21 +7,28 @@ import re
 import socket
 import threading
 import time
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from types import MappingProxyType
 from typing import Final
 
+from backend.adapters.inbound.api.conversation import ConversationEndpoint, conversation_error
 from backend.adapters.inbound.api.local_browser import (
     HttpObservabilityPort,
     LocalBrowserHttpSecurityContract,
 )
+from backend.adapters.inbound.api.production import ProductionEndpoint
 from backend.adapters.inbound.api.read15 import Read15Endpoint, public_error
 from backend.adapters.inbound.api.routes import (
     ASSET_NAMES,
+    CONVERSATION_GENERATIONS_TEMPLATE,
+    CONVERSATION_MESSAGES_TEMPLATE,
+    CONVERSATION_TEMPLATE,
     MAX_TARGET_BYTES,
+    PRODUCTION_VERSION_TEMPLATE,
     SEARCH_TEMPLATE,
     RouteRejected,
+    is_conversation_target,
     resolve_route,
 )
 from backend.adapters.inbound.api.search import SearchEndpoint, public_search_error
@@ -36,7 +43,9 @@ _MEDIA = {"index.html": "text/html; charset=utf-8",
 _CSP = "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; " \
        "base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
 _REASONS = {200: "OK", 400: "Bad Request", 403: "Forbidden", 404: "Not Found",
-            405: "Method Not Allowed", 500: "Internal Server Error"}
+            405: "Method Not Allowed", 500: "Internal Server Error", 202: "Accepted",
+            409: "Conflict", 410: "Gone", 411: "Length Required", 413: "Content Too Large",
+            415: "Unsupported Media Type", 422: "Unprocessable Content", 503: "Service Unavailable"}
 
 
 class _InputRejected(ValueError):
@@ -50,6 +59,9 @@ class LocalRead15Service:
         self, configuration: LocalBrowserHttpConfiguration, endpoint: Read15Endpoint,
         observability: HttpObservabilityPort, assets: Mapping[str, bytes],
         *, search_endpoint: SearchEndpoint | None = None,
+        conversation_endpoint: ConversationEndpoint | None = None,
+        production_endpoint: ProductionEndpoint | None = None,
+        harvest: Callable[[], None] | None = None,
     ) -> None:
         if configuration.cors_enabled:
             raise ValueError("CORS must remain disabled for READ15-HTTP-LOCAL-1.0")
@@ -58,13 +70,19 @@ class LocalRead15Service:
         self.configuration = configuration
         self.endpoint = endpoint
         self.search_endpoint = search_endpoint
+        self.conversation_endpoint = conversation_endpoint
+        self.production_endpoint = production_endpoint
+        self.harvest = harvest
         self.observability = observability
         self.security = LocalBrowserHttpSecurityContract(configuration, observability)
         self.assets = MappingProxyType(dict(assets))
 
     def respond(
         self, method: str, target: str, headers: Mapping[str, str], correlation_id: str,
+        raw_body: bytes = b"",
     ) -> tuple[int, str, bytes, str]:
+        if is_conversation_target(target):
+            return self._conversation(method, target, headers, correlation_id, raw_body)
         decision = self.security.authorize_request(
             method=method, host_header=headers.get("host", ""),
             origin=headers.get("origin"), incoming_correlation_id=correlation_id,
@@ -100,6 +118,35 @@ class LocalRead15Service:
             json.dumps(dict(projection.payload), ensure_ascii=True).encode("utf-8"),
             match.template,
         )
+
+    def _conversation(
+        self, method: str, target: str, headers: Mapping[str, str], correlation: str, raw: bytes,
+    ) -> tuple[int, str, bytes, str]:
+        endpoint = self.conversation_endpoint
+        if endpoint is None:
+            return self.r2_error("R2_NOT_ENABLED", correlation)
+        try:
+            match = resolve_route(method, target)
+        except RouteRejected as error:
+            return self.r2_error(error.code, correlation)
+        code = self.security.authorize_command(method=method, headers=headers, nonce=endpoint.nonce)
+        if code:
+            return self.r2_error(code, correlation)
+        if match.template == CONVERSATION_TEMPLATE:
+            status, body = endpoint.get(correlation)
+        elif match.template in {CONVERSATION_MESSAGES_TEMPLATE, CONVERSATION_GENERATIONS_TEMPLATE}:
+            operation = "messages" if match.template == CONVERSATION_MESSAGES_TEMPLATE else "generations"
+            status, body = endpoint.post(operation, raw, correlation)
+        elif (match.template == PRODUCTION_VERSION_TEMPLATE and self.production_endpoint is not None
+                and match.production_ref is not None and match.version_ref is not None):
+            status, body = self.production_endpoint.get(match.production_ref, match.version_ref, correlation)
+        else:
+            return self.r2_error("APPLICATION_FAILURE", correlation)
+        return status, "application/json; charset=utf-8", body, match.template
+
+    def r2_error(self, code: str, correlation: str) -> tuple[int, str, bytes, str]:
+        status, body = conversation_error(code, correlation)
+        return status, "application/json; charset=utf-8", body, "/{unmatched}"
 
     def error(self, code: str, correlation_id: str) -> tuple[int, str, bytes, str]:
         if code == "INTERNAL_ERROR":
@@ -175,6 +222,15 @@ class LocalRead15Server(HTTPServer):
             self.shutdown()
         self.server_close()
 
+    def service_actions(self) -> None:
+        if self.service.harvest is not None:
+            try:
+                self.service.harvest()
+            except Exception:
+                self.service.observability.security_rejected(
+                    runtime_boundary=True, boundary="HTTP_LOCAL_BROWSER", policy_code="INTERNAL_ERROR"
+                )
+
     def handle_error(
         self, request: socket.socket | tuple[bytes, socket.socket],
         client_address: tuple[str, int],
@@ -197,23 +253,30 @@ class _LocalHandler(BaseHTTPRequestHandler):
         started = time.monotonic()
         self._deadline = started + SOCKET_TIMEOUT_SECONDS
         self._input_buffer = bytearray()
+        self._r2_request = False
         method = "UNKNOWN"
         service = self.server.service
         # Untrusted headers never determine this request's identity or grant permissions.
         correlation = service.observability.correlation_id(None)
         try:
-            method, target, headers = self._read_bounded()
-            status, media, body, template = service.respond(method, target, headers, correlation)
+            method, target, headers, raw_body = self._read_bounded()
+            status, media, body, template = service.respond(method, target, headers, correlation, raw_body)
         except _InputRejected as error:
-            status, media, body, template = service.error(error.code, correlation)
+            status, media, body, template = (
+                service.r2_error("REQUEST_FRAMING_REJECTED" if error.code == "READ15_REQUEST_REJECTED"
+                                 else error.code, correlation)
+                if self._r2_request else service.error(error.code, correlation)
+            )
             service.observability.validation_rejected(
                 boundary="HTTP", rule_code=error.code, field_code="request",
                 correlation_id=correlation,
             )
         except (TimeoutError, OSError):
-            status, media, body, template = service.error("READ15_REQUEST_REJECTED", correlation)
+            status, media, body, template = (service.r2_error("REQUEST_FRAMING_REJECTED", correlation)
+                if self._r2_request else service.error("READ15_REQUEST_REJECTED", correlation))
         except Exception:
-            status, media, body, template = service.error("INTERNAL_ERROR", correlation)
+            status, media, body, template = (service.r2_error("APPLICATION_FAILURE", correlation)
+                if self._r2_request else service.error("INTERNAL_ERROR", correlation))
         parsed_method = getattr(self, "command", "UNKNOWN")
         method = parsed_method if parsed_method in {
             "GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE", "CONNECT", "TRACE"
@@ -255,7 +318,7 @@ class _LocalHandler(BaseHTTPRequestHandler):
                 raise _InputRejected()
             self._input_buffer.extend(chunk)
 
-    def _read_bounded(self) -> tuple[str, str, dict[str, str]]:
+    def _read_bounded(self) -> tuple[str, str, dict[str, str], bytes]:
         # Both budgets are enforced on raw bytes before header parsing or dispatch.
         line = self._line(MAX_TARGET_BYTES + 32)
         parts = line[:-2].split(b" ")
@@ -270,6 +333,7 @@ class _LocalHandler(BaseHTTPRequestHandler):
             raise _InputRejected()
         # Preserve HEAD even for an error while reading its subsequent headers.
         self.command = verb.decode("ascii")
+        self._r2_request = is_conversation_target(target.decode("ascii"))
         headers: dict[str, str] = {}
         total = 0
         while True:
@@ -290,13 +354,47 @@ class _LocalHandler(BaseHTTPRequestHandler):
             if any(byte < 32 or byte >= 127 for byte in value):
                 raise _InputRejected()
             headers[name] = value.decode("ascii")
+        if self._r2_request and self.command == "POST":
+            return self.command, target.decode("ascii"), headers, self._command_body(headers)
         if (
             "transfer-encoding" in headers or headers.get("content-length", "0") != "0"
             or any(name in headers for name in ("expect", "authorization", "cookie",
                                                 "proxy-authorization"))
         ):
             raise _InputRejected()
-        return self.command, target.decode("ascii"), headers
+        if self._r2_request and self._input_buffer:
+            raise _InputRejected()
+        return self.command, target.decode("ascii"), headers, b""
+
+    def _command_body(self, headers: Mapping[str, str]) -> bytes:
+        if any(name in headers for name in ("transfer-encoding", "expect", "authorization",
+                                            "cookie", "proxy-authorization", "content-encoding")):
+            raise _InputRejected()
+        length = headers.get("content-length")
+        if length is None:
+            raise _InputRejected("LENGTH_REQUIRED")
+        if re.fullmatch(r"[1-9][0-9]{0,8}", length) is None:
+            raise _InputRejected()
+        size = int(length)
+        if size > 16384:
+            raise _InputRejected("REQUEST_TOO_LARGE")
+        if headers.get("content-type", "").lower() != "application/json; charset=utf-8":
+            raise _InputRejected("MEDIA_TYPE_REJECTED")
+        while len(self._input_buffer) < size:
+            remaining = self._deadline - time.monotonic()
+            if remaining <= 0 or self.server._stopping.is_set():
+                raise TimeoutError
+            self.connection.settimeout(min(.1, remaining))
+            try:
+                chunk = self.connection.recv(min(4096, size + 1 - len(self._input_buffer)))
+            except TimeoutError:
+                continue
+            if not chunk:
+                raise _InputRejected()
+            self._input_buffer.extend(chunk)
+        if len(self._input_buffer) != size:
+            raise _InputRejected()
+        return bytes(self._input_buffer)
 
     def _write_response(
         self, status: int, media: str, body: bytes, head: bool, correlation_id: str

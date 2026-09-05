@@ -56,3 +56,16 @@ footer { padding: 1.5rem clamp(1.25rem, 6vw, 6rem); border-top: 1px solid var(--
   dl div { grid-template-columns: 1fr; gap: .4rem; }
   footer { align-items: flex-start; flex-direction: column; }
 }
+:root { --candidate-accent: #785411; }
+.conversation-workspace textarea { width: 100%; box-sizing: border-box; padding: .8rem; font: inherit; }
+.conversation-workspace form { margin-block: 1.5rem; }
+.context-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+.context-grid label { display: flex; flex-direction: column; gap: .4rem; }
+.context-grid select, .context-grid input { width: 100%; min-height: 2.6rem; box-sizing: border-box; font: inherit; }
+.conversation-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+#conversation-messages { padding-left: 1.2rem; max-height: 28rem; overflow: auto; }
+#conversation-messages li { white-space: pre-wrap; padding: .8rem; margin-block: .5rem; border-left: 3px solid #a1aaa3; }
+.conversation-assistant { background: #f2f5f0; }
+.candidate-label { color: var(--candidate-accent); font-weight: 700; letter-spacing: .04em; }
+.production-section { white-space: pre-wrap; }
+#production-result { border: 2px solid #c2ad7b; padding: 1.2rem; margin-top: 1.4rem; }

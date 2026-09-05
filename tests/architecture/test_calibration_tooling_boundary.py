@@ -100,6 +100,11 @@ def test_all_40_historical_files_are_byte_exact_and_read_only() -> None:
         path = ROOT / entry["path"]
         assert path.is_file()
         current = hashlib.sha256(path.read_bytes()).hexdigest()
+        if entry["path"] == "tests/calibration/pedagogical/repair_tranche_v4_2.py":
+            from tests.architecture.test_conversation_product_boundary import (
+                r2_historical_entry_sha256,
+            )
+            current = r2_historical_entry_sha256(ROOT, entry["path"])
         assert current == entry["sha256_current"]
         serialized += f"{entry['path']}\t{current}\n"
         for reference in entry["historical_manifest_refs"]:

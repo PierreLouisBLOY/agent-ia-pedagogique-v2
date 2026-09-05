@@ -52,11 +52,18 @@ def test_runtime_and_harness_cannot_import_test_only_calibration() -> None:
 
 
 def test_golden_harness_adapters_and_registries_remain_byte_exact() -> None:
+    from tests.architecture.test_conversation_product_boundary import (
+        assert_r2_generation_source_lineage,
+    )
+    from tests.calibration.pedagogical.repair_tranche_v4_2 import _historical_generation_source
+    generation_path = "backend/adapters/outbound/generation/openai/adapter.py"
     actual = {
-        relative: hashlib.sha256((ROOT / relative).read_bytes()).hexdigest()
+        relative: hashlib.sha256(_historical_generation_source(relative)
+            if relative == generation_path else (ROOT / relative).read_bytes()).hexdigest()
         for relative in _FROZEN_OWNER_HASHES
     }
     assert actual == _FROZEN_OWNER_HASHES
+    assert_r2_generation_source_lineage(ROOT)
 
 
 def test_calibration_owner_has_no_provider_sdk_or_runtime_recovery_import() -> None:

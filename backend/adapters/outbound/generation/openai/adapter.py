@@ -6,7 +6,11 @@ import json
 from collections.abc import Mapping
 from typing import NoReturn, cast
 
-from backend.adapters.outbound.generation.openai.mapping import build_openai_request
+from backend.adapters.outbound.generation.openai.mapping import (
+    CONVERSATION_OUTPUT_CONTRACT_ID,
+    build_openai_request,
+    conversation_evidence_ids,
+)
 from backend.adapters.outbound.openai.contracts import (
     OpenAIResponsesResponse,
     OpenAIResponseStatus,
@@ -129,7 +133,16 @@ def _map_response(
             GenerationPortErrorCode.UNAVAILABLE,
             "OPENAI_RESPONSE_FAILED",
         )
-    payload = _parse_payload(response.output_text)
+    conversation = request.output_contract.get("id") == CONVERSATION_OUTPUT_CONTRACT_ID
+    payload = _parse_payload(response.output_text, conversation=conversation)
+    used: tuple[str, ...] = ()
+    if conversation:
+        value = payload["evidence_ids_used"]
+        if (not isinstance(value, list) or any(not isinstance(item, str) for item in value)
+                or len(set(value)) != len(value)
+                or not set(value).issubset(conversation_evidence_ids(request))):
+            _invalid_response()
+        used = tuple(value)
     outcome = payload["outcome"]
     warnings = _limitations(payload["warnings"], "warnings")
     uncertainties = _limitations(payload["uncertainties"], "uncertainties")
@@ -148,6 +161,12 @@ def _map_response(
         _invalid_response()
 
     sections = _sections(payload["sections"], request.expected_sections)
+    if conversation and (
+        any(len(text.strip()) < 20 or "exercice à compléter" in text.casefold()
+            for text in sections.values())
+        or sum(len(text.encode("utf-8")) for text in sections.values()) > 65536
+    ):
+        _invalid_response()
     if response.status is OpenAIResponseStatus.INCOMPLETE:
         warnings = warnings + ({"code": "OPENAI_RESPONSE_INCOMPLETE"},)
     status = (
@@ -156,28 +175,43 @@ def _map_response(
         else GenerationPortResultStatus.SUCCEEDED
     )
     content = "\n\n".join(f"{code}\n{text}" for code, text in sections.items())
+    if conversation and len(content.encode("utf-8")) > 65536:
+        _invalid_response()
     return GenerationPortResult(
         source_step_id=request.source_step_id,
         operation=request.operation,
         status=status,
         content=content,
         structured_payload={"sections": sections},
+        evidence_refs_used=tuple(ref for ref in request.evidence_refs if ref in used),
         warnings=warnings,
         uncertainties=uncertainties,
         execution_metadata=metadata,
     )
 
 
-def _parse_payload(output_text: str | None) -> Mapping[str, object]:
+def _parse_payload(output_text: str | None, *, conversation: bool = False) -> Mapping[str, object]:
     if output_text is None:
         _invalid_response()
     try:
-        payload = json.loads(output_text)
-    except (json.JSONDecodeError, TypeError):
+        payload = json.loads(output_text, object_pairs_hook=_unique_object) if conversation else (
+            json.loads(output_text)
+        )
+    except (json.JSONDecodeError, TypeError, ValueError, RecursionError):
         _invalid_response()
-    if not isinstance(payload, dict) or set(payload) != _EXPECTED_PAYLOAD_KEYS:
+    keys = _EXPECTED_PAYLOAD_KEYS | ({"evidence_ids_used"} if conversation else set())
+    if not isinstance(payload, dict) or set(payload) != keys:
         _invalid_response()
     return cast(dict[str, object], payload)
+
+
+def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("DUPLICATE_OUTPUT_KEY")
+        result[key] = value
+    return result
 
 
 def _sections(value: object, expected: tuple[str, ...]) -> dict[str, str]:

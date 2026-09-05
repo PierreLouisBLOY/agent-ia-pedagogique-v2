@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 from dataclasses import asdict, dataclass, replace
 from decimal import ROUND_CEILING, Decimal
 from enum import StrEnum
+from functools import lru_cache
 from pathlib import Path
 from typing import NoReturn, cast
 
@@ -72,6 +74,13 @@ _GENERATION_CONTRACT_PATHS = (
     "backend/adapters/outbound/generation/openai/adapter.py",
     "backend/adapters/outbound/openai/transport.py",
 )
+# R2-HISTORY-1: immutable source evidence, never a live authorization.
+_GENERATION_SOURCE_BASELINE = "a560d6ca1989ba3dd13c9d02eeb97ef3fff6238b"
+_GENERATION_SOURCE_HASHES = {
+    "backend/adapters/outbound/generation/openai/mapping.py": "77b9419d94c3b5bc6b9317c33dc7fc13bd31d44e44d993d7a41d93b374eabc99",
+    "backend/adapters/outbound/generation/openai/adapter.py": "9357224fa7b4c77e4dd0cd7184491597138dd4247bbb5ad75f346c22fbb66be1",
+    "backend/adapters/outbound/openai/transport.py": "11b757248dbdc959e220d4a8556fa5ffcf542f4b9d6130443d7b7fcaec87f215",
+}
 _V41_REVIEW_CONTRACT_PATHS = (
     "backend/adapters/outbound/review/openai/mapping.py",
     "backend/adapters/outbound/review/openai/adapter.py",
@@ -375,6 +384,7 @@ class RepairTrancheBudgetGuard:
             _error(RepairPlanErrorCode.CALL_NOT_PLANNED)
         if call_id in completed_call_ids:
             _error(RepairPlanErrorCode.CALL_COUNT_EXCEEDED)
+        _assert_current_generation_sources()
         return planned[call_id]
 
 
@@ -385,6 +395,7 @@ def validate_live_authorization(authorization: RepairRuntimeAuthorization) -> No
         or not authorization.effective
     ):
         _error(RepairPlanErrorCode.LIVE_AUTHORIZATION_REQUIRED)
+    _assert_current_generation_sources()
 
 
 def build_offline_provenance_aggregate(
@@ -517,7 +528,7 @@ def _contract_sha256(
             else compact_review_contract_sha256()
         )
     if call.provider is CalibrationProvider.OPENAI:
-        return _bundle_sha256(_GENERATION_CONTRACT_PATHS)
+        return _bundle_sha256(_GENERATION_CONTRACT_PATHS, historical_generation=True)
     return _bundle_sha256(_ANTHROPIC_CONTRACT_PATHS)
 
 
@@ -578,14 +589,42 @@ def _validate_canary_order(calls: tuple[CalibrationCallSpec, ...]) -> None:
             _error(RepairPlanErrorCode.CANARY_ORDER_INVALID)
 
 
-def _bundle_sha256(paths: tuple[str, ...]) -> str:
+def _bundle_sha256(paths: tuple[str, ...], *, historical_generation: bool = False) -> str:
+    if historical_generation and paths != _GENERATION_CONTRACT_PATHS:
+        _error(RepairPlanErrorCode.MATRIX_MISMATCH)
     digest = hashlib.sha256()
     for path in paths:
-        raw = (ROOT / path).read_bytes()
+        raw = _historical_generation_source(path) if historical_generation else (ROOT / path).read_bytes()
         digest.update(path.encode("utf-8"))
         digest.update(b"\0")
         digest.update(hashlib.sha256(raw).digest())
     return digest.hexdigest()
+
+
+@lru_cache(maxsize=3)
+def _historical_generation_source(path: str) -> bytes:
+    if path not in _GENERATION_SOURCE_HASHES:
+        _error(RepairPlanErrorCode.MATRIX_MISMATCH)
+    try:
+        raw = subprocess.run(
+            ["git", "show", f"{_GENERATION_SOURCE_BASELINE}:{path}"],
+            cwd=ROOT, capture_output=True, check=True, timeout=5,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        _error(RepairPlanErrorCode.MATRIX_MISMATCH)
+    if _sha256(raw) != _GENERATION_SOURCE_HASHES[path]:
+        _error(RepairPlanErrorCode.MATRIX_MISMATCH)
+    return raw
+
+
+def _assert_current_generation_sources() -> None:
+    # A historical identity may be inspected offline, but cannot bless changed runtime code.
+    try:
+        for path in _GENERATION_CONTRACT_PATHS:
+            if (ROOT / path).read_bytes() != _historical_generation_source(path):
+                _error(RepairPlanErrorCode.MATRIX_MISMATCH)
+    except OSError:
+        _error(RepairPlanErrorCode.MATRIX_MISMATCH)
 
 
 def _read_json_object(path: Path) -> dict[str, object]:

@@ -14,7 +14,82 @@ ROOT = Path(__file__).resolve().parents[2]
 BASELINE = "24b7a9850bc4644391dee2307c8a8a31036cd503"
 SERVER_PATH = "backend/adapters/inbound/api/server.py"
 ROUTES_PATH = "backend/adapters/inbound/api/routes.py"
-_CONTRACT = "docs/development/phase_12_18_h2_local_search/SEARCH_HTTP_LOCAL_V1.json"
+_CONTRACT = "docs/development/phase_12_18_h2_r2_generation/CONVERSATION_HTTP_LOCAL_V1.json"
+_R2_BASELINE = "19c42bc9f4b0b1a97b9bd2d6b880acd7378459f7"
+EXPECTED_R2_INVENTORY = (
+    "backend/adapters/inbound/api/routes.py",
+    "backend/adapters/inbound/api/server.py",
+    "backend/adapters/inbound/api/local_browser.py",
+    "backend/adapters/inbound/api/conversation.py",
+    "backend/adapters/inbound/api/production.py",
+    "backend/adapters/inbound/application/conversation.py",
+    "backend/adapters/inbound/application/production.py",
+    "backend/modules/pedagogical_context/contracts/dto/conversation_context.py",
+    "backend/modules/pedagogical_context/application/services/conversation_context.py",
+    "backend/modules/pedagogical_design/contracts/dto/conversation_draft.py",
+    "backend/modules/pedagogical_design/ports/inbound/create_conversation_draft.py",
+    "backend/modules/pedagogical_design/ports/outbound/conversation_generation.py",
+    "backend/modules/pedagogical_design/application/commands/create_conversation_draft.py",
+    "backend/modules/work_orchestration/contracts/dto/conversation.py",
+    "backend/modules/work_orchestration/contracts/dto/production_read_view.py",
+    "backend/modules/work_orchestration/application/dto/input/read_production.py",
+    "backend/modules/work_orchestration/ports/inbound/conversation.py",
+    "backend/modules/work_orchestration/ports/inbound/production_read.py",
+    "backend/modules/work_orchestration/ports/outbound/conversation_store.py",
+    "backend/modules/work_orchestration/ports/outbound/production_store.py",
+    "backend/modules/work_orchestration/ports/outbound/generation_job.py",
+    "backend/modules/work_orchestration/application/services/conversation.py",
+    "backend/modules/work_orchestration/application/queries/read_production.py",
+    "backend/adapters/outbound/persistence/conversation_memory.py",
+    "backend/adapters/outbound/generation/conversation.py",
+    "backend/adapters/outbound/system/conversation_job.py",
+    "backend/infrastructure/composition/bindings/conversation_agents.py",
+    "backend/infrastructure/composition/bindings/conversation_routing.py",
+    "backend/infrastructure/composition/bootstrap/conversation_worker.py",
+    "backend/infrastructure/composition/factories/conversation.py",
+    "backend/infrastructure/composition/factories/local_browser.py",
+    "backend/adapters/outbound/generation/openai/mapping.py",
+    "backend/adapters/outbound/generation/openai/adapter.py",
+    "frontend/index.html",
+    "frontend/app.js",
+    "frontend/styles.css",
+    "tests/architecture/test_local_browser_product_boundary.py",
+    "tests/architecture/test_resource_ref_contract_fitness.py",
+    "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+    "tests/unit/test_local_browser_product_routes.py",
+    "tests/architecture/test_local_search_product_boundary.py",
+    "tests/unit/test_conversation_context.py",
+    "tests/unit/test_conversation_application.py",
+    "tests/unit/test_conversation_generation.py",
+    "tests/unit/test_production_read.py",
+    "tests/unit/test_conversation_routes_security.py",
+    "tests/integration/test_conversation_http.py",
+    "tests/integration/test_conversation_job_lifecycle.py",
+    "tests/integration/test_conversation_product.py",
+    "tests/unit/test_openai_conversation_mapping.py",
+    "tests/unit/test_conversation_assets.py",
+    "tests/architecture/test_conversation_product_boundary.py",
+    "tests/support/conversation_fakes.py",
+    "tests/support/conversation_synthetic.py",
+    "architecture/adr/ADR-conversational-generation-product-boundary.md",
+    "docs/development/phase_12_18_h2_r2_generation/CONVERSATION_HTTP_LOCAL_V1.json",
+    "docs/development/phase_12_18_h2_r2_generation/IMPLEMENTATION_EVIDENCE.md",
+    "docs/development/phase_12_18_h2_r2_generation/LIVE_GENERATION_SCOPE.json",
+    "docs/development/phase_12_18_h2_r2_generation/MANIFEST_SHA256.txt",
+    "backend/adapters/inbound/cli/local_browser.py",
+    "backend/agent_runtime/contracts/planning/delegation.py",
+    "tests/architecture/test_pedagogical_calibration_fitness.py",
+    "tests/calibration/pedagogical/repair_tranche_v4_2.py",
+    "tests/architecture/test_calibration_tooling_boundary.py",
+    "tests/architecture/test_repository_hygiene_b06.py",
+)
+EXACT_R2_PREPARATION_PATHS = (
+    "docs/development/phase_12_18_h2_r2_generation_preparation/01_CONTRAT_R2_GENERATION_CONVERSATIONNELLE.md",
+    "docs/development/phase_12_18_h2_r2_generation_preparation/02_INVENTAIRE_GUARDS_TESTS_PERMISSIONS_R2.json",
+    "docs/development/phase_12_18_h2_r2_generation_preparation/03_DECISION_ET_PLAN_EXECUTION_R2.md",
+    "docs/development/phase_12_18_h2_r2_generation_preparation/MANIFEST_SHA256.txt",
+)
+PREPARATION_MANIFEST_SHA256 = "359b06ab34aa092831bd0d0eea909fc4b030776eef49414edbe7932f97eb9d6c"
 _SEARCH_BASELINE = "3f724ca81843b5d45ac534e9654ff16281c55713"
 EXPECTED_SEARCH_INVENTORY = (
     "architecture/adr/ADR-local-lexical-search-product-boundary.md",
@@ -75,6 +150,10 @@ _API_FORBIDDEN = (
 _EXPECTED_ROUTES = (
     (("GET",), "/api/v2/resources/{resource_ref}", None),
     (("GET",), "/api/v2/search", None),
+    (("GET",), "/api/v2/conversation", None),
+    (("POST",), "/api/v2/conversation/messages", None),
+    (("POST",), "/api/v2/conversation/generations", None),
+    (("GET",), "/api/v2/productions/{production_ref}/versions/{version_ref}", None),
     (("GET", "HEAD"), "/", "index.html"),
     (("GET", "HEAD"), "/assets/app.js", "app.js"),
     (("GET", "HEAD"), "/assets/styles.css", "styles.css"),
@@ -187,7 +266,9 @@ def route_contract_violations(root: Path) -> list[str]:
     constants: dict[str, object] = {}
     for node in ast.parse((root / ROUTES_PATH).read_text(encoding="utf-8")).body:
         if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.value:
-            if node.target.id in {"READ15_TEMPLATE", "SEARCH_TEMPLATE", "_RESOURCE_PREFIX", "ROUTE_SPECS"}:
+            if node.target.id in {"READ15_TEMPLATE", "SEARCH_TEMPLATE", "_RESOURCE_PREFIX", "ROUTE_SPECS",
+                                  "CONVERSATION_TEMPLATE", "CONVERSATION_MESSAGES_TEMPLATE",
+                                  "CONVERSATION_GENERATIONS_TEMPLATE", "PRODUCTION_VERSION_TEMPLATE"}:
                 constants[node.target.id] = _literal(node.value, constants)
     from backend.adapters.inbound.api.routes import ROUTE_SPECS
     contract = json.loads((root / _CONTRACT).read_text(encoding="utf-8"))
@@ -236,22 +317,32 @@ def observability_server_violations(source: str) -> list[str]:
 
 def inventory_violations(root: Path, changed: set[str] | None = None) -> list[str]:
     contract = json.loads((root / _CONTRACT).read_text(encoding="utf-8"))
-    assert contract["baseline_commit"] == _SEARCH_BASELINE
-    assert contract["approved_inventory"] == list(EXPECTED_SEARCH_INVENTORY)
+    assert contract["baseline_commit"] == _R2_BASELINE
+    assert contract["approved_inventory"] == list(EXPECTED_R2_INVENTORY)
+    indexed = set()
     if changed is None:
         changed = set()
         for arguments in (
-            ["diff", "--name-only", _SEARCH_BASELINE, "--"],
+            ["diff", "--name-only", _R2_BASELINE, "--"],
+            ["diff", "--cached", "--name-only", _R2_BASELINE, "--"],
             ["ls-files", "--others", "--exclude-standard"],
         ):
             result = subprocess.run(
                 ["git", *arguments], cwd=root, capture_output=True, text=True, check=True
             )
             changed.update(result.stdout.splitlines())
+            if "--cached" in arguments:
+                indexed.update(result.stdout.splitlines())
     protected = {item["path"]: item["sha256"] for item in contract["protected_documents"]}
     assert protected == dict(EXPECTED_PROTECTED_DOCUMENTS)
-    allowed = set(EXPECTED_SEARCH_INVENTORY)
-    violations = sorted(changed - allowed - set(protected))
+    allowed = set(EXPECTED_R2_INVENTORY)
+    preparation = set(EXACT_R2_PREPARATION_PATHS)
+    violations = sorted(changed - allowed - set(protected) - preparation)
+    violations.extend("MISSING_R2_PATH:" + path for path in sorted(allowed - changed))
+    violations.extend("PROTECTED_DOCUMENT_INDEXED:" + path for path in sorted(
+        indexed & (set(protected) | preparation)))
+    from tests.architecture.test_conversation_product_boundary import preparation_violations
+    violations.extend(preparation_violations(root))
     for name, digest in protected.items():
         path = root / name
         if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
@@ -349,7 +440,17 @@ def test_existing_pure_contracts_and_original_guards_other_tests_preserved() -> 
             "511336250f3a3274fe4f2f17f328771111250b0ec916a4e18723abc6b4ecf298",
     }
     for path, digest in expected.items():
-        assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == digest
+        if path == "backend/adapters/inbound/api/local_browser.py":
+            from tests.architecture.test_conversation_product_boundary import git_source, method_ast
+            raw = git_source(BASELINE, path)
+            assert digest in {hashlib.sha256(raw).hexdigest(),
+                hashlib.sha256(raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")).hexdigest()}
+            before = git_source(_R2_BASELINE, path).decode("utf-8")
+            current = (ROOT / path).read_text("utf-8")
+            assert method_ast(before, "authorize_request") == method_ast(current, "authorize_request")
+            assert method_ast(current, "authorize_command")
+        else:
+            assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == digest
     permitted = {
         "tests/architecture/test_local_browser_http_boundary_fitness.py": {
             "test_b04_adds_no_http_server_framework_or_route",

@@ -147,3 +147,218 @@ form.addEventListener("submit", async (event) => {
     button.disabled = false;
   }
 });
+
+const conversationForm = document.getElementById("conversation-form");
+const contextForm = document.getElementById("context-form");
+const conversationStatus = document.getElementById("conversation-status");
+const contextFields = document.getElementById("context-fields");
+const generationButton = document.getElementById("conversation-generate");
+const confirmButton = document.getElementById("context-confirm");
+const sendButton = document.getElementById("conversation-send");
+const stopWaitButton = document.getElementById("conversation-stop-wait");
+const readProductionButton = document.getElementById("production-read");
+let conversation = null;
+let transportNonce = null;
+let commandPending = false;
+let commandUncertain = false;
+let waiting = false;
+let pollTimer = null;
+let conversationSequence = 0;
+const contextDefinitions = [
+  ["resource_type", "Type", ["ASSESSMENT"]],
+  ["level", "Niveau", ["BTS_CG_YEAR_1", "BTS_CG_YEAR_2", "FIRST_STMG", "FINAL_STMG"]],
+  ["discipline", "Discipline"], ["topics", "Notions (une par ligne)"],
+  ["objectives", "Objectifs (un par ligne)"],
+  ["difficulty", "Difficulté", ["GUIDED", "STANDARD", "ADVANCED"]],
+  ["duration_minutes", "Durée en minutes"], ["total_points", "Note sur"], ["language", "Langue", ["fr"]]
+];
+const contextInputs = new Map();
+for (const [key, labelText, choices] of contextDefinitions) {
+  const label = document.createElement("label");
+  label.textContent = labelText;
+  const input = document.createElement(choices ? "select" :
+    (key === "topics" || key === "objectives" ? "textarea" : "input"));
+  input.id = "context-" + key;
+  input.required = true;
+  input.autocomplete = "off";
+  if (choices) {
+    for (const value of ["", ...choices]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value || "À préciser";
+      input.append(option);
+    }
+  }
+  label.append(input);
+  contextFields.append(label);
+  contextInputs.set(key, input);
+}
+const conversationErrors = Object.freeze({
+  R2_NOT_ENABLED: "R2 n’est pas activé pour ce processus.",
+  GENERATION_NOT_AUTHORIZED: "Aucun appel fournisseur n’est autorisé sur cette baseline.",
+  CONTEXT_CLARIFICATION_REQUIRED: "Précisez les champs manquants ou contradictoires.",
+  CONTEXT_NOT_CONFIRMED: "Confirmez le contexte avant de générer.",
+  REVISION_CONFLICT: "La conversation a évolué : actualisez son état avant une nouvelle commande.",
+  IDEMPOTENCY_CONFLICT: "Cette commande ne peut pas être réutilisée avec un autre contenu.",
+  GENERATION_IN_PROGRESS: "Un travail est déjà en cours. Consultez son état.",
+  GENERATION_OUTCOME_UNKNOWN: "Résultat incertain : aucun nouvel appel ne doit être lancé.",
+  CONVERSATION_EXPIRED: "Cette conversation a expiré après 2 heures.",
+  SESSION_CAPACITY_REACHED: "La capacité de cette session est atteinte.",
+  INSUFFICIENT_EVIDENCE: "Les supports admis sont insuffisants. Aucune candidate publiée.",
+  GENERATION_OUTPUT_INVALID: "La sortie a été refusée. L’ancienne candidate reste inchangée."
+});
+
+function updateConversation(view) {
+  if (!view || !/^conv:[0-9a-f]{32}$/.test(view.conversation_id) ||
+      !Number.isInteger(view.revision) || !Array.isArray(view.messages) || view.messages.length > 40 ||
+      typeof view.context?.values !== "object") throw new Error("INVALID_PUBLIC_RESPONSE");
+  conversation = view;
+  const fragment = document.createDocumentFragment();
+  for (const message of view.messages) {
+    const row = document.createElement("li");
+    row.className = message.role === "USER" ? "conversation-user" : "conversation-assistant";
+    row.textContent = (message.role === "USER" ? "Vous : " : "Atelier : ") + message.text;
+    fragment.append(row);
+  }
+  document.getElementById("conversation-messages").replaceChildren(fragment);
+  for (const [key, input] of contextInputs) {
+    const value = view.context.values[key];
+    input.value = Array.isArray(value) ? value.join("\n") : (value ?? "");
+  }
+  const active = view.active_generation?.state;
+  const blocked = commandPending || commandUncertain || active === "IN_PROGRESS" || active === "UNKNOWN";
+  sendButton.disabled = blocked;
+  confirmButton.disabled = blocked || view.messages.length === 0;
+  generationButton.disabled = blocked || view.context.status !== "CONFIRMED";
+  readProductionButton.disabled = !view.current_candidate;
+  document.getElementById("conversation-limits").textContent = "Champs à préciser : " +
+    (view.missing_fields.join(", ") || "aucun") + " · Expiration : " + view.expiration;
+  conversationStatus.textContent = active === "IN_PROGRESS" ? "Génération en cours…" :
+    active === "UNKNOWN" ? conversationErrors.GENERATION_OUTCOME_UNKNOWN :
+    active === "CANDIDATE_READY" ? "Candidate disponible — NON VALIDÉE." :
+    view.active_generation?.error_code ? (conversationErrors[view.active_generation.error_code] || "Travail arrêté.") :
+    view.context.status === "CONFIRMED" ? "Contexte confirmé. Génération distincte et conditionnelle." :
+    "Précisez puis confirmez le contexte.";
+}
+
+async function conversationFetch(path, options = {}) {
+  const response = await fetch(path, {
+    method: "GET", credentials: "omit", cache: "no-store", redirect: "error", ...options,
+    headers: { "X-Local-Intent": "conversation-v1", ...options.headers }
+  });
+  const value = await response.json();
+  if (value?.meta?.contract_id !== "CONVERSATION-HTTP-LOCAL-1.0") throw new Error("INVALID_PUBLIC_RESPONSE");
+  return { response, value };
+}
+
+async function refreshConversation() {
+  const sequence = ++conversationSequence;
+  try {
+    const { response, value } = await conversationFetch("/api/v2/conversation");
+    if (sequence !== conversationSequence) return;
+    if (!response.ok) {
+      conversationStatus.textContent = conversationErrors[value?.error?.code] || "La lecture locale a été refusée.";
+      waiting = false;
+      return;
+    }
+    if (!/^[A-Za-z0-9_-]{43}$/.test(value.data.transport_nonce)) throw new Error("INVALID_NONCE");
+    transportNonce = value.data.transport_nonce;
+    updateConversation(value.data.conversation);
+    if (conversation.active_generation?.state !== "IN_PROGRESS") waiting = false;
+  } catch {
+    conversationStatus.textContent = "Service local indisponible. Aucun renvoi automatique de commande.";
+    waiting = false;
+  } finally {
+    stopWaitButton.disabled = !waiting;
+    if (waiting) pollTimer = setTimeout(refreshConversation, 500);
+  }
+}
+
+async function submitConversation(operation, fields) {
+  if (!conversation || commandPending || commandUncertain) return;
+  commandPending = true;
+  generationButton.disabled = sendButton.disabled = confirmButton.disabled = true;
+  const body = { command_id: crypto.randomUUID(), conversation_id: conversation.conversation_id,
+    expected_revision: conversation.revision, ...fields };
+  try {
+    const { response, value } = await conversationFetch("/api/v2/conversation/" + operation, {
+      method: "POST", headers: { "Content-Type": "application/json; charset=utf-8", "X-R2-Nonce": transportNonce },
+      body: JSON.stringify(body)
+    });
+    commandPending = false;
+    if (!response.ok) {
+      conversationStatus.textContent = conversationErrors[value?.error?.code] || "Commande refusée : vérifiez les champs.";
+      await refreshConversation();
+      conversationStatus.textContent = conversationErrors[value?.error?.code] || "Commande refusée : vérifiez les champs.";
+      return;
+    }
+    if (operation === "generations") {
+      waiting = true;
+      await refreshConversation();
+    } else {
+      updateConversation(value.data);
+      document.getElementById("conversation-text").value = "";
+    }
+  } catch {
+    commandPending = false;
+    commandUncertain = true;
+    conversationStatus.textContent = "Réponse perdue : actualisez l’état. Aucun POST ne sera renvoyé automatiquement.";
+  }
+}
+conversationForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (conversationForm.reportValidity()) submitConversation("messages", {
+    text: document.getElementById("conversation-text").value
+  });
+});
+contextForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (!contextForm.reportValidity()) return;
+  const patch = {};
+  for (const [key, input] of contextInputs) {
+    patch[key] = key === "topics" || key === "objectives" ? input.value.split("\n").filter(Boolean) :
+      key === "duration_minutes" ? Number(input.value) : input.value;
+  }
+  submitConversation("messages", { text: "Je confirme ce contexte pédagogique.", context_patch: patch, confirm_context: true });
+});
+generationButton.addEventListener("click", () => submitConversation("generations", {
+  confirmed_context_sha256: conversation?.confirmed_context_sha256
+}));
+document.getElementById("conversation-refresh").addEventListener("click", () => {
+  clearTimeout(pollTimer);
+  refreshConversation();
+});
+stopWaitButton.addEventListener("click", () => {
+  waiting = false;
+  clearTimeout(pollTimer);
+  stopWaitButton.disabled = true;
+  conversationStatus.textContent = "Attente arrêtée. Le travail serveur et son éventuelle facturation ne sont pas annulés.";
+});
+readProductionButton.addEventListener("click", async () => {
+  const refs = conversation?.current_candidate;
+  if (!refs || !/^prod:[0-9a-f]{32}$/.test(refs.production_ref) || !/^ver:[0-9a-f]{32}$/.test(refs.version_ref)) return;
+  try {
+    const { response, value } = await conversationFetch("/api/v2/productions/" +
+      encodeURIComponent(refs.production_ref) + "/versions/" + encodeURIComponent(refs.version_ref));
+    const data = value.data;
+    if (!response.ok || data?.validation_state !== "CANDIDATE" || data.production_ref !== refs.production_ref ||
+        data.version_ref !== refs.version_ref || !Array.isArray(data.sections) || data.sections.length !== 5) {
+      throw new Error("INVALID_PUBLIC_RESPONSE");
+    }
+    const fragment = document.createDocumentFragment();
+    appendSearchText(fragment, "p", refs.production_ref + " · " + refs.version_ref, "provenance");
+    appendSearchText(fragment, "p", data.content);
+    for (const section of data.sections) {
+      appendSearchText(fragment, "h3", section.section_id);
+      appendSearchText(fragment, "p", section.text, "production-section");
+    }
+    for (const ref of data.references) appendSearchText(fragment, "p",
+      ref.evidence_id + " · " + ref.provenance_label + " · " + (ref.declared_used ? "Utilisation déclarée" : "Fourni, non déclaré utilisé"), "provenance");
+    for (const limitation of data.limitations) appendSearchText(fragment, "p", limitation, "scope-note");
+    document.getElementById("production-content").replaceChildren(fragment);
+    document.getElementById("production-result").hidden = false;
+  } catch {
+    conversationStatus.textContent = "Lecture de cette version refusée. Aucune génération relancée.";
+  }
+});
+refreshConversation();

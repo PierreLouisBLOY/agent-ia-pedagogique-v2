@@ -71,7 +71,8 @@ class DelegationEnvelope:
             raise ValueError("permission_scope.principal must be an agent")
         if self.permission_scope.principal.actor_id != self.target_agent.value:
             raise ValueError("permission_scope.principal must match target_agent")
-        if self.permission_scope.capability_ids != (self.source_step.capability_id,):
+        if (self.permission_scope.capability_ids != (self.source_step.capability_id,)
+                and not _bounded_r2_evidence_mandate(self)):
             raise ValueError("permission_scope must contain exactly the delegated capability")
         if self.permission_scope.delegable:
             raise ValueError("delegated permission_scope must not be redelegable")
@@ -89,3 +90,27 @@ class DelegationEnvelope:
             "trace_context",
             freeze_agent_safe_mapping(self.trace_context),
         )
+
+
+def _bounded_r2_evidence_mandate(envelope: DelegationEnvelope) -> bool:
+    """Owner-approved versioned exception; parent narrowing remains the policy's duty."""
+    scope = envelope.permission_scope
+    budget = scope.budget
+    marker = "R2-EVIDENCE-MANDATE-1.0"
+    if (envelope.target_agent is not AgentId.AG_02
+            or envelope.source_step.capability_id is None
+            or envelope.source_step.capability_id.value != "CAP-E01"
+            or tuple(cap.value for cap in scope.capability_ids) != ("CAP-E01", "CAP-E02", "CAP-E03")
+            or envelope.source_step.output_contract.get("evidence_mandate") != marker
+            or dict(envelope.constraints) != {"evidence_mandate": marker}
+            or scope.operations != ("read",) or scope.delegable
+            or budget is None or envelope.source_step.budget != budget
+            or budget.max_retries != 0 or budget.max_tool_calls != 0
+            or budget.max_steps is None or not 1 <= budget.max_steps <= 2
+            or budget.max_runtime_seconds is None or not 1 <= budget.max_runtime_seconds <= 120
+            or budget.max_cost is None or not budget.max_cost.is_finite()
+            or budget.max_cost < 0
+            or scope.valid_from is None or scope.expires_at is None
+            or budget.deadline != scope.expires_at):
+        return False
+    return 0 < (scope.expires_at.value - scope.valid_from.value).total_seconds() <= 120

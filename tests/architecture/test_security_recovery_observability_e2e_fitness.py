@@ -126,6 +126,43 @@ def test_later_provider_work_preserves_phase_f_backend_owners() -> None:
         "backend/adapters/inbound/api/search.py",
     }
 
+    h2_conversation_owner_files = {
+        "backend/adapters/inbound/api/routes.py",
+        "backend/adapters/inbound/api/server.py",
+        "backend/adapters/inbound/api/local_browser.py",
+        "backend/adapters/inbound/api/conversation.py",
+        "backend/adapters/inbound/api/production.py",
+        "backend/adapters/inbound/application/conversation.py",
+        "backend/adapters/inbound/application/production.py",
+        "backend/modules/pedagogical_context/contracts/dto/conversation_context.py",
+        "backend/modules/pedagogical_context/application/services/conversation_context.py",
+        "backend/modules/pedagogical_design/contracts/dto/conversation_draft.py",
+        "backend/modules/pedagogical_design/ports/inbound/create_conversation_draft.py",
+        "backend/modules/pedagogical_design/ports/outbound/conversation_generation.py",
+        "backend/modules/pedagogical_design/application/commands/create_conversation_draft.py",
+        "backend/modules/work_orchestration/contracts/dto/conversation.py",
+        "backend/modules/work_orchestration/contracts/dto/production_read_view.py",
+        "backend/modules/work_orchestration/application/dto/input/read_production.py",
+        "backend/modules/work_orchestration/ports/inbound/conversation.py",
+        "backend/modules/work_orchestration/ports/inbound/production_read.py",
+        "backend/modules/work_orchestration/ports/outbound/conversation_store.py",
+        "backend/modules/work_orchestration/ports/outbound/production_store.py",
+        "backend/modules/work_orchestration/ports/outbound/generation_job.py",
+        "backend/modules/work_orchestration/application/services/conversation.py",
+        "backend/modules/work_orchestration/application/queries/read_production.py",
+        "backend/adapters/outbound/persistence/conversation_memory.py",
+        "backend/adapters/outbound/generation/conversation.py",
+        "backend/adapters/outbound/system/conversation_job.py",
+        "backend/infrastructure/composition/bindings/conversation_agents.py",
+        "backend/infrastructure/composition/bindings/conversation_routing.py",
+        "backend/infrastructure/composition/bootstrap/conversation_worker.py",
+        "backend/infrastructure/composition/factories/conversation.py",
+        "backend/infrastructure/composition/factories/local_browser.py",
+        "backend/adapters/outbound/generation/openai/mapping.py",
+        "backend/adapters/outbound/generation/openai/adapter.py",
+        "backend/adapters/inbound/cli/local_browser.py",
+        "backend/agent_runtime/contracts/planning/delegation.py",
+    }
     assert all(
         path.startswith(allowed)
         or path in f2a_retrieval_files
@@ -134,6 +171,7 @@ def test_later_provider_work_preserves_phase_f_backend_owners() -> None:
         or path in b04_http_contract_files
         or path in h2_read15_inbound_files
         or path in h2_local_search_owner_files
+        or path in h2_conversation_owner_files
         for path in changed
     ) and inventory_violations(ROOT) == []
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -149,6 +150,29 @@ class LocalBrowserHttpSecurityContract:
             LocalBrowserHttpDecisionCode.ALLOWED,
             correlation_id,
         )
+
+    def authorize_command(
+        self, *, method: str, headers: Mapping[str, str], nonce: str,
+    ) -> str | None:
+        """Separate R2 metadata gate; the historical authorize_request is unchanged."""
+        host = self._configuration.bind_host
+        canonical = "[::1]" if host == "::1" else host
+        if self._configuration.port != 80:
+            canonical += ":" + str(self._configuration.port)
+        if headers.get("host") != canonical:
+            return "HOST_REJECTED"
+        origin = headers.get("origin")
+        if (method == "POST" or origin is not None) and origin != "http://" + canonical:
+            return "ORIGIN_REJECTED"
+        if headers.get("sec-fetch-site", "same-origin") != "same-origin":
+            return "ORIGIN_REJECTED"
+        if headers.get("x-local-intent") != "conversation-v1":
+            return "LOCAL_INTENT_REJECTED"
+        if method == "POST":
+            supplied = headers.get("x-r2-nonce", "")
+            if not supplied.isascii() or not hmac.compare_digest(supplied, nonce):
+                return "LOCAL_INTENT_REJECTED"
+        return None
 
     def record_completion(
         self,

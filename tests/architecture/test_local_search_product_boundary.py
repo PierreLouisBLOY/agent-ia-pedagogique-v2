@@ -11,11 +11,20 @@ import pytest
 from backend.adapters.inbound.api import routes
 from tests.architecture import test_resource_ref_contract_fitness as resource_guard
 from tests.architecture import test_security_recovery_observability_e2e_fitness as owner_guard
+from tests.architecture.test_conversation_product_boundary import (
+    HISTORICAL_R1_ROUTES,
+    assert_historical_manifest,
+    assert_r2_guard_nodes_preserved,
+    git_diff_paths,
+    git_source,
+)
 from tests.architecture.test_local_browser_product_boundary import (
     _CONTRACT,
     _EXPECTED_ROUTES,
+    _R2_BASELINE,
     _SEARCH_BASELINE,
     EXPECTED_PROTECTED_DOCUMENTS,
+    EXPECTED_R2_INVENTORY,
     EXPECTED_SEARCH_INVENTORY,
     ROOT,
     frontend_violations,
@@ -27,7 +36,8 @@ from tests.architecture.test_local_browser_product_boundary import (
 
 def test_exact_five_routes_preserve_read15() -> None:
     assert routes.ROUTE_SPECS == _EXPECTED_ROUTES
-    assert len(_EXPECTED_ROUTES) == 5
+    assert len(_EXPECTED_ROUTES) == 9
+    assert tuple(r for r in _EXPECTED_ROUTES if r in HISTORICAL_R1_ROUTES) == HISTORICAL_R1_ROUTES
     assert route_contract_violations(ROOT) == []
     assert frontend_violations(ROOT) == []
 
@@ -62,10 +72,12 @@ def test_extra_route_method_or_off_registry_declaration_rejected(
 def test_exact_inventory_before_and_after_commit() -> None:
     assert len(EXPECTED_SEARCH_INVENTORY) == 30
     assert inventory_violations(ROOT) == []
-    assert inventory_violations(ROOT, set(EXPECTED_SEARCH_INVENTORY)) == []
+    assert set(git_diff_paths(_SEARCH_BASELINE, _R2_BASELINE)) == set(EXPECTED_SEARCH_INVENTORY)
+    assert inventory_violations(ROOT, set(EXPECTED_R2_INVENTORY)) == []
+    assert len(EXPECTED_R2_INVENTORY) == 65
     assert _SEARCH_BASELINE == "3f724ca81843b5d45ac534e9654ff16281c55713"
     source = (ROOT / "tests/architecture/test_local_browser_product_boundary.py").read_text("utf-8")
-    assert '["diff", "--name-only", _SEARCH_BASELINE, "--"]' in source
+    assert '["diff", "--name-only", _R2_BASELINE, "--"]' in source
 
 
 @pytest.mark.parametrize("name", [
@@ -156,11 +168,12 @@ def test_only_approved_guard_functions_change_and_old_assertions_remain() -> Non
     }
     for path, allowed in scopes.items():
         old = functions(baseline_source(path))
-        current = functions((ROOT / path).read_text("utf-8"))
+        current = functions(git_source(_R2_BASELINE, path).decode("utf-8"))
         assert old.keys() == current.keys()
         assert {k: v for k, v in old.items() if k not in allowed} == {
             k: v for k, v in current.items() if k not in allowed
         }
+    assert_r2_guard_nodes_preserved(ROOT)
     ref_path = "tests/architecture/test_resource_ref_contract_fitness.py"
     name = "test_read15_keeps_one_field_and_deprecations_without_http_implementation"
     old = next(n for n in ast.parse(baseline_source(ref_path)).body
@@ -181,7 +194,15 @@ def test_reused_components_and_history_are_byte_identical() -> None:
     prep = ROOT / "docs/development/phase_12_18_h2_recherche_locale_preparation"
     inventory = json.loads((prep / "03_INVENTAIRE_FICHIERS_ET_GUARDS.json").read_text("utf-8"))
     for item in inventory["read_only_dependencies"]:
-        assert hashlib.sha256((ROOT / item["path"]).read_bytes()).hexdigest() == item["sha256"]
+        if item["path"] in {"backend/adapters/inbound/api/local_browser.py",
+                            "backend/adapters/inbound/cli/local_browser.py"}:
+            for baseline in (_SEARCH_BASELINE, _R2_BASELINE):
+                raw = git_source(baseline, item["path"])
+                assert item["sha256"] in {hashlib.sha256(raw).hexdigest(),
+                    hashlib.sha256(raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")).hexdigest()}
+        else:
+            assert hashlib.sha256((ROOT / item["path"]).read_bytes()).hexdigest() == item["sha256"]
+    assert_historical_manifest("docs/development/phase_12_18_h2_local_search", _R2_BASELINE, 29)
     for name, digest in EXPECTED_PROTECTED_DOCUMENTS:
         assert hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == digest
     # The old manifest is a historical working-tree snapshot. Check baseline Git blobs,

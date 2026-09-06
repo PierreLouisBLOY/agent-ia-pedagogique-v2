@@ -10,6 +10,35 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE_R2 = "19c42bc9f4b0b1a97b9bd2d6b880acd7378459f7"
+CORRECTION_BASELINE = "0c17d12eea1e1e6d4b04d943e756e0c8e35c41ba"
+CORRECTION_PATHS = (
+    "backend/adapters/inbound/cli/local_browser.py",
+    "backend/infrastructure/composition/factories/conversation.py",
+    "backend/infrastructure/composition/bootstrap/conversation_worker.py",
+    "backend/adapters/outbound/system/conversation_job.py",
+    "backend/adapters/outbound/generation/openai/mapping.py",
+    "backend/adapters/outbound/generation/openai/adapter.py",
+    "backend/modules/work_orchestration/ports/outbound/generation_job.py",
+    "backend/adapters/outbound/openai/transport.py",
+    "backend/adapters/outbound/openai/contracts.py",
+    "tests/unit/test_openai_conversation_mapping.py",
+    "tests/integration/test_conversation_job_lifecycle.py",
+    "tests/integration/test_conversation_product.py",
+    "tests/integration/test_conversation_http.py",
+    "tests/architecture/test_conversation_product_boundary.py",
+    "tests/support/conversation_fakes.py",
+    "tests/architecture/test_local_browser_product_boundary.py",
+    "tests/architecture/test_local_search_product_boundary.py",
+    "architecture/adr/ADR-conversational-generation-product-boundary.md",
+    "docs/development/phase_12_18_h2_r2_generation/CONVERSATION_HTTP_LOCAL_V1.json",
+    "docs/development/phase_12_18_h2_r2_generation/LIVE_GENERATION_SCOPE.json",
+    "docs/development/phase_12_18_h2_r2_generation/IMPLEMENTATION_EVIDENCE.md",
+    "docs/development/phase_12_18_h2_r2_generation/MANIFEST_SHA256.txt",
+)
+CORRECTED_GENERATION_HASHES = {
+    "backend/adapters/outbound/generation/openai/adapter.py": "8854f9b5dea7d9ddb713d27211a77fe36dff4577ee080f63f5f71925fccc3088",
+    "backend/adapters/outbound/generation/openai/mapping.py": "ace7fe0d46f38dd03270160259e2858e86d9bfe98ba57c8492213c29f7f855b7",
+}
 R2_HISTORY_PATH = "tests/calibration/pedagogical/repair_tranche_v4_2.py"
 R2_HISTORY_BASELINE = "6d0d66380757d7502fd967cd0246c5b6ff91d5f8"
 R2_HISTORY_ACTIVE_SHA256 = "9b85e5496ed9177bfd11fff896b7bd9bd87b4bf919216c6327172a784cf952d9"
@@ -177,6 +206,72 @@ def preparation_violations(root: Path) -> list[str]:
     return violations
 
 
+def corrective_inventory_violations(changed: set[str]) -> set[str]:
+    return changed ^ set(CORRECTION_PATHS)
+
+
+def test_correction_exact_delta_and_delivered_65_path_snapshot():
+    assert len(CORRECTION_PATHS) == len(set(CORRECTION_PATHS)) == 22
+    assert set(git_diff_paths(BASELINE_R2, CORRECTION_BASELINE)) == set(R2_PATHS)
+    changed = set(git_diff_paths(CORRECTION_BASELINE, "HEAD"))
+    for args in (["diff", "--name-only", "HEAD", "--"], ["diff", "--cached", "--name-only", "HEAD", "--"]):
+        changed.update(subprocess.run(["git", *args], cwd=ROOT,
+            capture_output=True, text=True, check=True).stdout.splitlines())
+    assert corrective_inventory_violations(changed) == set()
+    extras = set(CORRECTION_PATHS) - set(R2_PATHS)
+    assert extras == {"backend/adapters/outbound/openai/contracts.py", "backend/adapters/outbound/openai/transport.py"}
+
+
+@pytest.mark.parametrize("kind", ("unknown", "omission", "substitution"))
+def test_corrective_inventory_rejects_every_unapproved_delta(kind):
+    changed = set(CORRECTION_PATHS)
+    if kind != "unknown":
+        changed.remove(CORRECTION_PATHS[0])
+    if kind != "omission":
+        changed.add("backend/UNAPPROVED.py")
+    assert corrective_inventory_violations(changed)
+
+
+def assert_corrective_inventory_assertion_only(source: str) -> None:
+    path = "tests/architecture/test_local_search_product_boundary.py"
+    expected = ast.parse(git_source(CORRECTION_BASELINE, path))
+    function = next(node for node in expected.body if isinstance(node, ast.FunctionDef)
+                    and node.name == "test_exact_inventory_before_and_after_commit")
+    old = ast.parse("assert inventory_violations(ROOT, set(EXPECTED_R2_INVENTORY)) == []").body[0]
+    indexes = [index for index, node in enumerate(function.body) if ast.dump(node) == ast.dump(old)]
+    assert len(indexes) == 1
+    function.body[indexes[0]] = ast.parse('''assert inventory_violations(ROOT, set(EXPECTED_R2_INVENTORY) | {
+        "backend/adapters/outbound/openai/contracts.py",
+        "backend/adapters/outbound/openai/transport.py",
+    }) == []''').body[0]
+    assert ast.dump(ast.parse(source)) == ast.dump(expected)
+
+
+@pytest.mark.parametrize("mutation", ("none", "historical_count", "shared_path", "extra_statement"))
+def test_corrective_inventory_guard_has_exactly_one_approved_assertion_delta(mutation):
+    source = (ROOT / "tests/architecture/test_local_search_product_boundary.py").read_text("utf-8")
+    if mutation == "historical_count":
+        source = source.replace("== 65", "== 64")
+    elif mutation == "shared_path":
+        source = source.replace('"backend/adapters/outbound/openai/contracts.py",', "")
+    elif mutation == "extra_statement":
+        source += "\nUNAPPROVED = True\n"
+    if mutation == "none":
+        assert_corrective_inventory_assertion_only(source)
+    else:
+        with pytest.raises(AssertionError):
+            assert_corrective_inventory_assertion_only(source)
+
+
+@pytest.mark.parametrize("missing", ("contracts.py", "transport.py", "both"))
+def test_active_inventory_still_rejects_missing_shared_openai_modules(missing):
+    from tests.architecture.test_local_browser_product_boundary import inventory_violations
+    shared = {"backend/adapters/outbound/openai/" + name for name in ("contracts.py", "transport.py")}
+    removed = shared if missing == "both" else {"backend/adapters/outbound/openai/" + missing}
+    violations = inventory_violations(ROOT, (set(R2_PATHS) | set(CORRECTION_PATHS)) - removed)
+    assert set(violations) == {"MISSING_R2_PATH:" + path for path in removed}
+
+
 def method_ast(source: str, name: str) -> str:
     cls = next(n for n in ast.parse(source).body if isinstance(n, ast.ClassDef)
                and n.name == "LocalBrowserHttpSecurityContract")
@@ -283,6 +378,8 @@ def test_only_closed_r2_routes_and_pure_security_evolution():
     ]
 
 def assert_r2_generation_source_lineage(root: Path) -> None:
+    for path, expected in CORRECTED_GENERATION_HASHES.items():
+        assert hashlib.sha256((root / path).read_bytes()).hexdigest() == expected
     changes = {
         "backend/adapters/outbound/generation/openai/adapter.py": (
             {"_map_response", "_parse_payload"}, {"_unique_object"}, set(),
@@ -295,7 +392,9 @@ def assert_r2_generation_source_lineage(root: Path) -> None:
     }
     for path, (modified, added, new_constants, new_imports) in changes.items():
         before = ast.parse(git_source(BASELINE_R2, path))
-        after = ast.parse((root / path).read_text("utf-8"))
+        # Keep the initial R2/legacy AST proof on the immutable delivered snapshot;
+        # active corrected sources are independently authenticated above.
+        after = ast.parse(git_source(CORRECTION_BASELINE, path))
         old_functions = function_map(ast.unparse(before))
         new_functions = function_map(ast.unparse(after))
         assert new_functions.keys() == old_functions.keys() | added
@@ -442,7 +541,7 @@ def test_hist020_wrong_baseline_even_with_equivalent_blob_is_rejected(monkeypatc
 @pytest.mark.parametrize("mutation", ("none", "extra", "substitution", "omission"))
 def test_exact_65_path_inventory_at_all_git_states(monkeypatch, stage, mutation):
     from tests.architecture import test_local_browser_product_boundary as guard
-    expected = set(R2_PATHS)
+    expected = set(R2_PATHS) | set(CORRECTION_PATHS)
     actual = set(expected)
     extra = "backend/modules/unapproved_r2.py"
     removed = R2_PATHS[0]
@@ -451,7 +550,7 @@ def test_exact_65_path_inventory_at_all_git_states(monkeypatch, stage, mutation)
     if mutation in {"substitution", "omission"}:
         actual.remove(removed)
     if mutation == "substitution":
-        assert len(actual) == 65
+        assert len(actual) == 67
     calls = []
     def git(args, **kwargs):
         calls.append(args[1:])

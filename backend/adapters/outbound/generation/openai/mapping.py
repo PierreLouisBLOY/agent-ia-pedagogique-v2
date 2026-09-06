@@ -123,6 +123,7 @@ def build_openai_request(
         output_schema=provider_schema,
         max_output_tokens=max_output_tokens,
         schema_name="pedagogical_generation",
+        service_tier="default" if conversation else None,
         reasoning_effort=OpenAIReasoningEffort.LOW if conversation else None,
     )
     if conversation:
@@ -134,7 +135,7 @@ def build_openai_request(
                            "max_output_tokens": result.max_output_tokens,
                            "reasoning": {"effort": "low"}, "store": False,
                            "tools": [], "tool_choice": "none", "background": False,
-                           "stream": False}, ensure_ascii=True).encode()
+                           "stream": False, "service_tier": "default"}, ensure_ascii=True).encode()
         if len(wire) > 24576:
             raise GenerationPortError(GenerationPortErrorCode.UNAVAILABLE,
                                       "R2_WIRE_BOUND_REJECTED")

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import NoReturn, cast
 
 from backend.adapters.outbound.generation.openai.mapping import (
@@ -12,6 +12,7 @@ from backend.adapters.outbound.generation.openai.mapping import (
     conversation_evidence_ids,
 )
 from backend.adapters.outbound.openai.contracts import (
+    OpenAIResponsesRequest,
     OpenAIResponsesResponse,
     OpenAIResponseStatus,
     OpenAIResponsesTransportFactory,
@@ -49,6 +50,7 @@ class OpenAIGenerationAdapter:
         "_provider_profile",
         "_secret_resolver",
         "_transport_factory",
+        "_before_request", "_on_dispatch", "_on_response", "_on_parsing",
     )
 
     def __init__(
@@ -66,6 +68,19 @@ class OpenAIGenerationAdapter:
         self._model_profile = model_profile
         self._secret_resolver = secret_resolver
         self._transport_factory = transport_factory
+        self._before_request: Callable[[OpenAIResponsesRequest], None] | None = None
+        self._on_dispatch: Callable[[], None] | None = None
+        self._on_response: Callable[[OpenAIResponsesResponse], None] | None = None
+        self._on_parsing: Callable[[str], None] | None = None
+
+    def bind_conversation_execution(self, *, before_request: Callable[[OpenAIResponsesRequest], None],
+        on_dispatch: Callable[[], None], on_response: Callable[[OpenAIResponsesResponse], None],
+        on_parsing: Callable[[str], None]) -> None:
+        """Explicit R2 instrumentation/preflight; no default acquisition or authority."""
+        if self._before_request is not None:
+            raise ValueError("R2_EXECUTION_ALREADY_BOUND")
+        self._before_request, self._on_dispatch = before_request, on_dispatch
+        self._on_response, self._on_parsing = on_response, on_parsing
 
     def __repr__(self) -> str:
         return (
@@ -82,6 +97,8 @@ class OpenAIGenerationAdapter:
             request=request,
             model_profile=self._model_profile,
         )
+        if self._before_request is not None:
+            self._before_request(provider_request)  # Before resolver and transport construction.
         try:
             secret = self._secret_resolver.resolve(
                 self._provider_profile.credential_ref
@@ -93,6 +110,8 @@ class OpenAIGenerationAdapter:
                     / 1_000.0
                 ),
             )
+            if self._on_dispatch is not None:
+                self._on_dispatch()
             response = transport.create(request=provider_request)
         except ProviderSecretError:
             raise GenerationPortError(
@@ -104,12 +123,19 @@ class OpenAIGenerationAdapter:
                 GenerationPortErrorCode.UNAVAILABLE,
                 f"OPENAI_TRANSPORT_{error.code.value}",
             ) from None
-        return _map_response(
-            request=request,
-            response=response,
-            provider_profile=self._provider_profile,
-            model_profile=self._model_profile,
-        )
+        if self._on_response is not None:
+            self._on_response(response)  # Captured privately before any pedagogical parsing.
+        try:
+            result = _map_response(request=request, response=response,
+                provider_profile=self._provider_profile, model_profile=self._model_profile)
+        except Exception:
+            if self._on_parsing is not None:
+                self._on_parsing("FAILED")
+            raise
+        if self._on_parsing is not None:
+            self._on_parsing("REFUSED" if response.status is OpenAIResponseStatus.REFUSED else
+                "INCOMPLETE" if response.status is OpenAIResponseStatus.INCOMPLETE else "SUCCEEDED")
+        return result
 
 
 def _map_response(

@@ -116,3 +116,62 @@ def test_denied_authorization_has_no_receipt_child_or_retry(tmp_path):
         job.start(draft_request())
     assert job._child is None and not job.receipt.root.exists()
     job.close()
+
+
+@pytest.mark.parametrize("mode,expected", [
+    ("private-candidate", "CANDIDATE_READY"), ("private-invalid", "FAILED_OUTPUT"),
+    ("private-disconnect", "UNKNOWN"), ("private-refused", "FAILED_OUTPUT"),
+    ("private-incomplete", "CANDIDATE_READY"),
+])
+def test_corrective_private_channel_preserves_preparse_usage_and_no_replay(tmp_path, mode, expected):
+    from tests.support.conversation_fakes import corrective_process_job
+    job, target, inputs = corrective_process_job(tmp_path, mode=mode)
+    request = draft_request()
+    try:
+        job.authorize(request)
+        assert inputs == []
+        job.start(request)
+        result = collect(job, timeout=15)
+        assert result.state == expected
+        assert result.usage.response_received and result.usage.input_tokens == 3000
+        assert result.usage.reasoning_tokens == 100
+        assert inputs == ["FAKE_INPUT"]
+        with pytest.raises(ConversationRejected):
+            job.start(request)
+        captured = list((tmp_path / "receipts").glob("*.USAGE_CAPTURED.json"))
+        assert len(captured) == 1
+        technical = json.loads(captured[0].read_text("utf-8"))["technical"]
+        assert technical["usage"]["parsing"] == "NOT_RUN"
+        assert technical["cost_kind"] == "DOCUMENTED_RATE_CALCULATION_NOT_INVOICE"
+        assert technical["calculated_usd"] == "0.01792"
+        raw = "".join(p.read_text("utf-8") for p in (tmp_path / "receipts").glob("*.json"))
+        for forbidden in (request.brief, "SYNTHETIC_PRIVATE_CHANNEL", str(target.runtime_path),
+                          "Question substantielle", "output_text"):
+            assert forbidden not in raw
+    finally:
+        job.close()
+    assert job._child.poll() is not None
+
+
+def test_private_timeout_remains_unknown_not_zero_and_has_no_second_attempt(tmp_path):
+    from tests.support.conversation_fakes import corrective_process_job
+    job, _, inputs = corrective_process_job(tmp_path, mode="private-timeout")
+    elapsed = [0.0]
+    job.clock = lambda: elapsed[0]
+    try:
+        job.authorize(draft_request())
+        job.start(draft_request())
+        deadline = time.monotonic() + 15
+        while not list((tmp_path / "receipts").glob("*.PROVIDER_ATTEMPTED.json")):
+            assert time.monotonic() < deadline, "synthetic dispatch did not occur"
+            time.sleep(.02)
+        elapsed[0] = 121.0  # Advance watchdog only after the captured fake dispatch.
+        result = collect(job, timeout=9)
+        assert result.state == "UNKNOWN"
+        assert result.usage.provider_attempted and not result.usage.response_received
+        assert result.usage.input_tokens is None
+        assert inputs == ["FAKE_INPUT"]
+        with pytest.raises(ConversationRejected):
+            job.authorize(draft_request())
+    finally:
+        job.close()

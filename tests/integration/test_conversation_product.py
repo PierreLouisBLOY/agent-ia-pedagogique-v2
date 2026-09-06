@@ -45,3 +45,23 @@ def test_complete_synthetic_http_process_agents_candidate_and_r3_refusal(tmp_pat
     for private in (PILOT, "Atelier Horizon", "r2.synth.bilan", str(target.runtime_path), "transport_nonce"):
         assert private not in logs
     assert job._child.poll() is not None
+
+
+def test_corrective_product_uses_private_worker_real_agents_and_two_identical_reads(tmp_path):
+    from tests.support.conversation_fakes import CONTEXT, corrective_process_job
+    job, target, inputs = corrective_process_job(tmp_path / "worker")
+    with running_conversation(tmp_path / "http", jobs=job) as (composition, _):
+        (_, _, data), _ = http_command(composition, 1, text=PILOT, context_patch=CONTEXT, confirm_context=True)
+        (status, _, _), body = http_command(composition, 2, operation="generations",
+            confirmed_context_sha256=data["data"]["confirmed_context_sha256"])
+        assert status == 202
+        assert http_call(composition, "/api/v2/conversation/generations", body=body)[0] == 202
+        view = wait_terminal(composition)
+        assert view["active_generation"]["state"] == "CANDIDATE_READY"
+        refs = view["current_candidate"]
+        route = "/api/v2/productions/" + refs["production_ref"] + "/versions/" + refs["version_ref"]
+        first = http_call(composition, route)
+        assert first[0] == 200 and first[2]["data"] == http_call(composition, route)[2]["data"]
+        assert len(first[2]["data"]["sections"]) == 5 and inputs == ["FAKE_INPUT"]
+        assert "technical" not in str(first[2]) and "SYNTHETIC_PRIVATE_CHANNEL" not in str(first[2])
+    assert target.expected_sha256 and job._child.poll() is not None

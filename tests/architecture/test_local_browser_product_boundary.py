@@ -316,9 +316,12 @@ def observability_server_violations(source: str) -> list[str]:
 
 
 def inventory_violations(root: Path, changed: set[str] | None = None) -> list[str]:
+    from tests.architecture.test_conversation_product_boundary import CORRECTION_PATHS
     contract = json.loads((root / _CONTRACT).read_text(encoding="utf-8"))
     assert contract["baseline_commit"] == _R2_BASELINE
     assert contract["approved_inventory"] == list(EXPECTED_R2_INVENTORY)
+    assert contract["corrective_inventory"] == list(CORRECTION_PATHS)
+    assert contract["corrective_baseline_commit"] == "0c17d12eea1e1e6d4b04d943e756e0c8e35c41ba"
     indexed = set()
     if changed is None:
         changed = set()
@@ -335,7 +338,7 @@ def inventory_violations(root: Path, changed: set[str] | None = None) -> list[st
                 indexed.update(result.stdout.splitlines())
     protected = {item["path"]: item["sha256"] for item in contract["protected_documents"]}
     assert protected == dict(EXPECTED_PROTECTED_DOCUMENTS)
-    allowed = set(EXPECTED_R2_INVENTORY)
+    allowed = set(EXPECTED_R2_INVENTORY) | set(CORRECTION_PATHS)
     preparation = set(EXACT_R2_PREPARATION_PATHS)
     violations = sorted(changed - allowed - set(protected) - preparation)
     violations.extend("MISSING_R2_PATH:" + path for path in sorted(allowed - changed))

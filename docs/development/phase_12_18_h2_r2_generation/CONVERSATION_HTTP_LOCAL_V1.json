@@ -816,5 +816,32 @@
       "active_sha256": "9b85e5496ed9177bfd11fff896b7bd9bd87b4bf919216c6327172a784cf952d9"
     },
     "unchanged_shared_helper_sha256": "95fedd65171033273b68c34ad8b9e50aaf0c6d6da1140ae7b9708b21483b903c"
-  }
+  },
+  "corrective_inventory": [
+    "backend/adapters/inbound/cli/local_browser.py",
+    "backend/infrastructure/composition/factories/conversation.py",
+    "backend/infrastructure/composition/bootstrap/conversation_worker.py",
+    "backend/adapters/outbound/system/conversation_job.py",
+    "backend/adapters/outbound/generation/openai/mapping.py",
+    "backend/adapters/outbound/generation/openai/adapter.py",
+    "backend/modules/work_orchestration/ports/outbound/generation_job.py",
+    "backend/adapters/outbound/openai/transport.py",
+    "backend/adapters/outbound/openai/contracts.py",
+    "tests/unit/test_openai_conversation_mapping.py",
+    "tests/integration/test_conversation_job_lifecycle.py",
+    "tests/integration/test_conversation_product.py",
+    "tests/integration/test_conversation_http.py",
+    "tests/architecture/test_conversation_product_boundary.py",
+    "tests/support/conversation_fakes.py",
+    "tests/architecture/test_local_browser_product_boundary.py",
+    "tests/architecture/test_local_search_product_boundary.py",
+    "architecture/adr/ADR-conversational-generation-product-boundary.md",
+    "docs/development/phase_12_18_h2_r2_generation/CONVERSATION_HTTP_LOCAL_V1.json",
+    "docs/development/phase_12_18_h2_r2_generation/LIVE_GENERATION_SCOPE.json",
+    "docs/development/phase_12_18_h2_r2_generation/IMPLEMENTATION_EVIDENCE.md",
+    "docs/development/phase_12_18_h2_r2_generation/MANIFEST_SHA256.txt"
+  ],
+  "corrective_baseline_commit": "0c17d12eea1e1e6d4b04d943e756e0c8e35c41ba",
+  "corrective_review_manifest_sha256": "9da1ccaa2850fa6986b49beca2540288130b33b0afe52fcb997f5e1de87400dd",
+  "corrective_scope": "R2_EXISTING_WIRING_PRIVATE_USAGE_AND_LOCKED_ENVIRONMENT"
 }

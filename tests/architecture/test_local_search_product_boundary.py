@@ -73,7 +73,10 @@ def test_exact_inventory_before_and_after_commit() -> None:
     assert len(EXPECTED_SEARCH_INVENTORY) == 30
     assert inventory_violations(ROOT) == []
     assert set(git_diff_paths(_SEARCH_BASELINE, _R2_BASELINE)) == set(EXPECTED_SEARCH_INVENTORY)
-    assert inventory_violations(ROOT, set(EXPECTED_R2_INVENTORY)) == []
+    assert inventory_violations(ROOT, set(EXPECTED_R2_INVENTORY) | {
+        "backend/adapters/outbound/openai/contracts.py",
+        "backend/adapters/outbound/openai/transport.py",
+    }) == []
     assert len(EXPECTED_R2_INVENTORY) == 65
     assert _SEARCH_BASELINE == "3f724ca81843b5d45ac534e9654ff16281c55713"
     source = (ROOT / "tests/architecture/test_local_browser_product_boundary.py").read_text("utf-8")

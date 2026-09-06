@@ -219,8 +219,10 @@ def synthetic_worker_main():
     )
     from tests.support.conversation_synthetic import synthetic_target
     from tests.unit.test_conversation_generation import SyntheticGenerationPort
-    request = read_request(sys.stdin.buffer)
     mode = sys.argv[1]
+    if mode.startswith("private-"):
+        return corrective_worker_main(mode)
+    request = read_request(sys.stdin.buffer)
     if mode == "blocked":
         time.sleep(30)
         return 1
@@ -237,6 +239,115 @@ def synthetic_worker_main():
     result = run_generation(request, target=target, generation=port, reserved_cost=Decimal("0"))
     sys.stdout.buffer.write(encode_frame(result_payload(result)))
     sys.stdout.buffer.flush()
+    return 0
+
+
+def corrective_scope():
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[2]
+    return json.loads((root / "docs/development/phase_12_18_h2_r2_generation/LIVE_GENERATION_SCOPE.json").read_text("utf-8"))
+
+
+def corrective_grant(target, receipt_root=None):
+    """SYNTHETIC GRANT AND COUNTER RECEIPT: no account, count or live permission."""
+    from backend.infrastructure.composition.factories.conversation import (
+        r2_count_handoff,
+        r2_digest,
+        r2_environment_identity,
+    )
+    scope = corrective_scope()
+    count = r2_count_handoff(scope["projection"])
+    proof = {"kind": "AUTHORIZED_PROVIDER_COUNT", "input_tokens": 3000,
+        "generation_request_sha256": count["generation_request_sha256"],
+        "count_request_sha256": count["count_request_sha256"],
+        "count_authorization_sha256": "a" * 64, "count_cost_status": "APPROVED_BOUND"}
+    return {"schema": "R2-GENERATION-GRANT-1.0", "operation": "GENERATION",
+        "baseline_commit": "f" * 40, "scope_sha256": r2_digest(scope),
+        **{k: scope[k] for k in ("projection_sha256", "profile_sha256", "pricing_sha256", "output_schema_sha256", "usage_contract_sha256")},
+        "provider": "OPENAI_ONLY", "max_calls": 1, "ceiling_usd": "0.140000",
+        "live_authorized": True, "transfer_authorized": True,
+        "credential_source": "MASKED_LOCAL_PRIVATE_CHANNEL",
+        "expires_at": (datetime.now(UTC) + timedelta(minutes=10)).isoformat(),
+        "token_count_receipt": proof, "token_count_receipt_sha256": r2_digest(proof),
+        "receipt_root_sha256": r2_digest(str(receipt_root.absolute()).casefold()) if receipt_root else "b" * 64,
+        "runtime_sha256": target.expected_sha256, "environment": r2_environment_identity()}
+
+
+def corrective_process_job(tmp_path, *, mode="private-candidate", timeout=120):
+    import subprocess
+
+    from backend.infrastructure.composition.factories.conversation import build_r2_process_job
+    from tests.support.conversation_synthetic import synthetic_target
+    target = synthetic_target(tmp_path / "synthetic")
+    inputs = []
+    def read_fake():
+        inputs.append("FAKE_INPUT")
+        return "SYNTHETIC_PRIVATE_CHANNEL_VALUE_NOT_A_CREDENTIAL"
+    job = build_r2_process_job(grant=corrective_grant(target, tmp_path / "receipts"), scope=corrective_scope(), baseline="f" * 40,
+        target=target, receipt_root=tmp_path / "receipts", private_temp=tmp_path,
+        credential_input=read_fake)
+    def launch(args, **kwargs):
+        assert args[1:3] == ["-m", "backend.infrastructure.composition.bootstrap.conversation_worker"]
+        assert args[3] == "--private-read" and args[5] == "--private-write"
+        assert "SYNTHETIC_PRIVATE_CHANNEL" not in repr((args, kwargs))
+        assert not any(k.startswith("OPENAI_") for k in kwargs["env"])
+        return subprocess.Popen([args[0], "-m", "tests.support.conversation_fakes", mode, *args[3:]], **kwargs)
+    job.launch, job.timeout = launch, timeout
+    return job, target, inputs
+
+
+def corrective_worker_main(mode):
+    import argparse
+    import sys
+
+    from backend.adapters.outbound.openai.contracts import (
+        OpenAIResponsesResponse,
+        OpenAIResponseStatus,
+        OpenAIResponseUsage,
+    )
+    from backend.adapters.outbound.system.conversation_job import encode_frame, result_payload
+    from backend.infrastructure.composition.bootstrap.conversation_worker import (
+        private_pipe,
+        read_private_packet,
+        read_request,
+        run_authorized_generation,
+    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--private-read", type=int, required=True)
+    parser.add_argument("--private-write", type=int, required=True)
+    args = parser.parse_args(sys.argv[2:])
+    calls = []
+    class Factory:
+        def build(self, *, secret, timeout_seconds):
+            assert secret.reveal_for_transport() == "SYNTHETIC_PRIVATE_CHANNEL_VALUE_NOT_A_CREDENTIAL"
+            assert timeout_seconds == 90
+            return self
+        def create(self, *, request):
+            calls.append("FAKE_CREATE")
+            assert len(calls) == 1 and request.service_tier == "default"
+            if mode == "private-timeout":
+                time.sleep(30)
+            value = {"outcome": "OUTPUT", "sections": [{"code": code,
+                "text": "Question substantielle synthétique détaillée, sans appel fournisseur."} for code in SECTION_IDS],
+                "warnings": [], "uncertainties": [], "evidence_ids_used": ["r2.evidence.1"]}
+            status = OpenAIResponseStatus.REFUSED if mode == "private-refused" else (
+                OpenAIResponseStatus.INCOMPLETE if mode == "private-incomplete" else OpenAIResponseStatus.COMPLETED)
+            return OpenAIResponsesResponse(status=status,
+                output_text="{" if mode == "private-invalid" else json.dumps(value),
+                usage=OpenAIResponseUsage(input_tokens=3000, cached_input_tokens=100,
+                    cache_write_input_tokens=200, output_tokens=1000, total_tokens=4000, reasoning_tokens=100),
+                service_tier="default")
+    with private_pipe(args.private_read, "rb") as source, private_pipe(args.private_write, "wb") as sink:
+        packet = read_private_packet(source)
+        assert set(packet) == {"grant", "runtime_path", "data_root", "secret"}
+        request = read_request(sys.stdin.buffer)
+        result = run_authorized_generation(packet, request=request, sink=sink,
+            material=("f" * 40, corrective_scope()), transport_factory=Factory())
+        assert calls == ["FAKE_CREATE"]
+        if mode == "private-disconnect":
+            return 1
+        sys.stdout.buffer.write(encode_frame(result_payload(result)))
+        sys.stdout.buffer.flush()
     return 0
 
 

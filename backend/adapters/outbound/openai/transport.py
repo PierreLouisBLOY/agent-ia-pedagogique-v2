@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from typing import cast
 
 import openai
-from openai import OpenAI
+from openai import DefaultHttpxClient, OpenAI
 from openai.types.responses.response import Response
 from openai.types.responses.response_create_params import ResponseCreateParamsNonStreaming
 
@@ -26,21 +28,37 @@ from backend.adapters.outbound.openai.schema import (
 from backend.infrastructure.config.secrets.provider import ProviderSecretValue
 
 
+def openai_sdk_import_path() -> Path:
+    """Private diagnostic metadata only; SDK ownership stays in this adapter."""
+    return Path(openai.__file__).resolve()
+
+
 class OpenAISDKResponsesTransport:
     """One-shot Responses transport; retry and fallback remain external concerns."""
 
-    __slots__ = ("__client",)
+    __slots__ = ("__client", "__r2")
 
-    def __init__(self, *, secret: ProviderSecretValue, timeout_seconds: float) -> None:
+    def __init__(self, *, secret: ProviderSecretValue, timeout_seconds: float,
+                 r2_destination: bool = False) -> None:
         if type(secret) is not ProviderSecretValue:
             raise TypeError("secret must be a ProviderSecretValue")
         if not isinstance(timeout_seconds, float) or timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be a positive float")
-        self.__client = OpenAI(
-            api_key=secret.reveal_for_transport(),
-            timeout=timeout_seconds,
-            max_retries=0,
-        )
+        self.__r2 = r2_destination
+        if r2_destination:
+            # Fail closed instead of mutating shared environment or importing ambient headers.
+            if any(name.startswith(("OPENAI_", "AZURE_OPENAI_")) or name.upper() in {
+                "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "SSL_CERT_FILE", "SSL_CERT_DIR"
+            } for name in os.environ):
+                raise OpenAITransportError(OpenAITransportErrorCode.INVALID_REQUEST)
+            self.__client = OpenAI(api_key=secret.reveal_for_transport(), timeout=timeout_seconds,
+                max_retries=0, base_url="https://api.openai.com/v1", organization="", project="",
+                admin_api_key="", webhook_secret="",
+                http_client=DefaultHttpxClient(trust_env=False, follow_redirects=False))
+        else:
+            self.__client = OpenAI(
+                api_key=secret.reveal_for_transport(), timeout=timeout_seconds, max_retries=0,
+            )
 
     def __repr__(self) -> str:
         return "OpenAISDKResponsesTransport([REDACTED])"
@@ -74,20 +92,35 @@ class OpenAISDKResponsesTransport:
         )
         if request.reasoning_effort is not None:
             parameters["reasoning"] = {"effort": request.reasoning_effort.value}
+        if request.service_tier is not None:
+            if request.service_tier != "default":
+                raise OpenAITransportError(OpenAITransportErrorCode.INVALID_REQUEST)
+            parameters["service_tier"] = "default"
+        if self.__r2 and request.service_tier != "default":
+            raise OpenAITransportError(OpenAITransportErrorCode.INVALID_REQUEST)
         try:
             raw_response = self.__client.responses.create(**parameters)
         except openai.OpenAIError as error:
             raise OpenAITransportError(_openai_error_code(error)) from None
+        finally:
+            if self.__r2:
+                self.__client.close()
         return _normalized_response(raw_response)
 
 
 class OpenAISDKResponsesTransportFactory:
+    def __init__(self, *, r2_destination: bool = False) -> None:
+        self.r2_destination = r2_destination
+
     def build(
         self,
         *,
         secret: ProviderSecretValue,
         timeout_seconds: float,
     ) -> OpenAIResponsesTransport:
+        if self.r2_destination:
+            return OpenAISDKResponsesTransport(secret=secret, timeout_seconds=timeout_seconds,
+                                              r2_destination=True)
         return OpenAISDKResponsesTransport(secret=secret, timeout_seconds=timeout_seconds)
 
 
@@ -98,7 +131,10 @@ def _normalized_response(response: Response) -> OpenAIResponsesResponse:
         output_details = getattr(usage, "output_tokens_details", None)
         normalized_usage = OpenAIResponseUsage(
             input_tokens=usage.input_tokens,
-            cached_input_tokens=usage.input_tokens_details.cached_tokens,
+            cached_input_tokens=_optional_non_negative_int(
+                getattr(getattr(usage, "input_tokens_details", None), "cached_tokens", None)),
+            cache_write_input_tokens=_optional_non_negative_int(
+                getattr(getattr(usage, "input_tokens_details", None), "cache_write_tokens", None)),
             output_tokens=usage.output_tokens,
             total_tokens=usage.total_tokens,
             reasoning_tokens=_optional_non_negative_int(
@@ -109,6 +145,8 @@ def _normalized_response(response: Response) -> OpenAIResponsesResponse:
         status=_response_status(response),
         output_text=response.output_text or None,
         usage=normalized_usage,
+        service_tier=(response.service_tier if getattr(response, "service_tier", None) in {
+            "default", "flex", "priority", "scale", "ultrafast"} else None),
         incomplete_reason=_incomplete_reason(response),
     )
 

@@ -10,6 +10,7 @@ import subprocess
 import threading
 import time
 from collections.abc import Callable, Mapping
+from dataclasses import asdict, fields, replace
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -33,7 +34,10 @@ from backend.modules.work_orchestration.contracts.dto.conversation import (
     ConversationRejected,
     plain,
 )
-from backend.modules.work_orchestration.ports.outbound.generation_job import GenerationJobResult
+from backend.modules.work_orchestration.ports.outbound.generation_job import (
+    GenerationJobResult,
+    GenerationUsage,
+)
 
 FRAME_LIMIT = 256 * 1024
 WORKER_MODULE = "backend.infrastructure.composition.bootstrap.conversation_worker"
@@ -85,14 +89,24 @@ def decode_request(data: Mapping[str, object]) -> ConversationDraftRequest:
 
 def result_payload(result: GenerationJobResult) -> dict[str, object]:
     draft = result.draft
-    return {"generation_id": result.generation_id, "state": result.state, "error_code": result.error_code,
+    payload: dict[str, object] = {"generation_id": result.generation_id, "state": result.state, "error_code": result.error_code,
             "draft": None if draft is None else {"production_ref": draft.production_ref,
                 "content": draft.content, "sections": draft.sections, "references": draft.references,
                 "lineage": draft.lineage, "limitations": draft.limitations}}
+    if result.usage is not None:
+        payload["usage"] = asdict(result.usage)
+    return payload
+
+
+def decode_usage(value: object) -> GenerationUsage:
+    if not isinstance(value, dict) or set(value) != {f.name for f in fields(GenerationUsage)}:
+        raise ValueError("IPC_USAGE_REJECTED")
+    return GenerationUsage(**value)
 
 
 def decode_result(data: Mapping[str, object]) -> GenerationJobResult:
-    if set(data) != {"generation_id", "state", "error_code", "draft"}:
+    if set(data) not in ({"generation_id", "state", "error_code", "draft"},
+                        {"generation_id", "state", "error_code", "draft", "usage"}):
         raise ValueError("IPC_RESULT_REJECTED")
     draft = data["draft"]
     materialized = None
@@ -104,7 +118,8 @@ def decode_result(data: Mapping[str, object]) -> GenerationJobResult:
         materialized = ConversationDraft(draft["production_ref"], draft["content"],
             tuple(draft["sections"]), tuple(draft["references"]), draft["lineage"], tuple(draft["limitations"]))
     return GenerationJobResult(cast(str, data["generation_id"]), cast(str, data["state"]),
-        materialized, cast(str | None, data["error_code"]))
+        materialized, cast(str | None, data["error_code"]),
+        decode_usage(data["usage"]) if "usage" in data else None)
 
 
 class OneShotReceipt:
@@ -120,8 +135,14 @@ class OneShotReceipt:
         self.digest, self.ceiling = authorization_sha256, ceiling
         self.reserved = False
 
-    def record(self, state: str, request: ConversationDraftRequest) -> None:
-        if state not in {"RESERVED", "DISPATCHED", "CONSUMED", "UNKNOWN"}:
+    def require_unused(self) -> None:
+        if capture_secure_path(self.root / (self.digest + ".RESERVED.json"), allowed_root=self.root).exists:
+            raise ConversationRejected("GENERATION_NOT_AUTHORIZED")
+
+    def record(self, state: str, request: ConversationDraftRequest,
+               usage: GenerationUsage | None = None) -> None:
+        if state not in {"RESERVED", "DISPATCHED", "CONSUMED", "UNKNOWN",
+                         "PROVIDER_ATTEMPTED", "USAGE_CAPTURED", "USAGE_PARSED"}:
             raise ValueError("INVALID_RECEIPT_STATE")
         if state != "RESERVED" and not self.reserved:
             raise ValueError("RECEIPT_NOT_RESERVED")
@@ -131,10 +152,12 @@ class OneShotReceipt:
             raise ConversationRejected("GENERATION_NOT_AUTHORIZED")
         temporary = private_temporary_file(self.root, allowed_root=self.root,
             prefix="receipt-", suffix=".tmp")
-        payload = {"authorization_sha256": self.digest, "state": state,
+        payload: dict[str, object] = {"authorization_sha256": self.digest, "state": state,
             "generation_id": request.generation_id, "request_id": request.request_id,
             "reserved_usd": str(self.ceiling), "observed_usd": None,
             "timestamp": datetime.now(UTC).isoformat()}
+        if usage is not None:
+            payload["technical"] = usage_cost_evidence(usage)
         # Private temporary inode + exclusive atomic publication; no content or secret.
         with temporary.open("wb") as handle:
             handle.write(json.dumps(payload, separators=(",", ":")).encode())
@@ -149,7 +172,8 @@ class ConversationProcessJob:
     def __init__(self, *, executable: Path, working_directory: Path,
         environment: Mapping[str, str], authorize: Callable[[ConversationDraftRequest], None],
         receipt: OneShotReceipt, launch: Callable[..., subprocess.Popen[bytes]] = subprocess.Popen,
-        clock: Callable[[], float] = time.monotonic, timeout: float = 120) -> None:
+        clock: Callable[[], float] = time.monotonic, timeout: float = 120,
+        technical: Callable[[], Mapping[str, object]] | None = None) -> None:
         if (not 0 < timeout <= 120 or set(environment) - ENVIRONMENT_KEYS
                 or environment.get("PYTHONDONTWRITEBYTECODE") != "1"):
             raise ValueError("WORKER_CONFIGURATION_REJECTED")
@@ -162,6 +186,7 @@ class ConversationProcessJob:
         self._result: GenerationJobResult | None = None
         self._used = False
         self._authorized_digest: str | None = None
+        self.technical = technical
 
     def authorize(self, request: ConversationDraftRequest) -> None:
         if self._used or self._stop.is_set():
@@ -184,12 +209,22 @@ class ConversationProcessJob:
     def _supervise(self, request: ConversationDraftRequest, frame: bytes, deadline: float) -> None:
         result = GenerationJobResult(request.generation_id, "UNKNOWN", error_code="GENERATION_OUTCOME_UNKNOWN")
         child = None
+        channel = None
+        usage = None
         try:
             self.receipt.record("DISPATCHED", request)
-            child = self.launch([str(self.executable), "-m", WORKER_MODULE], cwd=self.directory,
+            args = [str(self.executable), "-m", WORKER_MODULE]
+            options: dict[str, object] = {}
+            if self.technical is not None:
+                channel = PrivateWorkerChannel(self.technical())
+                args.extend(channel.arguments)
+                options = channel.launch_options
+            child = self.launch(args, cwd=self.directory,
                 env=self.environment, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL, shell=False, bufsize=0,
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), **options)
+            if channel is not None:
+                channel.after_launch()
             self._child = child
             if child.stdin is None or child.stdout is None:
                 raise ValueError("IPC_UNAVAILABLE")
@@ -199,6 +234,12 @@ class ConversationProcessJob:
             sent = 0
             expected = None
             while not self._stop.is_set() and self.clock() < deadline:
+                if channel is not None:
+                    for captured in channel.pump():
+                        usage = captured
+                        state = ("PROVIDER_ATTEMPTED" if not captured.response_received else
+                                 "USAGE_CAPTURED" if captured.parsing == "NOT_RUN" else "USAGE_PARSED")
+                        self.receipt.record(state, request, captured)
                 if sent < len(frame):
                     try:
                         sent += os.write(child.stdin.fileno(), frame[sent:sent + 4096])
@@ -226,11 +267,30 @@ class ConversationProcessJob:
                         raise ValueError("IPC_IDENTITY_REJECTED")
                     break
                 self._stop.wait(.01)
-            self.receipt.record("UNKNOWN" if result.state == "UNKNOWN" else "CONSUMED", request)
+            if channel is not None:
+                for captured in channel.pump():
+                    usage = captured
+                    state = ("PROVIDER_ATTEMPTED" if not captured.response_received else
+                             "USAGE_CAPTURED" if captured.parsing == "NOT_RUN" else "USAGE_PARSED")
+                    self.receipt.record(state, request, captured)
+            if usage is not None:
+                result = replace(result, usage=result.usage or usage)
+            self.receipt.record("UNKNOWN" if result.state == "UNKNOWN" else "CONSUMED", request, result.usage)
         except Exception:
-            result = GenerationJobResult(request.generation_id, "UNKNOWN", error_code="GENERATION_OUTCOME_UNKNOWN")
+            # A failing result pipe must not hide metadata already written by the child.
+            if channel is not None:
+                try:
+                    for captured in channel.pump():
+                        usage = captured
+                        state = ("PROVIDER_ATTEMPTED" if not captured.response_received else
+                                 "USAGE_CAPTURED" if captured.parsing == "NOT_RUN" else "USAGE_PARSED")
+                        self.receipt.record(state, request, captured)
+                except Exception:
+                    pass  # Keep the last validated capture; RESERVED still prevents replay.
+            result = GenerationJobResult(request.generation_id, "UNKNOWN",
+                error_code="GENERATION_OUTCOME_UNKNOWN", usage=usage)
             try:
-                self.receipt.record("UNKNOWN", request)
+                self.receipt.record("UNKNOWN", request, usage)
             except Exception:
                 pass  # RESERVED remains an irreversible refusal on restart.
         finally:
@@ -245,6 +305,8 @@ class ConversationProcessJob:
                 for pipe in (child.stdin, child.stdout):
                     if pipe is not None:
                         pipe.close()
+            if channel is not None:
+                channel.close()
             with self._lock:
                 self._result = result
 
@@ -259,3 +321,91 @@ class ConversationProcessJob:
             self._thread.join(timeout=3)
             if self._thread.is_alive() or (self._child is not None and self._child.poll() is None):
                 raise ConversationRejected("GENERATION_OUTCOME_UNKNOWN")
+
+
+def usage_cost_evidence(usage: GenerationUsage) -> dict[str, object]:
+    """R2 documented rate, not an invoice; missing cache/tier is not free."""
+    amount = None
+    kind = "UNKNOWN"
+    if usage.service_tier == "default" and usage.input_tokens is not None and usage.output_tokens is not None:
+        amount = (Decimal(usage.input_tokens) * Decimal("2.5")
+                  + Decimal(usage.output_tokens) * Decimal("12")) / Decimal(1_000_000)
+        kind = "CONSERVATIVE_BOUND"
+        cached, written = usage.cached_input_tokens, usage.cache_write_input_tokens
+        if cached is not None and written is not None and cached + written <= usage.input_tokens:
+            amount = (Decimal(usage.input_tokens - cached - written) * Decimal("2")
+                + Decimal(cached) * Decimal("0.2") + Decimal(written) * Decimal("2.5")
+                + Decimal(usage.output_tokens) * Decimal("12")) / Decimal(1_000_000)
+            kind = "DOCUMENTED_RATE_CALCULATION_NOT_INVOICE"
+    return {"usage": asdict(usage), "cost_kind": kind,
+            "calculated_usd": str(amount) if amount is not None else None}
+
+
+class PrivateWorkerChannel:
+    """Inherited anonymous pipes; never a listener, shared env or pedagogical frame."""
+    def __init__(self, packet: Mapping[str, object]) -> None:
+        self._out = bytearray(encode_frame(dict(packet)))
+        if len(self._out) > 16384:
+            raise ValueError("PRIVATE_CHANNEL_BOUND")
+        self._in = bytearray()
+        self._read_child, self._write_parent = os.pipe()
+        self._read_parent, self._write_child = os.pipe()
+        self._fds = {self._read_child, self._write_parent, self._read_parent, self._write_child}
+        self._sent = 0
+        self.launch_options: dict[str, object] = {}
+        if os.name == "nt":
+            import msvcrt
+            handles = [msvcrt.get_osfhandle(fd) for fd in (self._read_child, self._write_child)]
+            for handle in handles:
+                os.set_handle_inheritable(handle, True)
+            startup = subprocess.STARTUPINFO()
+            startup.lpAttributeList = {"handle_list": handles}
+            self.launch_options = {"startupinfo": startup, "close_fds": True}
+        else:
+            handles = [self._read_child, self._write_child]
+            self.launch_options = {"pass_fds": tuple(handles), "close_fds": True}
+        self.arguments = ["--private-read", str(handles[0]), "--private-write", str(handles[1])]
+        os.set_blocking(self._write_parent, False)
+        os.set_blocking(self._read_parent, False)
+
+    def __repr__(self) -> str:
+        return "PrivateWorkerChannel([REDACTED])"
+
+    def after_launch(self) -> None:
+        for fd in (self._read_child, self._write_child):
+            os.close(fd)
+            self._fds.remove(fd)
+
+    def pump(self) -> tuple[GenerationUsage, ...]:
+        if self._sent < len(self._out):
+            try:
+                self._sent += os.write(self._write_parent, self._out[self._sent:self._sent + 4096])
+            except BlockingIOError:
+                pass
+            if self._sent == len(self._out):
+                self._out[:] = b"\x00" * len(self._out)
+                os.close(self._write_parent)
+                self._fds.remove(self._write_parent)
+        try:
+            chunk = os.read(self._read_parent, 4096)
+        except BlockingIOError:
+            chunk = b""
+        self._in.extend(chunk)
+        if len(self._in) > 16384:
+            raise ValueError("PRIVATE_CHANNEL_BOUND")
+        results = []
+        while len(self._in) >= 4:
+            size = struct.unpack("!I", self._in[:4])[0]
+            if not 1 <= size <= 4096:
+                raise ValueError("PRIVATE_CHANNEL_BOUND")
+            if len(self._in) < size + 4:
+                break
+            results.append(decode_usage(decode_frame(bytes(self._in[:size + 4]))))
+            del self._in[:size + 4]
+        return tuple(results)
+
+    def close(self) -> None:
+        self._out[:] = b"\x00" * len(self._out)
+        for fd in tuple(self._fds):
+            os.close(fd)
+            self._fds.remove(fd)

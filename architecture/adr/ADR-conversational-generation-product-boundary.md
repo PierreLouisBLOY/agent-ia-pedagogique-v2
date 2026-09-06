@@ -191,3 +191,45 @@ skips; 397 targeted and 768 reuse tests passed separately. Ruff, mypy backend
 (724 files), compilation and dependency checks pass. The source scope remains
 65 paths. The authorized local commit binds this validated synthetic snapshot;
 it does not grant live authority or establish R2_PRODUCT_COMPLETE.
+
+## Approved consolidated correction — review before implementation
+
+The owner explicitly confirmed the five choices in the unsigned review's
+decision 05, synthetic tests and a bounded local commit after validation.
+The review manifest is
+9da1ccaa2850fa6986b49beca2540288130b33b0afe52fcb997f5e1de87400dd;
+the correction starts from 0c17d12eea1e1e6d4b04d943e756e0c8e35c41ba.
+IMPLEMENTATION_EVIDENCE records the exact intended correction inventory.
+
+The existing nine production points include the two explicitly added shared
+OpenAI modules. R2 is opt-in and legacy request/transport behaviour is retained.
+R2 fixes service_tier=default, binds consent to the actual complete request,
+and separates any input-token counting permission from generation permission.
+A synthetic counter is not a real token-bound proof.
+
+A future masked local credential input is handed off in memory on a private
+ephemeral technical channel, never argv, ambient environment, pedagogical
+IPC, HTTP, disk, receipts or logs. Only fake values are used in this increment.
+Neutral bounded usage metadata is captured before output parsing, passed
+through the existing result port and preserved in private one-shot receipts.
+Unknown usage remains unknown, including after timeout; no retry follows.
+No general observability schema or agent/business authority is expanded.
+
+A separate Python 3.12 environment may use only locally available wheels
+verified against the unchanged locks, including OpenAI 3.8.0. Parent and
+worker must use that same environment. This does not permit package network,
+existing-environment modification, credentials, input-token API or generation.
+P_LIVE remains NOT_AUTHORIZED and USD 0.140000 is not financially approved.
+The 21 protected/preparatory inputs and historical manifests remain unchanged.
+
+### Approved one-assertion inventory extension
+
+The owner's subsequent explicit agreement permits only the additional assertion
+in tests/architecture/test_local_search_product_boundary.py::test_exact_inventory_before_and_after_commit.
+Its active inventory argument becomes the union of the historical 65 paths and
+the two already approved shared OpenAI modules, contracts.py and transport.py.
+The historical count of 65 and every other statement in that file are retained.
+The correction inventory is now 22 existing files; its cumulative union is still
+67. Existing R2 tests verify the exact AST delta and reject missing shared paths.
+No production change, generic inventory exemption, live authority or extra scope
+is introduced by this extension. Validation precedes one coherent local commit.

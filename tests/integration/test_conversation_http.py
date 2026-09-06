@@ -114,3 +114,24 @@ def test_credential_headers_are_rejected_without_reflection(tmp_path, header):
         assert response[0] == 400
         assert "SYNTHETIC_PRIVATE_MARKER" not in json.dumps(response)
         assert composition.conversation.service.snapshot()["revision"] == 1
+
+
+def test_technical_usage_is_not_exposed_in_http_candidate_or_conversation(tmp_path):
+    from dataclasses import replace
+
+    from backend.modules.work_orchestration.ports.outbound.generation_job import GenerationUsage
+    jobs = FakeJobs()
+    with running_conversation(tmp_path, jobs=jobs) as (composition, _):
+        (_, _, data), _ = http_command(composition, 1, text=PILOT, context_patch=CONTEXT, confirm_context=True)
+        response, _ = http_command(composition, 2, operation="generations",
+            confirmed_context_sha256=data["data"]["confirmed_context_sha256"])
+        assert response[0] == 202
+        jobs.succeed()
+        jobs.result = replace(jobs.result, usage=GenerationUsage(provider_attempted=True,
+            response_received=True, input_tokens=111, output_tokens=222, parsing="SUCCEEDED"))
+        view = wait_terminal(composition)
+        refs = view["current_candidate"]
+        route = "/api/v2/productions/" + refs["production_ref"] + "/versions/" + refs["version_ref"]
+        raw = json.dumps([view, http_call(composition, route)[2]])
+        assert "input_tokens" not in raw and "provider_attempted" not in raw and "technical" not in raw
+        assert len(jobs.calls) == 1

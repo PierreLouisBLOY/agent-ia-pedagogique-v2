@@ -296,3 +296,314 @@ Les preuves brutes, sorties synthétiques de test et fichiers SQLite restent hor
 R2_SYNTHETIC_WIRING_ONLY ; génération réelle = NOT_RUN.
 R2_PRODUCT_COMPLETE n'est pas revendiqué. CAP-R02 est vérifié synthétiquement.
 R3/R4/H3 ne sont pas démarrés ; la feuille de route reste inchangée.
+
+## Correctif consolidé R2 — accord et inventaire avant édition
+
+L'accord explicite « oui » du propriétaire confirme les cinq choix de la
+pièce 05 de la revue, les tests synthétiques et le commit local borné après
+validation. Baseline de ce correctif :
+`0c17d12eea1e1e6d4b04d943e756e0c8e35c41ba`.
+Manifeste de revue :
+`9da1ccaa2850fa6986b49beca2540288130b33b0afe52fcb997f5e1de87400dd`.
+ZIP de revue :
+`de73fa18a8c3ff3dbe6ddef82ecfb12e8715b9cc18ca42b0fcf32a7fce1f03e2`.
+Contrôle d'entrée : 19/19 entrées du manifeste et 9/9 sources de production
+conformes aux empreintes PRE. Aucun horodatage de signature n'est inventé.
+
+L'inventaire de réalisation prévu est limité aux 21 fichiers existants
+ci-dessous (aucune création de source). Toute nécessité supplémentaire doit
+être signalée avant application. L'ensemble historique des 65 chemins reste
+authentifié sur son commit livré ; il ne devient pas une autorisation de
+modifier indistinctement ces 65 fichiers.
+
+Production (9) :
+
+- backend/adapters/inbound/cli/local_browser.py
+- backend/infrastructure/composition/factories/conversation.py
+- backend/infrastructure/composition/bootstrap/conversation_worker.py
+- backend/adapters/outbound/system/conversation_job.py
+- backend/adapters/outbound/generation/openai/mapping.py
+- backend/adapters/outbound/generation/openai/adapter.py
+- backend/modules/work_orchestration/ports/outbound/generation_job.py
+- backend/adapters/outbound/openai/transport.py
+- backend/adapters/outbound/openai/contracts.py
+
+Tests, doubles et oracles R2 existants (7) :
+
+- tests/unit/test_openai_conversation_mapping.py
+- tests/integration/test_conversation_job_lifecycle.py
+- tests/integration/test_conversation_product.py
+- tests/integration/test_conversation_http.py
+- tests/architecture/test_conversation_product_boundary.py
+- tests/support/conversation_fakes.py
+- tests/architecture/test_local_browser_product_boundary.py
+
+Preuves et contrats actifs (5) :
+
+- architecture/adr/ADR-conversational-generation-product-boundary.md
+- docs/development/phase_12_18_h2_r2_generation/CONVERSATION_HTTP_LOCAL_V1.json
+- docs/development/phase_12_18_h2_r2_generation/LIVE_GENERATION_SCOPE.json
+- docs/development/phase_12_18_h2_r2_generation/IMPLEMENTATION_EVIDENCE.md
+- docs/development/phase_12_18_h2_r2_generation/MANIFEST_SHA256.txt
+
+Les adaptations d'oracle visent exclusivement l'inventaire exact et la
+lignée AST des sources réellement corrigées ; les autres assertions,
+historiques et 21 documents protégés/préparatoires restent préservés.
+Les factories local_browser, resolver existant, bindings et routing agents
+sont réutilisés sans modification présumée.
+
+Permissions : environnement dédié hors dépôt à partir des seuls wheels
+locaux conformes aux locks, Python 3.12 / OpenAI 3.8.0 ; secrets factices ;
+tests synthétiques et boucle locale. Aucune lecture de credential réel,
+donnée utilisateur/seed/runtime/sidecar, même métadonnée. Aucune installation
+dans le venv existant, aucun téléchargement ou changement de lock.
+P_LIVE et comptage API restent NOT_AUTHORIZED ; le budget de génération
+reste proposé. Les validations de ce correctif sont PENDING, pas PASS.
+
+### Réalisation du delta et état des preuves intermédiaires
+
+Les neuf points de production sont raccordés sans modifier le resolver,
+les bindings/routing agents ou la factory READ-15. Le CLI conserve son refus
+par défaut ; un grant fermé doit lier baseline, scope, requête, profil,
+pricing, schéma, bilan, environnement et namespace anti-rejeu. Une preuve
+de comptage approuvée séparément est obligatoire. L'entrée masquée intervient
+après ces préconditions, avant le job borné, sans repli vers une saisie visible.
+Le worker réutilise le même interpréteur, authentifie les sources et rejoue
+les contrôles avant tout resolver ; le hash de la requête effectivement
+produite est vérifié avant résolution/transmission.
+
+Deux pipes anonymes hérités et éphémères séparent credential et capture
+technique de l'IPC pédagogique. Ni socket externe ni fichier de credential.
+Les compteurs disponibles sont transmis avant parsing et publiés dans des
+reçus privés exclusifs. Une rupture du canal de résultat ne supprime pas
+les compteurs déjà capturés. Une absence réelle de preuve reste UNKNOWN.
+Les coûts sont soit inconnus, soit bornés, soit calculés au tarif documentaire
+(jamais présentés comme une facture). Le reasoning n'est pas additionné une
+seconde fois à la sortie ; l'absence d'un champ cache n'est pas zéro.
+
+Le transport partagé conserve son mode legacy. Le mode R2 refuse les
+configurations ambiantes pouvant modifier destination/headers/proxy ; URL
+OpenAI fixe, redirects désactivés, retries zéro, tier default explicite.
+La documentation officielle et le code du SDK verrouillé ont guidé ce
+traitement : [Responses](https://developers.openai.com/api/reference/cli/resources/responses/methods/create),
+[comptage](https://developers.openai.com/api/docs/guides/token-counting),
+[profil et tarifs](https://developers.openai.com/api/docs/models/gpt-5.6-terra).
+
+Environnement séparé : Python 3.12.14 / OpenAI 3.8.0 / Windows ; locks dev
+et calibration inchangés, 42 vérifications de wheels locaux conformes.
+L'installation est offline, hors dépôt ; le venv existant reste inchangé.
+Le SDK réellement importé doit appartenir au préfixe du nouvel environnement.
+Le parent et le worker échangent la même identité technique, sans chemin privé
+dans les preuves partageables. Aucun client avec credential réel n'est créé.
+
+Première série ciblée : 73 PASS, 1 FAIL (87,59 s). Le test de watchdog
+expirait avant le dispatch synthétique ; il avance maintenant une horloge
+injectée seulement après l'événement effectivement capturé, sans modifier
+la borne de production 120 s ni la non-régression de timeout.
+Deuxième série intermédiaire : 240 PASS (177,48 s), comprenant parcours
+privé, parsing invalide, refus, incomplete, rupture IPC, oracles et HTTP.
+Cette série n'est pas la validation finale du snapshot : des durcissements
+supplémentaires et tests de non-rejeu/saisie masquée ont suivi.
+Ruff global et mypy backend (724 sources) ont également réussi à ce stade.
+
+Le contrat historique de 65 chemins reste lié à son commit livré ; le delta
+de correction est exactement de 21 modifications, et l'union cumulative de
+67 chemins n'autorise aucune extension implicite. Les oracles refusent
+omission, substitution et fichier supplémentaire ; les identités historiques
+sont authentifiées sur leurs snapshots et les sources actives séparément.
+
+### Permission restante, sans nouveau chantier
+
+TOKEN_BOUND_PROOF = PENDING_AUTHORIZED_COUNT. Le handoff pur fournit les sept
+champs acceptés par input_tokens.count, leur hash et celui de la requête
+complète de génération ; les paramètres create-only sont explicitement
+séparés. Aucun compteur synthétique n'est assimilé à une mesure fournisseur.
+Le runner de comptage réel n'est pas activé : aucune construction de client
+authentifié ni appel ici. Il faut encore une autorisation distincte du
+comptage exact, de son transfert et de son coût documenté/couvert. Le coût
+du comptage n'est pas supposé gratuit et n'est pas inclus implicitement
+dans les 0,140000 USD proposés pour la génération.
+
+Après ces preuves et le commit, l'accord de génération devra nommer ce commit
+effectif, le scope et ses hashes requête/profil/schéma/pricing/bilan, le reçu
+de comptage autorisé, l'environnement, le namespace privé anti-rejeu et
+la source de credential masquée confirmée. Aucun grant réel ni signature
+n'est prérempli. Le snapshot initial et les sources de proposition restent
+inchangés et hors du correctif. R2_SYNTHETIC_WIRING_ONLY demeure le statut.
+
+### Résultats obtenus et arrêt borné avant commit
+
+Les séries suivantes ont réellement été exécutées. Leurs comptes se recouvrent ;
+ils ne s'additionnent pas à la globale.
+
+| Contrôle | Résultat constaté |
+|---|---|
+| Ciblés stables avant dernier drainage de métadonnées | 273 PASS, 0 FAIL, 0 SKIP ; 170,97 s |
+| Réemplois legacy / Review / schéma / resolver | 67 PASS, 0 FAIL, 0 SKIP ; 16,36 s |
+| Mapping et lifecycle après drainage et correction lint | 82 PASS, 0 FAIL, 0 SKIP ; 81,25 s |
+| Première collecte globale, sans importlib | ERROR de collision des deux modules READ-15 homonymes ; aucun test exécuté |
+| Globale SYNTHETIC_AUTHORIZED avec importlib | 5514 PASS, 2 FAIL, 28 SKIP ; 788,13 s |
+| Non-régression de frontière SDK après cette globale | 84 PASS, 0 FAIL, 0 SKIP ; 10,46 s |
+| Ruff global après correction SDK | PASS |
+| mypy backend après correction SDK | PASS, 724 sources |
+| compileall backend et calibration_tooling avant correction SDK | PASS ; caches externes |
+| pip check de l'environnement dédié | PASS |
+
+Invocation globale : `python -m pytest tests --import-mode=importlib
+--ignore=tests/non_functional/test_retrieval_quality_real_gate.py
+-p no:cacheprovider --basetemp <temp-prive>/global-importlib
+--junitxml <temp-prive>/global-importlib.xml -q --tb=short`.
+Le mode importlib est déjà documenté dans les preuves R1/R2. Aucun renommage,
+ignore supplémentaire, nouveau skip ou xfail n'a été introduit. Les 28 skips
+existants se répartissent en 23 gates SQLite réelles non configurées,
+3 gates historiques explicitement opt-in non activées et 2 tests de liens
+symboliques indisponibles dans cet environnement. REAL_SEED_GATE reste
+NOT_RUN / NOT_PASS ; les données utilisateur n'ont pas été inspectées.
+
+Identifiants des preuves JUnit conservées sous le temp privé du correctif :
+
+- stable-targeted.xml : `f00026cb45b5b50fa2078380eee7152f29fa12ef3b4a246639b8653df479455b` ;
+- legacy-reuse.xml : `8311d25c41d157c89adecd2cc77ae2a9669c41b8f1b2cf8d22646fe3998b9aec` ;
+- final-local.xml : `24c207137fb40f9996c5e499ec80f6a24381b962d0033922a957e6188f5bef37` ;
+- global-importlib.xml : `aab13fbb5a2d805426971813bbf1f66a4415efb631509218e78a5a65b09ae6a9` ;
+- sdk-boundary-final.xml : `c10cf2f7db015a71f00039019bd218290d9f3b5e9f2d2d90a3d9037c2e9449be`.
+
+Premier échec global : un import direct du SDK dans la composition. Corrigé
+dans les modules déjà inclus : l'adaptateur concret fournit son chemin
+d'import réel comme métadonnée privée et la composition le vérifie contre
+la distribution et le préfixe de l'environnement. Aucun type SDK ni import
+SDK ne sort désormais de sa frontière. Le guard historique
+test_openai_generation_adapter_fitness.py reste inchangé et a réussi dans
+la série de 84 tests, incluant les contre-exemples de version et de chemin
+SDK incorrects, sans client réel ni credential.
+
+Second échec global, encore ouvert :
+`tests/architecture/test_local_search_product_boundary.py`, fonction
+`test_exact_inventory_before_and_after_commit`, assertion fournissant
+`set(EXPECTED_R2_INVENTORY)` au validateur actuel. Elle fournit les 65 chemins
+livrés tandis que le contrôle actif exige leur union avec les deux modules
+OpenAI partagés autorisés, soit 67. Les deux diagnostics sont
+MISSING_R2_PATH pour contracts.py et transport.py sous
+backend/adapters/outbound/openai/. La preuve existante est réutilisée ; aucune
+nouvelle globale n'est lancée uniquement pour reproduire cette erreur.
+
+Delta additionnel exact proposé, NON APPLIQUÉ : un seul fichier de test
+supplémentaire, une seule assertion. Fournir au contrôle actif l'union
+explicite des 65 chemins historiques avec
+`backend/adapters/outbound/openai/contracts.py` et
+`backend/adapters/outbound/openai/transport.py`. Conserver l'assertion de
+compte historique 65, les baselines, toutes les autres assertions et les
+contrôles de chemin absent, supplémentaire ou substitué. Ne pas accepter
+silencieusement un inventaire actif incomplet dans le validateur commun.
+
+Cela porterait le delta de correction à 22 fichiers (toujours 67 dans
+l'union cumulative), avec adaptation de l'inventaire et non-régression dans
+les pièces R2 déjà incluses. Le fichier supplémentaire reste byte-identique
+à la baseline livrée ; cette extension attend un accord explicite. Aucun
+autre élargissement, chantier ou modification de contrat produit n'est requis.
+
+État de sortie de cette intervention : 21 fichiers modifiés non stagés,
+21 documents protégés/préparatoires inchangés et hors index ; aucun commit,
+push ou merge. La globale n'est pas PASS. L'autorisation de commit est
+conditionnelle et ne peut pas être consommée tant que le dernier échec
+n'est pas résolu puis validé. Après accord limité sur l'assertion : ciblés,
+globale synthétique finale, contrôles d'identité, commit cohérent et contrôle
+post-commit. Le comptage et P_LIVE restent distinctement non autorisés ;
+aucun comptage API, appel fournisseur, lecture de credential ou dépense.
+
+### Accord reçu pour l'assertion supplémentaire — reprise avant édition
+
+Le « oui » suivant la demande explicite d'extension vaut accord uniquement
+pour le delta décrit ci-dessus : une assertion du fichier
+tests/architecture/test_local_search_product_boundary.py, sa non-régression,
+les inventaires/preuves actifs, puis validation et commit local cohérent.
+L'inventaire effectif est désormais la liste initiale de 21 fichiers augmentée
+de ce seul fichier, soit 22 modifications ; l'union cumulative reste 67.
+Les 65 chemins historiques, toutes les autres assertions et les 21 documents
+protégés/préparatoires restent inchangés. L'ADR est complété et relu avant
+cette adaptation. Aucune date d'attestation propriétaire n'est inventée.
+Le comptage API, la génération réelle et toute dépense restent non autorisés.
+Les résultats antérieurs sont conservés comme traces, pas réétiquetés PASS.
+La validation finale de cette reprise est encore PENDING à cette étape.
+
+### Clôture synthétique après l'accord limité — état final de référence
+
+Cette section remplace les états d'attente précédents, conservés comme traces.
+L'assertion supplémentaire a été adaptée exactement comme approuvé. Un oracle
+AST compare tout son fichier au commit de départ et n'accepte que ce seul
+remplacement ; ses contre-exemples refusent un autre compte historique,
+l'omission d'un module partagé et toute instruction supplémentaire. Le
+validateur actif continue de refuser l'absence de contracts.py, de transport.py
+ou des deux : aucun ancien inventaire incomplet n'est exempté silencieusement.
+
+Résultats réellement obtenus sur le correctif à 22 fichiers :
+
+| Contrôle | Résultat |
+|---|---|
+| Ciblés de reprise, inventaires, frontières SDK et mapping | 243 PASS, 0 FAIL, 0 SKIP ; 40,31 s |
+| Globale SYNTHETIC_AUTHORIZED finale | 5524 PASS, 0 FAIL, 28 skips existants ; 775,21 s |
+| Ruff global, sans cache dépôt | PASS |
+| mypy backend, cache externe | PASS, 724 sources |
+| compileall backend et calibration_tooling, cache externe | PASS |
+| pip check isolé de l'environnement dédié | PASS |
+| Identité SDK importé et interpréteur | Python 3.12.14, Windows, OpenAI 3.8.0 ; PASS |
+
+Les deux échecs de la globale précédente sont résolus, sans retoucher le guard
+de confinement SDK ni une seconde assertion du guard d'inventaire local-search.
+La commande globale reste celle documentée ci-dessus, avec le basetemp
+`global-assertion-final` et le JUnit `global-assertion-final.xml` sous le temp
+privé du correctif. Les 28 skips et l'unique exclusion autorisée restent
+inchangés. Aucun nouveau skip/xfail de masquage, configuration persistante,
+réseau externe, paquet téléchargé ou accès à une donnée utilisateur.
+
+Preuves de reprise :
+
+- assertion-extension-targeted.xml : `f10ef4ab4cd95866a4ceb91affe87fb4dfdda0e8c705339d4c9c6c973a477e05` ;
+- global-assertion-final.xml : `313fa6bee5414af69c48708b25dc5511710ec6c0772a23f1685e4f4d4f112425`.
+
+La validation porte sur le code final ; les seules éditions qui la suivent
+sont la clôture documentaire active et son manifeste. L'index exact des 22
+fichiers, leurs octets, les 21 documents protégés/préparatoires hors index,
+l'absence de secrets/données runtime et le manifeste actif sont vérifiés
+avant le commit local cohérent autorisé. Un contrôle ciblé sur l'état final
+et des vérifications après commit sont requis ; leurs preuves restent dans
+le temp privé, sans second commit documentaire auto-référent. Le commit
+effectif est fourni dans la réponse de livraison et vérifiable par Git.
+
+### Handoff unique : identités et permissions restantes
+
+Le scope actif est validé synthétiquement, pas autorisé en live. Son fichier
+brut a le SHA-256 `ea3b57a7309e639554be5fc417349ce6eac228c384db71da221b38acbab544fa`.
+Le champ scope_sha256 du futur grant utilise la sérialisation JSON canonique,
+dont le SHA-256 est `89572eeb3204c895c22b559058229be6cd678d5e2562f40965d46f97f10b7502` ;
+ce n'est pas le hash des octets indentés du fichier. Le grant devra nommer le
+commit corrigé effectif, pas la baseline d'entrée 0c17d12.
+
+| Identité à lier | SHA-256 |
+|---|---|
+| Requête complète de génération | 576e7008056bd74038e1b74be94e3278e67b29fa5591f6699a34d964f15002a7 |
+| Profil | 9b8497a10a7ed5d9dd2854e0ddf5502e6bc5d5ef857ff5ffb8b87166658204b2 |
+| Schéma de sortie | 0bee00bebfe3af4b51589336b23b33dc7ac7e7078ebdc3d85ef6a8ebffd4e32e |
+| Pricing documentaire proposé | e4359625a5e0acf7142b35e472e98c5aed113f5af0b4bd4db1bcf5d5a6fac35d |
+| Bilan technique privé | 7ca587fdc0614f6fe9cd6329154065612ce97fd0ff7f57c3b4bf581ed8611a8f |
+| Requête distincte de comptage préparée | b284e5da6b8c341acac469cecec641b6185c22ebd92e5b8812a2c1835d628bb7 |
+
+Il reste à autoriser séparément le comptage exact et son transfert minimisé,
+avec coût documenté/couvert avant toute opération authentifiée. Aucun coût
+nul n'est supposé ; TOKEN_BOUND_PROOF reste PENDING_AUTHORIZED_COUNT. Le reçu
+obtenu devra être lié à la requête de génération et approuvé, sans reprise
+implicite, avant un grant de génération. Le handoff de comptage testé est pur,
+pas un appel réel effectué ni une autorisation de créer un client authentifié.
+
+La permission ultérieure de génération devra confirmer : OpenAI seulement,
+une unique requête/projection synthétique ci-dessus (trois passages C13,
+métadonnées pédagogiques, instructions et schéma), modèle Terra / low /
+4096 / tier default, environnement ci-dessus, saisie locale masquée et canal
+privé approuvés comme source effective, hash de la fixture synthétique alors
+explicitement fournie, namespace privé anti-rejeu, expiration et budget.
+Le plafond 0,140000 USD reste proposé, non approuvé ; il ne couvre pas
+implicitement le comptage. Aucune autorisation/signature réelle n'est créée.
+
+État de livraison : R2_SYNTHETIC_WIRING_ONLY ; P_LIVE = NOT_AUTHORIZED ;
+REAL_SEED_GATE = NOT_RUN / NOT_PASS ; PROVIDER_CALLS = 0 ; COUNT_API_CALLS = 0.
+R2_PRODUCT_COMPLETE n'est pas revendiqué. Aucun push, merge, R3, R4 ou H3.

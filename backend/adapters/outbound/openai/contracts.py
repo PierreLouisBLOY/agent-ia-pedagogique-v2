@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Protocol
 
@@ -64,6 +64,7 @@ class OpenAIResponsesRequest:
     output_schema: dict[str, object]
     max_output_tokens: int
     schema_name: str
+    service_tier: str | None = field(default=None, kw_only=True)
     reasoning_effort: OpenAIReasoningEffort | None = None
 
 
@@ -73,6 +74,7 @@ class OpenAIResponseUsage:
     cached_input_tokens: int | None = None
     output_tokens: int | None = None
     total_tokens: int | None = None
+    cache_write_input_tokens: int | None = field(default=None, kw_only=True)
     reasoning_tokens: int | None = None
 
 
@@ -81,6 +83,7 @@ class OpenAIResponsesResponse:
     status: OpenAIResponseStatus
     output_text: str | None = None
     usage: OpenAIResponseUsage = OpenAIResponseUsage()
+    service_tier: str | None = field(default=None, kw_only=True)
     incomplete_reason: OpenAIIncompleteReason = OpenAIIncompleteReason.NONE
 
 

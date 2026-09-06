@@ -248,6 +248,76 @@ def r2_environment_identity() -> dict[str, str]:
             "platform": sys.platform, "openai": version("openai")}
 
 
+_R2_UNKNOWN_COUNT_RECEIPT_SHA256 = "b31b77e43e949831b7c06b7ed30418f01edbd4c7b529b32fade95ec597bae936"
+_R2_UNKNOWN_COUNT_AUTHORIZATION_SHA256 = "5e62ec067cd99af49e5d378d29b473c3a3d7ba263ee43aa164944dae25c09c46"
+
+
+def count_receipt_financially_admissible_for_generation(
+    proof: Mapping[str, object], *, scope_sha256: str,
+) -> bool:
+    """Pure closed exception for one owner-accepted receipt, never a live grant.
+
+    Legacy known-cost proofs retain their six-field shape. UNKNOWN additionally
+    carries the original UTF-8 receipt/approval text (not paths) so their raw
+    SHA-256 identities can be verified without reading files or resolving keys.
+    Historical receipt flags are preserved; this is a new admissibility decision.
+    """
+    core = {"kind", "generation_request_sha256", "count_request_sha256", "input_tokens",
+            "count_authorization_sha256", "count_cost_status"}
+    count = proof.get("input_tokens")
+    authorization_sha = proof.get("count_authorization_sha256")
+    if (proof.get("kind") != "AUTHORIZED_PROVIDER_COUNT" or type(count) is not int
+            or not 0 < count <= 32768 or not isinstance(authorization_sha, str)
+            or re.fullmatch(r"[0-9a-f]{64}", authorization_sha) is None):
+        return False
+    cost = proof.get("count_cost_status")
+    if cost in ("APPROVED_BOUND", "MEASURED"):
+        # This specific approval accepts UNKNOWN, not a fabricated known/zero cost.
+        return set(proof) == core and authorization_sha != _R2_UNKNOWN_COUNT_AUTHORIZATION_SHA256
+    if (cost != "UNKNOWN" or set(proof) != core | {
+            "count_receipt_raw", "count_receipt_sha256", "count_authorization_raw"}
+            or authorization_sha != _R2_UNKNOWN_COUNT_AUTHORIZATION_SHA256
+            or proof["count_receipt_sha256"] != _R2_UNKNOWN_COUNT_RECEIPT_SHA256
+            or count != 1100
+            or scope_sha256 != "89572eeb3204c895c22b559058229be6cd678d5e2562f40965d46f97f10b7502"):
+        return False
+    receipt_raw, authorization_raw = proof["count_receipt_raw"], proof["count_authorization_raw"]
+    if not isinstance(receipt_raw, str) or not isinstance(authorization_raw, str):
+        return False
+    try:
+        receipt_bytes, authorization_bytes = receipt_raw.encode("utf-8"), authorization_raw.encode("utf-8")
+        if (len(receipt_bytes) > 4096 or len(authorization_bytes) > 4096
+                or hashlib.sha256(receipt_bytes).hexdigest() != _R2_UNKNOWN_COUNT_RECEIPT_SHA256
+                or hashlib.sha256(authorization_bytes).hexdigest() != authorization_sha):
+            return False
+        receipt = json.loads(receipt_raw)
+    except (UnicodeError, ValueError):
+        return False
+    if not isinstance(receipt, dict) or not {
+        "OWNER_R2_COUNT = APPROVED",
+        "COUNT_COST_STATUS = UNKNOWN_ACCEPTED_FOR_THIS_SINGLE_COUNT",
+        "COUNT_CALLS_MAX = 1", "COUNT_RETRY = FORBIDDEN",
+        "P_LIVE_GENERATION = NOT_AUTHORIZED", "OWNER_ATTESTATION = APPROVED",
+    }.issubset(authorization_raw.splitlines()):
+        return False
+    bindings = {
+        "baseline_commit": "dee62951e34a46af942aefdfcd9abfc3a2d0c7bb",
+        "scope_canonical_sha256": scope_sha256,
+        "count_authorization_sha256": authorization_sha,
+        "count_request_sha256": "b284e5da6b8c341acac469cecec641b6185c22ebd92e5b8812a2c1835d628bb7",
+        "generation_request_sha256": "576e7008056bd74038e1b74be94e3278e67b29fa5591f6699a34d964f15002a7",
+        "count_status": "PASS", "count_cost_status": "UNKNOWN", "replay": "FORBIDDEN",
+        "live_authorization": "CONSUMED", "P_LIVE_GENERATION": "NOT_AUTHORIZED",
+    }
+    return (all(receipt.get(key) == value for key, value in bindings.items())
+            and proof["count_request_sha256"] == bindings["count_request_sha256"]
+            and proof["generation_request_sha256"] == bindings["generation_request_sha256"]
+            and type(receipt.get("input_tokens")) is int and receipt["input_tokens"] == 1100
+            and type(receipt.get("COUNT_API_CALLS")) is int and receipt["COUNT_API_CALLS"] == 1
+            and type(receipt.get("GENERATION_CALLS")) is int and receipt["GENERATION_CALLS"] == 0
+            and receipt.get("provider_attempted") is True and receipt.get("response_received") is True)
+
+
 def validate_r2_grant(grant: Mapping[str, object], *, scope: Mapping[str, object],
                       baseline: str, now: datetime) -> Decimal:
     """No I/O: explicit owner grant, count receipt binding and reserve before secret."""
@@ -282,16 +352,10 @@ def validate_r2_grant(grant: Mapping[str, object], *, scope: Mapping[str, object
         raise ValueError("R2_SCOPE_REJECTED")
     handoff = r2_count_handoff(projection)
     proof = grant["token_count_receipt"]
-    proof_keys = {"kind", "generation_request_sha256", "count_request_sha256", "input_tokens",
-                  "count_authorization_sha256", "count_cost_status"}
-    if (not isinstance(proof, dict) or set(proof) != proof_keys
-            or proof["kind"] != "AUTHORIZED_PROVIDER_COUNT"
+    if (not isinstance(proof, dict)
+            or not count_receipt_financially_admissible_for_generation(proof, scope_sha256=r2_digest(dict(scope)))
             or proof["generation_request_sha256"] != handoff["generation_request_sha256"]
             or proof["count_request_sha256"] != handoff["count_request_sha256"]
-            or type(proof["input_tokens"]) is not int or not 0 < proof["input_tokens"] <= 32768
-            or proof["count_cost_status"] not in {"APPROVED_BOUND", "MEASURED"}
-            or not isinstance(proof["count_authorization_sha256"], str)
-            or re.fullmatch(r"[0-9a-f]{64}", proof["count_authorization_sha256"]) is None
             or grant["token_count_receipt_sha256"] != r2_digest(proof)):
         raise ValueError("R2_AUTHORIZED_COUNT_REQUIRED")
     return ceiling

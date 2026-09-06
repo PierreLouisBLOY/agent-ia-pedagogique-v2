@@ -607,3 +607,123 @@ implicitement le comptage. Aucune autorisation/signature réelle n'est créée.
 État de livraison : R2_SYNTHETIC_WIRING_ONLY ; P_LIVE = NOT_AUTHORIZED ;
 REAL_SEED_GATE = NOT_RUN / NOT_PASS ; PROVIDER_CALLS = 0 ; COUNT_API_CALLS = 0.
 R2_PRODUCT_COMPLETE n'est pas revendiqué. Aucun push, merge, R3, R4 ou H3.
+
+## Correctif ciblé COUNT_COST_UNKNOWN — décision et delta PRE (2026-09-06)
+
+Cette section succède au handoff précédent, sans réécrire ses constats historiques.
+Baseline vérifiée : `dee62951e34a46af942aefdfcd9abfc3a2d0c7bb`.
+Autorisation du correctif : document propriétaire SHA-256
+`73a6257fe44f32d913c65c84848d09c83cf13502043e01ae745b1645b7b8ac84`,
+attesté le `2026-09-06T15:15:53+02:00`. Les quatre pièces du manifeste
+du ZIP de correctif ont été vérifiées avant édition.
+
+Le reçu externe `b31b77e43e949831b7c06b7ed30418f01edbd4c7b529b32fade95ec597bae936`
+est PASS, avec 1100 tokens et un coût UNKNOWN accepté pour cet appel unique
+par l'autorisation `5e62ec067cd99af49e5d378d29b473c3a3d7ba263ee43aa164944dae25c09c46`.
+Il reste immuable et hors Git. Aucun appel n'est autorisé dans ce correctif.
+
+Cause exacte : `validate_r2_grant`, dans la factory conversation, refuse
+`proof["count_cost_status"]` hors de `{APPROVED_BOUND, MEASURED}` et lève
+`R2_AUTHORIZED_COUNT_REQUIRED`. Le libellé `COUNT_COST_NOT_ESTABLISHED`
+provient du reçu externe ; aucune assertion applicative de ce nom n'existe.
+Le reçu externe complet n'est pas non plus le format fermé à six champs
+du `token_count_receipt` actuel : une enveloppe vérifiable est nécessaire.
+
+Allowlist minimale déclarée avant édition technique, sans nouveau chemin :
+
+| Fichier | SHA-256 PRE |
+|---|---|
+| backend/infrastructure/composition/factories/conversation.py | c9be91f92cb4e7551eeb439c35fc9c11464b0c67676dc663db4868a8ec08a216 |
+| tests/unit/test_openai_conversation_mapping.py | eef858841de9052c3f42a590d2fcdfd45347faf7881e2990fb907959570dd7cd |
+| docs/development/phase_12_18_h2_r2_generation/IMPLEMENTATION_EVIDENCE.md | 70382518b753203b0037e7aee19c36929efa588239111d1015b3415ced1a99a0 |
+| docs/development/phase_12_18_h2_r2_generation/MANIFEST_SHA256.txt | d29e45fa00d75a8584832ed3fc4b0266af69510d0ec7385dc4f7421f2c801bc2 |
+
+Décision technique : prédicat pur et fermé dans la même factory, sans nouvelle
+frontière ni accès fichier/provider. Le cas UNKNOWN exigera les octets UTF-8
+du reçu et de l'autorisation dans une enveloppe dédiée, leurs empreintes exactes,
+le scope inchangé, PASS, 1100 tokens et l'interdiction de rejeu. Le chemin
+historique à coût connu reste fermé à ses six champs ; il ne peut pas servir
+à renommer artificiellement le coût de cette autorisation UNKNOWN en coût connu.
+La conversion éventuelle appartient au futur grant privé, jamais au scope commité.
+
+Le contrat du coût de génération reste inchangé. Le calcul documentaire
+`0.051902 USD` est correct avec 1100 tokens, les tarifs du scope et le facteur
+1.25 ; la proposition `0.060000 USD` n'est ni approuvée ni recevable par le guard
+de budget actuel, qui exige encore au moins `0.131072 USD` et au plus
+`0.140000 USD`. Aucun ajustement silencieux de ce guard n'est inclus.
+
+### Résultat du correctif borné
+
+`R2_COUNT_RECEIPT_ADMISSIBILITY_FIX = PASS`.
+Le prédicat a été exécuté hors ligne sur les octets du reçu réel et de
+l'autorisation réelle, avec les pins de production non mockés : admissibilité
+TRUE, 1100 tokens, coût UNKNOWN conservé. L'ancien champ d'inadmissibilité du
+reçu décrit sa situation historique et n'est pas réécrit. Le nouveau prédicat
+porte la décision dérivée, sans modifier ni réémettre ce reçu.
+
+Format de la future enveloppe privée `token_count_receipt` : les six champs
+historiques, dont `count_cost_status = UNKNOWN`, plus exactement :
+
+- `count_receipt_raw` : texte UTF-8 exact du reçu, fin de ligne comprise ;
+- `count_receipt_sha256` : empreinte des octets originaux `b31b77e4...bae936` ;
+- `count_authorization_raw` : texte UTF-8 exact de l'attestation `5e62ec06...09c46`.
+
+Les deux empreintes complètes sont données ci-dessus et fixées dans le
+prédicat. Le champ externe `token_count_receipt_sha256` reste `r2_digest` de
+l'enveloppe complète à neuf champs : il ne faut pas lui substituer le hash du
+fichier reçu. Aucune approbation ou génération réelle n'est créée par cette
+conversion. Le test complet avec grant exclusivement synthétique sérialisait
+5201 octets, sous la limite existante de 16384 octets ; cette limite est inchangée.
+
+Les non-régressions positives stockées sont entièrement synthétiques : seules
+les deux empreintes sont remplacées en mémoire dans ces tests pour examiner
+les contre-exemples sémantiques. Un test indépendant impose les deux pins de
+production exacts et rejette cette fixture. La vérification externe du reçu
+réel, sans substitution des pins, complète cette couverture ; aucun reçu
+provider brut, credential ni attestation brute n'est entré dans Git.
+
+Contrôles réellement exécutés :
+
+| Contrôle | Résultat |
+|---|---|
+| Mapping R2, génération unitaire, guards conversation/recherche locale | 271 PASS, 0 FAIL, 0 SKIP ; exécution finale 34,46 s |
+| Intégration HTTP/produit/job et réemplois génération/Review/schéma/secrets factices | 108 PASS, 0 FAIL, 0 SKIP ; 145,48 s |
+| Ruff dépôt, sans cache | PASS |
+| mypy backend strict, cache externe | PASS, 724 fichiers |
+| compileall backend, bytecode externe | PASS |
+| Reçu réel : prédicat sans I/O/provider, refus de P_LIVE absent | PASS ; reçu inchangé |
+| Inventaire/hygiène avant commit | 4 fichiers dans ce lot ; 21 documents protégés inchangés et hors index ; 66 entrées du manifeste ; 0 candidat secret/chemin privé |
+
+Les défauts de commande et de typage rencontrés ont été corrigés dans ce lot :
+une première sélection nommait un fichier de test inexistant (aucun test lancé),
+Ruff demandait un import multiligne et mypy signalait un cast redondant.
+Aucun test n'a été exclu, aucun skip/xfail ajouté, aucune assertion historique
+affaiblie. Les résultats ci-dessus proviennent des exécutions réussies.
+
+Preuves externes, sans contenu pédagogique ou secret :
+
+- `final-validation.xml` : `86c070c160db450e24298970c0be13cb3f24ee6729f874447c85850493a32e04` ;
+- `integration.xml` : `7d749249563d31e21b8216aa91c7c63aba7946babcf9d04f6b8e2c3b23133e5f` ;
+- `actual_receipt_validation.json` : `642eb12099bea3106ad066e56dc8a629f677f93367d50722082a3b6d916e74ba`.
+
+La suite globale n'est pas relancée : l'impact est limité au grant interne R2,
+couvert par les validations unitaires, d'intégration, de guards et de réemplois
+ci-dessus, plus lint/typecheck/compilation globaux. Aucun contrat métier, API,
+route, modèle, schéma, plafond ou provider partagé n'est modifié.
+
+Le scope brut et son hash canonique, le reçu externe, l'autorisation du
+comptage et les manifests historiques restent inchangés. Seul le manifeste
+actif est actualisé pour les trois cibles éditées ; ses 66 chemins ne changent
+pas. Après ces seules éditions documentaires, le diff/index, le manifeste et
+les protections sont revérifiés avant le commit local, puis un contrôle ciblé
+et la lecture authentifiée des sources sont rejoués après commit. Le SHA du
+commit effectif est livré séparément afin d'éviter l'auto-référence.
+
+État final de ce lot : `COUNT_RECEIPT_ADMISSIBLE = TRUE`,
+`INPUT_TOKEN_BOUND = 1100`, `COUNT_API_CALLS = 0`, `GENERATION_CALLS = 0`,
+`P_LIVE_GENERATION = NOT_AUTHORIZED`, `REAL_SEED_GATE = NOT_RUN / NOT_PASS`.
+Le seul comptage historique reste consommé, sans retry ni reprise.
+Prochaine étape : décision propriétaire P_LIVE liée au nouveau commit et
+à un budget compatible avec le contrat inchangé ; la proposition 0,060000 USD
+nécessiterait une décision distincte sur le contrat budgétaire avant utilisation.
+Aucun push, merge, R3, R4 ou H3.

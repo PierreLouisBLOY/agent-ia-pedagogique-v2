@@ -18,7 +18,7 @@ d22e0357f52ee3ae9c107f379a141ecdd54fb729333aab279ac2e4f3766abf4c  ../../../backe
 1ee5cf1f27fdb9554350be8f9486856fdd84b86ae57d471e589cfa952e2281b3  ../../../backend/infrastructure/composition/bindings/conversation_agents.py
 722ed3051b7fbd06cd1649dddf8681d812de66a18c0add7e50cb7ad8e5540c90  ../../../backend/infrastructure/composition/bindings/conversation_routing.py
 13015550bd5f902184bb013a2bf6c35cc01f0afe06f2b5708ff77abb4041613a  ../../../backend/infrastructure/composition/bootstrap/conversation_worker.py
-c9be91f92cb4e7551eeb439c35fc9c11464b0c67676dc663db4868a8ec08a216  ../../../backend/infrastructure/composition/factories/conversation.py
+db2cfbbc46a370ff402c585f76a2faf929635609ff6c11c18372a6f47f74462f  ../../../backend/infrastructure/composition/factories/conversation.py
 187d25613d9234264f13d9a555c67c229f09cd072dd4b1cf1a52d3aaf277aa39  ../../../backend/infrastructure/composition/factories/local_browser.py
 a320bb5df2ca159384830df9ed98ab2624e3c2bbdb264c46482a264b7980ffcc  ../../../backend/modules/pedagogical_context/application/services/conversation_context.py
 02cbdf1f24286b6b04f3891e93d8c7a36b07e64863f40c1e206271097ba224d3  ../../../backend/modules/pedagogical_context/contracts/dto/conversation_context.py
@@ -59,8 +59,8 @@ e28add30b67269fc4c5ad4d82048e1cdaf23bdf0d0b7e99f7f3e7d46b492c2a1  ../../../tests
 0fba05cbe7681e12afe162b3dfee9917adcf34b95874221cef1f3942a4b7efe7  ../../../tests/unit/test_conversation_generation.py
 50a926724111f9752ae16ee37aa6ee319b671301ba5394dba78f1025b010ece3  ../../../tests/unit/test_conversation_routes_security.py
 56c91b80ab76ffe8db5eb6356de1f18743522f1ebf5453eb4b00c5910cf80499  ../../../tests/unit/test_local_browser_product_routes.py
-eef858841de9052c3f42a590d2fcdfd45347faf7881e2990fb907959570dd7cd  ../../../tests/unit/test_openai_conversation_mapping.py
+ff459b8caf7c73d72fd9c0c6ffc1b0b2ea244c3ff70c9f7a45c3181a875670b5  ../../../tests/unit/test_openai_conversation_mapping.py
 9870dcf08c7a1b526dc8dd7624e82e2d88cc7d7bddcf48d8ef565cdc364dc922  ../../../tests/unit/test_production_read.py
 b65f7927ff0b8605be3038600f365ada359680596051a57ddae5282d81ce5332  CONVERSATION_HTTP_LOCAL_V1.json
-70382518b753203b0037e7aee19c36929efa588239111d1015b3415ced1a99a0  IMPLEMENTATION_EVIDENCE.md
+f9aa511c0a05367a34f9326c4f29123607779b62c256dbf563ba443f2504460b  IMPLEMENTATION_EVIDENCE.md
 ea3b57a7309e639554be5fc417349ce6eac228c384db71da221b38acbab544fa  LIVE_GENERATION_SCOPE.json

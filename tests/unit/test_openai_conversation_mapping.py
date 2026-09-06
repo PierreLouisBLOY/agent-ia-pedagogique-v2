@@ -392,3 +392,184 @@ def test_cli_never_falls_back_to_unmasked_input(monkeypatch, capsys, tty):
         "--data-root", "UNOPENED_SYNTHETIC_ROOT", "--runtime-sha256", "a" * 64,
         "--enable-conversation", "--live-authorization", "UNOPENED_SYNTHETIC_GRANT"]) == 1
     assert capsys.readouterr().out.strip() == "R2_LIVE_PREFLIGHT_NOT_READY"
+
+
+def synthetic_unknown_count_proof(monkeypatch=None, *, receipt_changes=None, approval=None):
+    """Synthetic only: production pinned digests are never met by this fixture.
+
+    Patching exactly the two pins lets tests exercise semantic counterexamples;
+    a separate unpatched offline check uses the actual receipt outside Git.
+    """
+    import hashlib
+
+    from backend.infrastructure.composition.factories import conversation
+    from tests.support.conversation_fakes import corrective_scope
+    scope = corrective_scope()
+    authorization = approval if approval is not None else (
+        "# SYNTHETIC UNIT TEST, NOT A REAL OWNER ATTESTATION\n"
+        "OWNER_R2_COUNT = APPROVED\n"
+        "COUNT_COST_STATUS = UNKNOWN_ACCEPTED_FOR_THIS_SINGLE_COUNT\n"
+        "COUNT_CALLS_MAX = 1\nCOUNT_RETRY = FORBIDDEN\n"
+        "P_LIVE_GENERATION = NOT_AUTHORIZED\nOWNER_ATTESTATION = APPROVED\n")
+    auth_sha = hashlib.sha256(authorization.encode()).hexdigest()
+    receipt = {"schema": "SYNTHETIC_TEST_NOT_PROVIDER_OUTPUT",
+        "baseline_commit": "dee62951e34a46af942aefdfcd9abfc3a2d0c7bb",
+        "scope_canonical_sha256": conversation.r2_digest(scope),
+        "count_authorization_sha256": auth_sha,
+        "count_request_sha256": scope["count_handoff"]["count_request_sha256"],
+        "generation_request_sha256": scope["projection_sha256"],
+        "count_status": "PASS", "count_cost_status": "UNKNOWN", "input_tokens": 1100,
+        "replay": "FORBIDDEN", "live_authorization": "CONSUMED",
+        "P_LIVE_GENERATION": "NOT_AUTHORIZED", "COUNT_API_CALLS": 1, "GENERATION_CALLS": 0,
+        "provider_attempted": True, "response_received": True}
+    receipt.update(receipt_changes or {})
+    raw = json.dumps(receipt, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
+    receipt_sha = hashlib.sha256(raw.encode()).hexdigest()
+    if monkeypatch is not None:
+        monkeypatch.setattr(conversation, "_R2_UNKNOWN_COUNT_RECEIPT_SHA256", receipt_sha)
+        monkeypatch.setattr(conversation, "_R2_UNKNOWN_COUNT_AUTHORIZATION_SHA256", auth_sha)
+    return {"kind": "AUTHORIZED_PROVIDER_COUNT", "count_cost_status": "UNKNOWN", "input_tokens": 1100,
+        "count_request_sha256": scope["count_handoff"]["count_request_sha256"],
+        "generation_request_sha256": scope["projection_sha256"], "count_authorization_sha256": auth_sha,
+        "count_receipt_raw": raw, "count_receipt_sha256": receipt_sha,
+        "count_authorization_raw": authorization}
+
+
+def unknown_count_admissible(proof):
+    from backend.infrastructure.composition.factories.conversation import (
+        count_receipt_financially_admissible_for_generation,
+        r2_digest,
+    )
+    from tests.support.conversation_fakes import corrective_scope
+    return count_receipt_financially_admissible_for_generation(proof, scope_sha256=r2_digest(corrective_scope()))
+
+
+def test_unknown_cost_pins_exact_owner_and_receipt_not_synthetic():
+    from backend.infrastructure.composition.factories import conversation
+    assert conversation._R2_UNKNOWN_COUNT_RECEIPT_SHA256 == "b31b77e43e949831b7c06b7ed30418f01edbd4c7b529b32fade95ec597bae936"
+    assert conversation._R2_UNKNOWN_COUNT_AUTHORIZATION_SHA256 == "5e62ec067cd99af49e5d378d29b473c3a3d7ba263ee43aa164944dae25c09c46"
+    assert not unknown_count_admissible(synthetic_unknown_count_proof())
+
+
+def test_unknown_cost_exact_accepted_semantics_are_pure_without_live(monkeypatch):
+    from backend.adapters.outbound.openai import transport
+    from backend.infrastructure.composition.factories.conversation import (
+        count_receipt_financially_admissible_for_generation,
+        r2_digest,
+    )
+    from tests.support.conversation_fakes import corrective_scope
+    proof = synthetic_unknown_count_proof(monkeypatch)
+    scope_hash = r2_digest(corrective_scope())
+    before = dict(proof)
+    def forbidden(*args, **kwargs):
+        pytest.fail("Pure count admissibility must not resolve files, credentials or SDK clients")
+    monkeypatch.setattr(transport, "OpenAI", forbidden)
+    monkeypatch.setattr("builtins.open", forbidden)
+    assert count_receipt_financially_admissible_for_generation(proof, scope_sha256=scope_hash)
+    assert proof == before and proof["count_cost_status"] == "UNKNOWN"
+
+
+@pytest.mark.parametrize("field,value", [
+    ("count_status", "FAILED"), ("count_status", "UNKNOWN"), ("count_status", None),
+    ("input_tokens", 1101), ("input_tokens", 1100.0), ("input_tokens", True),
+    ("count_cost_status", 0), ("count_cost_status", "MEASURED"),
+    ("replay", "ALLOWED"), ("replay", None), ("live_authorization", "NOT_CONSUMED"),
+    ("baseline_commit", "0" * 40), ("scope_canonical_sha256", "0" * 64),
+    ("count_authorization_sha256", "0" * 64), ("count_request_sha256", "0" * 64),
+    ("generation_request_sha256", "0" * 64), ("COUNT_API_CALLS", 2), ("COUNT_API_CALLS", True),
+    ("GENERATION_CALLS", 1), ("GENERATION_CALLS", False),
+    ("provider_attempted", False), ("response_received", False), ("P_LIVE_GENERATION", "AUTHORIZED"),
+])
+def test_unknown_count_semantic_counterexamples_even_with_synthetic_pins(monkeypatch, field, value):
+    proof = synthetic_unknown_count_proof(monkeypatch, receipt_changes={field: value})
+    assert not unknown_count_admissible(proof)
+
+
+@pytest.mark.parametrize("field,value", [
+    ("input_tokens", 1101), ("input_tokens", 1100.0), ("count_cost_status", 0),
+    ("count_request_sha256", "0" * 64), ("generation_request_sha256", "0" * 64),
+    ("count_authorization_sha256", "0" * 64), ("count_receipt_sha256", "0" * 64),
+    ("count_authorization_raw", ""), ("count_receipt_raw", "{}"),
+    ("count_receipt_raw", None), ("kind", "BYTE_ESTIMATE"),
+])
+def test_unknown_count_envelope_drift_rejected(monkeypatch, field, value):
+    proof = synthetic_unknown_count_proof(monkeypatch)
+    proof[field] = value
+    assert not unknown_count_admissible(proof)
+
+
+@pytest.mark.parametrize("missing", ["count_authorization_raw", "count_receipt_raw", "count_receipt_sha256"])
+def test_unknown_count_missing_acceptance_or_evidence_rejected(monkeypatch, missing):
+    proof = synthetic_unknown_count_proof(monkeypatch)
+    del proof[missing]
+    assert not unknown_count_admissible(proof)
+
+
+def test_owner_cost_acceptance_must_be_explicit_even_with_synthetic_auth_pin(monkeypatch):
+    original = synthetic_unknown_count_proof()["count_authorization_raw"]
+    proof = synthetic_unknown_count_proof(monkeypatch, approval=original.replace(
+        "COUNT_COST_STATUS = UNKNOWN_ACCEPTED_FOR_THIS_SINGLE_COUNT\n", ""))
+    assert not unknown_count_admissible(proof)
+
+
+@pytest.mark.parametrize("cost", ["APPROVED_BOUND", "MEASURED", 0, "0"])
+def test_unknown_authorization_cannot_be_relabelled_known_or_zero(monkeypatch, cost):
+    proof = synthetic_unknown_count_proof(monkeypatch)
+    for key in ("count_receipt_raw", "count_receipt_sha256", "count_authorization_raw"):
+        del proof[key]
+    proof["count_cost_status"] = cost
+    assert not unknown_count_admissible(proof)
+
+
+def test_unknown_count_scope_is_not_generalized(monkeypatch):
+    from backend.infrastructure.composition.factories.conversation import (
+        count_receipt_financially_admissible_for_generation,
+    )
+    proof = synthetic_unknown_count_proof(monkeypatch)
+    assert not count_receipt_financially_admissible_for_generation(proof, scope_sha256="0" * 64)
+
+
+@pytest.mark.parametrize("live", [False, None, "MISSING", True])
+def test_admissible_count_still_requires_separate_generation_grant(monkeypatch, live):
+    from datetime import UTC, datetime
+    from decimal import Decimal
+    from types import SimpleNamespace
+
+    from backend.infrastructure.composition.factories.conversation import (
+        r2_digest,
+        validate_r2_grant,
+    )
+    from tests.support.conversation_fakes import corrective_grant, corrective_scope
+    grant = corrective_grant(SimpleNamespace(expected_sha256="b" * 64))
+    grant["token_count_receipt"] = synthetic_unknown_count_proof(monkeypatch)
+    grant["token_count_receipt_sha256"] = r2_digest(grant["token_count_receipt"])
+    if live == "MISSING":
+        del grant["live_authorized"]
+    else:
+        grant["live_authorized"] = live
+    if live is True:
+        assert validate_r2_grant(grant, scope=corrective_scope(), baseline="f" * 40,
+                                 now=datetime.now(UTC)) == Decimal("0.140000")
+    else:
+        with pytest.raises(ValueError, match="R2_GRANT_REJECTED"):
+            validate_r2_grant(grant, scope=corrective_scope(), baseline="f" * 40, now=datetime.now(UTC))
+
+
+def test_unknown_count_does_not_change_generation_budget_contract(monkeypatch):
+    from datetime import UTC, datetime
+    from decimal import Decimal
+    from types import SimpleNamespace
+
+    from backend.infrastructure.composition.factories.conversation import (
+        proposed_conversation_cost,
+        r2_digest,
+        validate_r2_grant,
+    )
+    from tests.support.conversation_fakes import corrective_grant, corrective_scope
+    grant = corrective_grant(SimpleNamespace(expected_sha256="b" * 64))
+    grant["token_count_receipt"] = synthetic_unknown_count_proof(monkeypatch)
+    grant["token_count_receipt_sha256"] = r2_digest(grant["token_count_receipt"])
+    grant["ceiling_usd"] = "0.060000"
+    assert proposed_conversation_cost() == Decimal("0.131072")
+    with pytest.raises(ValueError, match="R2_BUDGET_REJECTED"):
+        validate_r2_grant(grant, scope=corrective_scope(), baseline="f" * 40, now=datetime.now(UTC))

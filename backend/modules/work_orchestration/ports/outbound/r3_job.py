@@ -1,0 +1,13 @@
+from typing import Protocol
+
+from backend.modules.work_orchestration.contracts.dto.r3_review_modify import (
+    R3JobRequest,
+    R3JobResult,
+)
+
+
+class R3JobPort(Protocol):
+    def authorize(self, request: R3JobRequest) -> None: ...
+    def start(self, request: R3JobRequest) -> None: ...
+    def poll(self) -> R3JobResult | None: ...
+    def close(self) -> None: ...

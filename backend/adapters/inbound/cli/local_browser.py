@@ -31,9 +31,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--runtime-sha256", required=True)
     parser.add_argument("--enable-conversation", action="store_true",
                         help="R2 volatile, sans autorisation fournisseur implicite")
+    parser.add_argument("--enable-review-modify", action="store_true",
+                        help="R3 volatile ; aucun provider autorisé")
     parser.add_argument("--live-authorization", type=Path,
                         help="Fichier explicite réservé au handoff live ; refusé tant que ses préconditions ne sont pas établies")
     args = parser.parse_args(argv)
+    if args.enable_review_modify and (not args.enable_conversation or args.live_authorization is not None):
+        print("R3_SYNTHETIC_ONLY")
+        return 1
     jobs = None
     secret_value = ""
     if args.live_authorization is not None:
@@ -63,6 +68,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             Read15RuntimeTarget(args.runtime, args.data_root, args.runtime_sha256),
             enable_conversation=args.enable_conversation,
             generation_jobs=jobs,
+            enable_review_modify=args.enable_review_modify,
         )
     except Exception:
         print("LOCAL_READ15_STARTUP_REJECTED")

@@ -154,6 +154,13 @@ _EXPECTED_ROUTES = (
     (("POST",), "/api/v2/conversation/messages", None),
     (("POST",), "/api/v2/conversation/generations", None),
     (("GET",), "/api/v2/productions/{production_ref}/versions/{version_ref}", None),
+    (("POST",), "/api/v2/conversation/assessment-preparations", None),
+    (("POST",), "/api/v2/conversation/reviews", None),
+    (("GET",), "/api/v2/conversation/reviews/{review_ref}", None),
+    (("POST",), "/api/v2/conversation/validations", None),
+    (("POST",), "/api/v2/conversation/modifications", None),
+    (("GET",), "/api/v2/conversation/operations/{operation_ref}", None),
+    (("GET",), "/api/v2/productions/{production_ref}/versions/{version_ref}/assessment", None),
     (("GET", "HEAD"), "/", "index.html"),
     (("GET", "HEAD"), "/assets/app.js", "app.js"),
     (("GET", "HEAD"), "/assets/styles.css", "styles.css"),
@@ -263,23 +270,32 @@ def _literal(node: ast.expr, constants: dict[str, object]) -> object:
 
 
 def route_contract_violations(root: Path) -> list[str]:
+    from tests.support.r3_guard_oracle import R3_CONTRACT, R3_ROUTES
     constants: dict[str, object] = {}
     for node in ast.parse((root / ROUTES_PATH).read_text(encoding="utf-8")).body:
         if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.value:
             if node.target.id in {"READ15_TEMPLATE", "SEARCH_TEMPLATE", "_RESOURCE_PREFIX", "ROUTE_SPECS",
                                   "CONVERSATION_TEMPLATE", "CONVERSATION_MESSAGES_TEMPLATE",
-                                  "CONVERSATION_GENERATIONS_TEMPLATE", "PRODUCTION_VERSION_TEMPLATE"}:
+                                  "CONVERSATION_GENERATIONS_TEMPLATE", "PRODUCTION_VERSION_TEMPLATE",
+                                  "R3_PREPARATION_TEMPLATE", "R3_REVIEWS_TEMPLATE", "R3_REVIEW_TEMPLATE",
+                                  "R3_VALIDATIONS_TEMPLATE", "R3_MODIFICATIONS_TEMPLATE",
+                                  "R3_OPERATION_TEMPLATE", "R3_ASSESSMENT_TEMPLATE"}:
                 constants[node.target.id] = _literal(node.value, constants)
     from backend.adapters.inbound.api.routes import ROUTE_SPECS
-    contract = json.loads((root / _CONTRACT).read_text(encoding="utf-8"))
-    documented = tuple(
-        (tuple(row["methods"]), row["path"], row["asset"]) for row in contract["routes"]
-    )
+    historical = json.loads((root / _CONTRACT).read_text(encoding="utf-8"))
+    documented_r2 = tuple((tuple(r["methods"]), r["path"], r["asset"]) for r in historical["routes"])
+    # Legacy mutation fixtures supply only their historical document. The active
+    # contract remains independently checked against the literal oracle, never inferred.
+    active_path = root / R3_CONTRACT
+    contract = json.loads((active_path if active_path.is_file() else ROOT / R3_CONTRACT).read_text("utf-8"))
+    documented = tuple((tuple(r["methods"]), r["path"], r["asset"]) for r in contract["routes"])
     violations = []
-    if constants.get("ROUTE_SPECS") != _EXPECTED_ROUTES:
+    if constants.get("ROUTE_SPECS") != R3_ROUTES:
         violations.append("AST_REGISTRY_DRIFT")
-    if ROUTE_SPECS != _EXPECTED_ROUTES or documented != _EXPECTED_ROUTES:
+    if ROUTE_SPECS != R3_ROUTES or documented != R3_ROUTES or _EXPECTED_ROUTES != R3_ROUTES:
         violations.append("CONTRACT_REGISTRY_DRIFT")
+    if documented_r2 != R3_ROUTES[:6] + R3_ROUTES[-3:]:
+        violations.append("HISTORICAL_R2_REGISTRY_DRIFT")
     for path in (root / "backend/adapters/inbound/api").rglob("*.py"):
         if path.relative_to(root).as_posix() != ROUTES_PATH:
             if "/api/v2" in path.read_text(encoding="utf-8"):
@@ -323,19 +339,14 @@ def inventory_violations(root: Path, changed: set[str] | None = None) -> list[st
     assert contract["corrective_inventory"] == list(CORRECTION_PATHS)
     assert contract["corrective_baseline_commit"] == "0c17d12eea1e1e6d4b04d943e756e0c8e35c41ba"
     indexed = set()
+    active_errors = []
     if changed is None:
-        changed = set()
-        for arguments in (
-            ["diff", "--name-only", _R2_BASELINE, "--"],
-            ["diff", "--cached", "--name-only", _R2_BASELINE, "--"],
-            ["ls-files", "--others", "--exclude-standard"],
-        ):
-            result = subprocess.run(
-                ["git", *arguments], cwd=root, capture_output=True, text=True, check=True
-            )
-            changed.update(result.stdout.splitlines())
-            if "--cached" in arguments:
-                indexed.update(result.stdout.splitlines())
+        from tests.support.r3_guard_oracle import R3_BASELINE, active_inventory
+        # R2 is closed, not reauthorized by the active R3 delta.
+        result = subprocess.run(["git", "diff", "--name-only", _R2_BASELINE, R3_BASELINE, "--"],
+            cwd=root, capture_output=True, text=True, check=True)
+        changed = set(result.stdout.splitlines())
+        active_errors = active_inventory(root)
     protected = {item["path"]: item["sha256"] for item in contract["protected_documents"]}
     assert protected == dict(EXPECTED_PROTECTED_DOCUMENTS)
     allowed = set(EXPECTED_R2_INVENTORY) | set(CORRECTION_PATHS)
@@ -350,7 +361,7 @@ def inventory_violations(root: Path, changed: set[str] | None = None) -> list[st
         path = root / name
         if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != digest:
             violations.append("PROTECTED_DOCUMENT_CHANGED:" + name)
-    return violations
+    return violations + active_errors
 
 
 def test_server_framework_and_application_boundaries() -> None:

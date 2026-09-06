@@ -362,3 +362,143 @@ readProductionButton.addEventListener("click", async () => {
   }
 });
 refreshConversation();
+
+// R3: no persistent browser store, promotion, export, or implicit POST retry.
+const r3Status = document.getElementById("r3-status");
+const r3Content = document.getElementById("r3-content");
+const r3Version = document.getElementById("r3-version");
+let r3State = null;
+let r3Busy = false;
+let r3Uncertain = false;
+let r3ReadSequence = 0;
+const r3Buttons = ["prepare", "review", "validate", "modify"];
+
+function r3Controls() {
+  const blocked = !r3State || r3Busy || r3Uncertain || commandPending || commandUncertain;
+  for (const name of r3Buttons) document.getElementById("r3-" + name).disabled = blocked;
+  if (r3State && !blocked) {
+    document.getElementById("r3-prepare").disabled = r3State.bundle !== null;
+    document.getElementById("r3-review").disabled = r3State.bundle === null;
+    document.getElementById("r3-modify").disabled = r3State.bundle === null ||
+      r3State.current_candidate?.version_ref !== r3State.version_ref;
+  }
+}
+
+async function r3Fetch(path, body = null) {
+  const options = { method: body ? "POST" : "GET", credentials: "omit", cache: "no-store",
+    redirect: "error", headers: { "X-Local-Intent": "conversation-v1" } };
+  if (body) {
+    options.headers["Content-Type"] = "application/json; charset=utf-8";
+    options.headers["X-R2-Nonce"] = transportNonce;
+    options.body = JSON.stringify(body);
+  }
+  const response = await fetch(path, options);
+  const envelope = await response.json();
+  if (envelope?.meta?.contract_id !== "REVIEW-MODIFY-HTTP-LOCAL-1.0")
+    throw new Error("INVALID_R3_RESPONSE");
+  if (!response.ok) throw new Error(envelope?.error?.code || "R3_REFUSED");
+  return envelope.data;
+}
+
+async function showR3(productionRef, versionRef) {
+  const sequence = ++r3ReadSequence;
+  if (!/^prod:[0-9a-f]{32}$/.test(productionRef) || !/^ver:[0-9a-f]{32}$/.test(versionRef))
+    throw new Error("INVALID_VERSION");
+  const base = "/api/v2/productions/" + productionRef + "/versions/" + versionRef;
+  const data = await r3Fetch(base + "/assessment");
+  const subject = await conversationFetch(base);
+  if (sequence !== r3ReadSequence) return;
+  if (!subject.response.ok || subject.value.data.production_ref !== productionRef ||
+      subject.value.data.version_ref !== versionRef) throw new Error("VERSION_READ_REFUSED");
+  if (data.production_ref !== productionRef || data.version_ref !== versionRef ||
+      !Array.isArray(data.versions) || data.versions.length > 3 ||
+      !["REVIEWED", "REVIEW_NOT_RUN"].includes(data.review_status)) throw new Error("INVALID_R3_STATE");
+  r3State = data;
+  r3Version.replaceChildren();
+  for (const [index, refs] of data.versions.entries()) {
+    const option = document.createElement("option");
+    option.value = refs.version_ref;
+    option.textContent = "V" + (index + 1) + " · " + refs.version_ref;
+    option.selected = refs.version_ref === versionRef;
+    r3Version.append(option);
+  }
+  document.getElementById("r3-identities").textContent =
+    "Consultée : " + versionRef + " · Courante : " + (data.current_candidate?.version_ref || "aucune");
+  r3Content.replaceChildren();
+  appendSearchText(r3Content, "h3", "Sujet — version exacte");
+  appendSearchText(r3Content, "pre", subject.value.data.content ||
+    subject.value.data.production?.content || data.bundle?.subject?.content || "Lire via CAP-R02.");
+  if (data.bundle) {
+    appendSearchText(r3Content, "h3", "Correction");
+    for (const answer of data.bundle.correction.answers)
+      appendSearchText(r3Content, "p", answer.question_id + " · " + answer.expected_answer);
+    appendSearchText(r3Content, "h3", "Barème · " + data.bundle.marking.total_points + " points");
+    appendSearchText(r3Content, "pre", JSON.stringify(data.bundle.marking.dossiers, null, 2));
+  }
+  appendSearchText(r3Content, "h3", "Review : " + data.review_status);
+  appendSearchText(r3Content, "pre", JSON.stringify(data.reviews, null, 2));
+  appendSearchText(r3Content, "h3", "Validation déterministe");
+  appendSearchText(r3Content, "pre", JSON.stringify(data.validations, null, 2));
+  r3Status.textContent = "CANDIDATE — NON VALIDÉE · " + data.review_status;
+  r3Controls();
+}
+
+document.getElementById("r3-load").addEventListener("click", async () => {
+  try {
+    await refreshConversation();
+    const refs = conversation?.current_candidate;
+    if (!refs) throw new Error("NO_CANDIDATE_IN_SESSION");
+    await showR3(refs.production_ref, refs.version_ref);
+  } catch { r3Status.textContent = "Aucune version R3 disponible. Aucun appel ou renvoi automatique."; }
+});
+r3Version.addEventListener("change", async () => {
+  try { if (r3State) await showR3(r3State.production_ref, r3Version.value); }
+  catch { r3Status.textContent = "Version exacte indisponible."; }
+});
+
+async function r3Command(operation) {
+  if (!r3State || r3Busy || r3Uncertain || commandPending || commandUncertain) return;
+  r3Busy = true;
+  r3Controls();
+  let submitted = false;
+  try {
+    await refreshConversation();
+    const state = r3State;
+    const body = { conversation_id: conversation.conversation_id, command_id: crypto.randomUUID(),
+      expected_revision: conversation.revision, production_ref: state.production_ref };
+    if (operation === "modifications") {
+      Object.assign(body, { base_version_ref: state.version_ref, base_bundle_sha256: state.bundle_sha256,
+        operation: "HARDEN_DOSSIER_3", instruction: "Rends le dossier 3 plus difficile." });
+    } else {
+      body.version_ref = state.version_ref;
+      if (operation === "assessment-preparations") body.subject_sha256 = state.subject_sha256;
+      else body.bundle_sha256 = state.bundle_sha256;
+      if (operation === "reviews") body.dimensions = ["REV-ACC", "REV-CON", "REV-PED"];
+    }
+    submitted = true;
+    let result = await r3Fetch("/api/v2/conversation/" + operation, body);
+    if (!/^op:[0-9a-f]{32}$/.test(result.operation_ref)) throw new Error("INVALID_OPERATION");
+    const deadline = Date.now() + 90000;
+    while (result.state === "RUNNING" && Date.now() < deadline) {
+      r3Status.textContent = "Travail R3 en cours. Aucune répétition de commande.";
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      result = await r3Fetch("/api/v2/conversation/operations/" + result.operation_ref);
+    }
+    if (result.state === "RUNNING" || result.state === "UNKNOWN") {
+      r3Uncertain = true;
+      throw new Error("R3_UNKNOWN");
+    }
+    await showR3(result.production_ref, result.version_ref);
+    if (result.state !== "SUCCEEDED") r3Status.textContent = "Travail refusé ; version antérieure conservée.";
+  } catch {
+    if (submitted) r3Uncertain = true;
+    r3Status.textContent = "Travail refusé ou résultat incertain. Aucun renvoi automatique.";
+  } finally {
+    r3Busy = false;
+    r3Controls();
+  }
+}
+for (const [name, operation] of [["prepare", "assessment-preparations"], ["review", "reviews"],
+    ["validate", "validations"], ["modify", "modifications"]]) {
+  document.getElementById("r3-" + name).addEventListener("click", () => r3Command(operation));
+}

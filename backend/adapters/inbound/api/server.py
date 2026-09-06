@@ -18,6 +18,8 @@ from backend.adapters.inbound.api.local_browser import (
     LocalBrowserHttpSecurityContract,
 )
 from backend.adapters.inbound.api.production import ProductionEndpoint
+from backend.adapters.inbound.api.r3_review_modify import R3Endpoint
+from backend.adapters.inbound.api.r3_review_modify import error as r3_error
 from backend.adapters.inbound.api.read15 import Read15Endpoint, public_error
 from backend.adapters.inbound.api.routes import (
     ASSET_NAMES,
@@ -26,6 +28,7 @@ from backend.adapters.inbound.api.routes import (
     CONVERSATION_TEMPLATE,
     MAX_TARGET_BYTES,
     PRODUCTION_VERSION_TEMPLATE,
+    ROUTE_SPECS,
     SEARCH_TEMPLATE,
     RouteRejected,
     is_conversation_target,
@@ -62,6 +65,7 @@ class LocalRead15Service:
         conversation_endpoint: ConversationEndpoint | None = None,
         production_endpoint: ProductionEndpoint | None = None,
         harvest: Callable[[], None] | None = None,
+        r3_endpoint: R3Endpoint | None = None,
     ) -> None:
         if configuration.cors_enabled:
             raise ValueError("CORS must remain disabled for READ15-HTTP-LOCAL-1.0")
@@ -71,6 +75,7 @@ class LocalRead15Service:
         self.endpoint = endpoint
         self.search_endpoint = search_endpoint
         self.conversation_endpoint = conversation_endpoint
+        self.r3_endpoint = r3_endpoint
         self.production_endpoint = production_endpoint
         self.harvest = harvest
         self.observability = observability
@@ -140,6 +145,17 @@ class LocalRead15Service:
         elif (match.template == PRODUCTION_VERSION_TEMPLATE and self.production_endpoint is not None
                 and match.production_ref is not None and match.version_ref is not None):
             status, body = self.production_endpoint.get(match.production_ref, match.version_ref, correlation)
+        elif match.template in {row[1] for row in ROUTE_SPECS[6:13]}:
+            r3 = self.r3_endpoint
+            if r3 is None:
+                status, body = r3_error("R3_NOT_ENABLED", correlation)
+            elif method == "POST":
+                status, body = r3.post(match.template.rsplit("/", 1)[-1], raw, correlation)
+            elif match.review_ref or match.operation_ref:
+                status, body = r3.report(match.review_ref or match.operation_ref or "", correlation,
+                                         review=match.review_ref is not None)
+            else:
+                status, body = r3.assessment(match.production_ref or "", match.version_ref or "", correlation)
         else:
             return self.r2_error("APPLICATION_FAILURE", correlation)
         return status, "application/json; charset=utf-8", body, match.template

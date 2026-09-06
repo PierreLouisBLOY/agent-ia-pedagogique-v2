@@ -506,6 +506,7 @@ class ConversationComposition:
     service: ConversationService
     endpoint: ConversationEndpoint
     production: ProductionEndpoint
+    store: ConversationMemoryStore
 
 
 def build_conversation(*, jobs: GenerationJobPort | None = None) -> ConversationComposition:
@@ -534,4 +535,4 @@ def build_conversation(*, jobs: GenerationJobPort | None = None) -> Conversation
             actor_context=UseCaseContext(corr))
         return inbound.invoke(request=request)
     return ConversationComposition(service, ConversationEndpoint(ConversationApplicationInbound(service),
-                                    token_urlsafe(32)), ProductionEndpoint(read))
+                                    token_urlsafe(32)), ProductionEndpoint(read), store)

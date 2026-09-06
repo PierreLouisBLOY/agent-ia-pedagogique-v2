@@ -69,3 +69,7 @@ footer { padding: 1.5rem clamp(1.25rem, 6vw, 6rem); border-top: 1px solid var(--
 .candidate-label { color: var(--candidate-accent); font-weight: 700; letter-spacing: .04em; }
 .production-section { white-space: pre-wrap; }
 #production-result { border: 2px solid #c2ad7b; padding: 1.2rem; margin-top: 1.4rem; }
+/* R3 stays inside the three existing, entirely local assets. */
+.r3-workspace select { max-width: 100%; padding: .6rem; }
+.r3-workspace pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.r3-workspace h3 { margin-top: 1.5rem; }

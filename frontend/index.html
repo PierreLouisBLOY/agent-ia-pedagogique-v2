@@ -54,6 +54,24 @@
         <div id="production-content"></div>
       </article>
     </section>
+    <section class="workspace r3-workspace" aria-labelledby="r3-heading">
+      <p class="eyebrow">R3 · Vérifier et modifier une version exacte</p>
+      <h2 id="r3-heading">Sujet, correction et barème</h2>
+      <p class="candidate-label">CANDIDATE — NON VALIDÉE</p>
+      <p>Une review V1 ne couvre jamais V2. Session volatile : tout est perdu à l’arrêt.</p>
+      <button id="r3-load" type="button">Afficher la candidate courante</button>
+      <label for="r3-version">Version consultée (pas un alias latest)</label>
+      <select id="r3-version" aria-label="Version exacte"></select>
+      <div class="conversation-actions">
+        <button id="r3-prepare" type="button" disabled>Préparer correction et barème</button>
+        <button id="r3-review" type="button" disabled>Review de cette version</button>
+        <button id="r3-validate" type="button" disabled>Vérifier les calculs (CAP-A01)</button>
+        <button id="r3-modify" type="button" disabled>Rendre le dossier 3 plus difficile</button>
+      </div>
+      <p id="r3-status" role="status" aria-live="polite">R3 inactif tant qu’aucune version n’est consultée.</p>
+      <p id="r3-identities" class="scope-note"></p>
+      <div id="r3-content"></div>
+    </section>
     <section class="workspace search-workspace" aria-labelledby="search-heading">
       <h2 id="search-heading">Rechercher des passages</h2>
       <p id="search-help">Recherche lexicale dans les passages indexés ; certains résultats

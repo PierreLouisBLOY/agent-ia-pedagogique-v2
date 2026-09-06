@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
+R3_BASELINE = "817ad474d93c78c602a22bd30cf77fe7621e68b1"
 BASELINE_R2 = "19c42bc9f4b0b1a97b9bd2d6b880acd7378459f7"
 CORRECTION_BASELINE = "0c17d12eea1e1e6d4b04d943e756e0c8e35c41ba"
 CORRECTION_PATHS = (
@@ -213,10 +214,9 @@ def corrective_inventory_violations(changed: set[str]) -> set[str]:
 def test_correction_exact_delta_and_delivered_65_path_snapshot():
     assert len(CORRECTION_PATHS) == len(set(CORRECTION_PATHS)) == 22
     assert set(git_diff_paths(BASELINE_R2, CORRECTION_BASELINE)) == set(R2_PATHS)
-    changed = set(git_diff_paths(CORRECTION_BASELINE, "HEAD"))
-    for args in (["diff", "--name-only", "HEAD", "--"], ["diff", "--cached", "--name-only", "HEAD", "--"]):
-        changed.update(subprocess.run(["git", *args], cwd=ROOT,
-            capture_output=True, text=True, check=True).stdout.splitlines())
+    changed = set(git_diff_paths(CORRECTION_BASELINE, R3_BASELINE))
+    from tests.support.r3_guard_oracle import active_inventory
+    assert active_inventory(ROOT) == []
     assert corrective_inventory_violations(changed) == set()
     extras = set(CORRECTION_PATHS) - set(R2_PATHS)
     assert extras == {"backend/adapters/outbound/openai/contracts.py", "backend/adapters/outbound/openai/transport.py"}
@@ -249,7 +249,7 @@ def assert_corrective_inventory_assertion_only(source: str) -> None:
 
 @pytest.mark.parametrize("mutation", ("none", "historical_count", "shared_path", "extra_statement"))
 def test_corrective_inventory_guard_has_exactly_one_approved_assertion_delta(mutation):
-    source = (ROOT / "tests/architecture/test_local_search_product_boundary.py").read_text("utf-8")
+    source = git_source(R3_BASELINE, "tests/architecture/test_local_search_product_boundary.py").decode("utf-8")
     if mutation == "historical_count":
         source = source.replace("== 65", "== 64")
     elif mutation == "shared_path":
@@ -285,7 +285,7 @@ def function_map(source: str) -> dict[str, str]:
 def assert_r2_guard_nodes_preserved(root: Path) -> None:
     for path, allowed in GUARD_NODES.items():
         before = function_map(git_source(BASELINE_R2, path).decode("utf-8"))
-        after = function_map((root / path).read_text("utf-8"))
+        after = function_map(git_source(R3_BASELINE, path).decode("utf-8"))
         assert before.keys() == after.keys()
         assert {k: v for k, v in before.items() if k not in allowed} == {
             k: v for k, v in after.items() if k not in allowed
@@ -296,6 +296,8 @@ def assert_r2_guard_nodes_preserved(root: Path) -> None:
                   if isinstance(n, ast.FunctionDef) and n.name == name)
     after = next(n for n in ast.parse((root / path).read_text("utf-8")).body
                  if isinstance(n, ast.FunctionDef) and n.name == name)
+    from tests.support.r3_guard_oracle import GUARDS, assert_guard_scope
+    assert_guard_scope(root, paths=tuple(p for p in GUARD_NODES if p in GUARDS))
     # Original permitted table and entire historical loop are immutable.
     assert [ast.dump(n) for n in before.body[-2:]] == [ast.dump(n) for n in after.body[-2:]]
 
@@ -365,7 +367,7 @@ def test_only_closed_r2_routes_and_pure_security_evolution():
     from backend.adapters.inbound.api.routes import ROUTE_SPECS
     from tests.architecture.test_local_browser_product_boundary import _EXPECTED_ROUTES
     assert ROUTE_SPECS == _EXPECTED_ROUTES
-    assert len(ROUTE_SPECS) == 9
+    assert len(ROUTE_SPECS) == 16
     assert tuple(r for r in ROUTE_SPECS if r in HISTORICAL_R1_ROUTES) == HISTORICAL_R1_ROUTES
     path = "backend/adapters/inbound/api/local_browser.py"
     old, current = git_source(BASELINE_R2, path).decode("utf-8"), (ROOT / path).read_text("utf-8")
@@ -541,6 +543,7 @@ def test_hist020_wrong_baseline_even_with_equivalent_blob_is_rejected(monkeypatc
 @pytest.mark.parametrize("mutation", ("none", "extra", "substitution", "omission"))
 def test_exact_65_path_inventory_at_all_git_states(monkeypatch, stage, mutation):
     from tests.architecture import test_local_browser_product_boundary as guard
+    from tests.support.r3_guard_oracle import R3_PATHS
     expected = set(R2_PATHS) | set(CORRECTION_PATHS)
     actual = set(expected)
     extra = "backend/modules/unapproved_r2.py"
@@ -554,19 +557,21 @@ def test_exact_65_path_inventory_at_all_git_states(monkeypatch, stage, mutation)
     calls = []
     def git(args, **kwargs):
         calls.append(args[1:])
+        if args == ["git", "diff", "--name-only", BASELINE_R2, R3_BASELINE, "--"]:
+            return subprocess.CompletedProcess(args, 0, stdout="\n".join(sorted(actual)))
         if "--cached" in args:
-            assert args == ["git", "diff", "--cached", "--name-only", BASELINE_R2, "--"]
-            result = set() if stage == "untracked" else actual
+            assert args == ["git", "diff", "--cached", "--name-only", R3_BASELINE, "--"]
+            result = set() if stage == "untracked" else set(R3_PATHS)
         elif args[1] == "diff":
-            assert args == ["git", "diff", "--name-only", BASELINE_R2, "--"]
-            result = set() if stage == "untracked" else actual
+            assert args == ["git", "diff", "--name-only", R3_BASELINE, "--"]
+            result = set() if stage == "untracked" else set(R3_PATHS)
         else:
             assert args == ["git", "ls-files", "--others", "--exclude-standard"]
-            result = actual if stage == "untracked" else set()
+            result = set(R3_PATHS) if stage == "untracked" else set()
         return subprocess.CompletedProcess(args, 0, stdout="\n".join(sorted(result)))
     monkeypatch.setattr(guard.subprocess, "run", git)
     violations = guard.inventory_violations(ROOT)
-    assert len(calls) == 3
+    assert len(calls) == 4
     if mutation == "none":
         assert violations == []
     else:
@@ -680,13 +685,16 @@ def test_tooling_import_boundary_still_rejects_historical_imports(tmp_path, monk
 ))
 def test_index_cannot_be_hidden_by_clean_working_bytes(monkeypatch, path):
     from tests.architecture import test_local_browser_product_boundary as guard
+    from tests.support.r3_guard_oracle import R3_PATHS
     def git(args, **kwargs):
+        if args == ["git", "diff", "--name-only", BASELINE_R2, R3_BASELINE, "--"]:
+            return subprocess.CompletedProcess(args, 0, stdout="\n".join(sorted(set(R2_PATHS) | set(CORRECTION_PATHS))))
         if "--cached" in args:
-            assert args == ["git", "diff", "--cached", "--name-only", BASELINE_R2, "--"]
+            assert args == ["git", "diff", "--cached", "--name-only", R3_BASELINE, "--"]
             # Index contains an additional file while worktree content cancels that delta.
             result = {path}
         elif args[1] == "diff":
-            result = set(R2_PATHS)
+            result = set(R3_PATHS)
         else:
             result = set()
         return subprocess.CompletedProcess(args, 0, stdout="\n".join(sorted(result)))

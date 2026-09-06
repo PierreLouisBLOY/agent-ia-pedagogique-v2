@@ -13,6 +13,13 @@ CONVERSATION_TEMPLATE: Final = "/api/v2/conversation"
 CONVERSATION_MESSAGES_TEMPLATE: Final = "/api/v2/conversation/messages"
 CONVERSATION_GENERATIONS_TEMPLATE: Final = "/api/v2/conversation/generations"
 PRODUCTION_VERSION_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{version_ref}"
+R3_PREPARATION_TEMPLATE: Final = "/api/v2/conversation/assessment-preparations"
+R3_REVIEWS_TEMPLATE: Final = "/api/v2/conversation/reviews"
+R3_REVIEW_TEMPLATE: Final = "/api/v2/conversation/reviews/{review_ref}"
+R3_VALIDATIONS_TEMPLATE: Final = "/api/v2/conversation/validations"
+R3_MODIFICATIONS_TEMPLATE: Final = "/api/v2/conversation/modifications"
+R3_OPERATION_TEMPLATE: Final = "/api/v2/conversation/operations/{operation_ref}"
+R3_ASSESSMENT_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{version_ref}/assessment"
 _PRODUCTION_PREFIX: Final = "/api/v2/productions/"
 _RESOURCE_PREFIX: Final = "/api/v2/resources/"
 ROUTE_SPECS: Final = (
@@ -22,6 +29,13 @@ ROUTE_SPECS: Final = (
     (("POST",), CONVERSATION_MESSAGES_TEMPLATE, None),
     (("POST",), CONVERSATION_GENERATIONS_TEMPLATE, None),
     (("GET",), PRODUCTION_VERSION_TEMPLATE, None),
+    (("POST",), R3_PREPARATION_TEMPLATE, None),
+    (("POST",), R3_REVIEWS_TEMPLATE, None),
+    (("GET",), R3_REVIEW_TEMPLATE, None),
+    (("POST",), R3_VALIDATIONS_TEMPLATE, None),
+    (("POST",), R3_MODIFICATIONS_TEMPLATE, None),
+    (("GET",), R3_OPERATION_TEMPLATE, None),
+    (("GET",), R3_ASSESSMENT_TEMPLATE, None),
     (("GET", "HEAD"), "/", "index.html"),
     (("GET", "HEAD"), "/assets/app.js", "app.js"),
     (("GET", "HEAD"), "/assets/styles.css", "styles.css"),
@@ -55,12 +69,14 @@ class RouteMatch:
     search_limit: int | None = None
     production_ref: str | None = None
     version_ref: str | None = None
+    operation_ref: str | None = None
+    review_ref: str | None = None
 
 
 def is_conversation_target(target: str) -> bool:
     path = target.partition("?")[0]
     return path in {CONVERSATION_TEMPLATE, CONVERSATION_MESSAGES_TEMPLATE,
-                    CONVERSATION_GENERATIONS_TEMPLATE} or path.startswith(_PRODUCTION_PREFIX)
+                    CONVERSATION_GENERATIONS_TEMPLATE} or path.startswith(_PRODUCTION_PREFIX) or path.startswith(CONVERSATION_TEMPLATE + "/")
 
 
 def _search_match(query: str) -> RouteMatch:
@@ -107,14 +123,29 @@ def resolve_route(method: str, target: str) -> RouteMatch:
                 segments = unquote_to_bytes(path[len(_PRODUCTION_PREFIX):]).decode("ascii").split("/")
             except UnicodeDecodeError:
                 raise RouteRejected(conversation=True) from None
-            if (len(segments) != 3 or segments[1] != "versions"
+            assessment = len(segments) == 4 and segments[-1] == "assessment"
+            if ((len(segments) != 3 and not assessment) or segments[1] != "versions"
                     or re.fullmatch(r"prod:[0-9a-f]{32}", segments[0]) is None
                     or re.fullmatch(r"ver:[0-9a-f]{32}", segments[2]) is None):
                 raise RouteRejected(conversation=True)
             if method != "GET":
                 raise RouteRejected(method=True, conversation=True)
-            return RouteMatch(PRODUCTION_VERSION_TEMPLATE, production_ref=segments[0],
+            return RouteMatch(R3_ASSESSMENT_TEMPLATE if assessment else PRODUCTION_VERSION_TEMPLATE, production_ref=segments[0],
                               version_ref=segments[2])
+        for template, prefix, field in ((R3_REVIEW_TEMPLATE, R3_REVIEWS_TEMPLATE + "/", "review"),
+                                       (R3_OPERATION_TEMPLATE, CONVERSATION_TEMPLATE + "/operations/", "op")):
+            if path.startswith(prefix):
+                reference = path[len(prefix):]
+                if re.fullmatch(field + r":[0-9a-f]{32}", reference) is None:
+                    raise RouteRejected(conversation=True)
+                if method != "GET":
+                    raise RouteRejected(method=True, conversation=True)
+                return RouteMatch(template, review_ref=reference if field == "review" else None,
+                                  operation_ref=reference if field == "op" else None)
+        if path not in {CONVERSATION_TEMPLATE, CONVERSATION_MESSAGES_TEMPLATE,
+                        CONVERSATION_GENERATIONS_TEMPLATE, R3_PREPARATION_TEMPLATE,
+                        R3_REVIEWS_TEMPLATE, R3_VALIDATIONS_TEMPLATE, R3_MODIFICATIONS_TEMPLATE}:
+            raise RouteRejected(missing=True, conversation=True)
         expected = "GET" if path == CONVERSATION_TEMPLATE else "POST"
         if method != expected:
             raise RouteRejected(method=True, conversation=True)

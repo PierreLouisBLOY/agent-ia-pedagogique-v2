@@ -36,7 +36,7 @@ from tests.architecture.test_local_browser_product_boundary import (
 
 def test_exact_five_routes_preserve_read15() -> None:
     assert routes.ROUTE_SPECS == _EXPECTED_ROUTES
-    assert len(_EXPECTED_ROUTES) == 9
+    assert len(_EXPECTED_ROUTES) == 16
     assert tuple(r for r in _EXPECTED_ROUTES if r in HISTORICAL_R1_ROUTES) == HISTORICAL_R1_ROUTES
     assert route_contract_violations(ROOT) == []
     assert frontend_violations(ROOT) == []
@@ -80,7 +80,10 @@ def test_exact_inventory_before_and_after_commit() -> None:
     assert len(EXPECTED_R2_INVENTORY) == 65
     assert _SEARCH_BASELINE == "3f724ca81843b5d45ac534e9654ff16281c55713"
     source = (ROOT / "tests/architecture/test_local_browser_product_boundary.py").read_text("utf-8")
-    assert '["diff", "--name-only", _R2_BASELINE, "--"]' in source
+    assert '["git", "diff", "--name-only", _R2_BASELINE, R3_BASELINE, "--"]' in source
+    from tests.support.r3_guard_oracle import R3_PATHS, active_inventory
+    assert len(R3_PATHS) == 59
+    assert active_inventory(ROOT) == []
 
 
 @pytest.mark.parametrize("name", [

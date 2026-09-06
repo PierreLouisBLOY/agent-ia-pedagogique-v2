@@ -34,6 +34,7 @@ from backend.infrastructure.composition.factories.conversation import (
     ConversationComposition,
     build_conversation,
 )
+from backend.infrastructure.composition.factories.r3_review_modify import R3Composition, build_r3
 from backend.infrastructure.config.schemas.http import LocalBrowserHttpConfiguration
 from backend.infrastructure.filesystem import (
     assert_local_data_root,
@@ -51,6 +52,7 @@ from backend.modules.resource_library.domain.value_objects.search_text import (
     SearchText,
 )
 from backend.modules.work_orchestration.ports.outbound.generation_job import GenerationJobPort
+from backend.modules.work_orchestration.ports.outbound.r3_job import R3JobPort
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.time import Instant
 
@@ -83,6 +85,7 @@ class LocalRead15Composition:
     observability: LocalObservabilitySession
     _closed: bool = False
     conversation: ConversationComposition | None = None
+    r3: R3Composition | None = None
 
     @property
     def url(self) -> str:
@@ -101,6 +104,8 @@ class LocalRead15Composition:
         self._closed = True
         self.server.stop()
         try:
+            if self.r3 is not None:
+                self.r3.service.close()
             if self.conversation is not None:
                 self.conversation.service.close()
         finally:
@@ -177,10 +182,13 @@ def _application_searcher(target: Read15RuntimeTarget) -> SearchEndpoint:
 def build_local_read15(
     configuration: LocalBrowserHttpConfiguration, target: Read15RuntimeTarget,
     *, enable_conversation: bool = False, generation_jobs: GenerationJobPort | None = None,
+    enable_review_modify: bool = False, r3_jobs: R3JobPort | None = None,
 ) -> LocalRead15Composition:
     """Receive an explicit existing target; never read ambient environment settings."""
     if generation_jobs is not None and not enable_conversation:
         raise ValueError("R2_NOT_ENABLED")
+    if (enable_review_modify and not enable_conversation) or (r3_jobs is not None and not enable_review_modify):
+        raise ValueError("R3_NOT_ENABLED")
     target.validate()
     # Verify that the authenticated supplied fixture can open as a query-only reader.
     connection = connect_sqlite(
@@ -196,16 +204,25 @@ def build_local_read15(
     }
     observability = build_local_observability_session(target.data_root)
     conversation = build_conversation(jobs=generation_jobs) if enable_conversation else None
+    r3 = build_r3(conversation, r3_jobs) if enable_review_modify and conversation else None
+    def harvest() -> None:
+        if conversation:
+            conversation.service.poll()
+        if r3:
+            r3.service.poll()
     try:
         service = LocalRead15Service(
             configuration, _application_reader(target), observability, assets,
             search_endpoint=_application_searcher(target),
             conversation_endpoint=conversation.endpoint if conversation else None,
             production_endpoint=conversation.production if conversation else None,
-            harvest=conversation.service.poll if conversation else None,
+            harvest=harvest if conversation else None,
+            r3_endpoint=r3.endpoint if r3 else None,
         )
         server = LocalRead15Server(service)
     except Exception:
+        if r3 is not None:
+            r3.service.close()
         if conversation is not None:
             conversation.service.close()
         observability.shutdown()
@@ -213,4 +230,4 @@ def build_local_read15(
     observability.startup(
         app_version="v2.0", config_profile_id="local.read15", runtime_mode="LOCAL_BROWSER"
     )
-    return LocalRead15Composition(server, observability, conversation=conversation)
+    return LocalRead15Composition(server, observability, conversation=conversation, r3=r3)

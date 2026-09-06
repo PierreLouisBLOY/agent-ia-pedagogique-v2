@@ -1,0 +1,81 @@
+"""Assemble only the authorized delta; never let generated data overwrite V1."""
+from collections.abc import Mapping
+
+from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
+    BUNDLE_CONTRACT,
+    AssessmentBundle,
+    as_plain,
+    fingerprint,
+    items,
+    object_data,
+)
+from backend.modules.pedagogical_design.contracts.dto.assessment_revision import (
+    HARDEN,
+    AssessmentRevisionRequest,
+)
+
+
+def assemble_revision(request: AssessmentRevisionRequest, proposed: Mapping[str, object],
+                      *, version_ref: str, lineage: Mapping[str, object]) -> AssessmentBundle:
+    if request.operation == HARDEN:
+        delta = object_data(proposed, {"dossier_3", "questions_d3", "answers_d3",
+                                      "marking_d3", "scenarios_d3", "limitations"})
+        if request.base is None:
+            raise ValueError("ASSESSMENT_BUNDLE_MISSING")
+        data = request.base.mutable_copy()
+        subject = object_data(data["subject"])
+        sections = list(items(subject["sections"], 5))
+        section = object_data(delta["dossier_3"], {"section_id", "text"})
+        if section["section_id"] != "DOSSIER_3" or section == sections[-1]:
+            raise ValueError("TARGETED_DELTA_REQUIRED")
+        questions = items(delta["questions_d3"], 30)
+        old_d3 = [q for q in items(data["questions"]) if q["dossier_id"] == "DOSSIER_3"]
+        if (len(questions) <= len(old_d3)
+                or any(q.get("dossier_id") != "DOSSIER_3" for q in questions)
+                or not items(delta["scenarios_d3"], 10)):
+            raise ValueError("COMPLEXIFICATION_REQUIRED")
+        sections[-1] = section
+        subject["sections"] = sections
+        subject["content"] = "\n\n".join(str(s["text"]) for s in sections)
+        data["subject"] = subject
+        data["questions"] = [q for q in items(data["questions"]) if q["dossier_id"] != "DOSSIER_3"] + list(questions)
+        old_ids = {q["question_id"] for q in old_d3}
+        correction = object_data(data["correction"])
+        correction["answers"] = [a for a in items(correction["answers"]) if a["question_id"] not in old_ids] + list(items(delta["answers_d3"]))
+        data["correction"] = correction
+        marking = object_data(data["marking"])
+        dossiers = list(items(marking["dossiers"], 3))
+        revised = object_data(delta["marking_d3"])
+        if (revised.get("dossier_id") != "DOSSIER_3"
+                or revised.get("duration_minutes") != dossiers[-1].get("duration_minutes")):
+            raise ValueError("DEPENDENCY_CHANGE_REQUIRES_APPROVAL")
+        old_points = tuple(q["points"] for q in items(dossiers[-1]["questions"]))
+        from decimal import Decimal
+        if sum(Decimal(str(q["points"])) for q in items(revised["questions"])) != sum(Decimal(str(p)) for p in old_points):
+            raise ValueError("DEPENDENCY_CHANGE_REQUIRES_APPROVAL")
+        dossiers[-1] = revised
+        marking["dossiers"] = dossiers
+        data["marking"] = marking
+        case_data = object_data(data["case_data"])
+        case_data["scenarios"] = list(items(delta["scenarios_d3"], 10))
+        data["case_data"] = case_data
+        data["limitations"] = as_plain(delta["limitations"])
+    else:
+        delta = object_data(proposed, {"questions", "correction", "marking", "case_data", "limitations"})
+        for field in ("correction", "marking"):
+            supplied = object_data(delta[field])
+            if (supplied.get("production_ref"), supplied.get("version_ref")) != (
+                    request.production_ref, request.base_version_ref):
+                raise ValueError("ASSESSMENT_REFERENCE")
+        data = dict(delta)
+        data.update(contract_id=BUNDLE_CONTRACT, production_ref=request.production_ref,
+                    subject=as_plain(request.subject), pedagogical_context=as_plain(request.context),
+                    context_sha256=fingerprint(request.context), references=as_plain(request.references))
+    data["version_ref"] = version_ref
+    data["subject_sha256"] = fingerprint(data["subject"])
+    for field in ("correction", "marking"):
+        part = object_data(data[field])
+        part.update(production_ref=request.production_ref, version_ref=version_ref)
+        data[field] = part
+    data["lineage"] = dict(lineage)
+    return AssessmentBundle(data)

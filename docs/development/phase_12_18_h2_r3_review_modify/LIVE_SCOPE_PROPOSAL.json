@@ -1,0 +1,32 @@
+{
+  "schema": "R3-FUTURE-LIVE-SCOPE-PROPOSAL-1.0",
+  "status": "NOT_AUTHORIZED",
+  "provider_calls_authorized": 0,
+  "credential_resolution_authorized": false,
+  "documentation_network_authorized": false,
+  "budget_approved": false,
+  "source_scope": "Only a separately approved exact synthetic production, source units, minimized projections and hashes. No user data or old consumed grant.",
+  "separate_permissions": [
+    "P_R3_LIVE_PREPARE_SUPPLEMENTS",
+    "P_R3_LIVE_REVIEW",
+    "P_R3_LIVE_MODIFY"
+  ],
+  "steps": [
+    {
+      "operation": "PREPARE_SUPPLEMENTS",
+      "requires": "Separate payload, token count, budget, baseline, model and owner approval."
+    },
+    {
+      "operation": "REVIEW_V1",
+      "requires": "Exact V1/bundle hash; no validation or promotion authority."
+    },
+    {
+      "operation": "HARDEN_DOSSIER_3",
+      "requires": "Exact base V1/bundle hash; CAP-A01 before atomic V2; no automatic review of V2."
+    }
+  ],
+  "live_runner_ready": false,
+  "reason": "Composition intentionally refuses provider dispatch by default; synthetic injected worker only. A future live permission is not a credential or runtime implementation.",
+  "R4": "NOT_STARTED",
+  "H3": "NOT_STARTED"
+}

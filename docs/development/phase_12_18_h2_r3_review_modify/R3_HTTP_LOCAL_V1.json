@@ -1,0 +1,308 @@
+{
+  "schema": "REVIEW-MODIFY-HTTP-LOCAL-1.0",
+  "baseline_commit": "817ad474d93c78c602a22bd30cf77fe7621e68b1",
+  "package_manifest_sha256": "b9f90be754a2e7dc359087675e23ec4284673e9e5336fe742ecf286a1ddba211",
+  "approved_inventory": [
+    "backend/adapters/inbound/api/routes.py",
+    "backend/adapters/inbound/api/server.py",
+    "backend/adapters/outbound/persistence/conversation_memory.py",
+    "backend/infrastructure/composition/factories/conversation.py",
+    "backend/infrastructure/composition/factories/local_browser.py",
+    "backend/adapters/inbound/cli/local_browser.py",
+    "frontend/index.html",
+    "frontend/app.js",
+    "frontend/styles.css",
+    "tests/architecture/test_local_browser_product_boundary.py",
+    "tests/architecture/test_local_search_product_boundary.py",
+    "tests/architecture/test_resource_ref_contract_fitness.py",
+    "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+    "tests/architecture/test_conversation_product_boundary.py",
+    "tests/unit/test_local_browser_product_routes.py",
+    "backend/modules/pedagogical_design/contracts/dto/assessment_bundle.py",
+    "backend/modules/pedagogical_design/contracts/dto/assessment_revision.py",
+    "backend/modules/pedagogical_design/domain/policies/assessment_revision.py",
+    "backend/modules/pedagogical_design/ports/outbound/assessment_revision.py",
+    "backend/modules/pedagogical_design/ports/inbound/revise_assessment.py",
+    "backend/modules/pedagogical_design/application/commands/revise_assessment.py",
+    "backend/modules/validation_control/contracts/dto/deterministic_validation.py",
+    "backend/modules/validation_control/domain/policies/assessment_checks.py",
+    "backend/modules/validation_control/ports/inbound/validate_assessment.py",
+    "backend/modules/validation_control/application/commands/validate_assessment.py",
+    "backend/modules/work_orchestration/contracts/dto/r3_review_modify.py",
+    "backend/modules/work_orchestration/ports/inbound/r3_review_modify.py",
+    "backend/modules/work_orchestration/ports/outbound/r3_store.py",
+    "backend/modules/work_orchestration/ports/outbound/r3_job.py",
+    "backend/modules/work_orchestration/application/services/r3_review_modify.py",
+    "backend/adapters/inbound/application/r3_review_modify.py",
+    "backend/adapters/inbound/api/r3_review_modify.py",
+    "backend/adapters/outbound/generation/assessment_revision.py",
+    "backend/adapters/outbound/review/assessment_review.py",
+    "backend/adapters/outbound/system/r3_job.py",
+    "backend/infrastructure/composition/bindings/r3_agents.py",
+    "backend/infrastructure/composition/bootstrap/r3_worker.py",
+    "backend/infrastructure/composition/factories/r3_review_modify.py",
+    "tests/support/r3_synthetic.py",
+    "tests/support/r3_fakes.py",
+    "tests/support/r3_guard_oracle.py",
+    "tests/unit/test_assessment_bundle.py",
+    "tests/unit/test_assessment_deterministic_validation.py",
+    "tests/unit/test_assessment_revision.py",
+    "tests/unit/test_r3_review_mapping.py",
+    "tests/unit/test_r3_generation_mapping.py",
+    "tests/unit/test_r3_commands.py",
+    "tests/unit/test_r3_routes_security.py",
+    "tests/unit/test_r3_assets.py",
+    "tests/integration/test_r3_product.py",
+    "tests/integration/test_r3_http.py",
+    "tests/integration/test_r3_jobs.py",
+    "tests/architecture/test_r3_product_boundary.py",
+    "tests/architecture/test_r3_guard_non_regression.py",
+    "architecture/adr/ADR-conversational-review-modify-product-boundary.md",
+    "docs/development/phase_12_18_h2_r3_review_modify/R3_HTTP_LOCAL_V1.json",
+    "docs/development/phase_12_18_h2_r3_review_modify/IMPLEMENTATION_EVIDENCE.md",
+    "docs/development/phase_12_18_h2_r3_review_modify/LIVE_SCOPE_PROPOSAL.json",
+    "docs/development/phase_12_18_h2_r3_review_modify/MANIFEST_SHA256.txt"
+  ],
+  "routes": [
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/resources/{resource_ref}",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/search",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/conversation",
+      "asset": null
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v2/conversation/messages",
+      "asset": null
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v2/conversation/generations",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/productions/{production_ref}/versions/{version_ref}",
+      "asset": null
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v2/conversation/assessment-preparations",
+      "asset": null
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v2/conversation/reviews",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/conversation/reviews/{review_ref}",
+      "asset": null
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v2/conversation/validations",
+      "asset": null
+    },
+    {
+      "methods": [
+        "POST"
+      ],
+      "path": "/api/v2/conversation/modifications",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/conversation/operations/{operation_ref}",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/productions/{production_ref}/versions/{version_ref}/assessment",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/",
+      "asset": "index.html"
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/assets/app.js",
+      "asset": "app.js"
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/assets/styles.css",
+      "asset": "styles.css"
+    }
+  ],
+  "deterministic_checks": [
+    {
+      "id": "A01",
+      "code": "VERSION_BINDING",
+      "rule": "Cible/production/version exactes ; sujet, correction, barème liés au même couple."
+    },
+    {
+      "id": "A02",
+      "code": "REQUIRED_STRUCTURE",
+      "rule": "Cinq sections sujet exactes et bundle complet typé ; absence de bundle = FAIL."
+    },
+    {
+      "id": "A03",
+      "code": "QUESTION_IDENTITY",
+      "rule": "IDs questions uniques et stables, dossier et locator valides ; aucune question omise/dupliquée."
+    },
+    {
+      "id": "A04",
+      "code": "CORRECTION_COVERAGE",
+      "rule": "Une correction par question, aucun orphelin ; réponse et justification non vides."
+    },
+    {
+      "id": "A05",
+      "code": "MARKING_REFERENTIAL_INTEGRITY",
+      "rule": "Une entrée par question et critères uniques ; aucune référence pendante."
+    },
+    {
+      "id": "A06",
+      "code": "TOTAL_TWENTY",
+      "rule": "Points de critères = points question = points dossier ; somme exacte 20.00."
+    },
+    {
+      "id": "A07",
+      "code": "NUMERIC_DOMAIN",
+      "rule": "Décimaux finis de précision bornée, unité EUR, points positifs ; pas de bool/float/NaN."
+    },
+    {
+      "id": "A08",
+      "code": "CASE_COMPONENT_TOTALS",
+      "rule": "Ressources/emplois stables, actif/passif circulants et trésorerie : composants exhaustifs, totaux recalculés."
+    },
+    {
+      "id": "A09",
+      "code": "FRNG",
+      "rule": "FRNG = ressources stables - emplois stables ; calcul exact au centime."
+    },
+    {
+      "id": "A10",
+      "code": "BFR",
+      "rule": "BFR = actif circulant hors trésorerie - passif circulant hors trésorerie."
+    },
+    {
+      "id": "A11",
+      "code": "NET_TREASURY",
+      "rule": "TN = FRNG - BFR = trésorerie active - trésorerie passive ; même scénario et même unité."
+    },
+    {
+      "id": "A12",
+      "code": "CONTEXT_PRESERVATION",
+      "rule": "BTS CG, ASSESSMENT, 60 minutes, français et /20 ; somme des durées de dossiers = 60."
+    },
+    {
+      "id": "A13",
+      "code": "EVIDENCE_AND_PROVENANCE",
+      "rule": "Refs exactes disponibles en session et allowlistées ; aucun label officiel/canonique ou validation inventé."
+    },
+    {
+      "id": "A14",
+      "code": "IMMUTABLE_TARGETED_DELTA",
+      "rule": "V1 préservée ; seuls D3 et ses suppléments changent ; dépendances D1/D2 sans approbation explicite refusées."
+    },
+    {
+      "id": "A15",
+      "code": "ANSWER_CALCULATION_AND_LOCATORS",
+      "rule": "Résultats numériques et expressions typées de la correction concordent avec les données/scénarios ; locators textuels exacts."
+    },
+    {
+      "id": "A16",
+      "code": "COVERAGE_LIMITS",
+      "rule": "Couverture déclarée et limites : toute assertion hors calcul formalisé est WARNING, jamais validée pédagogiquement par CAP-A01."
+    }
+  ],
+  "permissions": {
+    "P_R3_IMPL": "APPROVED",
+    "P_R3_DOC_NETWORK": "NOT_AUTHORIZED",
+    "P_R3_LIVE_REVIEW": "NOT_AUTHORIZED",
+    "P_R3_LIVE_MODIFY": "NOT_AUTHORIZED",
+    "P_R3_LIVE_PREPARE_SUPPLEMENTS": "NOT_AUTHORIZED"
+  },
+  "status": "R3_SYNTHETIC_WIRING_ONLY",
+  "currency_policy": "Explicit source EUR/kEUR label with exact subject locator; bounded decimal scale conversion to EUR; unknown or ambiguous scale rejected.",
+  "review_policy": "Reports bind exact production, version and bundle hash. V2 is REVIEW_NOT_RUN until separately requested. CAP-A01 before atomic publication. No promotion.",
+  "calculation_language": "Closed reference / ADD / SUB data AST; depth <=4, 2..16 operands per operator, <=60 calculations in the bundle; references resolved within one case, exact two-decimal results and answer locators. Free answer prose produces WARNING even when the output omits a limitation. Pedagogical judgment and rationales are never certified by CAP-A01.",
+  "source_scale_contract": {
+    "currency": "EUR",
+    "source_scale": ["EUR", "kEUR"],
+    "source_unit_locator": ["section_id", "start", "end", "exact_text"],
+    "component": ["component_id", "source_value", "amount"],
+    "normalization": "EUR factor 1; kEUR factor 1000; no heuristic, float or silent round-off."
+  },
+  "http": {
+    "security": "Existing R2 loopback Host/Origin/nonce/intent and bounded framing are unchanged. GET never dispatches a provider.",
+    "post_common_fields": ["conversation_id", "command_id", "expected_revision", "production_ref"],
+    "assessment-preparations": ["version_ref", "subject_sha256"],
+    "reviews": ["version_ref", "bundle_sha256", "dimensions"],
+    "validations": ["version_ref", "bundle_sha256"],
+    "modifications": ["base_version_ref", "base_bundle_sha256", "operation", "instruction"],
+    "modification_operation": "HARDEN_DOSSIER_3",
+    "modification_instruction": "Rends le dossier 3 plus difficile.",
+    "job_states": ["RUNNING", "SUCCEEDED", "FAILED_NO_EFFECT", "FAILED_OUTPUT", "UNKNOWN"],
+    "review_binding": ["production_ref", "version_ref", "subject_sha256", "bundle_sha256"],
+    "response_contract": "REVIEW-MODIFY-HTTP-LOCAL-1.0",
+    "security_and_framing_errors": "Existing CONVERSATION-HTTP-LOCAL-1.0 transport error envelope is preserved.",
+    "generation_review_default": "R3_NOT_AUTHORIZED",
+    "automatic_post_retry": false,
+    "automatic_review_of_new_version": false
+  },
+  "limits": {
+    "versions_per_production": 3,
+    "reports_per_version": 8,
+    "commands_per_session": 64,
+    "job_seconds": 90
+  },
+  "allowed_test_exclusion": "tests/non_functional/test_retrieval_quality_real_gate.py",
+  "real_seed_gate": "NOT_RUN / NOT_PASS"
+}

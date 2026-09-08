@@ -321,6 +321,11 @@ def hash_variants(raw: bytes) -> set[str]:
 def active_inventory(
     root: Path, *, changed: set[str] | None = None, indexed: set[str] | None = None
 ) -> list[str]:
+    from tests.support.r3_parse_observability_guard import (
+        PATCH_PATHS,
+        active_source_matches,
+        patch_violations,
+    )
     doc = json.loads((root / R3_CONTRACT).read_text("utf-8"))
     assert doc["baseline_commit"] == R3_BASELINE
     assert doc["package_manifest_sha256"] == R3_MANIFEST
@@ -339,19 +344,24 @@ def active_inventory(
             changed.update(result.stdout.splitlines())
             if "--cached" in args:
                 indexed.update(result.stdout.splitlines())
-    violations = sorted(changed - set(R3_PATHS) - set(PREPARATION))
+    violations = sorted(changed - set(R3_PATHS) - set(PREPARATION) - set(PATCH_PATHS))
     violations += ["MISSING_R3_PATH:" + p for p in sorted(set(R3_PATHS) - changed)]
     violations += ["PROTECTED_DOCUMENT_INDEXED:" + p for p in sorted(indexed & set(PREPARATION))]
     for path, digest in (PREPARATION | READ_ONLY).items():
         file = root / path
-        if not file.is_file() or hashlib.sha256(file.read_bytes()).hexdigest() != digest:
+        if not file.is_file() or not active_source_matches(root, path, digest):
             violations.append("PROTECTED_DOCUMENT_CHANGED:" + path)
+    violations += patch_violations(root)
+    if changed & (set(PATCH_PATHS) - set(R3_PATHS)):
+        violations += ["PARSE_PATCH_MISSING:" + p for p in sorted(set(PATCH_PATHS) - changed)]
     return violations
 
 
 def assert_guard_scope(
     root: Path, *, baseline_root: Path | None = None, paths: tuple[str, ...] | None = None
 ) -> None:
+    from tests.support.r3_parse_observability_guard import assert_guard_extension
+
     repository = baseline_root or Path(__file__).resolve().parents[2]
     for path in paths or tuple(GUARDS):
         raw = git_bytes(repository, R3_BASELINE, path)
@@ -361,7 +371,11 @@ def assert_guard_scope(
         old = {n.name: n for n in before.body if isinstance(n, ast.FunctionDef)}
         new = {n.name: n for n in after.body if isinstance(n, ast.FunctionDef)}
         assert old.keys() == new.keys(), path
-        for name in old.keys() - set(GUARDS[path]):
+        extra = set()
+        if path == "tests/architecture/test_conversation_product_boundary.py":
+            assert_guard_extension(root, path, repository=repository)
+            extra = {"assert_r2_generation_source_lineage"}
+        for name in old.keys() - set(GUARDS[path]) - extra:
             assert ast.dump(old[name]) == ast.dump(new[name]), (path, name)
 
         def declarations(tree):

@@ -11,6 +11,11 @@ from backend.adapters.outbound.generation.openai.mapping import (
     build_openai_request,
     conversation_evidence_ids,
 )
+from backend.adapters.outbound.generation.parse_diagnostic import (
+    ParseCode,
+    ParseDiagnostic,
+    ParseStage,
+)
 from backend.adapters.outbound.openai.contracts import (
     OpenAIResponsesRequest,
     OpenAIResponsesResponse,
@@ -51,6 +56,7 @@ class OpenAIGenerationAdapter:
         "_secret_resolver",
         "_transport_factory",
         "_before_request", "_on_dispatch", "_on_response", "_on_parsing",
+        "_parse_diagnostic",
     )
 
     def __init__(
@@ -72,6 +78,11 @@ class OpenAIGenerationAdapter:
         self._on_dispatch: Callable[[], None] | None = None
         self._on_response: Callable[[OpenAIResponsesResponse], None] | None = None
         self._on_parsing: Callable[[str], None] | None = None
+        self._parse_diagnostic = ParseDiagnostic(enabled=False)
+
+    def parse_diagnostic(self) -> dict[str, str | None]:
+        """Private metadata snapshot, never included in the GenerationPort result."""
+        return self._parse_diagnostic.snapshot()
 
     def bind_conversation_execution(self, *, before_request: Callable[[OpenAIResponsesRequest], None],
         on_dispatch: Callable[[], None], on_response: Callable[[OpenAIResponsesResponse], None],
@@ -90,8 +101,12 @@ class OpenAIGenerationAdapter:
         )
 
     def generate(self, *, request: GenerationPortRequest) -> GenerationPortResult:
+        self._parse_diagnostic = ParseDiagnostic(enabled=False)
         if type(request) is not GenerationPortRequest:
             raise TypeError("request must be a GenerationPortRequest")
+        self._parse_diagnostic = ParseDiagnostic(enabled=(
+            request.objective == "PREPARE_SUPPLEMENTS"
+            and request.output_contract.get("contract_id") == "R3-TRANSFORMATION-1.0"))
         _require_supported_operation(request.operation, self._model_profile)
         provider_request = build_openai_request(
             request=request,
@@ -127,7 +142,8 @@ class OpenAIGenerationAdapter:
             self._on_response(response)  # Captured privately before any pedagogical parsing.
         try:
             result = _map_response(request=request, response=response,
-                provider_profile=self._provider_profile, model_profile=self._model_profile)
+                provider_profile=self._provider_profile, model_profile=self._model_profile,
+                diagnostic=self._parse_diagnostic)
         except Exception:
             if self._on_parsing is not None:
                 self._on_parsing("FAILED")
@@ -144,8 +160,25 @@ def _map_response(
     response: OpenAIResponsesResponse,
     provider_profile: ProviderProfileConfig,
     model_profile: ModelProfileConfig,
+    diagnostic: ParseDiagnostic | None = None,
 ) -> GenerationPortResult:
-    metadata = _execution_metadata(response, provider_profile, model_profile)
+    trace = diagnostic if diagnostic is not None else ParseDiagnostic(enabled=False)
+    with trace.capture():
+        return _map_response_body(request=request, response=response,
+            provider_profile=provider_profile, model_profile=model_profile, diagnostic=trace)
+
+
+def _map_response_body(
+    *,
+    request: GenerationPortRequest,
+    response: OpenAIResponsesResponse,
+    provider_profile: ProviderProfileConfig,
+    model_profile: ModelProfileConfig,
+    diagnostic: ParseDiagnostic,
+) -> GenerationPortResult:
+    with diagnostic.at(ParseStage.ENVELOPE, expected=(AttributeError, TypeError),
+                       code=ParseCode.RESPONSE_ENVELOPE_INVALID):
+        metadata = _execution_metadata(response, provider_profile, model_profile)
     if response.status is OpenAIResponseStatus.REFUSED:
         return GenerationPortResult(
             source_step_id=request.source_step_id,
@@ -160,20 +193,22 @@ def _map_response(
             "OPENAI_RESPONSE_FAILED",
         )
     conversation = request.output_contract.get("id") == CONVERSATION_OUTPUT_CONTRACT_ID
-    payload = _parse_payload(response.output_text, conversation=conversation)
+    payload = _parse_payload(response.output_text, conversation=conversation, diagnostic=diagnostic)
     used: tuple[str, ...] = ()
     if conversation:
         value = payload["evidence_ids_used"]
         if (not isinstance(value, list) or any(not isinstance(item, str) for item in value)
                 or len(set(value)) != len(value)
                 or not set(value).issubset(conversation_evidence_ids(request))):
+            diagnostic.fail(ParseCode.SCHEMA_VALIDATION_FAILURE)
             _invalid_response()
         used = tuple(value)
     outcome = payload["outcome"]
-    warnings = _limitations(payload["warnings"], "warnings")
-    uncertainties = _limitations(payload["uncertainties"], "uncertainties")
+    warnings = _limitations(payload["warnings"], "warnings", diagnostic=diagnostic)
+    uncertainties = _limitations(payload["uncertainties"], "uncertainties", diagnostic=diagnostic)
     if outcome == "INSUFFICIENT_EVIDENCE":
         if payload["sections"] or not uncertainties:
+            diagnostic.fail(ParseCode.CARDINALITY_INVALID)
             _invalid_response()
         return GenerationPortResult(
             source_step_id=request.source_step_id,
@@ -184,14 +219,16 @@ def _map_response(
             execution_metadata=metadata,
         )
     if outcome != "OUTPUT":
+        diagnostic.fail(ParseCode.ENUM_INVALID if isinstance(outcome, str) else ParseCode.TYPE_MISMATCH)
         _invalid_response()
 
-    sections = _sections(payload["sections"], request.expected_sections)
+    sections = _sections(payload["sections"], request.expected_sections, diagnostic=diagnostic)
     if conversation and (
         any(len(text.strip()) < 20 or "exercice à compléter" in text.casefold()
             for text in sections.values())
         or sum(len(text.encode("utf-8")) for text in sections.values()) > 65536
     ):
+        diagnostic.fail(ParseCode.SCHEMA_VALIDATION_FAILURE)
         _invalid_response()
     if response.status is OpenAIResponseStatus.INCOMPLETE:
         warnings = warnings + ({"code": "OPENAI_RESPONSE_INCOMPLETE"},)
@@ -202,31 +239,50 @@ def _map_response(
     )
     content = "\n\n".join(f"{code}\n{text}" for code, text in sections.items())
     if conversation and len(content.encode("utf-8")) > 65536:
+        diagnostic.fail(ParseCode.CARDINALITY_INVALID)
         _invalid_response()
-    return GenerationPortResult(
-        source_step_id=request.source_step_id,
-        operation=request.operation,
-        status=status,
-        content=content,
-        structured_payload={"sections": sections},
-        evidence_refs_used=tuple(ref for ref in request.evidence_refs if ref in used),
-        warnings=warnings,
-        uncertainties=uncertainties,
-        execution_metadata=metadata,
-    )
+    with diagnostic.at(ParseStage.DOMAIN_MAP, expected=(TypeError, ValueError),
+                       code=ParseCode.DOMAIN_MAPPING_FAILURE):
+        return GenerationPortResult(
+            source_step_id=request.source_step_id,
+            operation=request.operation,
+            status=status,
+            content=content,
+            structured_payload={"sections": sections},
+            evidence_refs_used=tuple(ref for ref in request.evidence_refs if ref in used),
+            warnings=warnings,
+            uncertainties=uncertainties,
+            execution_metadata=metadata,
+        )
 
 
-def _parse_payload(output_text: str | None, *, conversation: bool = False) -> Mapping[str, object]:
+def _parse_payload(output_text: str | None, *, conversation: bool = False,
+                   diagnostic: ParseDiagnostic | None = None) -> Mapping[str, object]:
+    diagnostic = diagnostic if diagnostic is not None else ParseDiagnostic(enabled=False)
+    diagnostic.begin(ParseStage.TEXT_EXTRACT)
     if output_text is None:
+        diagnostic.fail(ParseCode.OUTPUT_TEXT_MISSING)
         _invalid_response()
+    diagnostic.begin(ParseStage.JSON_DECODE)
     try:
         payload = json.loads(output_text, object_pairs_hook=_unique_object) if conversation else (
             json.loads(output_text)
         )
     except (json.JSONDecodeError, TypeError, ValueError, RecursionError):
+        diagnostic.fail(ParseCode.JSON_DECODE_FAILURE)
         _invalid_response()
+    diagnostic.begin(ParseStage.SCHEMA_VALIDATE)
     keys = _EXPECTED_PAYLOAD_KEYS | ({"evidence_ids_used"} if conversation else set())
     if not isinstance(payload, dict) or set(payload) != keys:
+        if not isinstance(payload, dict):
+            diagnostic.fail(ParseCode.TYPE_MISMATCH)
+        elif "sections" not in payload:
+            diagnostic.begin(ParseStage.OUTPUT_EXTRACT)
+            diagnostic.fail(ParseCode.STRUCTURED_OUTPUT_MISSING)
+        elif keys - set(payload):
+            diagnostic.fail(ParseCode.REQUIRED_FIELD_MISSING)
+        else:
+            diagnostic.fail(ParseCode.SCHEMA_VALIDATION_FAILURE)
         _invalid_response()
     return cast(dict[str, object], payload)
 
@@ -240,40 +296,72 @@ def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
     return result
 
 
-def _sections(value: object, expected: tuple[str, ...]) -> dict[str, str]:
+def _sections(value: object, expected: tuple[str, ...], *,
+              diagnostic: ParseDiagnostic | None = None) -> dict[str, str]:
+    diagnostic = diagnostic if diagnostic is not None else ParseDiagnostic(enabled=False)
+    diagnostic.begin(ParseStage.SCHEMA_VALIDATE)
     if not isinstance(value, list) or not value:
+        diagnostic.fail(ParseCode.TYPE_MISMATCH if not isinstance(value, list)
+                        else ParseCode.CARDINALITY_INVALID)
         _invalid_response()
     sections: dict[str, str] = {}
     for item in value:
         if not isinstance(item, dict) or set(item) != {"code", "text"}:
+            if not isinstance(item, dict):
+                diagnostic.fail(ParseCode.TYPE_MISMATCH)
+            elif "text" not in item:
+                diagnostic.begin(ParseStage.TEXT_EXTRACT)
+                diagnostic.fail(ParseCode.OUTPUT_TEXT_MISSING)
+            elif "code" not in item:
+                diagnostic.fail(ParseCode.REQUIRED_FIELD_MISSING)
+            else:
+                diagnostic.fail(ParseCode.SCHEMA_VALIDATION_FAILURE)
             _invalid_response()
         code = item["code"]
         text = item["text"]
         if not isinstance(code, str) or not code.strip():
+            diagnostic.fail(ParseCode.TYPE_MISMATCH if not isinstance(code, str)
+                            else ParseCode.SCHEMA_VALIDATION_FAILURE)
             _invalid_response()
         if not isinstance(text, str) or not text.strip() or code in sections:
+            diagnostic.fail(ParseCode.TYPE_MISMATCH if not isinstance(text, str)
+                            else ParseCode.CARDINALITY_INVALID if code in sections
+                            else ParseCode.OUTPUT_TEXT_MISSING)
             _invalid_response()
         sections[code] = text
     if expected and tuple(sections) != expected:
+        diagnostic.fail(ParseCode.CARDINALITY_INVALID)
         _invalid_response()
     return sections
 
 
-def _limitations(value: object, field_name: str) -> tuple[Mapping[str, object], ...]:
+def _limitations(value: object, field_name: str, *,
+                 diagnostic: ParseDiagnostic | None = None) -> tuple[Mapping[str, object], ...]:
+    diagnostic = diagnostic if diagnostic is not None else ParseDiagnostic(enabled=False)
+    diagnostic.begin(ParseStage.SCHEMA_VALIDATE)
     if not isinstance(value, list):
+        diagnostic.fail(ParseCode.TYPE_MISMATCH)
         _invalid_response()
     limitations: list[Mapping[str, object]] = []
     for item in value:
         if not isinstance(item, dict) or set(item) != {"code", "message"}:
+            diagnostic.fail(ParseCode.TYPE_MISMATCH if not isinstance(item, dict)
+                            else ParseCode.REQUIRED_FIELD_MISSING if {"code", "message"} - set(item)
+                            else ParseCode.SCHEMA_VALIDATION_FAILURE)
             _invalid_response()
         code = item["code"]
         message = item["message"]
         if not isinstance(code, str) or not code.strip():
+            diagnostic.fail(ParseCode.TYPE_MISMATCH if not isinstance(code, str)
+                            else ParseCode.SCHEMA_VALIDATION_FAILURE)
             _invalid_response()
         if not isinstance(message, str) or not message.strip():
+            diagnostic.fail(ParseCode.TYPE_MISMATCH if not isinstance(message, str)
+                            else ParseCode.SCHEMA_VALIDATION_FAILURE)
             _invalid_response()
         limitations.append({"code": code, "message": message})
     if len(limitations) > 16:
+        diagnostic.fail(ParseCode.CARDINALITY_INVALID)
         raise GenerationPortError(
             GenerationPortErrorCode.INVALID_RESPONSE,
             f"OPENAI_INVALID_{field_name.upper()}",

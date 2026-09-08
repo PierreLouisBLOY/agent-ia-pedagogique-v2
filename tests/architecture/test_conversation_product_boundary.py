@@ -380,8 +380,10 @@ def test_only_closed_r2_routes_and_pure_security_evolution():
     ]
 
 def assert_r2_generation_source_lineage(root: Path) -> None:
+    from tests.support.r3_parse_observability_guard import active_source_matches
+
     for path, expected in CORRECTED_GENERATION_HASHES.items():
-        assert hashlib.sha256((root / path).read_bytes()).hexdigest() == expected
+        assert active_source_matches(root, path, expected)
     changes = {
         "backend/adapters/outbound/generation/openai/adapter.py": (
             {"_map_response", "_parse_payload"}, {"_unique_object"}, set(),

@@ -1,5 +1,6 @@
 """R3 Application ownership: exact targets, CAP-A01 and atomic publication."""
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import cast
 
@@ -34,6 +35,95 @@ from backend.modules.work_orchestration.contracts.dto.r3_review_modify import (
 from backend.modules.work_orchestration.ports.outbound.r3_job import R3JobPort
 from backend.modules.work_orchestration.ports.outbound.r3_store import R3Store
 
+DIAGNOSTIC_STAGES = frozenset({
+    "UNKNOWN", "LOCAL_POSTPROCESS_ENTRY", "PARSED_OUTPUT_MAPPING",
+    "SUPPLEMENTS_DOMAIN_CONSTRUCTION", "BUNDLE_ASSEMBLY", "CANDIDATE_VIEW",
+    "DETERMINISTIC_VALIDATION_CAP_A01", "VERSION_BINDING",
+    "STORE_CAS_OR_IDEMPOTENCY", "ATOMIC_PUBLICATION", "POST_PROCESS_RECEIPT",
+})
+DIAGNOSTIC_CODES = frozenset({
+    "NONE", "UNCLASSIFIED_LOCAL_FAILURE", "ASSESSMENT_FIELDS", "ASSESSMENT_SCHEMA",
+    "ASSESSMENT_REFERENCE", "ASSESSMENT_CONTRACT", "ASSESSMENT_SECTIONS",
+    "ASSESSMENT_SUBJECT_HASH", "ASSESSMENT_SIZE", "ASSESSMENT_LIMITATIONS",
+    "ASSESSMENT_VALIDATION_FAILED", "ASSESSMENT_PUBLICATION_REJECTED",
+    "REVISION_CONFLICT", "SESSION_CAPACITY_REACHED", "IDEMPOTENCY_CONFLICT",
+    "GENERATION_IN_PROGRESS",
+})
+_DIAGNOSTIC_REASONS = frozenset({
+    "CHECK_SATISFIED", "ASSESSMENT_BUNDLE_MISSING", "SEMANTIC_HUMAN_REVIEW_REQUIRED",
+    *(f"A{i:02}_REJECTED" for i in range(1, 17)),
+    *(f"A{i:02}_INVALID_OR_NON_EVALUABLE" for i in range(1, 17)),
+})
+
+
+def _failure_code(error: Exception) -> str:
+    # Only exact known exception types and literal allowlisted args; never stringify.
+    if type(error) in (ValueError, R3Rejected) and len(error.args) == 1:
+        value = error.args[0]
+        if type(value) is str and value in DIAGNOSTIC_CODES - {"NONE"}:
+            return value
+    return "UNCLASSIFIED_LOCAL_FAILURE"
+
+
+@dataclass
+class _ProcessingDiagnostic:
+    operation_ref: str | None = None
+    last_stage: str = "UNKNOWN"
+    transitions: list[str] = field(default_factory=list)
+    trace_complete: bool = True
+    failure_stage: str = "UNKNOWN"
+    failure_code: str = "NONE"
+    cap_execution: str = "UNKNOWN"
+    cap_overall: str = "UNKNOWN"
+    checks: tuple[tuple[str, str, str], ...] = ()
+    publication_state: str = "UNKNOWN"
+    receipt_state: str = "UNKNOWN"
+    receipt_failure_code: str = "NONE"
+
+    def mark(self, stage: str) -> None:
+        if type(stage) is not str or stage not in DIAGNOSTIC_STAGES:
+            return
+        self.last_stage = stage
+        if not self.transitions or self.transitions[-1] != stage:
+            if len(self.transitions) < 64:
+                self.transitions.append(stage)
+            else:
+                self.trace_complete = False
+
+    def failed(self, error: Exception) -> None:
+        self.failure_code = _failure_code(error)
+        self.failure_stage = self.last_stage
+        if self.last_stage == "ATOMIC_PUBLICATION":
+            # Categorize a closed store rejection; last_stage retains the actual call boundary.
+            if self.failure_code in {"REVISION_CONFLICT", "IDEMPOTENCY_CONFLICT",
+                                      "GENERATION_IN_PROGRESS", "SESSION_CAPACITY_REACHED"}:
+                self.failure_stage = "STORE_CAS_OR_IDEMPOTENCY"
+            elif self.failure_code == "ASSESSMENT_REFERENCE":
+                self.failure_stage = "VERSION_BINDING"
+            self.publication_state = "UNKNOWN"  # Exception alone does not prove rollback.
+
+    def validated(self, result: AssessmentValidation) -> None:
+        # No locators, expected/observed text, bundle or pedagogical content.
+        if (tuple(c.check_id for c in result.checks) != tuple(f"A{i:02}" for i in range(1, 17))
+                or any(type(c.status) is not str or c.status not in {"PASS", "WARNING", "FAIL"}
+                       or type(c.reason_code) is not str
+                       or c.reason_code not in _DIAGNOSTIC_REASONS for c in result.checks)):
+            return
+        self.cap_execution, self.cap_overall = "COMPLETED", result.overall_status
+        self.checks = tuple((c.check_id, c.status, c.reason_code) for c in result.checks)
+
+    def snapshot(self) -> dict[str, object]:
+        return {
+            "schema": "R3-LOCAL-PROCESSING-DIAGNOSTIC-1.0",
+            "operation_ref": self.operation_ref, "last_stage": self.last_stage,
+            "stage_transitions": list(self.transitions), "trace_complete": self.trace_complete,
+            "failure_stage": self.failure_stage, "failure_code": self.failure_code,
+            "cap_execution": self.cap_execution, "cap_overall": self.cap_overall,
+            "checks": [{"check_id": i, "status": s, "reason_code": r} for i, s, r in self.checks],
+            "publication_state": self.publication_state, "receipt_state": self.receipt_state,
+            "receipt_failure_code": self.receipt_failure_code,
+        }
+
 
 class R3ReviewModifyService:
     def __init__(self, *, conversation_id: str, store: R3Store, jobs: R3JobPort,
@@ -42,6 +132,20 @@ class R3ReviewModifyService:
         self._id, self._store, self._jobs = conversation_id, store, jobs
         self._ensure, self._clock, self._new_id = ensure_session, clock, new_id
         self._active: tuple[R3Command, R3JobRequest, ProductionReadView] | None = None
+        self._diagnostics: dict[str, _ProcessingDiagnostic] = {}
+
+    def diagnostic(self, operation_ref: str) -> dict[str, object]:
+        """Private composition readback only; never added to HTTP/business receipts."""
+        return self._diagnostics.get(operation_ref, _ProcessingDiagnostic()).snapshot()
+
+    def _trace(self, operation_ref: str) -> _ProcessingDiagnostic:
+        trace = self._diagnostics.get(operation_ref)
+        if trace is None:
+            trace = _ProcessingDiagnostic(operation_ref)
+            if len(self._diagnostics) >= 64:
+                self._diagnostics.pop(next(iter(self._diagnostics)))
+            self._diagnostics[operation_ref] = trace
+        return trace
 
     def _production(self, production_ref: str, version_ref: str) -> ProductionReadView:
         self._ensure()
@@ -103,7 +207,13 @@ class R3ReviewModifyService:
         job = R3JobRequest(operation_ref, command.operation, revision, bundle,
                           tuple(cast(tuple[str, ...], command.body.get("dimensions", ()))))
         self._jobs.authorize(job)
-        reserved = self._store.r3_reserve(command, operation_ref)
+        trace = self._trace(operation_ref)
+        trace.mark("STORE_CAS_OR_IDEMPOTENCY")
+        try:
+            reserved = self._store.r3_reserve(command, operation_ref)
+        except Exception as error:
+            trace.failed(error)
+            raise
         if reserved["operation_ref"] != operation_ref:
             return reserved
         self._active = (command, job, view)
@@ -130,9 +240,17 @@ class R3ReviewModifyService:
         if result.operation_ref != request.operation_ref:
             self._store.r3_complete(request.operation_ref, {"state": "UNKNOWN", "error_code": "APPLICATION_FAILURE"})
             return
+        trace = self._trace(request.operation_ref)
         if result.state != "SUCCEEDED" or result.payload is None:
+            # Upstream supplied no local output or failure-stage evidence.
+            trace.cap_execution, trace.cap_overall = "NOT_RUN", "NOT_RUN"
             self._store.r3_complete(request.operation_ref, {"state": result.state})
+            trace.mark("POST_PROCESS_RECEIPT")
+            trace.receipt_state = "WRITTEN"
             return
+        trace.mark("LOCAL_POSTPROCESS_ENTRY")
+        trace.cap_execution, trace.cap_overall = "NOT_RUN", "NOT_RUN"
+        trace.publication_state = "NOT_RUN"
         try:
             self._ensure()
             if request.operation == "reviews":
@@ -148,21 +266,38 @@ class R3ReviewModifyService:
                 "instruction_sha256": fingerprint({"instruction": command.body.get("instruction", PREPARE)}),
                 "changed_locators": ["DOSSIER_3"] if base else [], "dependency_changes": []}
             bundle = ReviseAssessmentCommand().execute(request.revision, result.payload,
-                                                       version_ref=version, lineage=lineage)
+                version_ref=version, lineage=lineage, observe=trace.mark)
+            trace.mark("CANDIDATE_VIEW")
             data = object_data(as_plain(original.data))
             subject = object_data(bundle.data["subject"])
             data.update(version_ref=version, content=subject["content"], sections=subject["sections"])
             candidate = ProductionReadView(original.production_ref, version, self._id, data)
+            trace.mark("DETERMINISTIC_VALIDATION_CAP_A01")
+            trace.cap_execution, trace.cap_overall = "STARTED", "UNKNOWN"
             validation = self._validation(candidate, bundle, parent=base)
+            trace.validated(validation)
             if validation.overall_status == "FAIL":
                 raise R3Rejected("ASSESSMENT_VALIDATION_FAILED")
+            trace.mark("ATOMIC_PUBLICATION")
+            trace.publication_state = "STARTED"
             self._store.r3_complete(request.operation_ref, {"state": "SUCCEEDED",
                 "bundle_sha256": bundle.sha256, "review_status": "REVIEW_NOT_RUN",
                 "validation_status": validation.overall_status},
                 production=candidate if base else None, bundle=bundle, validation=validation)
-        except Exception:
-            self._store.r3_complete(request.operation_ref, {"state": "FAILED_OUTPUT",
-                                                          "error_code": "ASSESSMENT_PUBLICATION_REJECTED"})
+            trace.publication_state = "PUBLISHED"
+            trace.mark("POST_PROCESS_RECEIPT")
+            trace.receipt_state = "WRITTEN"
+        except Exception as error:
+            trace.failed(error)
+            trace.mark("POST_PROCESS_RECEIPT")
+            try:
+                self._store.r3_complete(request.operation_ref, {"state": "FAILED_OUTPUT",
+                    "error_code": "ASSESSMENT_PUBLICATION_REJECTED"})
+                trace.receipt_state = "WRITTEN"
+            except Exception as receipt_error:
+                trace.receipt_state = "UNKNOWN"
+                trace.receipt_failure_code = _failure_code(receipt_error)
+                raise
 
     def _publish_review(self, request: R3JobRequest, payload: Mapping[str, object]) -> None:
         bundle = request.bundle
@@ -193,3 +328,4 @@ class R3ReviewModifyService:
             self._store.r3_complete(self._active[1].operation_ref, {"state": "UNKNOWN"})
             self._active = None
         self._store.r3_clear()
+        self._diagnostics.clear()

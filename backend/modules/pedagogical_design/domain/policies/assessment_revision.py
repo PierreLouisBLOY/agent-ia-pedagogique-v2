@@ -1,5 +1,5 @@
 """Assemble only the authorized delta; never let generated data overwrite V1."""
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     BUNDLE_CONTRACT,
@@ -16,7 +16,17 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_revision import
 
 
 def assemble_revision(request: AssessmentRevisionRequest, proposed: Mapping[str, object],
-                      *, version_ref: str, lineage: Mapping[str, object]) -> AssessmentBundle:
+                      *, version_ref: str, lineage: Mapping[str, object],
+                      observe: Callable[[str], None] | None = None) -> AssessmentBundle:
+    def mark(stage: str) -> None:
+        # Diagnostic-only scalar notification; a sink cannot change a domain decision.
+        if observe is not None:
+            try:
+                observe(stage)
+            except Exception:
+                pass
+
+    mark("BUNDLE_ASSEMBLY")
     if request.operation == HARDEN:
         delta = object_data(proposed, {"dossier_3", "questions_d3", "answers_d3",
                                       "marking_d3", "scenarios_d3", "limitations"})
@@ -61,16 +71,21 @@ def assemble_revision(request: AssessmentRevisionRequest, proposed: Mapping[str,
         data["case_data"] = case_data
         data["limitations"] = as_plain(delta["limitations"])
     else:
+        mark("PARSED_OUTPUT_MAPPING")
         delta = object_data(proposed, {"questions", "correction", "marking", "case_data", "limitations"})
         for field in ("correction", "marking"):
+            mark("SUPPLEMENTS_DOMAIN_CONSTRUCTION")
             supplied = object_data(delta[field])
+            mark("VERSION_BINDING")
             if (supplied.get("production_ref"), supplied.get("version_ref")) != (
                     request.production_ref, request.base_version_ref):
                 raise ValueError("ASSESSMENT_REFERENCE")
+        mark("BUNDLE_ASSEMBLY")
         data = dict(delta)
         data.update(contract_id=BUNDLE_CONTRACT, production_ref=request.production_ref,
                     subject=as_plain(request.subject), pedagogical_context=as_plain(request.context),
                     context_sha256=fingerprint(request.context), references=as_plain(request.references))
+    mark("BUNDLE_ASSEMBLY")
     data["version_ref"] = version_ref
     data["subject_sha256"] = fingerprint(data["subject"])
     for field in ("correction", "marking"):
@@ -78,4 +93,5 @@ def assemble_revision(request: AssessmentRevisionRequest, proposed: Mapping[str,
         part.update(production_ref=request.production_ref, version_ref=version_ref)
         data[field] = part
     data["lineage"] = dict(lineage)
+    mark("BUNDLE_ASSEMBLY")
     return AssessmentBundle(data)

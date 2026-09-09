@@ -176,6 +176,11 @@ def _map_response_body(
     model_profile: ModelProfileConfig,
     diagnostic: ParseDiagnostic,
 ) -> GenerationPortResult:
+    from backend.adapters.outbound.generation.openai.prepare_contract import (
+        is_prepare_request,
+        normalized_prepare_text,
+    )
+
     with diagnostic.at(ParseStage.ENVELOPE, expected=(AttributeError, TypeError),
                        code=ParseCode.RESPONSE_ENVELOPE_INVALID):
         metadata = _execution_metadata(response, provider_profile, model_profile)
@@ -192,6 +197,21 @@ def _map_response_body(
             GenerationPortErrorCode.UNAVAILABLE,
             "OPENAI_RESPONSE_FAILED",
         )
+    if is_prepare_request(request):
+        text = normalized_prepare_text(response.output_text, diagnostic)
+        incomplete = response.status is OpenAIResponseStatus.INCOMPLETE
+        with diagnostic.at(ParseStage.DOMAIN_MAP, expected=(TypeError, ValueError),
+                           code=ParseCode.DOMAIN_MAPPING_FAILURE):
+            return GenerationPortResult(
+                source_step_id=request.source_step_id,
+                operation=request.operation,
+                status=(GenerationPortResultStatus.PARTIAL if incomplete
+                        else GenerationPortResultStatus.SUCCEEDED),
+                content="R3_RESULT_JSON\n" + text,
+                structured_payload={"sections": {"R3_RESULT_JSON": text}},
+                warnings=({"code": "OPENAI_RESPONSE_INCOMPLETE"},) if incomplete else (),
+                execution_metadata=metadata,
+            )
     conversation = request.output_contract.get("id") == CONVERSATION_OUTPUT_CONTRACT_ID
     payload = _parse_payload(response.output_text, conversation=conversation, diagnostic=diagnostic)
     used: tuple[str, ...] = ()

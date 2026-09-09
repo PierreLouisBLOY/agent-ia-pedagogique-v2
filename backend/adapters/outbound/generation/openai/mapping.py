@@ -40,6 +40,12 @@ def build_openai_request(
     request: GenerationPortRequest,
     model_profile: ModelProfileConfig,
 ) -> OpenAIResponsesRequest:
+    from backend.adapters.outbound.generation.openai.prepare_contract import (
+        INSTRUCTIONS,
+        is_prepare_request,
+        prepare_output_schema,
+    )
+
     payload = {
         "operation": request.operation.value,
         "source_step_id": request.source_step_id,
@@ -81,7 +87,10 @@ def build_openai_request(
         model_profile.context_limits.reserved_output_tokens,
     )
     conversation = request.output_contract.get("id") == CONVERSATION_OUTPUT_CONTRACT_ID
+    prepare = is_prepare_request(request)
     schema = _output_schema(request.expected_sections)
+    if prepare:
+        schema = prepare_output_schema()
     if conversation:
         if (request.operation is not GenerationOperation.GENERATE
                 or model_profile.model_code.value != "gpt-5.6-terra"
@@ -118,7 +127,7 @@ def build_openai_request(
             "Do not infer official provenance or approval. Produce all five requested "
             "substantial sections, including the fictional case, numerical annexes and questions."
             if conversation else ""
-        ),
+        ) + (INSTRUCTIONS if prepare else ""),
         input_json=input_json,
         output_schema=provider_schema,
         max_output_tokens=max_output_tokens,

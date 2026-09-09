@@ -326,6 +326,7 @@ def active_inventory(
         active_source_matches,
         patch_violations,
     )
+    from tests.support.r3_prepare_contract_alignment_guard import PATHS as SUCCESSOR_PATHS
     doc = json.loads((root / R3_CONTRACT).read_text("utf-8"))
     assert doc["baseline_commit"] == R3_BASELINE
     assert doc["package_manifest_sha256"] == R3_MANIFEST
@@ -344,7 +345,8 @@ def active_inventory(
             changed.update(result.stdout.splitlines())
             if "--cached" in args:
                 indexed.update(result.stdout.splitlines())
-    violations = sorted(changed - set(R3_PATHS) - set(PREPARATION) - set(PATCH_PATHS))
+    violations = sorted(changed - set(R3_PATHS) - set(PREPARATION) - set(PATCH_PATHS)
+                        - set(SUCCESSOR_PATHS))
     violations += ["MISSING_R3_PATH:" + p for p in sorted(set(R3_PATHS) - changed)]
     violations += ["PROTECTED_DOCUMENT_INDEXED:" + p for p in sorted(indexed & set(PREPARATION))]
     for path, digest in (PREPARATION | READ_ONLY).items():
@@ -354,6 +356,8 @@ def active_inventory(
     violations += patch_violations(root)
     if changed & (set(PATCH_PATHS) - set(R3_PATHS)):
         violations += ["PARSE_PATCH_MISSING:" + p for p in sorted(set(PATCH_PATHS) - changed)]
+    if changed & (set(SUCCESSOR_PATHS) - set(R3_PATHS)):
+        violations += ["PREPARE_SUCCESSOR_MISSING:" + p for p in sorted(set(SUCCESSOR_PATHS) - changed)]
     return violations
 
 

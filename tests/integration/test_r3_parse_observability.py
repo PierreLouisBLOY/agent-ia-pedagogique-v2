@@ -21,15 +21,21 @@ class SyntheticResponsePort:
         self.requests = []
 
     def generate(self, *, request):
+        from dataclasses import replace
+
         self.requests.append(request)
-        text = json.dumps(supplements()) if self.fault != "inner" else "{PRIVATE_SENTINEL"
-        payload = json.dumps({"outcome": "OUTPUT",
-            "sections": [{"code": "R3_RESULT_JSON", "text": text}], "warnings": [], "uncertainties": []})
+        payload = json.dumps(supplements())
         if self.fault == "outer":
             payload = "{PRIVATE_SENTINEL"
-        return _map_response(request=request, response=OpenAIResponsesResponse(
+        result = _map_response(request=request, response=OpenAIResponsesResponse(
             status=OpenAIResponseStatus.COMPLETED, output_text=payload),
             provider_profile=_provider(), model_profile=_model(), diagnostic=self.trace)
+        # An inner-parser failure is now injected at the internal transport boundary,
+        # never by accepting a malformed provider payload through the dedicated schema.
+        if self.fault == "inner":
+            result = replace(result, structured_payload={
+                "sections": {"R3_RESULT_JSON": "{PRIVATE_SENTINEL"}})
+        return result
 
 
 @pytest.mark.parametrize("fault", ["outer", "inner", None])

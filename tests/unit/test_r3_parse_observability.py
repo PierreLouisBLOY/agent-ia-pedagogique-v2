@@ -235,7 +235,9 @@ def test_patch_inventory_closed_mutants(mutation):
 
 @pytest.mark.parametrize("path", PATCH_PATHS)
 def test_every_patch_source_mutation_is_rejected(tmp_path, path):
-    for name in PATCH_PATHS:
+    from tests.support.r3_prepare_contract_alignment_guard import PATHS
+
+    for name in set(PATCH_PATHS) | set(PATHS):
         target = tmp_path / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / name).read_bytes())

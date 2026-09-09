@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def test_exact_closed_inventory_owners_and_protected_identities():
     from tests.support.r3_parse_observability_guard import active_source_matches
+    from tests.support.r3_prepare_contract_alignment_guard import PRODUCERS
 
     assert len(R3_PATHS) == len(set(R3_PATHS)) == 59
     assert len(PRE_HASHES) == 15 and len(BACKEND_CREATES) == 23
@@ -32,7 +33,7 @@ def test_exact_closed_inventory_owners_and_protected_identities():
         assert digest in hash_variants(git_bytes(ROOT, R3_BASELINE, path))
     for path, digest in READ_ONLY.items():
         assert active_source_matches(ROOT, path, digest)
-        if path != "backend/adapters/outbound/generation/openai/adapter.py":
+        if path not in PRODUCERS:
             assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == digest
     assert_guard_scope(ROOT)
 

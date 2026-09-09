@@ -58,6 +58,10 @@ def oracle_digest(raw: bytes) -> str:
 
 
 def active_source_matches(root: Path, path: str, historical: str) -> bool:
+    from tests.support.r3_prepare_contract_alignment_guard import PRODUCERS, source_matches
+
+    if path in PRODUCERS:
+        return source_matches(root, path, historical)
     file = root / path
     if not file.is_file():
         return False
@@ -74,7 +78,16 @@ def assert_guard_extension(root: Path, path: str, *, repository: Path | None = N
     assert PRE[path] in {hashlib.sha256(raw).hexdigest(),
         hashlib.sha256(raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")).hexdigest()}
     current = (root / path).read_bytes()
-    assert digest(current) == POST[path], path
+    from tests.support.r3_prepare_contract_alignment_guard import (
+        PRE as SUCCESSOR_PRE,
+    )
+    from tests.support.r3_prepare_contract_alignment_guard import assert_successor_scope
+
+    if path in SUCCESSOR_PRE:
+        assert_successor_scope(root, repository=repository)
+        assert SUCCESSOR_PRE[path] == POST[path]
+    else:
+        assert digest(current) == POST[path], path
     def unchanged(source: bytes) -> list[str]:
         return [ast.dump(n) for n in ast.parse(source).body
                 if not (isinstance(n, ast.FunctionDef) and n.name in GUARD_SYMBOLS[path])]
@@ -82,23 +95,32 @@ def assert_guard_extension(root: Path, path: str, *, repository: Path | None = N
 
 
 def patch_violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
+    from tests.support.r3_prepare_contract_alignment_guard import PATHS, successor_violations
+
     assert set(POST) == set(PATCH_PATHS) - {SELF}
-    errors = []
+    errors = successor_violations(root)
     for path, expected in POST.items():
+        if path in PATHS:
+            continue  # The independent exact successor oracle checked these bytes above.
         file = root / path
         if not file.is_file() or digest(file.read_bytes()) != expected:
             errors.append("PARSE_PATCH_IDENTITY:" + path)
     oracle = root / SELF
-    if not oracle.is_file() or oracle_digest(oracle.read_bytes()) != ORACLE_AST_SHA256:
+    from tests.support.r3_prepare_contract_alignment_guard import POST as SUCCESSOR_POST
+    if not oracle.is_file() or digest(oracle.read_bytes()) != SUCCESSOR_POST[SELF]:
         errors.append("PARSE_PATCH_ORACLE_IDENTITY")
     if changed is not None:
-        errors += ["PARSE_PATCH_MISSING:" + p for p in sorted(set(PATCH_PATHS) - changed)]
-        errors += ["PARSE_PATCH_UNAPPROVED:" + p for p in sorted(changed - set(PATCH_PATHS))]
+        allowed = set(PATCH_PATHS) | set(PATHS)
+        errors += ["PARSE_PATCH_MISSING:" + p for p in sorted(allowed - changed)]
+        errors += ["PARSE_PATCH_UNAPPROVED:" + p for p in sorted(changed - allowed)]
     return errors
 
 
 def assert_patch_git_state(root: Path) -> None:
     """Authenticate working AND staged bytes; also valid after the bounded commit."""
+    from tests.support.r3_prepare_contract_alignment_guard import PATHS, assert_successor_git_state
+
+    assert_successor_git_state(root)
     observed = set()
     for args in (["diff", "--name-only", BASELINE, "--"],
                  ["diff", "--cached", "--name-only", BASELINE, "--"],
@@ -108,6 +130,8 @@ def assert_patch_git_state(root: Path) -> None:
     from tests.support.r3_guard_oracle import PREPARATION
     assert patch_violations(root, changed=observed - set(PREPARATION)) == []
     for path in PATCH_PATHS:
+        if path in PATHS:
+            continue  # Working and staged successor bytes were both authenticated above.
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)
         if staged.returncode:
             assert path in CREATES

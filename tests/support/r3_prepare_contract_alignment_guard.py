@@ -84,16 +84,22 @@ def oracle_digest(raw: bytes) -> str:
 
 
 def successor_violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
+    from tests.support.r3_serializer_8192_guard import PRE as SERIALIZER_PRE
+    from tests.support.r3_serializer_8192_guard import source_matches as serializer_source_matches
+
     assert len(PATHS) == len(set(PATHS)) == 12
     assert set(POST) == set(PATHS) - {SELF}
     errors = []
     for path, expected in POST.items():
         file = root / path
-        if not file.is_file() or digest(file.read_bytes()) != expected:
+        if (not file.is_file() or digest(file.read_bytes()) != expected) and not (
+                path in SERIALIZER_PRE and expected == SERIALIZER_PRE[path]
+                and serializer_source_matches(root, path, expected)):
             errors.append("PREPARE_SUCCESSOR_IDENTITY:" + path)
     oracle = root / SELF
     try:
-        if oracle_digest(oracle.read_bytes()) != ORACLE_AST_SHA256:
+        if (oracle_digest(oracle.read_bytes()) != ORACLE_AST_SHA256
+                and not serializer_source_matches(root, SELF, SERIALIZER_PRE[SELF])):
             errors.append("PREPARE_SUCCESSOR_ORACLE_IDENTITY")
     except (OSError, SyntaxError, ValueError):
         errors.append("PREPARE_SUCCESSOR_ORACLE_UNREADABLE")
@@ -107,6 +113,8 @@ def source_matches(root: Path, path: str, historical: str) -> bool:
     # This exception is only for the two explicitly authorized producer successors.
     from tests.support.r3_parse_observability_guard import ADAPTER
     from tests.support.r3_parse_observability_guard import PRE as OLD_PRE
+    from tests.support.r3_serializer_8192_guard import PRE as SERIALIZER_PRE
+    from tests.support.r3_serializer_8192_guard import source_matches as serializer_source_matches
 
     identities = {PRODUCERS[0]: PRE[PRODUCERS[0]], ADAPTER: OLD_PRE[ADAPTER]}
     file = root / path
@@ -114,7 +122,9 @@ def source_matches(root: Path, path: str, historical: str) -> bool:
     # Authenticate the expected table itself; complete inventories are separately checked
     # by successor_violations/assert_successor_git_state, never inferred from this helper.
     return (path in identities and historical == identities[path]
-            and oracle_digest(Path(__file__).read_bytes()) == ORACLE_AST_SHA256
+            and (oracle_digest(Path(__file__).read_bytes()) == ORACLE_AST_SHA256
+                 or serializer_source_matches(Path(__file__).resolve().parents[2], SELF,
+                                              SERIALIZER_PRE[SELF]))
             and file.is_file() and digest(file.read_bytes()) == POST[path])
 
 
@@ -144,7 +154,14 @@ def assert_successor_scope(root: Path, *, repository: Path | None = None) -> Non
 
 def assert_successor_git_state(root: Path) -> None:
     from tests.support.r3_guard_oracle import PREPARATION
+    from tests.support.r3_serializer_8192_guard import PATHS as SERIALIZER_PATHS
+    from tests.support.r3_serializer_8192_guard import PRE as SERIALIZER_PRE
+    from tests.support.r3_serializer_8192_guard import (
+        assert_git_state as assert_serializer_git_state,
+    )
+    from tests.support.r3_serializer_8192_guard import source_matches as serializer_source_matches
 
+    assert_serializer_git_state(root)
     observed = set()
     for args in (["diff", "--name-only", BASELINE, "--"],
                  ["diff", "--cached", "--name-only", BASELINE, "--"],
@@ -154,7 +171,8 @@ def assert_successor_git_state(root: Path) -> None:
         if "--cached" in args:
             assert not paths & set(PREPARATION)
         observed.update(paths)
-    assert successor_violations(root, changed=observed - set(PREPARATION)) == []
+    assert successor_violations(root, changed=(observed - set(PREPARATION))
+                               - (set(SERIALIZER_PATHS) - set(PATHS))) == []
     assert_successor_scope(root)
     for path in PATHS:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)
@@ -163,6 +181,11 @@ def assert_successor_git_state(root: Path) -> None:
         elif path in PRE and digest(staged.stdout) == PRE[path]:
             continue  # Exact approved baseline bytes before staging, never arbitrary bytes.
         elif path == SELF:
-            assert oracle_digest(staged.stdout) == ORACLE_AST_SHA256, path
+            assert (oracle_digest(staged.stdout) == ORACLE_AST_SHA256
+                    or (serializer_source_matches(root, path, SERIALIZER_PRE[path])
+                        and digest(staged.stdout) == digest((root / path).read_bytes()))), path
         else:
-            assert digest(staged.stdout) == POST[path], path
+            assert (digest(staged.stdout) == POST[path]
+                    or (path in SERIALIZER_PRE and POST[path] == SERIALIZER_PRE[path]
+                        and serializer_source_matches(root, path, POST[path])
+                        and digest(staged.stdout) == digest((root / path).read_bytes()))), path

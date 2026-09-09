@@ -327,6 +327,9 @@ def active_inventory(
         patch_violations,
     )
     from tests.support.r3_prepare_contract_alignment_guard import PATHS as SUCCESSOR_PATHS
+    from tests.support.r3_serializer_8192_guard import CREATES as SERIALIZER_CREATES
+    from tests.support.r3_serializer_8192_guard import PATHS as SERIALIZER_PATHS
+    from tests.support.r3_serializer_8192_guard import violations as serializer_violations
     doc = json.loads((root / R3_CONTRACT).read_text("utf-8"))
     assert doc["baseline_commit"] == R3_BASELINE
     assert doc["package_manifest_sha256"] == R3_MANIFEST
@@ -346,13 +349,16 @@ def active_inventory(
             if "--cached" in args:
                 indexed.update(result.stdout.splitlines())
     violations = sorted(changed - set(R3_PATHS) - set(PREPARATION) - set(PATCH_PATHS)
-                        - set(SUCCESSOR_PATHS))
+                        - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS))
     violations += ["MISSING_R3_PATH:" + p for p in sorted(set(R3_PATHS) - changed)]
     violations += ["PROTECTED_DOCUMENT_INDEXED:" + p for p in sorted(indexed & set(PREPARATION))]
     for path, digest in (PREPARATION | READ_ONLY).items():
         file = root / path
         if not file.is_file() or not active_source_matches(root, path, digest):
             violations.append("PROTECTED_DOCUMENT_CHANGED:" + path)
+    if changed & set(SERIALIZER_CREATES):
+        violations += serializer_violations(root)
+        violations += ["SERIALIZER_MISSING:" + p for p in sorted(set(SERIALIZER_PATHS) - changed)]
     violations += patch_violations(root)
     if changed & (set(PATCH_PATHS) - set(R3_PATHS)):
         violations += ["PARSE_PATCH_MISSING:" + p for p in sorted(set(PATCH_PATHS) - changed)]

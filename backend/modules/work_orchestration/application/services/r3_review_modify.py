@@ -24,6 +24,7 @@ from backend.modules.validation_control.application.commands.validate_assessment
     ValidateAssessmentCommand,
 )
 from backend.modules.validation_control.contracts.dto.deterministic_validation import (
+    TARGETED_CHECK_REASON_CODES,
     AssessmentValidation,
 )
 from backend.modules.work_orchestration.contracts.dto.production_read_view import ProductionReadView
@@ -50,6 +51,7 @@ DIAGNOSTIC_CODES = frozenset({
     "GENERATION_IN_PROGRESS",
 })
 _DIAGNOSTIC_REASONS = frozenset({
+    *TARGETED_CHECK_REASON_CODES,
     "CHECK_SATISFIED", "ASSESSMENT_BUNDLE_MISSING", "SEMANTIC_HUMAN_REVIEW_REQUIRED",
     *(f"A{i:02}_REJECTED" for i in range(1, 17)),
     *(f"A{i:02}_INVALID_OR_NON_EVALUABLE" for i in range(1, 17)),

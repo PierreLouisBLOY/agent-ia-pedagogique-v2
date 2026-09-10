@@ -31,6 +31,31 @@ Keep source_value in its explicitly located source unit and amount in EUR;
 use canonical two-decimal strings. Return explicit structured calculations,
 not executable text. State uncertainty in limitations. This is an unvalidated
 candidate: do not claim validation, review, approval or publication.
+
+CAP-A01 production constraints (validation remains exclusively local):
+Every locator uses zero-based Unicode code-point offsets in the decoded text,
+not UTF-8 byte offsets, JSON-escaped offsets or UTF-16 code units. The end is
+exclusive: text[start:end] must equal exact_text, with 0 <= start < end <= len(text).
+Question locators target the supplied subject section of the same dossier_id.
+Use unique question_id values, cover all three dossiers, and bind correction and
+marking question references to those exact question IDs; never invent a source section.
+Calculation locators instead target their own answer.expected_answer, using
+section_id equal to that answer.question_id, not a dossier or subject section.
+Their exact_text must be precisely the canonical calculation.value string.
+The source_unit_locator targets an exact unit label in a supplied subject section:
+EUR/euros/€ for source_scale EUR, or kEUR/k€/milliers d'euros for source_scale kEUR.
+Do not select a whole sentence containing the label. Currency is always EUR.
+Convert each source_value explicitly: EUR factor 1, kEUR factor 1000; amount,
+totals, computed values and calculation values remain canonical two-decimal EUR
+strings, bounded to absolute 999999999.99. No numeric JSON values or implicit rounding.
+Each calculation selects an existing unique case_id. calculation_refs use
+case_id:metric (FRNG, BFR or TN) and must match the calculations for that question.
+Expression refs resolve only within that selected case: totals.<one of the six
+component groups> or computed.FRNG/computed.BFR/computed.TN. No unknown reference.
+Expressions are closed data trees with ADD/SUB only, 2 to 16 operands per operator,
+maximum depth 4 (root depth 1); at most 60 calculations across all answers.
+Both evaluated expression and located answer value must equal the selected
+case computed metric. Do not claim that schema compliance proves CAP compliance.
 """
 
 
@@ -85,11 +110,32 @@ def prepare_output_schema() -> dict[str, object]:
     }
     # Same four-level expression bound as CAP-A01; no unbounded recursive schema.
     for depth in range(4, 0, -1):
-        leaf = _object(ref=name)
+        leaf = _object(ref={"type": "string", "enum": [
+            *("totals." + key for key in GROUPS),
+            "computed.FRNG", "computed.BFR", "computed.TN",
+        ]})
         defs["expression" + str(depth)] = leaf if depth == 4 else {"anyOf": [
             leaf, _object(op={"type": "string", "enum": ["ADD", "SUB"]},
                           operands={"type": "array", "minItems": 2, "maxItems": 16,
                                     "items": _ref("expression" + str(depth + 1))})]}
+    for key, section, quote, description in (
+        ("question_locator", dossier, text,
+         "Offsets in the supplied subject section of this question's dossier_id."),
+        ("unit_locator", {"type": "string", "enum": [
+            "CONSIGNES", "CONTEXTE_ET_ANNEXES", "DOSSIER_1", "DOSSIER_2", "DOSSIER_3"]},
+         {"type": "string", "enum": ["EUR", "euros", "€", "kEUR", "k€", "milliers d'euros"]},
+         "Select only the exact source unit label, matching source_scale, in the subject."),
+        ("calculation_locator", name, money,
+         "Offsets in this answer.expected_answer; section_id is this answer.question_id; "
+         "exact_text equals calculation.value."),
+    ):
+        defs[key] = _object(section_id=section, start={"type": "integer", "minimum": 0},
+                            end={"type": "integer", "minimum": 1}, exact_text=quote)
+        defs[key]["description"] = description + (
+            " Zero-based decoded Unicode code points, end exclusive; "
+            "text[start:end] == exact_text and 0 <= start < end <= len(text).")
+    defs["question"]["properties"]["locator"] = _ref("question_locator")
+    defs["calculation"]["properties"]["locator"] = _ref("calculation_locator")
     root = _object(
         questions=_array(_ref("question"), 30),
         correction=_object(production_ref={"type": "string", "pattern": "^prod:[0-9a-f]{32}$"},
@@ -100,7 +146,7 @@ def prepare_output_schema() -> dict[str, object]:
                         total_points=money, dossiers=_array(_ref("dossier"), 3)),
         case_data=_object(currency={"type": "string", "enum": ["EUR"]},
                           source_scale={"type": "string", "enum": ["EUR", "kEUR"]},
-                          source_unit_locator=_ref("locator"), base_case=_ref("case"),
+                          source_unit_locator=_ref("unit_locator"), base_case=_ref("case"),
                           scenarios=_array(_ref("case"), 10)),
         limitations=_array({"type": "string", "minLength": 1, "maxLength": 500}, 16),
     )

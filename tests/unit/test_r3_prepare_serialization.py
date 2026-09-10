@@ -195,7 +195,9 @@ def test_successor_scope_and_working_index_and_history():
 
 @pytest.mark.parametrize("path", PATHS)
 def test_each_successor_source_mutation_is_rejected(tmp_path, path):
-    for item in PATHS:
+    from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
+
+    for item in set(PATHS) | set(CAP_PATHS):
         target = tmp_path / item
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / item).read_bytes())
@@ -231,6 +233,7 @@ def test_index_drift_is_rejected_independently(monkeypatch, path):
 
 
 def test_oracle_table_tampering_is_rejected():
+    from tests.support.r3_cap_a01_guard import source_matches as cap_source_matches
     from tests.support.r3_serializer_8192_guard import ORACLE_AST_SHA256
 
     raw = (ROOT / SELF).read_bytes()
@@ -239,4 +242,5 @@ def test_oracle_table_tampering_is_rejected():
     for path, historical in PRE.items():
         assert source_matches(ROOT, path, historical)
         assert not source_matches(ROOT, path, "0" * 64)
-        assert digest((ROOT / path).read_bytes()) == POST[path]
+        assert (digest((ROOT / path).read_bytes()) == POST[path]
+                or cap_source_matches(ROOT, path, POST[path]))

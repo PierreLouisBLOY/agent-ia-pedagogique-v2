@@ -3,6 +3,15 @@ from dataclasses import dataclass
 
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import identifier
 
+TARGETED_CHECK_REASON_CODES = frozenset({
+    "A03_LOCATOR_MISSING", "A03_LOCATOR_INVALID",
+    "A07_UNIT_LOCATOR_MISSING", "A07_UNIT_LOCATOR_INVALID",
+    "A07_SCALE_MISSING", "A07_UNIT_REFERENCE_INVALID", "A07_NUMERIC_VALUE_INVALID",
+    "A15_CALC_LOCATOR_MISSING", "A15_CALC_LOCATOR_INVALID",
+    "A15_CALC_REFERENCE_UNKNOWN", "A15_CALC_EXPRESSION_INVALID",
+    "A15_CALC_LIMIT_EXCEEDED", "A15_CALC_COLLECTION_INVALID",
+})
+
 
 @dataclass(frozen=True, slots=True)
 class AssessmentCheck:

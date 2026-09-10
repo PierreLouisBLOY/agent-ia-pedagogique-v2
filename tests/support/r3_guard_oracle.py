@@ -321,6 +321,8 @@ def hash_variants(raw: bytes) -> set[str]:
 def active_inventory(
     root: Path, *, changed: set[str] | None = None, indexed: set[str] | None = None
 ) -> list[str]:
+    from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
+    from tests.support.r3_cap_a01_guard import violations as cap_violations
     from tests.support.r3_parse_observability_guard import (
         PATCH_PATHS,
         active_source_matches,
@@ -349,7 +351,9 @@ def active_inventory(
             if "--cached" in args:
                 indexed.update(result.stdout.splitlines())
     violations = sorted(changed - set(R3_PATHS) - set(PREPARATION) - set(PATCH_PATHS)
-                        - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS))
+                        - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS))
+    if changed & (set(CAP_PATHS) - set(R3_PATHS) - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS)):
+        violations += cap_violations(root, changed=changed & set(CAP_PATHS))
     violations += ["MISSING_R3_PATH:" + p for p in sorted(set(R3_PATHS) - changed)]
     violations += ["PROTECTED_DOCUMENT_INDEXED:" + p for p in sorted(indexed & set(PREPARATION))]
     for path, digest in (PREPARATION | READ_ONLY).items():

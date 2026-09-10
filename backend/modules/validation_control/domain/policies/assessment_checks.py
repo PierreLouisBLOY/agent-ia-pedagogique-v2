@@ -17,6 +17,7 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
 )
 from backend.modules.pedagogical_design.contracts.dto.conversation_draft import SECTION_IDS
 from backend.modules.validation_control.contracts.dto.deterministic_validation import (
+    TARGETED_CHECK_REASON_CODES,
     AssessmentCheck,
 )
 
@@ -259,6 +260,34 @@ def check_rule(index: int, data: Mapping[str, object], *,
     return True
 
 
+def _targeted_reason(index: int, error: Exception) -> str:
+    """Only literal closed exception tags; never stringify or export their arguments."""
+    fallback = f"A{index:02}_INVALID_OR_NON_EVALUABLE"
+    if type(error) not in (ValueError, KeyError) or len(error.args) != 1:
+        return fallback
+    tag = error.args[0]
+    if type(tag) is not str:
+        return fallback
+    codes = {
+        (3, KeyError, "locator"): "A03_LOCATOR_MISSING",
+        (3, ValueError, "ASSESSMENT_LOCATOR"): "A03_LOCATOR_INVALID",
+        (7, KeyError, "source_unit_locator"): "A07_UNIT_LOCATOR_MISSING",
+        (7, ValueError, "ASSESSMENT_LOCATOR"): "A07_UNIT_LOCATOR_INVALID",
+        (7, KeyError, "source_scale"): "A07_SCALE_MISSING",
+        (7, ValueError, "SOURCE_SCALE_REQUIRED"): "A07_UNIT_REFERENCE_INVALID",
+        (7, ValueError, "ASSESSMENT_DECIMAL"): "A07_NUMERIC_VALUE_INVALID",
+        (15, KeyError, "locator"): "A15_CALC_LOCATOR_MISSING",
+        (15, ValueError, "ASSESSMENT_LOCATOR"): "A15_CALC_LOCATOR_INVALID",
+        (15, ValueError, "EXPRESSION_REFERENCE"): "A15_CALC_REFERENCE_UNKNOWN",
+        (15, ValueError, "EXPRESSION_OPERATOR"): "A15_CALC_EXPRESSION_INVALID",
+        (15, ValueError, "EXPRESSION_DECIMAL"): "A15_CALC_EXPRESSION_INVALID",
+        (15, ValueError, "EXPRESSION_DEPTH"): "A15_CALC_LIMIT_EXCEEDED",
+        (15, ValueError, "ASSESSMENT_ITEMS"): "A15_CALC_COLLECTION_INVALID",
+    }
+    code = codes.get((index, type(error), tag), fallback)
+    return code if code in TARGETED_CHECK_REASON_CODES else fallback
+
+
 def evaluate_checks(bundle: AssessmentBundle | None, *, parent: AssessmentBundle | None,
                     references: tuple[Mapping[str, object], ...]) -> tuple[AssessmentCheck, ...]:
     result = []
@@ -269,7 +298,7 @@ def evaluate_checks(bundle: AssessmentBundle | None, *, parent: AssessmentBundle
                 status, reason = "FAIL", "ASSESSMENT_BUNDLE_MISSING"
             elif not check_rule(index, bundle.data, parent=parent, references=references):
                 status, reason = ("WARNING", "SEMANTIC_HUMAN_REVIEW_REQUIRED") if index == 16 else ("FAIL", f"A{index:02}_REJECTED")
-        except (ValueError, TypeError, KeyError, InvalidOperation, OverflowError):
-            status, reason = "FAIL", f"A{index:02}_INVALID_OR_NON_EVALUABLE"
+        except (ValueError, TypeError, KeyError, InvalidOperation, OverflowError) as error:
+            status, reason = "FAIL", _targeted_reason(index, error)
         result.append(AssessmentCheck(f"A{index:02}", status, reason))
     return tuple(result)

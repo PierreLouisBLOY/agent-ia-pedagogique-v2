@@ -57,22 +57,31 @@ def oracle_digest(raw: bytes) -> str:
 
 def source_matches(root: Path, path: str, historical: str) -> bool:
     """Authenticate one declared successor only; not a complete-inventory exemption."""
+    from tests.support.r3_cap_a01_guard import PRE as CAP_PRE
+    from tests.support.r3_cap_a01_guard import source_matches as cap_source_matches
+
     file = root / path
     return (path in PRE and historical == PRE[path]
-            and oracle_digest(Path(__file__).read_bytes()) == ORACLE_AST_SHA256
-            and file.is_file() and digest(file.read_bytes()) == POST[path])
+            and (oracle_digest(Path(__file__).read_bytes()) == ORACLE_AST_SHA256
+                 or cap_source_matches(Path(__file__).resolve().parents[2], SELF, CAP_PRE[SELF]))
+            and file.is_file() and (digest(file.read_bytes()) == POST[path]
+                 or cap_source_matches(root, path, POST[path])))
 
 
 def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
+    from tests.support.r3_cap_a01_guard import PRE as CAP_PRE
+    from tests.support.r3_cap_a01_guard import source_matches as cap_source_matches
+
     assert len(PATHS) == len(set(PATHS)) == 6
     assert set(POST) == set(PATHS) - {SELF}
     errors = []
     for path, expected in POST.items():
         file = root / path
-        if not file.is_file() or digest(file.read_bytes()) != expected:
+        if (not file.is_file() or digest(file.read_bytes()) != expected) and not cap_source_matches(root, path, expected):
             errors.append("SERIALIZER_IDENTITY:" + path)
     try:
-        if oracle_digest((root / SELF).read_bytes()) != ORACLE_AST_SHA256:
+        if (oracle_digest((root / SELF).read_bytes()) != ORACLE_AST_SHA256
+                and not cap_source_matches(root, SELF, CAP_PRE[SELF])):
             errors.append("SERIALIZER_ORACLE_IDENTITY")
     except (OSError, SyntaxError, ValueError):
         errors.append("SERIALIZER_ORACLE_UNREADABLE")
@@ -97,8 +106,13 @@ def assert_scope(root: Path, *, repository: Path | None = None) -> None:
 
 
 def assert_git_state(root: Path) -> None:
+    from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
+    from tests.support.r3_cap_a01_guard import PRE as CAP_PRE
+    from tests.support.r3_cap_a01_guard import assert_git_state as assert_cap_git_state
+    from tests.support.r3_cap_a01_guard import source_matches as cap_source_matches
     from tests.support.r3_guard_oracle import PREPARATION
 
+    assert_cap_git_state(root)
     observed = set()
     for args in (["diff", "--name-only", BASELINE, "--"],
                  ["diff", "--cached", "--name-only", BASELINE, "--"],
@@ -108,7 +122,7 @@ def assert_git_state(root: Path) -> None:
         if "--cached" in args:
             assert not paths & set(PREPARATION)
         observed.update(paths)
-    assert violations(root, changed=observed - set(PREPARATION)) == []
+    assert violations(root, changed=observed - set(PREPARATION) - (set(CAP_PATHS) - set(PATHS))) == []
     assert_scope(root)
     for path in PATHS:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)
@@ -117,6 +131,10 @@ def assert_git_state(root: Path) -> None:
         elif path in PRE and digest(staged.stdout) == PRE[path]:
             continue  # Only exact original index bytes before staging.
         elif path == SELF:
-            assert oracle_digest(staged.stdout) == ORACLE_AST_SHA256
+            assert (oracle_digest(staged.stdout) == ORACLE_AST_SHA256
+                    or (cap_source_matches(root, path, CAP_PRE[path])
+                        and digest(staged.stdout) == digest((root / path).read_bytes())))
         else:
-            assert digest(staged.stdout) == POST[path], path
+            assert (digest(staged.stdout) == POST[path]
+                    or (cap_source_matches(root, path, POST[path])
+                        and digest(staged.stdout) == digest((root / path).read_bytes()))), path

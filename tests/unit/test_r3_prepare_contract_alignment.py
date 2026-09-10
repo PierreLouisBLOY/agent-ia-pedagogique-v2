@@ -199,7 +199,9 @@ def test_selection_is_exact_and_other_requests_byte_equivalent(override):
 
 
 def copied_sources(tmp_path):
-    for path in set(PATHS) | set(PATCH_PATHS):
+    from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
+
+    for path in set(PATHS) | set(PATCH_PATHS) | set(CAP_PATHS):
         target = tmp_path / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / path).read_bytes())

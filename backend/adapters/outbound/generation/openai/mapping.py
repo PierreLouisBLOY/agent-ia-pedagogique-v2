@@ -69,6 +69,15 @@ def build_openai_request(
         "expected_sections": list(request.expected_sections),
         "output_contract": _json_value(request.output_contract),
     }
+    if is_prepare_request(request):
+        # Provider projection only; the neutral post-materialization contract stays canonical.
+        output_contract = dict(request.output_contract)
+        output_contract["calculation_fields"] = ("case_id", "metric", "value", "expression")
+        output_contract["source_units"] = (
+            "explicit EUR or kEUR label with unique exact section_id/exact_text anchor; "
+            "no provider offsets; convert to EUR without guessing"
+        )
+        payload["output_contract"] = _json_value(output_contract)
     input_json = json.dumps(
         payload,
         ensure_ascii=False,

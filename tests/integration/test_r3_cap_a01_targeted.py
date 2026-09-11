@@ -21,11 +21,16 @@ class SyntheticPort:
         self.calls = 0
 
     def generate(self, *, request):
+        from tests.support.r3_locator_fixtures import wire_fixture
+
         self.calls += 1
+        data = mutated(self.name)
+        if self.name != "all_three_locators":
+            data = wire_fixture(data)
         return _map_response(
             request=request,
             response=OpenAIResponsesResponse(
-                OpenAIResponseStatus.COMPLETED, json.dumps(mutated(self.name))
+                OpenAIResponseStatus.COMPLETED, json.dumps(data)
             ),
             provider_profile=_provider(),
             model_profile=_model(),
@@ -70,14 +75,10 @@ def test_actual_pipeline_preserves_fail_closed_publication_and_closed_export(nam
             ):
                 assert before[key] == after[key]
             if name == "all_three_locators":
-                assert diagnostic["cap_execution"] == "COMPLETED"
-                assert diagnostic["cap_overall"] == "FAIL"
-                assert [diagnostic["checks"][i]["reason_code"] for i in (2, 6, 14)] == [
-                    "A03_LOCATOR_INVALID",
-                    "A07_UNIT_LOCATOR_INVALID",
-                    "A15_CALC_LOCATOR_INVALID",
-                ]
-                assert diagnostic["checks"][15]["status"] == "WARNING"
+                # Offsets are now rejected at the wire boundary, never repaired.
+                # Direct canonical CAP counterexamples remain in the unit matrix.
+                assert diagnostic["cap_execution"] == "NOT_RUN"
+                assert diagnostic["checks"] == []
             else:
                 assert diagnostic["cap_execution"] == "NOT_RUN"
         assert all(set(c) == {"check_id", "status", "reason_code"} for c in diagnostic["checks"])

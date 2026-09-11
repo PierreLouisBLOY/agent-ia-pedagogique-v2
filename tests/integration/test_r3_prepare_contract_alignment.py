@@ -22,10 +22,12 @@ class DirectPreparePort:
         self.trace = ParseDiagnostic()
 
     def generate(self, *, request):
+        from tests.support.r3_locator_fixtures import wire_fixture
+
         emitted = build_openai_request(request=request, model_profile=_model())
         self.calls.append(emitted)
         assert set(emitted.output_schema["properties"]) == set(FIELDS)
-        data = supplements()
+        data = wire_fixture(supplements())
         if self.fault in FIELDS:
             del data[self.fault]
         elif self.fault == "extra":

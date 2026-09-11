@@ -92,6 +92,7 @@ def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
 
 
 def assert_scope(root: Path, *, repository: Path | None = None) -> None:
+    from tests.support.r3_locator_materialization_guard import prior_scope_bytes
     from tests.support.r3_prepare_contract_alignment_guard import outside_symbols
 
     repository = repository or Path(__file__).resolve().parents[2]
@@ -101,7 +102,7 @@ def assert_scope(root: Path, *, repository: Path | None = None) -> None:
                              check=True, capture_output=True).stdout
         assert digest(raw) == expected, path
         assert outside_symbols(raw, SYMBOLS[path]) == outside_symbols(
-            (root / path).read_bytes(), SYMBOLS[path]), path
+            prior_scope_bytes(root, path), SYMBOLS[path]), path
     assert hashlib.sha256((repository / R2_SOURCE).read_bytes()).hexdigest() == R2_SOURCE_SHA256
 
 
@@ -111,6 +112,8 @@ def assert_git_state(root: Path) -> None:
     from tests.support.r3_cap_a01_guard import assert_git_state as assert_cap_git_state
     from tests.support.r3_cap_a01_guard import source_matches as cap_source_matches
     from tests.support.r3_guard_oracle import PREPARATION
+    from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
+    from tests.support.r3_locator_materialization_guard import PRE as LOCATOR_PRE
 
     assert_cap_git_state(root)
     observed = set()
@@ -122,7 +125,8 @@ def assert_git_state(root: Path) -> None:
         if "--cached" in args:
             assert not paths & set(PREPARATION)
         observed.update(paths)
-    assert violations(root, changed=observed - set(PREPARATION) - (set(CAP_PATHS) - set(PATHS))) == []
+    assert violations(root, changed=observed - set(PREPARATION) - (set(CAP_PATHS) - set(PATHS))
+                      - (set(LOCATOR_PATHS) - set(PATHS))) == []
     assert_scope(root)
     for path in PATHS:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)
@@ -130,6 +134,8 @@ def assert_git_state(root: Path) -> None:
             assert path in CREATES, path
         elif path in PRE and digest(staged.stdout) == PRE[path]:
             continue  # Only exact original index bytes before staging.
+        elif path in LOCATOR_PRE and digest(staged.stdout) == LOCATOR_PRE[path]:
+            continue
         elif path == SELF:
             assert (oracle_digest(staged.stdout) == ORACLE_AST_SHA256
                     or (cap_source_matches(root, path, CAP_PRE[path])

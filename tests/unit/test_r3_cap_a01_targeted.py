@@ -134,11 +134,20 @@ NAMES = (
 
 
 def observe(name):
+    # Preserve the historical schema-vs-canonical diagnostic table explicitly.
+    # The new wire anchor contract has its own dedicated mutation matrix.
+    from tests.support.r3_locator_materialization_guard import BASELINE as LOCATOR_BASELINE
+
+    path = "backend/adapters/outbound/generation/openai/prepare_contract.py"
+    raw = subprocess.run(["git", "show", f"{LOCATOR_BASELINE}:{path}"], cwd=ROOT,
+                         check=True, capture_output=True).stdout
+    historical = ModuleType("historical_prepare_offsets")
+    exec(compile(raw, "<historical-prepare-offsets>", "exec"), historical.__dict__)
     proposal = mutated(name)
     trace = ParseDiagnostic()
     try:
         with trace.capture():
-            normalized_prepare_text(json.dumps(proposal), trace)
+            historical.normalized_prepare_text(json.dumps(proposal), trace)
         schema = "ACCEPTED"
     except GenerationPortError:
         schema = "REJECTED"
@@ -521,7 +530,9 @@ def test_arbitrary_exception_values_are_never_exposed(index):
 
 @pytest.mark.parametrize("scale", ["EUR", "kEUR"])
 def test_unit_conversion_and_nominal_warning_preserved(scale):
-    original = supplements(scale)
+    from tests.support.r3_locator_fixtures import wire_supplements
+
+    original = wire_supplements(scale)
     assert json.loads(normalized_prepare_text(json.dumps(original), ParseDiagnostic())) == original
     data = bundle(scale).mutable_copy()
     data["limitations"].append("UNFORMALIZED_CONTENT")
@@ -535,7 +546,9 @@ def test_unit_conversion_and_nominal_warning_preserved(scale):
 
 @pytest.mark.parametrize("path", PATHS)
 def test_each_targeted_successor_identity_is_closed(tmp_path, path):
-    for item in PATHS:
+    from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
+
+    for item in set(PATHS) | set(LOCATOR_PATHS):
         target = tmp_path / item
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / item).read_bytes())
@@ -575,11 +588,14 @@ def test_exact_inventory_not_count_only(mutation):
 
 def test_frozen_scope_working_index_history_and_self_authentication():
     from tests.support.r3_cap_a01_guard import ORACLE_AST_SHA256
+    from tests.support.r3_locator_materialization_guard import PRE as LOCATOR_PRE
+    from tests.support.r3_locator_materialization_guard import source_matches as locator_matches
 
     assert_scope(ROOT)
     assert_git_state(ROOT)
     raw = (ROOT / SELF).read_bytes()
-    assert oracle_digest(raw) == ORACLE_AST_SHA256
+    assert (oracle_digest(raw) == ORACLE_AST_SHA256
+            or locator_matches(ROOT, SELF, LOCATOR_PRE[SELF]))
     assert (
         oracle_digest(raw.replace(next(iter(POST.values())).encode(), b"0" * 64))
         != ORACLE_AST_SHA256

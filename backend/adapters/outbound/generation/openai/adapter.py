@@ -176,9 +176,11 @@ def _map_response_body(
     model_profile: ModelProfileConfig,
     diagnostic: ParseDiagnostic,
 ) -> GenerationPortResult:
+    from backend.adapters.outbound.generation.openai.locator_materialization import (
+        materialized_prepare_text,
+    )
     from backend.adapters.outbound.generation.openai.prepare_contract import (
         is_prepare_request,
-        normalized_prepare_text,
     )
 
     with diagnostic.at(ParseStage.ENVELOPE, expected=(AttributeError, TypeError),
@@ -198,7 +200,7 @@ def _map_response_body(
             "OPENAI_RESPONSE_FAILED",
         )
     if is_prepare_request(request):
-        text = normalized_prepare_text(response.output_text, diagnostic)
+        text = materialized_prepare_text(response.output_text, request, diagnostic)
         incomplete = response.status is OpenAIResponseStatus.INCOMPLETE
         with diagnostic.at(ParseStage.DOMAIN_MAP, expected=(TypeError, ValueError),
                            code=ParseCode.DOMAIN_MAPPING_FAILURE):

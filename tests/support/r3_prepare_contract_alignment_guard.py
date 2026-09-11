@@ -85,6 +85,7 @@ def oracle_digest(raw: bytes) -> str:
 
 def successor_violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
     from tests.support.r3_cap_a01_guard import source_matches as cap_source_matches
+    from tests.support.r3_locator_materialization_guard import source_matches as locator_matches
     from tests.support.r3_serializer_8192_guard import PRE as SERIALIZER_PRE
     from tests.support.r3_serializer_8192_guard import source_matches as serializer_source_matches
 
@@ -93,7 +94,7 @@ def successor_violations(root: Path, *, changed: set[str] | None = None) -> list
     errors = []
     for path, expected in POST.items():
         file = root / path
-        if (not file.is_file() or digest(file.read_bytes()) != expected) and not cap_source_matches(root, path, expected) and not (
+        if (not file.is_file() or digest(file.read_bytes()) != expected) and not locator_matches(root, path, expected) and not cap_source_matches(root, path, expected) and not (
                 path in SERIALIZER_PRE and expected == SERIALIZER_PRE[path]
                 and serializer_source_matches(root, path, expected)):
             errors.append("PREPARE_SUCCESSOR_IDENTITY:" + path)
@@ -111,6 +112,8 @@ def successor_violations(root: Path, *, changed: set[str] | None = None) -> list
 
 
 def source_matches(root: Path, path: str, historical: str) -> bool:
+    from tests.support.r3_locator_materialization_guard import source_matches as locator_matches
+
     # This exception is only for the two explicitly authorized producer successors.
     from tests.support.r3_parse_observability_guard import ADAPTER
     from tests.support.r3_parse_observability_guard import PRE as OLD_PRE
@@ -126,7 +129,8 @@ def source_matches(root: Path, path: str, historical: str) -> bool:
             and (oracle_digest(Path(__file__).read_bytes()) == ORACLE_AST_SHA256
                  or serializer_source_matches(Path(__file__).resolve().parents[2], SELF,
                                               SERIALIZER_PRE[SELF]))
-            and file.is_file() and digest(file.read_bytes()) == POST[path])
+            and file.is_file() and (digest(file.read_bytes()) == POST[path]
+                                    or locator_matches(root, path, POST[path])))
 
 
 def outside_symbols(raw: bytes, symbols: list[str]) -> str:
@@ -143,6 +147,7 @@ def outside_symbols(raw: bytes, symbols: list[str]) -> str:
 
 
 def assert_successor_scope(root: Path, *, repository: Path | None = None) -> None:
+    from tests.support.r3_locator_materialization_guard import prior_scope_bytes
     repository = repository or Path(__file__).resolve().parents[2]
     assert successor_violations(root) == []
     for path, expected in PRE.items():
@@ -150,7 +155,7 @@ def assert_successor_scope(root: Path, *, repository: Path | None = None) -> Non
                                 capture_output=True, check=True).stdout
         assert digest(before) == expected, path
         assert outside_symbols(before, SYMBOLS[path]) == outside_symbols(
-            (root / path).read_bytes(), SYMBOLS[path]), path
+            prior_scope_bytes(root, path), SYMBOLS[path]), path
 
 
 def assert_successor_git_state(root: Path) -> None:
@@ -158,6 +163,9 @@ def assert_successor_git_state(root: Path) -> None:
     from tests.support.r3_cap_a01_guard import PRE as CAP_PRE
     from tests.support.r3_cap_a01_guard import source_matches as cap_source_matches
     from tests.support.r3_guard_oracle import PREPARATION
+    from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
+    from tests.support.r3_locator_materialization_guard import PRE as LOCATOR_PRE
+    from tests.support.r3_locator_materialization_guard import source_matches as locator_matches
     from tests.support.r3_serializer_8192_guard import PATHS as SERIALIZER_PATHS
     from tests.support.r3_serializer_8192_guard import PRE as SERIALIZER_PRE
     from tests.support.r3_serializer_8192_guard import (
@@ -177,7 +185,8 @@ def assert_successor_git_state(root: Path) -> None:
         observed.update(paths)
     assert successor_violations(root, changed=(observed - set(PREPARATION))
                                - (set(SERIALIZER_PATHS) - set(PATHS))
-                               - (set(CAP_PATHS) - set(PATHS))) == []
+                               - (set(CAP_PATHS) - set(PATHS))
+                               - (set(LOCATOR_PATHS) - set(PATHS))) == []
     assert_successor_scope(root)
     for path in PATHS:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)
@@ -187,12 +196,16 @@ def assert_successor_git_state(root: Path) -> None:
             continue  # Exact approved baseline bytes before staging, never arbitrary bytes.
         elif path in CAP_PRE and digest(staged.stdout) == CAP_PRE[path]:
             continue  # Exact preinventoried current baseline, independently checked above.
+        elif path in LOCATOR_PRE and digest(staged.stdout) == LOCATOR_PRE[path]:
+            continue
         elif path == SELF:
             assert (oracle_digest(staged.stdout) == ORACLE_AST_SHA256
                     or (serializer_source_matches(root, path, SERIALIZER_PRE[path])
                         and digest(staged.stdout) == digest((root / path).read_bytes()))), path
         else:
             assert (digest(staged.stdout) == POST[path]
+                    or (locator_matches(root, path, POST[path])
+                        and digest(staged.stdout) == digest((root / path).read_bytes()))
                     or (cap_source_matches(root, path, POST[path])
                         and digest(staged.stdout) == digest((root / path).read_bytes()))
                     or (path in SERIALIZER_PRE and POST[path] == SERIALIZER_PRE[path]

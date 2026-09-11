@@ -84,7 +84,9 @@ def test_actual_producer_root_exactly_matches_five_domain_fields():
 
 @pytest.mark.parametrize("field", FIELDS)
 def test_each_missing_root_field_rejected_without_defaults(field):
-    data = supplements()
+    from tests.support.r3_locator_fixtures import wire_supplements
+
+    data = wire_supplements()
     del data[field]
     trace = ParseDiagnostic()
     with trace.capture(), pytest.raises(GenerationPortError):
@@ -99,7 +101,9 @@ def test_each_missing_root_field_rejected_without_defaults(field):
     "nan", "invalid_json", "oversized_text", "fences", "none", "unicode_surrogate",
 ])
 def test_bad_provider_data_is_never_repaired(fault):
-    data = supplements()
+    from tests.support.r3_locator_fixtures import wire_supplements
+
+    data = wire_supplements()
     if fault == "extra":
         data["extra"] = "PRIVATE_SENTINEL"
     elif fault == "wrapper":
@@ -151,16 +155,20 @@ def test_bad_provider_data_is_never_repaired(fault):
 
 @pytest.mark.parametrize("scale", ["EUR", "kEUR"])
 def test_normalization_preserves_every_field_and_internal_parser(scale):
-    original = supplements(scale)
+    from tests.support.r3_locator_fixtures import wire_supplements
+
+    original = wire_supplements(scale)
     normalized = normalized_prepare_text(json.dumps(original), ParseDiagnostic())
     assert json.loads(normalized) == original
     assert parse_revision_result({"sections": {"R3_RESULT_JSON": normalized}}) == original
-    assert original == supplements(scale)
+    assert original == wire_supplements(scale)
 
 
 @pytest.mark.parametrize("status", list(OpenAIResponseStatus))
 def test_provider_status_cannot_be_upgraded(status):
-    response = OpenAIResponsesResponse(status=status, output_text=json.dumps(supplements()))
+    from tests.support.r3_locator_fixtures import wire_supplements
+
+    response = OpenAIResponsesResponse(status=status, output_text=json.dumps(wire_supplements()))
     kwargs = dict(request=prepare_request(), response=response,
                   provider_profile=_provider(), model_profile=_model(), diagnostic=ParseDiagnostic())
     if status is OpenAIResponseStatus.FAILED:
@@ -200,8 +208,9 @@ def test_selection_is_exact_and_other_requests_byte_equivalent(override):
 
 def copied_sources(tmp_path):
     from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
+    from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
 
-    for path in set(PATHS) | set(PATCH_PATHS) | set(CAP_PATHS):
+    for path in set(PATHS) | set(PATCH_PATHS) | set(CAP_PATHS) | set(LOCATOR_PATHS):
         target = tmp_path / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / path).read_bytes())

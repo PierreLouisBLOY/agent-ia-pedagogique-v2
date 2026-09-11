@@ -23,8 +23,10 @@ class SyntheticResponsePort:
     def generate(self, *, request):
         from dataclasses import replace
 
+        from tests.support.r3_locator_fixtures import wire_fixture
+
         self.requests.append(request)
-        payload = json.dumps(supplements())
+        payload = json.dumps(wire_fixture(supplements()))
         if self.fault == "outer":
             payload = "{PRIVATE_SENTINEL"
         result = _map_response(request=request, response=OpenAIResponsesResponse(

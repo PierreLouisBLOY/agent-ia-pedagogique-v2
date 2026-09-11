@@ -323,6 +323,8 @@ def active_inventory(
 ) -> list[str]:
     from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
     from tests.support.r3_cap_a01_guard import violations as cap_violations
+    from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
+    from tests.support.r3_locator_materialization_guard import violations as locator_violations
     from tests.support.r3_parse_observability_guard import (
         PATCH_PATHS,
         active_source_matches,
@@ -351,7 +353,9 @@ def active_inventory(
             if "--cached" in args:
                 indexed.update(result.stdout.splitlines())
     violations = sorted(changed - set(R3_PATHS) - set(PREPARATION) - set(PATCH_PATHS)
-                        - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS))
+                        - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS) - set(LOCATOR_PATHS))
+    if changed & (set(LOCATOR_PATHS) - set(R3_PATHS) - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS)):
+        violations += locator_violations(root, changed=changed & set(LOCATOR_PATHS))
     if changed & (set(CAP_PATHS) - set(R3_PATHS) - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS)):
         violations += cap_violations(root, changed=changed & set(CAP_PATHS))
     violations += ["MISSING_R3_PATH:" + p for p in sorted(set(R3_PATHS) - changed)]

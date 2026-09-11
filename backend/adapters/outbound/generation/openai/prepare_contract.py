@@ -26,22 +26,24 @@ For this PREPARE_SUPPLEMENTS transformation return the five-field JSON object
 directly, exactly as the output schema specifies. Do not return outcome,
 sections, R3_RESULT_JSON, a bundle, Markdown fences or any other wrapper.
 Use the supplied production_ref and version_ref in correction and marking.
-Copy exact source locators from the supplied subject; never rewrite the subject.
+Copy exact semantic anchors from the supplied subject; never rewrite the subject.
 Keep source_value in its explicitly located source unit and amount in EUR;
 use canonical two-decimal strings. Return explicit structured calculations,
 not executable text. State uncertainty in limitations. This is an unvalidated
 candidate: do not claim validation, review, approval or publication.
 
 CAP-A01 production constraints (validation remains exclusively local):
-Every locator uses zero-based Unicode code-point offsets in the decoded text,
-not UTF-8 byte offsets, JSON-escaped offsets or UTF-16 code units. The end is
-exclusive: text[start:end] must equal exact_text, with 0 <= start < end <= len(text).
-Question locators target the supplied subject section of the same dossier_id.
+Question locator and source_unit_locator contain only section_id and exact_text.
+Never emit start/end offsets: the local system derives them from exact text.
+Each anchor must occur exactly once in its supplied subject section.
+Question anchors target the supplied subject section of the same dossier_id.
 Use unique question_id values, cover all three dossiers, and bind correction and
 marking question references to those exact question IDs; never invent a source section.
-Calculation locators instead target their own answer.expected_answer, using
-section_id equal to that answer.question_id, not a dossier or subject section.
-Their exact_text must be precisely the canonical calculation.value string.
+Do not emit any calculation locator. Include each canonical calculation.value
+string verbatim in its answer.expected_answer. When calculations share a value,
+include at least one distinct non-overlapping occurrence per calculation.
+The local system assigns occurrences left-to-right in calculation order, using
+section_id equal to answer.question_id. Do not rewrite or reformat values.
 The source_unit_locator targets an exact unit label in a supplied subject section:
 EUR/euros/€ for source_scale EUR, or kEUR/k€/milliers d'euros for source_scale kEUR.
 Do not select a whole sentence containing the label. Currency is always EUR.
@@ -87,13 +89,11 @@ def prepare_output_schema() -> dict[str, object]:
     money = {"type": "string", "pattern": r"^-?(?:0|[1-9][0-9]{0,8})\.[0-9]{2}$"}
     dossier = {"type": "string", "enum": ["DOSSIER_1", "DOSSIER_2", "DOSSIER_3"]}
     defs: dict[str, Any] = {
-        "locator": _object(section_id=name, start={"type": "integer", "minimum": 0},
-                           end={"type": "integer", "minimum": 1}, exact_text=text),
-        "question": _object(question_id=name, dossier_id=dossier, locator=_ref("locator"),
+        "question": _object(question_id=name, dossier_id=dossier, locator=_ref("question_locator"),
                             instruction=text, expected_skill=text,
                             calculation_refs=_array(name, 60)),
         "calculation": _object(case_id=name, metric={"type": "string", "enum": ["FRNG", "BFR", "TN"]},
-                               value=money, locator=_ref("locator"), expression=_ref("expression1")),
+                               value=money, expression=_ref("expression1")),
         "answer": _object(question_id=name, expected_answer=text, rationale=text,
                           calculations=_array(_ref("calculation"), 60)),
         "criterion": _object(criterion_id=name, description=text, points=money),
@@ -120,22 +120,16 @@ def prepare_output_schema() -> dict[str, object]:
                                     "items": _ref("expression" + str(depth + 1))})]}
     for key, section, quote, description in (
         ("question_locator", dossier, text,
-         "Offsets in the supplied subject section of this question's dossier_id."),
+         "Unique exact anchor in the supplied subject section of this question's dossier_id."),
         ("unit_locator", {"type": "string", "enum": [
             "CONSIGNES", "CONTEXTE_ET_ANNEXES", "DOSSIER_1", "DOSSIER_2", "DOSSIER_3"]},
          {"type": "string", "enum": ["EUR", "euros", "€", "kEUR", "k€", "milliers d'euros"]},
          "Select only the exact source unit label, matching source_scale, in the subject."),
-        ("calculation_locator", name, money,
-         "Offsets in this answer.expected_answer; section_id is this answer.question_id; "
-         "exact_text equals calculation.value."),
     ):
-        defs[key] = _object(section_id=section, start={"type": "integer", "minimum": 0},
-                            end={"type": "integer", "minimum": 1}, exact_text=quote)
+        defs[key] = _object(section_id=section, exact_text=quote)
         defs[key]["description"] = description + (
-            " Zero-based decoded Unicode code points, end exclusive; "
-            "text[start:end] == exact_text and 0 <= start < end <= len(text).")
+            " No offsets; local exact unique matching derives the canonical locator.")
     defs["question"]["properties"]["locator"] = _ref("question_locator")
-    defs["calculation"]["properties"]["locator"] = _ref("calculation_locator")
     root = _object(
         questions=_array(_ref("question"), 30),
         correction=_object(production_ref={"type": "string", "pattern": "^prod:[0-9a-f]{32}$"},

@@ -96,6 +96,8 @@ def assert_guard_extension(root: Path, path: str, *, repository: Path | None = N
 
 def patch_violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
     from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
+    from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
+    from tests.support.r3_locator_materialization_guard import source_matches as locator_matches
     from tests.support.r3_prepare_contract_alignment_guard import PATHS, successor_violations
     from tests.support.r3_serializer_8192_guard import PATHS as SERIALIZER_PATHS
     from tests.support.r3_serializer_8192_guard import source_matches as serializer_source_matches
@@ -106,7 +108,7 @@ def patch_violations(root: Path, *, changed: set[str] | None = None) -> list[str
         if path in PATHS:
             continue  # The independent exact successor oracle checked these bytes above.
         file = root / path
-        if not file.is_file() or digest(file.read_bytes()) != expected:
+        if (not file.is_file() or digest(file.read_bytes()) != expected) and not locator_matches(root, path, expected):
             errors.append("PARSE_PATCH_IDENTITY:" + path)
     oracle = root / SELF
     from tests.support.r3_prepare_contract_alignment_guard import POST as SUCCESSOR_POST
@@ -115,7 +117,7 @@ def patch_violations(root: Path, *, changed: set[str] | None = None) -> list[str
         errors.append("PARSE_PATCH_ORACLE_IDENTITY")
     if changed is not None:
         # Complete new successor working/index identities are checked by assert_patch_git_state.
-        allowed = set(PATCH_PATHS) | set(PATHS) | (set(SERIALIZER_PATHS) & changed) | (set(CAP_PATHS) & changed)
+        allowed = set(PATCH_PATHS) | set(PATHS) | (set(SERIALIZER_PATHS) & changed) | (set(CAP_PATHS) & changed) | (set(LOCATOR_PATHS) & changed)
         errors += ["PARSE_PATCH_MISSING:" + p for p in sorted(allowed - changed)]
         errors += ["PARSE_PATCH_UNAPPROVED:" + p for p in sorted(changed - allowed)]
     return errors
@@ -123,6 +125,7 @@ def patch_violations(root: Path, *, changed: set[str] | None = None) -> list[str
 
 def assert_patch_git_state(root: Path) -> None:
     """Authenticate working AND staged bytes; also valid after the bounded commit."""
+    from tests.support.r3_locator_materialization_guard import source_matches as locator_matches
     from tests.support.r3_prepare_contract_alignment_guard import PATHS, assert_successor_git_state
 
     assert_successor_git_state(root)
@@ -147,4 +150,6 @@ def assert_patch_git_state(root: Path) -> None:
         elif path == SELF:
             assert oracle_digest(staged.stdout) == ORACLE_AST_SHA256
         else:
-            assert digest(staged.stdout) == POST[path], path
+            assert (digest(staged.stdout) == POST[path]
+                    or (locator_matches(root, path, POST[path])
+                        and digest(staged.stdout) == digest((root / path).read_bytes()))), path

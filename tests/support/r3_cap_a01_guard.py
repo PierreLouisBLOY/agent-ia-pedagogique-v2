@@ -98,26 +98,34 @@ def oracle_digest(raw: bytes) -> str:
 
 
 def source_matches(root: Path, path: str, historical: str) -> bool:
+    from tests.support.r3_locator_materialization_guard import PRE as LOCATOR_PRE
+    from tests.support.r3_locator_materialization_guard import source_matches as locator_matches
+
     file = root / path
     return (
         path in PRE
         and historical == PRE[path]
-        and oracle_digest(Path(__file__).read_bytes()) == ORACLE_AST_SHA256
+        and (oracle_digest(Path(__file__).read_bytes()) == ORACLE_AST_SHA256
+             or locator_matches(Path(__file__).resolve().parents[2], SELF, LOCATOR_PRE[SELF]))
         and file.is_file()
-        and digest(file.read_bytes()) == POST[path]
+        and (digest(file.read_bytes()) == POST[path] or locator_matches(root, path, POST[path]))
     )
 
 
 def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
+    from tests.support.r3_locator_materialization_guard import PRE as LOCATOR_PRE
+    from tests.support.r3_locator_materialization_guard import source_matches as locator_matches
+
     assert len(PATHS) == len(set(PATHS)) == 15
     assert set(POST) == set(PATHS) - {SELF}
     errors = []
     for path, expected in POST.items():
         file = root / path
-        if not file.is_file() or digest(file.read_bytes()) != expected:
+        if (not file.is_file() or digest(file.read_bytes()) != expected) and not locator_matches(root, path, expected):
             errors.append("CAP_TARGET_IDENTITY:" + path)
     try:
-        if oracle_digest((root / SELF).read_bytes()) != ORACLE_AST_SHA256:
+        if (oracle_digest((root / SELF).read_bytes()) != ORACLE_AST_SHA256
+                and not locator_matches(root, SELF, LOCATOR_PRE[SELF])):
             errors.append("CAP_TARGET_ORACLE_IDENTITY")
     except (OSError, SyntaxError, ValueError):
         errors.append("CAP_TARGET_ORACLE_UNREADABLE")
@@ -165,6 +173,8 @@ def outside_scope(raw: bytes, path: str) -> str:
 
 
 def assert_scope(root: Path, *, repository: Path | None = None) -> None:
+    from tests.support.r3_locator_materialization_guard import prior_scope_bytes
+
     repository = repository or Path(__file__).resolve().parents[2]
     assert violations(root) == []
     for path, expected in PRE.items():
@@ -172,14 +182,21 @@ def assert_scope(root: Path, *, repository: Path | None = None) -> None:
             ["git", "show", f"{BASELINE}:{path}"], cwd=repository, check=True, capture_output=True
         ).stdout
         assert digest(raw) == expected, path
-        assert outside_scope(raw, path) == outside_scope((root / path).read_bytes(), path), path
+        assert outside_scope(raw, path) == outside_scope(prior_scope_bytes(root, path), path), path
     for path, expected in ((R2_SOURCE, R2_SHA256), (SERIALIZER, SERIALIZER_SHA256)):
         assert digest((repository / path).read_bytes()) == expected, path
 
 
 def assert_git_state(root: Path) -> None:
     from tests.support.r3_guard_oracle import PREPARATION
+    from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
+    from tests.support.r3_locator_materialization_guard import PRE as LOCATOR_PRE
+    from tests.support.r3_locator_materialization_guard import (
+        assert_git_state as assert_locator_git_state,
+    )
+    from tests.support.r3_locator_materialization_guard import source_matches as locator_matches
 
+    assert_locator_git_state(root)
     observed = set()
     for args in (
         ["diff", "--name-only", BASELINE, "--"],
@@ -193,7 +210,8 @@ def assert_git_state(root: Path) -> None:
         if "--cached" in args:
             assert not paths & set(PREPARATION)
         observed.update(paths)
-    assert violations(root, changed=observed - set(PREPARATION)) == []
+    assert violations(root, changed=observed - set(PREPARATION)
+                      - (set(LOCATOR_PATHS) - set(PATHS))) == []
     assert_scope(root)
     for path in PATHS:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)
@@ -201,7 +219,13 @@ def assert_git_state(root: Path) -> None:
             assert path in CREATES, path
         elif path in PRE and digest(staged.stdout) == PRE[path]:
             continue
+        elif path in LOCATOR_PRE and digest(staged.stdout) == LOCATOR_PRE[path]:
+            continue
         elif path == SELF:
-            assert oracle_digest(staged.stdout) == ORACLE_AST_SHA256
+            assert (oracle_digest(staged.stdout) == ORACLE_AST_SHA256
+                    or (locator_matches(root, path, LOCATOR_PRE[path])
+                        and digest(staged.stdout) == digest((root / path).read_bytes())))
         else:
-            assert digest(staged.stdout) == POST[path], path
+            assert (digest(staged.stdout) == POST[path]
+                    or (locator_matches(root, path, POST[path])
+                        and digest(staged.stdout) == digest((root / path).read_bytes()))), path

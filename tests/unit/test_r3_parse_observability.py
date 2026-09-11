@@ -162,7 +162,7 @@ def test_inner_nominal_complete_and_no_shared_trace():
 
 
 def test_closed_schema_first_failure_and_unexpected_exception_privacy():
-    assert len(ParseStage) == 6 and len(ParseCode) == 11 and len(ParseStatus) == 4
+    assert len(ParseStage) == 6 and len(ParseCode) == 16 and len(ParseStatus) == 4
     trace = ParseDiagnostic()
     with pytest.raises(RuntimeError):
         with trace.capture():
@@ -236,9 +236,10 @@ def test_patch_inventory_closed_mutants(mutation):
 @pytest.mark.parametrize("path", PATCH_PATHS)
 def test_every_patch_source_mutation_is_rejected(tmp_path, path):
     from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
+    from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
     from tests.support.r3_prepare_contract_alignment_guard import PATHS
 
-    for name in set(PATCH_PATHS) | set(PATHS) | set(CAP_PATHS):
+    for name in set(PATCH_PATHS) | set(PATHS) | set(CAP_PATHS) | set(LOCATOR_PATHS):
         target = tmp_path / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / name).read_bytes())

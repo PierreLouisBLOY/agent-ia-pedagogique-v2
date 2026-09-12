@@ -11,8 +11,15 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     fingerprint,
     object_data,
 )
+from backend.modules.pedagogical_design.contracts.dto.assessment_revision import (
+    EditorialCorrectionPlan,
+)
 from backend.modules.validation_control.contracts.dto.deterministic_validation import (
     AssessmentValidation,
+)
+from backend.modules.validation_control.contracts.dto.editorial_scope import (
+    EditorialValidationScope,
+    verify_editorial_scope,
 )
 from backend.modules.work_orchestration.contracts.dto.conversation import (
     ConversationRejected,
@@ -33,6 +40,8 @@ class ConversationMemoryStore:
         self._r3_reviews: dict[str, dict[str, object]] = {}
         self._r3_validations: dict[tuple[str, str], tuple[AssessmentValidation, ...]] = {}
         self._r3_lease: tuple[R3Command, str, int] | None = None
+        self._r3_editorial_scopes: dict[tuple[str, str], EditorialValidationScope] = {}
+        self._r3_consumed_editorial_plans: set[str] = set()
 
     def read(self, conversation_id: str) -> ConversationState | None:
         with self._lock:
@@ -135,7 +144,8 @@ class ConversationMemoryStore:
                     production: ProductionReadView | None = None,
                     bundle: AssessmentBundle | None = None,
                     validation: AssessmentValidation | None = None,
-                    review: Mapping[str, object] | None = None) -> None:
+                    review: Mapping[str, object] | None = None,
+                    editorial_scope: EditorialValidationScope | None = None) -> None:
         with self._lock:
             lease = self._r3_lease
             if lease is None or lease[1] != operation_ref or lease[2] != self._state.revision:
@@ -170,6 +180,28 @@ class ConversationMemoryStore:
                 if (current_bundle is None or (review.get("production_ref"), review.get("version_ref")) != key
                         or review.get("bundle_sha256") != current_bundle.sha256):
                     raise R3Rejected("ASSESSMENT_REFERENCE")
+            scopes = dict(self._r3_editorial_scopes)
+            consumed_plans = set(self._r3_consumed_editorial_plans)
+            editorial = command.body.get("operation") == EditorialCorrectionPlan.OPERATION
+            if result["state"] == "SUCCEEDED" and editorial:
+                if (type(editorial_scope) is not EditorialValidationScope
+                        or production is None or bundle is None or validation is None or review is not None
+                        or editorial_scope.command_id != command.command_id
+                        or editorial_scope.operation_ref != operation_ref
+                        or editorial_scope.evidence.conversation_id != self._state.conversation_id
+                        or editorial_scope.evidence.plan.sha256 != command.body.get("plan_sha256")
+                        or editorial_scope.evidence.plan.data["review_sha256"] != command.body.get("review_sha256")
+                        or not verify_editorial_scope(editorial_scope,
+                            parent=self._r3_bundles.get(old_key), candidate=bundle.data)):
+                    raise R3Rejected("ASSESSMENT_PUBLICATION_REJECTED")
+                plan_hash = editorial_scope.evidence.plan.sha256
+                if plan_hash in consumed_plans or key in scopes:
+                    raise R3Rejected("IDEMPOTENCY_CONFLICT")
+                scopes[key] = editorial_scope
+                consumed_plans.add(plan_hash)
+            elif editorial_scope is not None or (
+                    bundle is not None and object_data(bundle.data["lineage"]).get("source_capability") is None):
+                raise R3Rejected("ASSESSMENT_PUBLICATION_REJECTED")
             versions = dict(self._versions)
             bundles = dict(self._r3_bundles)
             validations = dict(self._r3_validations)
@@ -192,6 +224,7 @@ class ConversationMemoryStore:
                      "production_ref": key[0], "version_ref": key[1]}
             self._versions, self._r3_bundles = versions, bundles
             self._r3_validations, self._r3_reviews = validations, reviews
+            self._r3_editorial_scopes, self._r3_consumed_editorial_plans = scopes, consumed_plans
             self._r3_operations[operation_ref] = final
             self._state, self._r3_lease = state, None
 
@@ -225,9 +258,15 @@ class ConversationMemoryStore:
                 "current_candidate": as_plain(self._state.view["current_candidate"]),
                 "versions": [{"production_ref": p, "version_ref": v} for p, v in self._versions if p == production_ref]}
 
+    def r3_editorial_scope(self, production_ref: str, version_ref: str) -> EditorialValidationScope | None:
+        with self._lock:
+            return self._r3_editorial_scopes.get((production_ref, version_ref))
+
     def r3_clear(self) -> None:
         with self._lock:
             self._r3_lease = None
+            self._r3_editorial_scopes.clear()
+            self._r3_consumed_editorial_plans.clear()
             self._r3_bundles.clear()
             self._r3_reviews.clear()
             self._r3_validations.clear()

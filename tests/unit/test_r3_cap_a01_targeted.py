@@ -511,7 +511,10 @@ def test_no_business_predicate_or_status_is_weakened(name):
         for n in ast.parse((ROOT / path).read_bytes()).body
         if isinstance(n, ast.FunctionDef)
     }
-    for symbol in old_nodes.keys() - {"evaluate_checks"}:
+    from tests.support.r3_editorial_correction_guard import assert_predicates
+
+    assert_predicates(ROOT)
+    for symbol in old_nodes.keys() - {"evaluate_checks", "check_rule"}:
         assert old_nodes[symbol] == new_nodes[symbol]
 
 
@@ -546,9 +549,10 @@ def test_unit_conversion_and_nominal_warning_preserved(scale):
 
 @pytest.mark.parametrize("path", PATHS)
 def test_each_targeted_successor_identity_is_closed(tmp_path, path):
+    from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
     from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
 
-    for item in set(PATHS) | set(LOCATOR_PATHS):
+    for item in set(PATHS) | set(LOCATOR_PATHS) | set(EDITORIAL_PATHS):
         target = tmp_path / item
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / item).read_bytes())

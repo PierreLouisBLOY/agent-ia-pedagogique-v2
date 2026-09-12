@@ -111,6 +111,8 @@ def assert_git_state(root: Path) -> None:
     from tests.support.r3_cap_a01_guard import PRE as CAP_PRE
     from tests.support.r3_cap_a01_guard import assert_git_state as assert_cap_git_state
     from tests.support.r3_cap_a01_guard import source_matches as cap_source_matches
+    from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
+    from tests.support.r3_editorial_correction_guard import index_matches
     from tests.support.r3_guard_oracle import PREPARATION
     from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
     from tests.support.r3_locator_materialization_guard import PRE as LOCATOR_PRE
@@ -126,7 +128,8 @@ def assert_git_state(root: Path) -> None:
             assert not paths & set(PREPARATION)
         observed.update(paths)
     assert violations(root, changed=observed - set(PREPARATION) - (set(CAP_PATHS) - set(PATHS))
-                      - (set(LOCATOR_PATHS) - set(PATHS))) == []
+                      - (set(LOCATOR_PATHS) - set(PATHS))
+                      - (set(EDITORIAL_PATHS) - set(PATHS))) == []
     assert_scope(root)
     for path in PATHS:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)
@@ -135,6 +138,8 @@ def assert_git_state(root: Path) -> None:
         elif path in PRE and digest(staged.stdout) == PRE[path]:
             continue  # Only exact original index bytes before staging.
         elif path in LOCATOR_PRE and digest(staged.stdout) == LOCATOR_PRE[path]:
+            continue
+        elif index_matches(root, path, staged.stdout):
             continue
         elif path == SELF:
             assert (oracle_digest(staged.stdout) == ORACLE_AST_SHA256

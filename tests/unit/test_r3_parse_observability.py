@@ -236,10 +236,11 @@ def test_patch_inventory_closed_mutants(mutation):
 @pytest.mark.parametrize("path", PATCH_PATHS)
 def test_every_patch_source_mutation_is_rejected(tmp_path, path):
     from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
+    from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
     from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
     from tests.support.r3_prepare_contract_alignment_guard import PATHS
 
-    for name in set(PATCH_PATHS) | set(PATHS) | set(CAP_PATHS) | set(LOCATOR_PATHS):
+    for name in set(PATCH_PATHS) | set(PATHS) | set(CAP_PATHS) | set(LOCATOR_PATHS) | set(EDITORIAL_PATHS):
         target = tmp_path / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / name).read_bytes())

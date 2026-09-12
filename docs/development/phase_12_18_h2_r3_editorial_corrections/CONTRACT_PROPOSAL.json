@@ -1,0 +1,311 @@
+{
+  "schema": "R3-EDITORIAL-CORRECTION-1.0",
+  "status": "APPROVED_SYNTHETIC_IMPLEMENTATION_E01_E04_ONLY",
+  "baseline_commit": "ef0cba51d009cb25443da146285eee5046f06e25",
+  "source_manifest_sha256": "c70fe5ffde64239f363dc190bd386e1444793b6b652cb062ee881e568d7992f8",
+  "approved_scope": "P_R3_EDITORIAL_IMPLEMENTATION_SYNTHETIC_31",
+  "operation": "APPLY_REVIEW_EDITORIAL_F01_F02",
+  "transport": "Existing modifications route / closed R3Command sub-operation",
+  "provenance": {
+    "source_capability": null,
+    "origin_kind": "LOCAL_DETERMINISTIC_M04",
+    "authority": "Injected session verifier authenticates exact external evidence; no candidate boolean grants authority",
+    "scope": "Immutable sealed local capsule, atomically stored with bundle and CAP validation",
+    "revalidation": "Exact stored version + live authenticated evidence + original parent; absence/revocation/forgery => A14 FAIL",
+    "limitations": "In-process trust boundary, not a signature scheme; arbitrary trusted Python execution is not sandboxed by these DTOs"
+  },
+  "content_allowlist": [
+    "correction.answers[0].expected_answer",
+    "correction.answers[0].calculations[0].locator",
+    "correction.answers[1].expected_answer",
+    "correction.answers[1].calculations[0].locator"
+  ],
+  "plan_binding": {
+    "format": "Strict raw UTF-8 JSON, duplicate keys/NaN/BOM rejected; frozen decoded mapping",
+    "fields": [
+      "contract",
+      "operation",
+      "prepared_from_baseline_commit",
+      "implementation_baseline_commit",
+      "contract_document_sha256",
+      "production_ref",
+      "parent_version_ref",
+      "parent_bundle_sha256",
+      "parent_subject_sha256",
+      "review_sha256",
+      "proposal_source_sha256",
+      "edits",
+      "changed_content_paths",
+      "source_capability",
+      "origin_kind",
+      "locator_algorithm",
+      "locator_source_sha256",
+      "max_child_publications",
+      "provider_calls",
+      "dependency_changes"
+    ],
+    "texts": "Exact externally approved old/new strings, new text retains old exact suffix; raw plan SHA binds both; private concrete plan remains outside Git",
+    "findings": [
+      "F-01",
+      "F-02"
+    ],
+    "locator_source_sha256": "b30b1311ffccff4451abfd3e222fa27902077f1ac2795f6995b018f31edf2942",
+    "locator_rule": "Existing pure calculation_locators; Python character offsets; deterministic non-overlap in original calculation order"
+  },
+  "invariants": [
+    "Unchanged subject and subject SHA",
+    "Only three version_ref metadata changes plus closed lineage",
+    "Whole-tree equality outside the exact four content paths and metadata",
+    "A01–A13/A15/A16 unchanged; A14 provider/HARDEN body preserved",
+    "Fresh child, one publication per plan, no review inheritance or finding closure",
+    "Existing CAS, limits, route inventory and defaults preserved",
+    "No job authorize/start/poll on editorial path",
+    "Close revokes authority and clears volatile capsules/consumption"
+  ],
+  "inventory": [
+    {
+      "path": "backend/modules/pedagogical_design/contracts/dto/assessment_revision.py",
+      "action": "MODIFY",
+      "symbols": [
+        "EditorialCorrectionPlan"
+      ]
+    },
+    {
+      "path": "backend/modules/pedagogical_design/domain/policies/assessment_revision.py",
+      "action": "MODIFY",
+      "symbols": [
+        "assemble_editorial_corrections"
+      ]
+    },
+    {
+      "path": "backend/modules/work_orchestration/contracts/dto/r3_review_modify.py",
+      "action": "MODIFY",
+      "symbols": [
+        "R3Command.__post_init__",
+        "R3Command.fingerprint"
+      ]
+    },
+    {
+      "path": "backend/modules/work_orchestration/application/services/r3_review_modify.py",
+      "action": "MODIFY",
+      "symbols": [
+        "R3ReviewModifyService.__init__",
+        "R3ReviewModifyService.execute",
+        "R3ReviewModifyService._validation",
+        "R3ReviewModifyService.close"
+      ]
+    },
+    {
+      "path": "backend/infrastructure/composition/factories/r3_review_modify.py",
+      "action": "MODIFY",
+      "symbols": [
+        "build_r3"
+      ]
+    },
+    {
+      "path": "backend/modules/validation_control/domain/policies/assessment_checks.py",
+      "action": "MODIFY",
+      "symbols": [
+        "check_rule",
+        "evaluate_checks"
+      ]
+    },
+    {
+      "path": "backend/modules/validation_control/application/commands/validate_assessment.py",
+      "action": "MODIFY",
+      "symbols": [
+        "ValidateAssessmentCommand.execute"
+      ]
+    },
+    {
+      "path": "backend/modules/validation_control/ports/inbound/validate_assessment.py",
+      "action": "MODIFY",
+      "symbols": [
+        "ValidateAssessment.execute"
+      ]
+    },
+    {
+      "path": "backend/modules/pedagogical_design/application/commands/revise_assessment.py",
+      "action": "MODIFY",
+      "symbols": [
+        "ReviseAssessmentCommand.execute_editorial"
+      ]
+    },
+    {
+      "path": "backend/modules/pedagogical_design/ports/inbound/revise_assessment.py",
+      "action": "MODIFY",
+      "symbols": [
+        "ReviseAssessment.execute_editorial"
+      ]
+    },
+    {
+      "path": "tests/support/r3_guard_oracle.py",
+      "action": "MODIFY",
+      "symbols": [
+        "active_inventory"
+      ]
+    },
+    {
+      "path": "tests/support/r3_locator_materialization_guard.py",
+      "action": "MODIFY",
+      "symbols": [
+        "authenticated",
+        "source_matches",
+        "prior_scope_bytes",
+        "violations",
+        "assert_scope",
+        "assert_git_state"
+      ]
+    },
+    {
+      "path": "tests/support/r3_cap_a01_guard.py",
+      "action": "MODIFY",
+      "symbols": [
+        "assert_git_state"
+      ]
+    },
+    {
+      "path": "tests/support/r3_serializer_8192_guard.py",
+      "action": "MODIFY",
+      "symbols": [
+        "assert_git_state"
+      ]
+    },
+    {
+      "path": "tests/support/r3_prepare_contract_alignment_guard.py",
+      "action": "MODIFY",
+      "symbols": [
+        "assert_successor_git_state"
+      ]
+    },
+    {
+      "path": "tests/support/r3_parse_observability_guard.py",
+      "action": "MODIFY",
+      "symbols": [
+        "patch_violations",
+        "assert_patch_git_state"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_cap_a01_targeted.py",
+      "action": "MODIFY",
+      "symbols": [
+        "test_no_business_predicate_or_status_is_weakened",
+        "test_each_targeted_successor_identity_is_closed"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_locator_materialization.py",
+      "action": "MODIFY",
+      "symbols": [
+        "test_every_successor_file_mutation_is_rejected"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_prepare_serialization.py",
+      "action": "MODIFY",
+      "symbols": [
+        "test_each_successor_source_mutation_is_rejected"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_prepare_contract_alignment.py",
+      "action": "MODIFY",
+      "symbols": [
+        "copied_sources"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_parse_observability.py",
+      "action": "MODIFY",
+      "symbols": [
+        "test_every_patch_source_mutation_is_rejected"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_editorial_corrections.py",
+      "action": "CREATE",
+      "symbols": []
+    },
+    {
+      "path": "tests/unit/test_r3_editorial_validation_scope.py",
+      "action": "CREATE",
+      "symbols": []
+    },
+    {
+      "path": "tests/integration/test_r3_editorial_corrections.py",
+      "action": "CREATE",
+      "symbols": []
+    },
+    {
+      "path": "tests/architecture/test_r3_editorial_correction_boundary.py",
+      "action": "CREATE",
+      "symbols": []
+    },
+    {
+      "path": "tests/support/r3_editorial_correction_guard.py",
+      "action": "CREATE",
+      "symbols": []
+    },
+    {
+      "path": "architecture/adr/ADR-r3-explicit-editorial-corrections.md",
+      "action": "CREATE",
+      "symbols": []
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r3_editorial_corrections/CONTRACT_PROPOSAL.json",
+      "action": "CREATE",
+      "symbols": []
+    },
+    {
+      "path": "backend/adapters/outbound/persistence/conversation_memory.py",
+      "action": "MODIFY",
+      "symbols": [
+        "ConversationMemoryStore.__init__",
+        "ConversationMemoryStore.r3_complete",
+        "ConversationMemoryStore.r3_editorial_scope",
+        "ConversationMemoryStore.r3_clear"
+      ]
+    },
+    {
+      "path": "backend/modules/work_orchestration/ports/outbound/r3_store.py",
+      "action": "MODIFY",
+      "symbols": [
+        "R3Store.r3_complete",
+        "R3Store.r3_editorial_scope"
+      ]
+    },
+    {
+      "path": "backend/modules/validation_control/contracts/dto/editorial_scope.py",
+      "action": "CREATE",
+      "symbols": [
+        "EditorialAuthorizationEvidence",
+        "EditorialValidationScope",
+        "build_editorial_scope",
+        "verify_editorial_scope"
+      ]
+    }
+  ],
+  "validation_policy": {
+    "named_tests_only": true,
+    "sqlite": false,
+    "historical_rehydration": false,
+    "provider_calls": 0,
+    "count_calls": 0,
+    "network": false,
+    "credentials": false,
+    "live": false
+  },
+  "out_of_scope": [
+    "E05",
+    "E06",
+    "E07",
+    "E08",
+    "E09",
+    "E10",
+    "R4",
+    "H3",
+    "pilot V2/V3",
+    "historical V1 application"
+  ]
+}

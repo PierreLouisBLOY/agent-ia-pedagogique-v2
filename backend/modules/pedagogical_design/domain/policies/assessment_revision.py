@@ -12,6 +12,7 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
 from backend.modules.pedagogical_design.contracts.dto.assessment_revision import (
     HARDEN,
     AssessmentRevisionRequest,
+    EditorialCorrectionPlan,
 )
 
 
@@ -94,4 +95,42 @@ def assemble_revision(request: AssessmentRevisionRequest, proposed: Mapping[str,
         data[field] = part
     data["lineage"] = dict(lineage)
     mark("BUNDLE_ASSEMBLY")
+    return AssessmentBundle(data)
+
+
+def assemble_editorial_corrections(
+    plan: EditorialCorrectionPlan, parent: AssessmentBundle, *, version_ref: str,
+    lineage: Mapping[str, object],
+    calculate_locators: Callable[[str, str, tuple[str, ...]], tuple[dict[str, object], ...]],
+) -> AssessmentBundle:
+    """Local approved text only. No provider, store, approval or parent mutation."""
+    plan.validate_parent(parent)
+    if version_ref == parent.version_ref:
+        raise ValueError("ASSESSMENT_REFERENCE")
+    data = parent.mutable_copy()
+    correction = object_data(data["correction"])
+    answers = items(correction["answers"])
+    for i, edit in enumerate(items(plan.data["edits"], 2)):
+        answer = answers[i]
+        calculations = items(answer["calculations"])
+        text = str(edit["proposed_expected_answer"])
+        locators = calculate_locators(str(answer["question_id"]), text,
+                                      tuple(str(c["value"]) for c in calculations))
+        if len(locators) != 1:
+            raise ValueError("ASSESSMENT_LOCATOR")
+        locator = object_data(locators[0], {"section_id", "start", "end", "exact_text"})
+        if (locator["section_id"] != answer["question_id"]
+                or locator["exact_text"] != calculations[0]["value"]):
+            raise ValueError("ASSESSMENT_LOCATOR")
+        answer["expected_answer"] = text
+        calculations[0]["locator"] = locator
+        answer["calculations"] = list(calculations)
+    correction["answers"] = list(answers)
+    data["correction"] = correction
+    data["version_ref"] = version_ref
+    for name in ("correction", "marking"):
+        part = object_data(data[name])
+        part["version_ref"] = version_ref
+        data[name] = part
+    data["lineage"] = dict(lineage)
     return AssessmentBundle(data)

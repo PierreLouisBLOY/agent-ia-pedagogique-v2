@@ -323,6 +323,8 @@ def active_inventory(
 ) -> list[str]:
     from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
     from tests.support.r3_cap_a01_guard import violations as cap_violations
+    from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
+    from tests.support.r3_editorial_correction_guard import violations as editorial_violations
     from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
     from tests.support.r3_locator_materialization_guard import violations as locator_violations
     from tests.support.r3_parse_observability_guard import (
@@ -353,7 +355,7 @@ def active_inventory(
             if "--cached" in args:
                 indexed.update(result.stdout.splitlines())
     violations = sorted(changed - set(R3_PATHS) - set(PREPARATION) - set(PATCH_PATHS)
-                        - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS) - set(LOCATOR_PATHS))
+                        - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS) - set(LOCATOR_PATHS) - set(EDITORIAL_PATHS))
     if changed & (set(LOCATOR_PATHS) - set(R3_PATHS) - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS)):
         violations += locator_violations(root, changed=changed & set(LOCATOR_PATHS))
     if changed & (set(CAP_PATHS) - set(R3_PATHS) - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS)):
@@ -367,6 +369,7 @@ def active_inventory(
     if changed & set(SERIALIZER_CREATES):
         violations += serializer_violations(root)
         violations += ["SERIALIZER_MISSING:" + p for p in sorted(set(SERIALIZER_PATHS) - changed)]
+    violations += editorial_violations(root)
     violations += patch_violations(root)
     if changed & (set(PATCH_PATHS) - set(R3_PATHS)):
         violations += ["PARSE_PATCH_MISSING:" + p for p in sorted(set(PATCH_PATHS) - changed)]

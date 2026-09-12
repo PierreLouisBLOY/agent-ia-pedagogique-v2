@@ -162,6 +162,8 @@ def assert_successor_git_state(root: Path) -> None:
     from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
     from tests.support.r3_cap_a01_guard import PRE as CAP_PRE
     from tests.support.r3_cap_a01_guard import source_matches as cap_source_matches
+    from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
+    from tests.support.r3_editorial_correction_guard import index_matches
     from tests.support.r3_guard_oracle import PREPARATION
     from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
     from tests.support.r3_locator_materialization_guard import PRE as LOCATOR_PRE
@@ -186,7 +188,8 @@ def assert_successor_git_state(root: Path) -> None:
     assert successor_violations(root, changed=(observed - set(PREPARATION))
                                - (set(SERIALIZER_PATHS) - set(PATHS))
                                - (set(CAP_PATHS) - set(PATHS))
-                               - (set(LOCATOR_PATHS) - set(PATHS))) == []
+                               - (set(LOCATOR_PATHS) - set(PATHS))
+                      - (set(EDITORIAL_PATHS) - set(PATHS))) == []
     assert_successor_scope(root)
     for path in PATHS:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)
@@ -197,6 +200,8 @@ def assert_successor_git_state(root: Path) -> None:
         elif path in CAP_PRE and digest(staged.stdout) == CAP_PRE[path]:
             continue  # Exact preinventoried current baseline, independently checked above.
         elif path in LOCATOR_PRE and digest(staged.stdout) == LOCATOR_PRE[path]:
+            continue
+        elif index_matches(root, path, staged.stdout):
             continue
         elif path == SELF:
             assert (oracle_digest(staged.stdout) == ORACLE_AST_SHA256

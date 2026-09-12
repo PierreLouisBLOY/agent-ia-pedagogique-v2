@@ -159,7 +159,9 @@ def test_neutral_contract_stays_canonical_but_provider_has_no_locator_authority(
 
 @pytest.mark.parametrize("path", PATHS)
 def test_every_successor_file_mutation_is_rejected(tmp_path, path):
-    for item in PATHS:
+    from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
+
+    for item in set(PATHS) | set(EDITORIAL_PATHS):
         target = tmp_path / item
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / item).read_bytes())

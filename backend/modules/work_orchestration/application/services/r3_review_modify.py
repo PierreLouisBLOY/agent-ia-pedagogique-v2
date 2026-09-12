@@ -19,6 +19,7 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_revision import
     HARDEN,
     PREPARE,
     AssessmentRevisionRequest,
+    EditorialCorrectionPlan,
 )
 from backend.modules.validation_control.application.commands.validate_assessment import (
     ValidateAssessmentCommand,
@@ -26,6 +27,11 @@ from backend.modules.validation_control.application.commands.validate_assessment
 from backend.modules.validation_control.contracts.dto.deterministic_validation import (
     TARGETED_CHECK_REASON_CODES,
     AssessmentValidation,
+)
+from backend.modules.validation_control.contracts.dto.editorial_scope import (
+    EditorialAuthorizationEvidence,
+    EditorialValidationScope,
+    build_editorial_scope,
 )
 from backend.modules.work_orchestration.contracts.dto.production_read_view import ProductionReadView
 from backend.modules.work_orchestration.contracts.dto.r3_review_modify import (
@@ -130,11 +136,32 @@ class _ProcessingDiagnostic:
 class R3ReviewModifyService:
     def __init__(self, *, conversation_id: str, store: R3Store, jobs: R3JobPort,
                  ensure_session: Callable[[], object], clock: Callable[[], datetime],
-                 new_id: Callable[[str], str]) -> None:
+                 new_id: Callable[[str], str],
+                 editorial_plan: EditorialCorrectionPlan | None = None,
+                 editorial_evidence: EditorialAuthorizationEvidence | None = None,
+                 editorial_authenticate: Callable[[EditorialAuthorizationEvidence], bool] | None = None,
+                 editorial_baseline: str | None = None, editorial_contract_sha256: str | None = None,
+                 calculate_locators: Callable[[str, str, tuple[str, ...]], tuple[dict[str, object], ...]] | None = None) -> None:
         self._id, self._store, self._jobs = conversation_id, store, jobs
         self._ensure, self._clock, self._new_id = ensure_session, clock, new_id
         self._active: tuple[R3Command, R3JobRequest, ProductionReadView] | None = None
         self._diagnostics: dict[str, _ProcessingDiagnostic] = {}
+        self._editorial_plan, self._editorial_evidence = editorial_plan, editorial_evidence
+        self._editorial_open = True
+        self._calculate_locators = calculate_locators
+
+        def authorized(evidence: EditorialAuthorizationEvidence) -> bool:
+            try:
+                return (self._editorial_open and evidence is self._editorial_evidence
+                        and evidence.plan is self._editorial_plan
+                        and evidence.baseline_commit == editorial_baseline
+                        and evidence.contract_sha256 == editorial_contract_sha256
+                        and evidence.conversation_id == self._id
+                        and editorial_authenticate is not None
+                        and editorial_authenticate(evidence) is True)
+            except Exception:
+                return False
+        self._editorial_authorized = authorized
 
     def diagnostic(self, operation_ref: str) -> dict[str, object]:
         """Private composition readback only; never added to HTTP/business receipts."""
@@ -157,16 +184,23 @@ class R3ReviewModifyService:
         return view
 
     def _validation(self, view: ProductionReadView, bundle: AssessmentBundle | None, *,
-                    parent: AssessmentBundle | None = None) -> AssessmentValidation:
+                    parent: AssessmentBundle | None = None,
+                    editorial_scope: EditorialValidationScope | None = None) -> AssessmentValidation:
         if parent is None and bundle is not None:
             ref = object_data(bundle.data["lineage"]).get("parent_version_ref")
             if ref is not None:
                 parent = self._store.r3_bundle(view.production_ref, str(ref))
+        if (editorial_scope is None and bundle is not None
+                and object_data(bundle.data["lineage"]).get("source_capability") is None):
+            editorial_scope = self._store.r3_editorial_scope(view.production_ref, view.version_ref)
+        if editorial_scope is not None and not self._editorial_authorized(editorial_scope.evidence):
+            editorial_scope = None
         subject = {"content": view.data["content"], "sections": view.data["sections"]}
         return ValidateAssessmentCommand().execute(bundle, production_ref=view.production_ref,
             version_ref=view.version_ref, subject_sha256=fingerprint(subject),
             validation_ref=self._new_id("validation"), evaluated_at=self._clock().isoformat(),
-            references=tuple(items(view.data["references"], 3)), parent=parent)
+            references=tuple(items(view.data["references"], 3)), parent=parent,
+            editorial_scope=editorial_scope)
 
     def execute(self, command: R3Command) -> dict[str, object]:
         self._ensure()
@@ -192,6 +226,20 @@ class R3ReviewModifyService:
                 raise R3Rejected("ASSESSMENT_REFERENCE")
             if command.operation != "validations" and bundle is None:
                 raise R3Rejected("ASSESSMENT_BUNDLE_MISSING")
+        editorial = (command.operation == "modifications"
+                     and command.body["operation"] == EditorialCorrectionPlan.OPERATION)
+        if editorial:
+            plan, evidence = self._editorial_plan, self._editorial_evidence
+            if (plan is None or evidence is None or bundle is None
+                    or self._calculate_locators is None or not self._editorial_authorized(evidence)):
+                raise R3Rejected("R3_NOT_AUTHORIZED")
+            if (command.body["plan_sha256"] != plan.sha256
+                    or command.body["review_sha256"] != plan.data["review_sha256"]):
+                raise R3Rejected("ASSESSMENT_REFERENCE")
+            plan.validate_parent(bundle)
+            review = self._store.r3_report(str(evidence.review.get("review_ref")), review=True)
+            if encoded(review) != encoded(evidence.review):
+                raise R3Rejected("ASSESSMENT_REFERENCE")
         if command.operation == "modifications" and self._validation(view, bundle).overall_status == "FAIL":
             raise R3Rejected("ASSESSMENT_VALIDATION_FAILED")
         operation_ref = self._new_id("op")
@@ -200,6 +248,54 @@ class R3ReviewModifyService:
             self._store.r3_reserve(command, operation_ref)
             self._store.r3_complete(operation_ref, {"state": "SUCCEEDED", "validation": result.as_dict()},
                                     validation=result)
+            return self._store.r3_report(operation_ref)
+        if editorial:
+            # No job creation, authorize/start/poll or provider operation on this path.
+            assert plan is not None and evidence is not None and bundle is not None
+            assert self._calculate_locators is not None
+            reserved = self._store.r3_reserve(command, operation_ref)
+            if reserved["operation_ref"] != operation_ref:
+                return reserved
+            trace = self._trace(operation_ref)
+            try:
+                trace.mark("BUNDLE_ASSEMBLY")
+                lineage: dict[str, object] = {
+                    "operation_ref": operation_ref, "command_id": command.command_id,
+                    "source_capability": None, "parent_version_ref": bundle.version_ref,
+                    "parent_bundle_sha256": bundle.sha256, "instruction_sha256": plan.sha256,
+                    "changed_locators": list(plan.PATHS), "dependency_changes": [],
+                }
+                child = ReviseAssessmentCommand().execute_editorial(plan, bundle,
+                    version_ref=self._new_id("ver"), lineage=lineage,
+                    calculate_locators=self._calculate_locators)
+                scope = build_editorial_scope(evidence, bundle, child,
+                    command_id=command.command_id, operation_ref=operation_ref,
+                    authenticate=self._editorial_authorized, calculate_locators=self._calculate_locators)
+                data = object_data(as_plain(view.data))
+                data["version_ref"] = child.version_ref
+                candidate = ProductionReadView(view.production_ref, child.version_ref, self._id, data)
+                trace.mark("DETERMINISTIC_VALIDATION_CAP_A01")
+                trace.cap_execution, trace.cap_overall = "STARTED", "UNKNOWN"
+                validation = self._validation(candidate, child, parent=bundle, editorial_scope=scope)
+                trace.validated(validation)
+                if validation.overall_status == "FAIL":
+                    raise R3Rejected("ASSESSMENT_VALIDATION_FAILED")
+                trace.mark("ATOMIC_PUBLICATION")
+                trace.publication_state = "STARTED"
+                self._store.r3_complete(operation_ref, {"state": "SUCCEEDED",
+                    "bundle_sha256": child.sha256, "review_status": "REVIEW_NOT_RUN",
+                    "validation_status": validation.overall_status},
+                    production=candidate, bundle=child, validation=validation, editorial_scope=scope)
+                trace.publication_state = "PUBLISHED"
+                trace.receipt_state = "WRITTEN"
+            except Exception as error:
+                trace.failed(error)
+                # An exception after commit must never overwrite a completed effect.
+                existing = self._store.r3_report(operation_ref)
+                if existing["state"] == "RUNNING":
+                    self._store.r3_complete(operation_ref, {"state": "FAILED_OUTPUT",
+                        "error_code": "ASSESSMENT_PUBLICATION_REJECTED"})
+                trace.receipt_state = "WRITTEN"
             return self._store.r3_report(operation_ref)
         revision = None
         if command.operation != "reviews":
@@ -325,6 +421,9 @@ class R3ReviewModifyService:
         return self._store.r3_report(reference, review=review)
 
     def close(self) -> None:
+        self._editorial_open = False
+        self._editorial_plan = self._editorial_evidence = None
+        self._calculate_locators = None
         self._jobs.close()
         if self._active is not None:
             self._store.r3_complete(self._active[1].operation_ref, {"state": "UNKNOWN"})

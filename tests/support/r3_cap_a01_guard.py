@@ -188,6 +188,8 @@ def assert_scope(root: Path, *, repository: Path | None = None) -> None:
 
 
 def assert_git_state(root: Path) -> None:
+    from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
+    from tests.support.r3_editorial_correction_guard import index_matches
     from tests.support.r3_guard_oracle import PREPARATION
     from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
     from tests.support.r3_locator_materialization_guard import PRE as LOCATOR_PRE
@@ -211,7 +213,8 @@ def assert_git_state(root: Path) -> None:
             assert not paths & set(PREPARATION)
         observed.update(paths)
     assert violations(root, changed=observed - set(PREPARATION)
-                      - (set(LOCATOR_PATHS) - set(PATHS))) == []
+                      - (set(LOCATOR_PATHS) - set(PATHS))
+                      - (set(EDITORIAL_PATHS) - set(PATHS))) == []
     assert_scope(root)
     for path in PATHS:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)
@@ -220,6 +223,8 @@ def assert_git_state(root: Path) -> None:
         elif path in PRE and digest(staged.stdout) == PRE[path]:
             continue
         elif path in LOCATOR_PRE and digest(staged.stdout) == LOCATOR_PRE[path]:
+            continue
+        elif index_matches(root, path, staged.stdout):
             continue
         elif path == SELF:
             assert (oracle_digest(staged.stdout) == ORACLE_AST_SHA256

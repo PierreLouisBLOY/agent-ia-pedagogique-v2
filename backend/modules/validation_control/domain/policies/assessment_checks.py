@@ -20,6 +20,10 @@ from backend.modules.validation_control.contracts.dto.deterministic_validation i
     TARGETED_CHECK_REASON_CODES,
     AssessmentCheck,
 )
+from backend.modules.validation_control.contracts.dto.editorial_scope import (
+    EditorialValidationScope,
+    verify_editorial_scope,
+)
 
 GROUPS = ("stable_resources", "stable_uses", "current_assets", "current_liabilities",
           "cash_assets", "cash_liabilities")
@@ -70,7 +74,8 @@ def _mark_questions(data: Mapping[str, object]) -> tuple[dict[str, object], ...]
 
 
 def check_rule(index: int, data: Mapping[str, object], *,
-               parent: AssessmentBundle | None, references: tuple[Mapping[str, object], ...]) -> bool:
+               parent: AssessmentBundle | None, references: tuple[Mapping[str, object], ...],
+               editorial_scope: EditorialValidationScope | None = None) -> bool:
     subject = object_data(data["subject"])
     sections = subject["sections"]
     questions = _questions(data)
@@ -189,6 +194,8 @@ def check_rule(index: int, data: Mapping[str, object], *,
         return (bool(actual) and actual == tuple(dict(r) for r in references)
                 and all(r["provenance_label"] == "SUPPORT_SYNTHETIQUE_R2 — aucune source officielle attestée" for r in actual))
     if index == 14:
+        if editorial_scope is not None or object_data(data["lineage"]).get("source_capability") is None:
+            return verify_editorial_scope(editorial_scope, parent=parent, candidate=data)
         lineage = object_data(data["lineage"], {"operation_ref", "command_id", "source_capability",
             "parent_version_ref", "parent_bundle_sha256", "instruction_sha256",
             "changed_locators", "dependency_changes"})
@@ -289,14 +296,16 @@ def _targeted_reason(index: int, error: Exception) -> str:
 
 
 def evaluate_checks(bundle: AssessmentBundle | None, *, parent: AssessmentBundle | None,
-                    references: tuple[Mapping[str, object], ...]) -> tuple[AssessmentCheck, ...]:
+                    references: tuple[Mapping[str, object], ...],
+                    editorial_scope: EditorialValidationScope | None = None) -> tuple[AssessmentCheck, ...]:
     result = []
     for index in range(1, 17):
         status, reason = "PASS", "CHECK_SATISFIED"
         try:
             if bundle is None:
                 status, reason = "FAIL", "ASSESSMENT_BUNDLE_MISSING"
-            elif not check_rule(index, bundle.data, parent=parent, references=references):
+            elif not check_rule(index, bundle.data, parent=parent, references=references,
+                                editorial_scope=editorial_scope):
                 status, reason = ("WARNING", "SEMANTIC_HUMAN_REVIEW_REQUIRED") if index == 16 else ("FAIL", f"A{index:02}_REJECTED")
         except (ValueError, TypeError, KeyError, InvalidOperation, OverflowError) as error:
             status, reason = "FAIL", _targeted_reason(index, error)

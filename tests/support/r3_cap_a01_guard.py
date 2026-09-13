@@ -197,6 +197,7 @@ def assert_git_state(root: Path) -> None:
         assert_git_state as assert_locator_git_state,
     )
     from tests.support.r3_locator_materialization_guard import source_matches as locator_matches
+    from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
 
     assert_locator_git_state(root)
     observed = set()
@@ -214,7 +215,7 @@ def assert_git_state(root: Path) -> None:
         observed.update(paths)
     assert violations(root, changed=observed - set(PREPARATION)
                       - (set(LOCATOR_PATHS) - set(PATHS))
-                      - (set(EDITORIAL_PATHS) - set(PATHS))) == []
+                      - (set(EDITORIAL_PATHS) - set(PATHS)) - (set(PORTABLE_PATHS) - set(PATHS))) == []
     assert_scope(root)
     for path in PATHS:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)

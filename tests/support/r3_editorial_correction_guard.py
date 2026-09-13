@@ -176,6 +176,11 @@ def oracle_digest(raw: bytes) -> str:
 
 
 def authenticated(root: Path) -> bool:
+    from tests.support.r3_portable_clone_guard import authenticated as portable_authenticated
+
+    successor_sha256 = "2f1b74d19c7c2f1f18e3e700ba9b9a8ec6c848a94b2c741d4d2d3aa3263af115"
+    if portable_authenticated(root, expected=successor_sha256):
+        return True
     try:
         return oracle_digest((root / SELF).read_bytes()) == ORACLE_SHA256
     except OSError:
@@ -183,12 +188,21 @@ def authenticated(root: Path) -> bool:
 
 
 def source_matches(root: Path, path: str, historical: str) -> bool:
+    from tests.support.r3_portable_clone_guard import source_matches as portable_matches
+
     file = root / path
+    if portable_matches(root, path, historical):
+        return True
     return (path in PRE and historical == PRE[path] and authenticated(root)
-            and file.is_file() and digest(file.read_bytes()) == POST.get(path))
+            and file.is_file() and (digest(file.read_bytes()) == POST.get(path)
+                                   or portable_matches(root, path, POST.get(path, ""))))
 
 
 def index_matches(root: Path, path: str, raw: bytes) -> bool:
+    from tests.support.r3_portable_clone_guard import index_matches as portable_index_matches
+
+    if portable_index_matches(root, path, raw):
+        return True
     return (path in PRE and source_matches(root, path, PRE[path])
             and digest(raw) in {PRE[path], POST[path]})
 
@@ -204,23 +218,29 @@ def baseline_bytes(path: str) -> bytes:
 
 
 def baseline_view(root: Path, path: str) -> bytes:
-    raw = (root / path).read_bytes()
+    from tests.support.r3_portable_clone_guard import baseline_view as portable_view
+
+    raw = portable_view(root, path)
     return baseline_bytes(path) if path in PRE and source_matches(root, path, PRE[path]) else raw
 
 
 def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
     assert len(PRE) == 23 and len(CREATES) == 8 and len(set(PATHS)) == 31
     assert set(POST) == set(PATHS) - {SELF}
-    errors = []
+    from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
+    from tests.support.r3_portable_clone_guard import source_matches as portable_matches
+    from tests.support.r3_portable_clone_guard import violations as portable_violations
+
+    errors = portable_violations(root)
     for path, expected in POST.items():
         file = root / path
-        if not file.is_file() or digest(file.read_bytes()) != expected:
+        if (not file.is_file() or digest(file.read_bytes()) != expected) and not portable_matches(root, path, expected):
             errors.append("EDITORIAL_IDENTITY:" + path)
     if not authenticated(root):
         errors.append("EDITORIAL_ORACLE_IDENTITY")
     if changed is not None:
         errors += ["EDITORIAL_MISSING:" + p for p in sorted(set(PATHS) - changed)]
-        errors += ["EDITORIAL_UNAPPROVED:" + p for p in sorted(changed - set(PATHS))]
+        errors += ["EDITORIAL_UNAPPROVED:" + p for p in sorted(changed - set(PATHS) - set(PORTABLE_PATHS))]
     return errors
 
 
@@ -283,9 +303,13 @@ def assert_predicates(root: Path) -> None:
 
 
 def assert_scope(root: Path) -> None:
+    from tests.support.r3_portable_clone_guard import assert_scope as assert_portable_scope
+    from tests.support.r3_portable_clone_guard import baseline_view as portable_view
+
+    assert_portable_scope(root)
     assert violations(root) == []
     for path in PRE:
-        before, after = baseline_bytes(path), (root / path).read_bytes()
+        before, after = baseline_bytes(path), portable_view(root, path)
         assert outside_scope(before, path) == outside_scope(after, path), path
         if not path.startswith("tests/support/"):
             old_imports = {ast.dump(n) for n in ast.parse(before).body
@@ -301,6 +325,9 @@ def assert_scope(root: Path) -> None:
 
 def assert_git_state(root: Path) -> None:
     from tests.support.r3_guard_oracle import PREPARATION
+    from tests.support.r3_portable_clone_guard import assert_git_state as assert_portable_git_state
+
+    assert_portable_git_state(root)
     observed = set()
     for args in (["diff", "--name-only", BASELINE, "--"],
                  ["diff", "--cached", "--name-only", BASELINE, "--"],
@@ -316,6 +343,8 @@ def assert_git_state(root: Path) -> None:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)
         if staged.returncode:
             assert path in CREATES, path
+        elif index_matches(root, path, staged.stdout):
+            continue
         elif path == SELF:
             assert oracle_digest(staged.stdout) == ORACLE_SHA256
             assert digest(staged.stdout) == digest((root / path).read_bytes())

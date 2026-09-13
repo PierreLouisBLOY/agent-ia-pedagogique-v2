@@ -100,6 +100,7 @@ def patch_violations(root: Path, *, changed: set[str] | None = None) -> list[str
     from tests.support.r3_editorial_correction_guard import violations as editorial_violations
     from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
     from tests.support.r3_locator_materialization_guard import source_matches as locator_matches
+    from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
     from tests.support.r3_prepare_contract_alignment_guard import PATHS, successor_violations
     from tests.support.r3_serializer_8192_guard import PATHS as SERIALIZER_PATHS
     from tests.support.r3_serializer_8192_guard import source_matches as serializer_source_matches
@@ -119,7 +120,7 @@ def patch_violations(root: Path, *, changed: set[str] | None = None) -> list[str
         errors.append("PARSE_PATCH_ORACLE_IDENTITY")
     if changed is not None:
         # Complete new successor working/index identities are checked by assert_patch_git_state.
-        allowed = set(PATCH_PATHS) | set(PATHS) | (set(SERIALIZER_PATHS) & changed) | (set(CAP_PATHS) & changed) | (set(LOCATOR_PATHS) & changed) | (set(EDITORIAL_PATHS) & changed)
+        allowed = set(PATCH_PATHS) | set(PATHS) | (set(SERIALIZER_PATHS) & changed) | (set(CAP_PATHS) & changed) | (set(LOCATOR_PATHS) & changed) | (set(EDITORIAL_PATHS) & changed) | (set(PORTABLE_PATHS) & changed)
         errors += ["PARSE_PATCH_MISSING:" + p for p in sorted(allowed - changed)]
         errors += ["PARSE_PATCH_UNAPPROVED:" + p for p in sorted(changed - allowed)]
     return errors

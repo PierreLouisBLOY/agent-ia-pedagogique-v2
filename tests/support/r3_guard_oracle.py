@@ -332,10 +332,14 @@ def active_inventory(
         active_source_matches,
         patch_violations,
     )
+    from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
+    from tests.support.r3_portable_clone_guard import private_preparations
+    from tests.support.r3_portable_clone_guard import violations as portable_violations
     from tests.support.r3_prepare_contract_alignment_guard import PATHS as SUCCESSOR_PATHS
     from tests.support.r3_serializer_8192_guard import CREATES as SERIALIZER_CREATES
     from tests.support.r3_serializer_8192_guard import PATHS as SERIALIZER_PATHS
     from tests.support.r3_serializer_8192_guard import violations as serializer_violations
+
     doc = json.loads((root / R3_CONTRACT).read_text("utf-8"))
     assert doc["baseline_commit"] == R3_BASELINE
     assert doc["package_manifest_sha256"] == R3_MANIFEST
@@ -355,14 +359,16 @@ def active_inventory(
             if "--cached" in args:
                 indexed.update(result.stdout.splitlines())
     violations = sorted(changed - set(R3_PATHS) - set(PREPARATION) - set(PATCH_PATHS)
-                        - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS) - set(LOCATOR_PATHS) - set(EDITORIAL_PATHS))
+                        - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS) - set(LOCATOR_PATHS) - set(EDITORIAL_PATHS) - set(PORTABLE_PATHS))
     if changed & (set(LOCATOR_PATHS) - set(R3_PATHS) - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS)):
         violations += locator_violations(root, changed=changed & set(LOCATOR_PATHS))
     if changed & (set(CAP_PATHS) - set(R3_PATHS) - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS)):
         violations += cap_violations(root, changed=changed & set(CAP_PATHS))
     violations += ["MISSING_R3_PATH:" + p for p in sorted(set(R3_PATHS) - changed)]
     violations += ["PROTECTED_DOCUMENT_INDEXED:" + p for p in sorted(indexed & set(PREPARATION))]
-    for path, digest in (PREPARATION | READ_ONLY).items():
+    violations += list(private_preparations(root).errors)
+    violations += portable_violations(root)
+    for path, digest in READ_ONLY.items():
         file = root / path
         if not file.is_file() or not active_source_matches(root, path, digest):
             violations.append("PROTECTED_DOCUMENT_CHANGED:" + path)

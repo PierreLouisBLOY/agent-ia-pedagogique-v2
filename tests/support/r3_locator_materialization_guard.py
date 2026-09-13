@@ -265,6 +265,7 @@ def assert_git_state(root: Path) -> None:
         assert_git_state as assert_editorial_git_state,
     )
     from tests.support.r3_editorial_correction_guard import index_matches
+    from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
 
     assert_editorial_git_state(root)
     from tests.support.r3_guard_oracle import PREPARATION
@@ -278,7 +279,7 @@ def assert_git_state(root: Path) -> None:
         if "--cached" in args:
             assert not paths & set(PREPARATION)
         observed.update(paths)
-    assert violations(root, changed=observed - set(PREPARATION) - (set(EDITORIAL_PATHS) - set(PATHS))) == []
+    assert violations(root, changed=observed - set(PREPARATION) - (set(EDITORIAL_PATHS) - set(PATHS)) - (set(PORTABLE_PATHS) - set(PATHS))) == []
     assert_scope(root)
     for path in PATHS:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)

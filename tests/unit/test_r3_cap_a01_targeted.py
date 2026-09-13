@@ -551,8 +551,9 @@ def test_unit_conversion_and_nominal_warning_preserved(scale):
 def test_each_targeted_successor_identity_is_closed(tmp_path, path):
     from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
     from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
+    from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
 
-    for item in set(PATHS) | set(LOCATOR_PATHS) | set(EDITORIAL_PATHS):
+    for item in set(PATHS) | set(LOCATOR_PATHS) | set(EDITORIAL_PATHS) | set(PORTABLE_PATHS):
         target = tmp_path / item
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / item).read_bytes())

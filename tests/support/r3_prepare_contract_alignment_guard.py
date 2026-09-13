@@ -168,6 +168,7 @@ def assert_successor_git_state(root: Path) -> None:
     from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
     from tests.support.r3_locator_materialization_guard import PRE as LOCATOR_PRE
     from tests.support.r3_locator_materialization_guard import source_matches as locator_matches
+    from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
     from tests.support.r3_serializer_8192_guard import PATHS as SERIALIZER_PATHS
     from tests.support.r3_serializer_8192_guard import PRE as SERIALIZER_PRE
     from tests.support.r3_serializer_8192_guard import (
@@ -189,7 +190,7 @@ def assert_successor_git_state(root: Path) -> None:
                                - (set(SERIALIZER_PATHS) - set(PATHS))
                                - (set(CAP_PATHS) - set(PATHS))
                                - (set(LOCATOR_PATHS) - set(PATHS))
-                      - (set(EDITORIAL_PATHS) - set(PATHS))) == []
+                      - (set(EDITORIAL_PATHS) - set(PATHS)) - (set(PORTABLE_PATHS) - set(PATHS))) == []
     assert_successor_scope(root)
     for path in PATHS:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)

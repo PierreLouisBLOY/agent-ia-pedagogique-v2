@@ -33,13 +33,17 @@ def test_exact_scope_history_working_index_and_predicates():
     assert_git_state(ROOT)
     assert len(PRE) == 23 and len(CREATES) == 8 and len(PATHS) == 31
     assert authenticated(ROOT)
-    assert oracle_digest((ROOT / SELF).read_bytes()) == ORACLE_SHA256
+    from tests.support.r3_portable_clone_guard import baseline_view as portable_view
+
+    assert oracle_digest(portable_view(ROOT, SELF)) == ORACLE_SHA256
     assert_predicates(ROOT)
 
 
 @pytest.mark.parametrize("path", PATHS)
 def test_each_source_mutation_missing_or_replaced_is_rejected(tmp_path, path):
-    for item in PATHS:
+    from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
+
+    for item in set(PATHS) | set(PORTABLE_PATHS):
         destination = tmp_path / item
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes((ROOT / item).read_bytes())

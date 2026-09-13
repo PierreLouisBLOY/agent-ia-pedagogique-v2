@@ -210,8 +210,9 @@ def copied_sources(tmp_path):
     from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
     from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
     from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
+    from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
 
-    for path in set(PATHS) | set(PATCH_PATHS) | set(CAP_PATHS) | set(LOCATOR_PATHS) | set(EDITORIAL_PATHS):
+    for path in set(PATHS) | set(PATCH_PATHS) | set(CAP_PATHS) | set(LOCATOR_PATHS) | set(EDITORIAL_PATHS) | set(PORTABLE_PATHS):
         target = tmp_path / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / path).read_bytes())

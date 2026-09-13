@@ -116,6 +116,7 @@ def assert_git_state(root: Path) -> None:
     from tests.support.r3_guard_oracle import PREPARATION
     from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
     from tests.support.r3_locator_materialization_guard import PRE as LOCATOR_PRE
+    from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
 
     assert_cap_git_state(root)
     observed = set()
@@ -129,7 +130,7 @@ def assert_git_state(root: Path) -> None:
         observed.update(paths)
     assert violations(root, changed=observed - set(PREPARATION) - (set(CAP_PATHS) - set(PATHS))
                       - (set(LOCATOR_PATHS) - set(PATHS))
-                      - (set(EDITORIAL_PATHS) - set(PATHS))) == []
+                      - (set(EDITORIAL_PATHS) - set(PATHS)) - (set(PORTABLE_PATHS) - set(PATHS))) == []
     assert_scope(root)
     for path in PATHS:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)

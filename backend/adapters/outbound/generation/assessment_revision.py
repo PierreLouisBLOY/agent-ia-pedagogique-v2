@@ -80,5 +80,5 @@ class AssessmentRevisionAdapter:
         return self._parse_diagnostic.snapshot()
 
     def propose(self, request: AssessmentRevisionRequest) -> Mapping[str, object]:
-        self._parse_diagnostic = ParseDiagnostic(enabled=request.operation == "PREPARE_SUPPLEMENTS")
+        self._parse_diagnostic = ParseDiagnostic(enabled=request.operation in {"PREPARE_SUPPLEMENTS", "HARDEN_DOSSIER_3"})
         return parse_revision_result(transform(self._port, request), diagnostic=self._parse_diagnostic)

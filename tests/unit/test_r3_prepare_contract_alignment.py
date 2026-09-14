@@ -197,6 +197,10 @@ def test_provider_status_cannot_be_upgraded(status):
 def test_selection_is_exact_and_other_requests_byte_equivalent(override):
     request = replace(prepare_request(), **override)
     assert not is_prepare_request(request)
+    if request.objective == "HARDEN_DOSSIER_3":
+        with pytest.raises(ValueError):
+            build_openai_request(request=request, model_profile=_model())
+        return
     path = "backend/adapters/outbound/generation/openai/mapping.py"
     raw = subprocess.run(["git", "show", f"{BASELINE}:{path}"], cwd=ROOT,
                          capture_output=True, check=True).stdout
@@ -208,11 +212,12 @@ def test_selection_is_exact_and_other_requests_byte_equivalent(override):
 
 def copied_sources(tmp_path):
     from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
+    from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
     from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
     from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
     from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
 
-    for path in set(PATHS) | set(PATCH_PATHS) | set(CAP_PATHS) | set(LOCATOR_PATHS) | set(EDITORIAL_PATHS) | set(PORTABLE_PATHS):
+    for path in set(PATHS) | set(PATCH_PATHS) | set(CAP_PATHS) | set(LOCATOR_PATHS) | set(EDITORIAL_PATHS) | set(PORTABLE_PATHS) | set(D3_PATHS):
         target = tmp_path / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / path).read_bytes())

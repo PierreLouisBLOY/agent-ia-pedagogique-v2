@@ -159,6 +159,13 @@ def source_bytes(root: Path, path: str) -> bytes:
 
 def authenticated(root: Path, *, expected: str = ORACLE_SHA256) -> bool:
     """Trust the running guard's pin, never a candidate-declared digest."""
+    from tests.support.r3_d3_scope_guard import PRE as D3_PRE
+    from tests.support.r3_d3_scope_guard import authenticated as d3_authenticated
+    from tests.support.r3_d3_scope_guard import source_matches as d3_matches
+
+    d3_successor_sha256 = "f89b6688842c7badd43bc83007ef379df89e4da4ffa4f6484de3f356b96e0884"
+    if expected == ORACLE_SHA256 and d3_authenticated(root, expected=d3_successor_sha256):
+        return d3_matches(root, EDITORIAL, D3_PRE[EDITORIAL])
     try:
         raw = source_bytes(root, SELF)
         if expected != ORACLE_SHA256 or digest(canonical_bytes(SELF, raw)) != expected:
@@ -174,7 +181,15 @@ def authenticated(root: Path, *, expected: str = ORACLE_SHA256) -> bool:
 
 
 def source_matches(root: Path, path: str, historical: str) -> bool:
+    from tests.support.r3_d3_scope_guard import PRE as D3_PRE
+    from tests.support.r3_d3_scope_guard import baseline_view as d3_view
+    from tests.support.r3_d3_scope_guard import source_matches as d3_matches
+
     try:
+        if path in D3_PRE and d3_matches(root, path, D3_PRE[path]) and authenticated(root):
+            raw = d3_view(root, path)
+            return (digest(raw) == historical or (path in PRE and historical == PRE[path]
+                    and digest(canonical_bytes(path, raw)) == POST.get(path)))
         return (path in PRE and historical == PRE[path] and authenticated(root)
                 and digest(canonical_bytes(path, source_bytes(root, path))) == POST.get(path))
     except (OSError, ValueError):
@@ -192,11 +207,17 @@ def baseline_bytes(path: str) -> bytes:
 
 
 def baseline_view(root: Path, path: str) -> bytes:
+    from tests.support.r3_d3_scope_guard import baseline_view as d3_view
+
     return (baseline_bytes(path) if path in PRE and source_matches(root, path, PRE[path])
-            else source_bytes(root, path))
+            else d3_view(root, path))
 
 
 def index_matches(root: Path, path: str, raw: bytes) -> bool:
+    from tests.support.r3_d3_scope_guard import index_matches as d3_index_matches
+
+    if d3_index_matches(root, path, raw):
+        return True
     if path not in PATHS or not authenticated(root):
         return False
     try:
@@ -210,19 +231,23 @@ def index_matches(root: Path, path: str, raw: bytes) -> bool:
 
 
 def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
+    from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
+    from tests.support.r3_d3_scope_guard import baseline_view as d3_view
+    from tests.support.r3_d3_scope_guard import violations as d3_violations
+
     assert set(POST) == set(PATHS) - {SELF} and len(PATHS) == 16
-    errors = []
+    errors = d3_violations(root)
     if not authenticated(root):
         errors.append("PORTABLE_ORACLE_IDENTITY")
     for path, expected in POST.items():
         try:
-            if digest(canonical_bytes(path, source_bytes(root, path))) != expected:
+            if digest(canonical_bytes(path, d3_view(root, path))) != expected:
                 errors.append("PORTABLE_IDENTITY:" + path)
         except (OSError, ValueError):
             errors.append("PORTABLE_IDENTITY:" + path)
     if changed is not None:
         errors += ["PORTABLE_MISSING:" + p for p in sorted(set(PATHS) - changed)]
-        errors += ["PORTABLE_UNAPPROVED:" + p for p in sorted(changed - set(PATHS))]
+        errors += ["PORTABLE_UNAPPROVED:" + p for p in sorted(changed - set(PATHS) - set(D3_PATHS))]
     return errors
 
 
@@ -235,9 +260,11 @@ def outside_scope(raw: bytes, path: str) -> str:
 
 
 def assert_scope(root: Path) -> None:
+    from tests.support.r3_d3_scope_guard import baseline_view as d3_view
+
     assert violations(root) == []
     for path in PRE:
-        assert outside_scope(baseline_bytes(path), path) == outside_scope(source_bytes(root, path), path), path
+        assert outside_scope(baseline_bytes(path), path) == outside_scope(d3_view(root, path), path), path
 
 
 @dataclass(frozen=True)
@@ -284,8 +311,10 @@ def private_preparations(root: Path, *, require_complete: bool = False) -> Priva
 
 
 def assert_git_state(root: Path) -> None:
+    from tests.support.r3_d3_scope_guard import assert_git_state as assert_d3_git_state
     from tests.support.r3_guard_oracle import PREPARATION
 
+    assert_d3_git_state(root)
     assert_scope(root)
     assert not private_preparations(root).errors
     observed: set[str] = set()

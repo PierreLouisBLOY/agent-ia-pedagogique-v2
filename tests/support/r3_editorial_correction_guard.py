@@ -225,13 +225,16 @@ def baseline_view(root: Path, path: str) -> bytes:
 
 
 def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
+    from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
+    from tests.support.r3_d3_scope_guard import violations as d3_violations
+
     assert len(PRE) == 23 and len(CREATES) == 8 and len(set(PATHS)) == 31
     assert set(POST) == set(PATHS) - {SELF}
     from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
     from tests.support.r3_portable_clone_guard import source_matches as portable_matches
     from tests.support.r3_portable_clone_guard import violations as portable_violations
 
-    errors = portable_violations(root)
+    errors = d3_violations(root) + portable_violations(root)
     for path, expected in POST.items():
         file = root / path
         if (not file.is_file() or digest(file.read_bytes()) != expected) and not portable_matches(root, path, expected):
@@ -240,7 +243,7 @@ def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
         errors.append("EDITORIAL_ORACLE_IDENTITY")
     if changed is not None:
         errors += ["EDITORIAL_MISSING:" + p for p in sorted(set(PATHS) - changed)]
-        errors += ["EDITORIAL_UNAPPROVED:" + p for p in sorted(changed - set(PATHS) - set(PORTABLE_PATHS))]
+        errors += ["EDITORIAL_UNAPPROVED:" + p for p in sorted(changed - set(D3_PATHS) - set(PATHS) - set(PORTABLE_PATHS))]
     return errors
 
 
@@ -324,6 +327,11 @@ def assert_scope(root: Path) -> None:
 
 
 def assert_git_state(root: Path) -> None:
+    from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
+    from tests.support.r3_d3_scope_guard import violations as d3_violations
+
+    assert len(D3_PATHS) == 46
+    assert d3_violations(root) == []
     from tests.support.r3_guard_oracle import PREPARATION
     from tests.support.r3_portable_clone_guard import assert_git_state as assert_portable_git_state
 

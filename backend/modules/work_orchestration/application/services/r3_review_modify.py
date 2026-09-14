@@ -54,7 +54,7 @@ DIAGNOSTIC_CODES = frozenset({
     "ASSESSMENT_SUBJECT_HASH", "ASSESSMENT_SIZE", "ASSESSMENT_LIMITATIONS",
     "ASSESSMENT_VALIDATION_FAILED", "ASSESSMENT_PUBLICATION_REJECTED",
     "REVISION_CONFLICT", "SESSION_CAPACITY_REACHED", "IDEMPOTENCY_CONFLICT",
-    "GENERATION_IN_PROGRESS",
+    "GENERATION_IN_PROGRESS", "DEPENDENCY_CHANGE_REQUIRES_APPROVAL",
 })
 _DIAGNOSTIC_REASONS = frozenset({
     *TARGETED_CHECK_REASON_CODES,
@@ -141,7 +141,9 @@ class R3ReviewModifyService:
                  editorial_evidence: EditorialAuthorizationEvidence | None = None,
                  editorial_authenticate: Callable[[EditorialAuthorizationEvidence], bool] | None = None,
                  editorial_baseline: str | None = None, editorial_contract_sha256: str | None = None,
-                 calculate_locators: Callable[[str, str, tuple[str, ...]], tuple[dict[str, object], ...]] | None = None) -> None:
+                 calculate_locators: Callable[[str, str, tuple[str, ...]], tuple[dict[str, object], ...]] | None = None,
+                 restored_editorial_scope: EditorialValidationScope | None = None,
+                 restored_authenticate: Callable[[EditorialValidationScope], bool] | None = None) -> None:
         self._id, self._store, self._jobs = conversation_id, store, jobs
         self._ensure, self._clock, self._new_id = ensure_session, clock, new_id
         self._active: tuple[R3Command, R3JobRequest, ProductionReadView] | None = None
@@ -149,6 +151,8 @@ class R3ReviewModifyService:
         self._editorial_plan, self._editorial_evidence = editorial_plan, editorial_evidence
         self._editorial_open = True
         self._calculate_locators = calculate_locators
+        self._restored_scope = restored_editorial_scope
+        self._restored_authenticate = restored_authenticate
 
         def authorized(evidence: EditorialAuthorizationEvidence) -> bool:
             try:
@@ -193,8 +197,16 @@ class R3ReviewModifyService:
         if (editorial_scope is None and bundle is not None
                 and object_data(bundle.data["lineage"]).get("source_capability") is None):
             editorial_scope = self._store.r3_editorial_scope(view.production_ref, view.version_ref)
-        if editorial_scope is not None and not self._editorial_authorized(editorial_scope.evidence):
-            editorial_scope = None
+        if editorial_scope is not None:
+            restored = False
+            try:
+                restored = (self._editorial_open and editorial_scope is self._restored_scope
+                    and self._restored_authenticate is not None
+                    and self._restored_authenticate(editorial_scope) is True)
+            except Exception:
+                restored = False
+            if not restored and not self._editorial_authorized(editorial_scope.evidence):
+                editorial_scope = None
         subject = {"content": view.data["content"], "sections": view.data["sections"]}
         return ValidateAssessmentCommand().execute(bundle, production_ref=view.production_ref,
             version_ref=view.version_ref, subject_sha256=fingerprint(subject),
@@ -387,10 +399,17 @@ class R3ReviewModifyService:
             trace.receipt_state = "WRITTEN"
         except Exception as error:
             trace.failed(error)
+            dependency_refusal = (
+                command.operation == "modifications" and request.revision is not None
+                and request.revision.operation == HARDEN and trace.last_stage == "BUNDLE_ASSEMBLY"
+                and type(error) is ValueError and len(error.args) == 1
+                and type(error.args[0]) is str
+                and error.args[0] == "DEPENDENCY_CHANGE_REQUIRES_APPROVAL")
             trace.mark("POST_PROCESS_RECEIPT")
             try:
                 self._store.r3_complete(request.operation_ref, {"state": "FAILED_OUTPUT",
-                    "error_code": "ASSESSMENT_PUBLICATION_REJECTED"})
+                    "error_code": ("DEPENDENCY_CHANGE_REQUIRES_APPROVAL" if dependency_refusal
+                                   else "ASSESSMENT_PUBLICATION_REJECTED")})
                 trace.receipt_state = "WRITTEN"
             except Exception as receipt_error:
                 trace.receipt_state = "UNKNOWN"
@@ -422,6 +441,7 @@ class R3ReviewModifyService:
 
     def close(self) -> None:
         self._editorial_open = False
+        self._restored_scope = self._restored_authenticate = None
         self._editorial_plan = self._editorial_evidence = None
         self._calculate_locators = None
         self._jobs.close()

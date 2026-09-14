@@ -40,12 +40,32 @@ def build_openai_request(
     request: GenerationPortRequest,
     model_profile: ModelProfileConfig,
 ) -> OpenAIResponsesRequest:
+    from backend.adapters.outbound.generation.openai.harden_contract import (
+        INSTRUCTIONS as HARDEN_INSTRUCTIONS,
+    )
+    from backend.adapters.outbound.generation.openai.harden_contract import (
+        harden_output_schema,
+        is_harden_request,
+        validate_harden_inputs,
+    )
     from backend.adapters.outbound.generation.openai.prepare_contract import (
         INSTRUCTIONS,
         is_prepare_request,
         prepare_output_schema,
     )
+    from backend.infrastructure.composition.factories.r3_harden_profile import (
+        validate_harden_profile,
+    )
 
+    harden = is_harden_request(request)
+    if request.objective == "HARDEN_DOSSIER_3":
+        if not harden:
+            raise ValueError("R3_HARDEN_OPERATION_REJECTED")
+        validate_harden_profile(model_profile)
+        validate_harden_inputs(request)
+        if set(request.resolved_inputs) != {"subject", "case_data", "questions_d3", "answers_d3",
+                                           "marking_d3", "protected_facts", "limits"}:
+            raise ValueError("R3_HARDEN_PROJECTION_REJECTED")
     payload = {
         "operation": request.operation.value,
         "source_step_id": request.source_step_id,
@@ -78,6 +98,12 @@ def build_openai_request(
             "no provider offsets; convert to EUR without guessing"
         )
         payload["output_contract"] = _json_value(output_contract)
+    if harden:
+        # Dedicated wire omits provider locators; local materialization owns offsets.
+        harden_contract = dict(request.output_contract)
+        harden_contract["calculation_fields"] = ("case_id", "metric", "value", "expression")
+        harden_contract["source_units"] = "Preserve supplied source scale. Question anchors in NEW D3 only; no offsets or calculation locators."
+        payload["output_contract"] = _json_value(harden_contract)
     input_json = json.dumps(
         payload,
         ensure_ascii=False,
@@ -100,6 +126,9 @@ def build_openai_request(
     schema = _output_schema(request.expected_sections)
     if prepare:
         schema = prepare_output_schema()
+    if harden:
+        schema = harden_output_schema()
+        max_output_tokens = 8192
     if conversation:
         if (request.operation is not GenerationOperation.GENERATE
                 or model_profile.model_code.value != "gpt-5.6-terra"
@@ -136,13 +165,13 @@ def build_openai_request(
             "Do not infer official provenance or approval. Produce all five requested "
             "substantial sections, including the fictional case, numerical annexes and questions."
             if conversation else ""
-        ) + (INSTRUCTIONS if prepare else ""),
+        ) + (INSTRUCTIONS if prepare else "") + (HARDEN_INSTRUCTIONS if harden else ""),
         input_json=input_json,
         output_schema=provider_schema,
         max_output_tokens=max_output_tokens,
         schema_name="pedagogical_generation",
-        service_tier="default" if conversation else None,
-        reasoning_effort=OpenAIReasoningEffort.LOW if conversation else None,
+        service_tier="default" if conversation or harden else None,
+        reasoning_effort=OpenAIReasoningEffort.LOW if conversation or harden else None,
     )
     if conversation:
         # Upper bound for our serialized parameters, not a tokenizer/framing proof.

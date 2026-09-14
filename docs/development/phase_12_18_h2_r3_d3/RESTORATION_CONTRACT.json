@@ -1,0 +1,31 @@
+{
+  "adoption_status": "APPROVED_SYNTHETIC_ONLY",
+  "historical_source_note": "source_text is minimized design provenance; its proposed status is superseded only for synthetic implementation. The two-hour maximum is adopted; operational grants remain separately required.",
+  "contract": "R3-RESTORE-EXISTING-1.0",
+  "operation": "RESTORE_EXISTING",
+  "source_names": [
+    "state",
+    "parent_view",
+    "child_view",
+    "parent_bundle",
+    "child_bundle",
+    "review",
+    "receipt",
+    "plan",
+    "owner_decision"
+  ],
+  "max_source_bytes": 262144,
+  "max_lease_seconds": 7200,
+  "validation_limit": [
+    1,
+    8
+  ],
+  "exact_existing_versions": 2,
+  "publication": false,
+  "command_replay": false,
+  "independent_external_grant_hash": true,
+  "fresh_opaque_evidence": true,
+  "copied_scope_rejected": true,
+  "close_revokes": true,
+  "source_text": "# A14 — Contrat de reprise proposé R3-RESTORE-EXISTING-1.0\n\n## Identités opérationnelles\n\nLes identités du pilote restent hors dépôt. Un futur accord devra lier les sources exactes, indépendamment des hashes du candidat.\n\n## DTO et composition bornés\n\nNouveau DTO neutre R3RestorationSnapshot : état de reprise déclaré, deux ProductionReadView exactes, deux AssessmentBundle exacts, review V1, reçus historiques, plan consommé et scope A14. Il ne contient ni chemin, réseau, credential, SDK, callback sérialisé ou droit implicite.\nLe contrat distingue les bytes historiques source, leur représentation typée, et la nouvelle enveloppe de reprise. Ne pas prétendre restaurer un snapshot byte-identical de session fermée s’il n’a pas été exporté.\n\nComposition privée dans r3_d3_recovery.py :\n1. Recevoir les bytes de sources et le grant externe explicitement fournis ; pas de découverte du filesystem, SQLite ou credential. L’I/O privée du futur runner sera liée séparément avant usage.\n2. Vérifier SHA bruts, liens V1/review/plan/reçu/V2 et grant externe épinglé indépendamment des candidats. L’approbation de conception présente ne sert jamais de grant opérationnel.\n3. Préserver les champs lineage de ProductionReadView. Ils ne peuvent pas être déduits du seul lineage AssessmentBundle. Si une vue ou son champ source manque, arrêt RESTORATION_SOURCE_INCOMPLETE. Aucun ID/fingerprint historique fabriqué.\n4. Construire un registre privé d’autorité avec identité d’objet, empreinte des preuves, code baseline courant, cible exacte, expiry et compteur borné. Le registre n’est ni fourni par le bundle ni authentifié par son propre booléen.\n5. Réutiliser EditorialAuthorizationEvidence / build_editorial_scope / verify_editorial_scope INCHANGÉS. Les champs de l’evidence restent liés au plan historique ; le reçu privé d’autorité est neuf et marqué RESTORE_EXISTING, jamais présenté comme le reçu de processus historique.\n6. Le callback valide l’objet précis, les hashes vérifiés, la cible, le grant opérationnel externe et l’état ouvert du registre ; copie, mauvais parent, révocation, expiration ou exception => false. Aucun callback constant.\n7. Construire le store par ConversationMemoryStore.from_r3_restoration, nouveau classmethod borné. Validation complète avant retour d’un store neuf ; aucune mutation d’un store existant. Affectation atomique des dictionnaires préparés ; aucune publication publish/r3_reserve/r3_complete pour simuler l’historique. Aucun nouvel ID de version.\n8. Les reçus historiques sont conservés et marqués comme sources historiques. N’inventer aucune entrée _r3_commands lorsque le corps/fingerprint exact n’existe pas ; interdire E06 dans le service restauré et conserver le plan dans _r3_consumed_editorial_plans. Une restitution documentaire de reçu ne vaut pas support de rejeu historique.\n9. Injecter seulement restored_editorial_scope et restored_authenticate dans le service ; editorial_plan/evidence restent None. Le service _validation accepte le scope de reprise seulement après authentification indépendante. Le chemin execute éditorial existant reste refusé, même sous un nouvel ID. Ne pas réutiliser _editorial_authorized comme permission de reprise.\n10. Le futur handler exposé ne donne accès qu’à lecture et validation bornée, via R3ApplicationInbound. Jobs par défaut UnapprovedR3Job : PREPARE, REVIEW et HARDEN refusés. L’activation HARDEN exige son grant distinct.\n11. Une session fraîche peut réutiliser les identifiants historiques liés, mais sa lease et sa date d’expiration sont une décision de reprise fraîche, explicitée dans son grant (proposition durée maximale 2 h, non canonisée ici). Aucun ancien timestamp réécrit ; aucune prolongation implicite. Une enveloppe dérivée doit être désignée comme dérivée.\n12. Revalidation réelle via inbound.command(\"validations\", corps exact lié), une fois si le grant le limite à une ; capture du résultat complet A01–A16 avant fermeture. A14 ne peut réussir qu’avec le parent V1 et le scope encore authentifié. A16 reste WARNING.\n13. close révoque le callback interne de reprise et la composition révoque son registre dans finally, puis efface le store. L’export des preuves précède close. Une erreur d’export entraîne un incident, jamais un rejeu E06/HARDEN.\n\n## Invariants du futur contrôle\n\nDeux versions restaurées, zéro version publiée pendant la reprise. V1/V2, corrigés, barèmes, plan et review bruts inchangés ; l’enveloppe de session, sa lease et les nouveaux rapports sont comparés séparément des objets immuables.\nAucune V2 review inventée, aucun changement de finding dans le registre applicatif au titre d’E07. Un futur enfant HARDEN a CAP-G02 propre et n’hérite pas du grant A14.\nLa reprise opérationnelle reste NOT_AUTHORIZED / NOT_RUN dans ce paquet.\n"
+}

@@ -41,9 +41,10 @@ def test_exact_scope_history_working_index_and_predicates():
 
 @pytest.mark.parametrize("path", PATHS)
 def test_each_source_mutation_missing_or_replaced_is_rejected(tmp_path, path):
+    from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
     from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
 
-    for item in set(PATHS) | set(PORTABLE_PATHS):
+    for item in set(PATHS) | set(PORTABLE_PATHS) | set(D3_PATHS):
         destination = tmp_path / item
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes((ROOT / item).read_bytes())
@@ -106,7 +107,9 @@ def test_m09_pure_contract_and_no_provider_editorial_route():
     assert "open(" not in ast.unparse(local) and "_store" not in ast.unparse(local)
     service = "backend/modules/work_orchestration/application/services/r3_review_modify.py"
     old = ast.parse(baseline_bytes(service))
-    new = ast.parse((ROOT/service).read_bytes())
+    from tests.support.r3_d3_scope_guard import assert_scope, baseline_view
+    assert_scope(ROOT)
+    new = ast.parse(baseline_view(ROOT, service))
     def method(tree, name):
         cls = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "R3ReviewModifyService")
         return next(n for n in cls.body if isinstance(n, ast.FunctionDef) and n.name == name)

@@ -30,6 +30,28 @@ from backend.modules.work_orchestration.contracts.dto.r3_review_modify import R3
 
 
 class ConversationMemoryStore:
+    @classmethod
+    def from_r3_restoration(cls, snapshot: object) -> ConversationMemoryStore:
+        from backend.modules.work_orchestration.contracts.dto.r3_restoration import (
+            R3RestorationSnapshot,
+        )
+
+        if type(snapshot) is not R3RestorationSnapshot:
+            raise ValueError("RESTORATION_SOURCE_INCOMPLETE")
+        snapshot.__post_init__()  # Recheck authority immediately before construction.
+        versions = {(v.production_ref, v.version_ref): v for v in snapshot.views}
+        bundles = {(b.production_ref, b.version_ref): b for b in snapshot.bundles}
+        child = snapshot.bundles[1]
+        reviews = {str(snapshot.review["review_ref"]): object_data(as_plain(snapshot.review))}
+        operations = {str(snapshot.receipt["operation_ref"]): object_data(as_plain(snapshot.receipt))}
+        result = cls(snapshot.state)
+        result._versions, result._r3_bundles = versions, bundles
+        result._r3_reviews, result._r3_operations = reviews, operations
+        result._r3_editorial_scopes = {(child.production_ref, child.version_ref): snapshot.scope}
+        result._r3_consumed_editorial_plans = {snapshot.scope.evidence.plan.sha256}
+        # No historical command body/fingerprint is inferred and no lease is recreated.
+        return result
+
     def __init__(self, initial: ConversationState) -> None:
         self._state = initial
         self._versions: dict[tuple[str, str], ProductionReadView] = {}

@@ -38,8 +38,9 @@ def inspect(root: Path, expected: dict[str, str], *, author: bool = False,
 
 
 def copy_successor(root: Path) -> None:
+    from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
     assert not set(guard.PATHS) & set(PREPARATION)
-    for path in guard.PATHS:
+    for path in set(guard.PATHS) | set(D3_PATHS) | set(D3_PATHS):
         target = root / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / path).read_bytes())
@@ -192,7 +193,9 @@ def test_every_staged_mutation_rejected_with_valid_worktree(monkeypatch: pytest.
 @pytest.mark.parametrize("path", tuple(guard.PRE))
 def test_signatures_and_outside_scope_nodes_remain_protected(path: str) -> None:
     before = guard.baseline_bytes(path)
-    after = (ROOT / path).read_bytes()
+    from tests.support.r3_d3_scope_guard import assert_scope, baseline_view
+    assert_scope(ROOT)
+    after = baseline_view(ROOT, path)
     assert guard.outside_scope(before, path) == guard.outside_scope(after, path)
     assert guard.outside_scope(before, path) != guard.outside_scope(after + b"\nUNAPPROVED = 1\n", path)
 

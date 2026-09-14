@@ -51,6 +51,8 @@ def version_target(production_ref: str, version_ref: str) -> ObjectVersionRef:
 
 
 def transform(port: GenerationPort, request: AssessmentRevisionRequest) -> Mapping[str, object]:
+    from backend.infrastructure.composition.bindings.r3_harden_projection import harden_projection
+
     meta = ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, "r3-transform", "r3-transform", None,
         CorrelationId("r3-transform"), Instant(datetime.now(UTC)), ActorRef(ActorKind.AGENT, "AG-03"),
         InvocationStatus.PLANNED)
@@ -60,9 +62,11 @@ def transform(port: GenerationPort, request: AssessmentRevisionRequest) -> Mappi
         version_target(request.production_ref, request.base_version_ref), ("R3_RESULT_JSON",))
     prepared, result = GeneratorAgent(GenerationCoordinator(port)).transform_production(
         request=GenerationPreparationRequest(CapabilityId("CAP-G02"), canonical,
-            resolved_inputs={"subject": as_plain(request.subject),
-                             "base_bundle": as_plain(request.base.data) if request.base else None},
+            resolved_inputs=(harden_projection(request) if request.operation == "HARDEN_DOSSIER_3" else
+                {"subject": as_plain(request.subject),
+                 "base_bundle": as_plain(request.base.data) if request.base else None}),
             output_contract={"contract_id": "R3-TRANSFORMATION-1.0", "strict_local_parser": True,
+                **({"harden_contract_id": "R3-HARDEN-WIRE-1.0"} if request.operation == "HARDEN_DOSSIER_3" else {}),
                 "section": "R3_RESULT_JSON", "encoding": "one JSON object, no fences, no extra keys",
                 "prepare_fields": ["questions", "correction", "marking", "case_data", "limitations"],
                 "harden_fields": ["dossier_3", "questions_d3", "answers_d3", "marking_d3", "scenarios_d3", "limitations"],

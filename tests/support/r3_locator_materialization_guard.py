@@ -189,11 +189,13 @@ def prior_scope_bytes(root: Path, path: str) -> bytes:
 
 
 def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
+    from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
+    from tests.support.r3_d3_scope_guard import violations as d3_violations
     from tests.support.r3_editorial_correction_guard import source_matches as editorial_matches
 
     assert len(PATHS) == len(set(PATHS)) == 22
     assert set(POST) == set(PATHS) - {SELF}
-    errors = []
+    errors = d3_violations(root)
     for path, expected in POST.items():
         file = root / path
         if (not file.is_file() or digest(file.read_bytes()) != expected) and not editorial_matches(root, path, expected):
@@ -202,7 +204,7 @@ def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
         errors.append("LOCATOR_ORACLE_IDENTITY")
     if changed is not None:
         errors += ["LOCATOR_MISSING:" + p for p in sorted(set(PATHS) - changed)]
-        errors += ["LOCATOR_UNAPPROVED:" + p for p in sorted(changed - set(PATHS))]
+        errors += ["LOCATOR_UNAPPROVED:" + p for p in sorted(changed - set(D3_PATHS) - set(PATHS))]
     return errors
 
 
@@ -260,6 +262,10 @@ def assert_scope(root: Path) -> None:
 
 
 def assert_git_state(root: Path) -> None:
+    from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
+    from tests.support.r3_d3_scope_guard import violations as d3_violations
+
+    assert d3_violations(root) == []
     from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
     from tests.support.r3_editorial_correction_guard import (
         assert_git_state as assert_editorial_git_state,
@@ -279,7 +285,7 @@ def assert_git_state(root: Path) -> None:
         if "--cached" in args:
             assert not paths & set(PREPARATION)
         observed.update(paths)
-    assert violations(root, changed=observed - set(PREPARATION) - (set(EDITORIAL_PATHS) - set(PATHS)) - (set(PORTABLE_PATHS) - set(PATHS))) == []
+    assert violations(root, changed=observed - set(PREPARATION) - (set(EDITORIAL_PATHS) - set(PATHS)) - (set(PORTABLE_PATHS) - set(PATHS)) - (set(D3_PATHS) - set(PATHS))) == []
     assert_scope(root)
     for path in PATHS:
         staged = subprocess.run(["git", "show", ":" + path], cwd=root, capture_output=True)

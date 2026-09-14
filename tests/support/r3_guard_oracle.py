@@ -323,6 +323,8 @@ def active_inventory(
 ) -> list[str]:
     from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
     from tests.support.r3_cap_a01_guard import violations as cap_violations
+    from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
+    from tests.support.r3_d3_scope_guard import violations as d3_violations
     from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
     from tests.support.r3_editorial_correction_guard import violations as editorial_violations
     from tests.support.r3_locator_materialization_guard import PATHS as LOCATOR_PATHS
@@ -359,7 +361,7 @@ def active_inventory(
             if "--cached" in args:
                 indexed.update(result.stdout.splitlines())
     violations = sorted(changed - set(R3_PATHS) - set(PREPARATION) - set(PATCH_PATHS)
-                        - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS) - set(LOCATOR_PATHS) - set(EDITORIAL_PATHS) - set(PORTABLE_PATHS))
+                        - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS) - set(LOCATOR_PATHS) - set(EDITORIAL_PATHS) - set(PORTABLE_PATHS) - set(D3_PATHS))
     if changed & (set(LOCATOR_PATHS) - set(R3_PATHS) - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS)):
         violations += locator_violations(root, changed=changed & set(LOCATOR_PATHS))
     if changed & (set(CAP_PATHS) - set(R3_PATHS) - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS)):
@@ -367,6 +369,7 @@ def active_inventory(
     violations += ["MISSING_R3_PATH:" + p for p in sorted(set(R3_PATHS) - changed)]
     violations += ["PROTECTED_DOCUMENT_INDEXED:" + p for p in sorted(indexed & set(PREPARATION))]
     violations += list(private_preparations(root).errors)
+    violations += d3_violations(root)
     violations += portable_violations(root)
     for path, digest in READ_ONLY.items():
         file = root / path

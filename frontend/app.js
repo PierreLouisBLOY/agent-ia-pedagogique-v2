@@ -490,6 +490,9 @@ async function r3Command(operation) {
     }
     await showR3(result.production_ref, result.version_ref);
     if (result.state !== "SUCCEEDED") r3Status.textContent = "Travail refusé ; version antérieure conservée.";
+    if (operation === "modifications" && result.state === "FAILED_OUTPUT" &&
+        result.error_code === "DEPENDENCY_CHANGE_REQUIRES_APPROVAL")
+      r3Status.textContent = "Modification refusée : le changement de durée ou de points de D3 exige un accord distinct. La version précédente est conservée.";
   } catch {
     if (submitted) r3Uncertain = true;
     r3Status.textContent = "Travail refusé ou résultat incertain. Aucun renvoi automatique.";

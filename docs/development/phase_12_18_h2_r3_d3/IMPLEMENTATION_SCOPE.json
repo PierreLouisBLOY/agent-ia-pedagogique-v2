@@ -1,0 +1,770 @@
+{
+  "schema": "R3-D3-IMPLEMENTATION-SCOPE-1.0",
+  "baseline": "6e43ca5a58cb50a71de87d099812ec340e8be686",
+  "source_manifest_sha256": "a61c067f01d8bb43d191900ac681b46cf46e764a95ef98069b5ffdec28d623ca",
+  "source_inventory_sha256": "ff630eddafba889c2ff3156fea534c96ccdf04ac1bc91f1410367db3ed52eb1f",
+  "paths": [
+    "backend/modules/work_orchestration/application/services/r3_review_modify.py",
+    "backend/adapters/outbound/persistence/conversation_memory.py",
+    "backend/infrastructure/composition/bindings/r3_agents.py",
+    "backend/adapters/outbound/generation/assessment_revision.py",
+    "backend/adapters/outbound/generation/openai/mapping.py",
+    "backend/adapters/outbound/generation/openai/adapter.py",
+    "frontend/app.js",
+    "tests/support/r3_guard_oracle.py",
+    "tests/support/r3_parse_observability_guard.py",
+    "tests/support/r3_prepare_contract_alignment_guard.py",
+    "tests/support/r3_serializer_8192_guard.py",
+    "tests/support/r3_cap_a01_guard.py",
+    "tests/support/r3_locator_materialization_guard.py",
+    "tests/support/r3_editorial_correction_guard.py",
+    "tests/support/r3_portable_clone_guard.py",
+    "tests/architecture/test_r3_editorial_correction_boundary.py",
+    "tests/unit/test_r3_portable_clone_guard.py",
+    "tests/unit/test_r3_parse_observability.py",
+    "tests/unit/test_r3_prepare_contract_alignment.py",
+    "tests/unit/test_r3_prepare_serialization.py",
+    "tests/unit/test_r3_cap_a01_targeted.py",
+    "tests/unit/test_r3_locator_materialization.py",
+    "backend/modules/work_orchestration/contracts/dto/r3_restoration.py",
+    "backend/infrastructure/composition/factories/r3_d3_recovery.py",
+    "backend/infrastructure/composition/bindings/r3_harden_projection.py",
+    "backend/adapters/outbound/generation/openai/harden_contract.py",
+    "backend/adapters/outbound/generation/openai/harden_materialization.py",
+    "backend/infrastructure/composition/factories/r3_harden_serialization.py",
+    "backend/infrastructure/composition/factories/r3_harden_profile.py",
+    "backend/infrastructure/composition/factories/r3_harden_execution.py",
+    "tests/support/r3_d3_scope_guard.py",
+    "tests/support/r3_d3_fixtures.py",
+    "tests/unit/test_r3_restoration.py",
+    "tests/integration/test_r3_d3_recovery.py",
+    "tests/unit/test_r3_dependency_refusal.py",
+    "tests/integration/test_r3_d3_product.py",
+    "tests/integration/test_r3_d3_http.py",
+    "tests/unit/test_r3_harden_wire.py",
+    "tests/unit/test_r3_harden_execution.py",
+    "tests/architecture/test_r3_d3_boundary.py",
+    "tests/unit/test_r3_d3_scope_guard.py",
+    "architecture/adr/ADR-r3-d3-restoration-harden-boundary.md",
+    "docs/development/phase_12_18_h2_r3_d3/README.md",
+    "docs/development/phase_12_18_h2_r3_d3/RESTORATION_CONTRACT.json",
+    "docs/development/phase_12_18_h2_r3_d3/HARDEN_CONTRACT.json",
+    "docs/development/phase_12_18_h2_r3_d3/IMPLEMENTATION_SCOPE.json"
+  ],
+  "modifications": [
+    {
+      "path": "backend/modules/work_orchestration/application/services/r3_review_modify.py",
+      "pre_bytes": 23549,
+      "pre_sha256_lf": "98a2368e21617978f3b2be67fdc4d8155c6dac7781dd2b14a98066bd4a776d3e",
+      "pre_sha256_raw": "98a2368e21617978f3b2be67fdc4d8155c6dac7781dd2b14a98066bd4a776d3e",
+      "reason": "A14 fresh scope separate from editorial execution; E08 exact-stage receipt.",
+      "symbol_checks": {
+        "DIAGNOSTIC_CODES": {
+          "ast_sha256": "6d48065a248b887ce93b4688e403f14c4ec9ad51550baf470eeeacc3f821c9e9",
+          "end_line": 58,
+          "line": 51
+        },
+        "R3ReviewModifyService.__init__": {
+          "ast_sha256": "06e7646a73dc176b7977cd041964aa3c0334d7abae133b7a2abd4e50020de761",
+          "end_line": 164,
+          "line": 137
+        },
+        "R3ReviewModifyService._validation": {
+          "ast_sha256": "505d80af401e40960385c4afac9c61162541f5e8f6cdad21e57d6a9c5e991fe6",
+          "end_line": 203,
+          "line": 186
+        },
+        "R3ReviewModifyService.close": {
+          "ast_sha256": "42e2289b550c7aa0dec23996b50f00d995257f0e922c723ab4563b0be773a5bf",
+          "end_line": 432,
+          "line": 423
+        },
+        "R3ReviewModifyService.poll": {
+          "ast_sha256": "2aaad1f7fa345ca59e7b8b3398a3768a6e079019f31ccd30d36d44fe2a3e89bf",
+          "end_line": 398,
+          "line": 325
+        }
+      },
+      "symbols": [
+        "DIAGNOSTIC_CODES",
+        "R3ReviewModifyService.__init__",
+        "R3ReviewModifyService._validation",
+        "R3ReviewModifyService.poll",
+        "R3ReviewModifyService.close"
+      ]
+    },
+    {
+      "path": "backend/adapters/outbound/persistence/conversation_memory.py",
+      "pre_bytes": 15970,
+      "pre_sha256_lf": "9eaae7f7f2b72278014f028cf19cada94b213988c3147be64f96c41909481c08",
+      "pre_sha256_raw": "9eaae7f7f2b72278014f028cf19cada94b213988c3147be64f96c41909481c08",
+      "reason": "Add classmethod only; authenticate closed snapshot then construct fresh store; all existing methods unchanged.",
+      "symbol_checks": {
+        "ConversationMemoryStore.from_r3_restoration": {
+          "status": "PROPOSED_ADDITION"
+        }
+      },
+      "symbols": [
+        "ConversationMemoryStore.from_r3_restoration"
+      ]
+    },
+    {
+      "path": "backend/infrastructure/composition/bindings/r3_agents.py",
+      "pre_bytes": 6856,
+      "pre_sha256_lf": "19f64b4b745ec81103312aaf8f879b9ef030fdea56898689eec9fbc91af233ca",
+      "pre_sha256_raw": "19f64b4b745ec81103312aaf8f879b9ef030fdea56898689eec9fbc91af233ca",
+      "reason": "HARDEN-only minimized resolved inputs and marker; PREPARE/review unchanged.",
+      "symbol_checks": {
+        "transform": {
+          "ast_sha256": "e340cbe6fcf9060867530cdc0d9983e1247183810169d4539d1dc0dbe267b513",
+          "end_line": 79,
+          "line": 53
+        }
+      },
+      "symbols": [
+        "transform"
+      ]
+    },
+    {
+      "path": "backend/adapters/outbound/generation/assessment_revision.py",
+      "pre_bytes": 3898,
+      "pre_sha256_lf": "9d88137443e6e3235e04b50008e7e080d23657573ef19aa1b63f3b6856aeab6b",
+      "pre_sha256_raw": "9d88137443e6e3235e04b50008e7e080d23657573ef19aa1b63f3b6856aeab6b",
+      "reason": "Enable existing private parse diagnostics for HARDEN, no new logging framework.",
+      "symbol_checks": {
+        "AssessmentRevisionAdapter.propose": {
+          "ast_sha256": "0188fb48c650ba925a02dbc341f738115a415396d89d7614c7016b8a7a097b6a",
+          "end_line": 84,
+          "line": 82
+        }
+      },
+      "symbols": [
+        "AssessmentRevisionAdapter.propose"
+      ]
+    },
+    {
+      "path": "backend/adapters/outbound/generation/openai/mapping.py",
+      "pre_bytes": 11509,
+      "pre_sha256_lf": "86e6e51830cf5ea70fc25507d643fcb63da144a6a0f1dcc42fa65b933d671438",
+      "pre_sha256_raw": "86e6e51830cf5ea70fc25507d643fcb63da144a6a0f1dcc42fa65b933d671438",
+      "reason": "Exact HARDEN selector and dedicated schema/parameters; reject unmarked HARDEN, keep other objectives.",
+      "symbol_checks": {
+        "build_openai_request": {
+          "ast_sha256": "117b66244a3cfa55e6212528b17d7bbd954b9d50070d8576a22fe70613fda2d5",
+          "end_line": 160,
+          "line": 38
+        }
+      },
+      "symbols": [
+        "build_openai_request"
+      ]
+    },
+    {
+      "path": "backend/adapters/outbound/generation/openai/adapter.py",
+      "pre_bytes": 19676,
+      "pre_sha256_lf": "409adc317691285eb03bbbba672c5ecaae2a80ca83158d486d3234c6f291c384",
+      "pre_sha256_raw": "409adc317691285eb03bbbba672c5ecaae2a80ca83158d486d3234c6f291c384",
+      "reason": "HARDEN diagnostics and materialization branch; status gates unchanged.",
+      "symbol_checks": {
+        "OpenAIGenerationAdapter.generate": {
+          "ast_sha256": "88b1541f21c7a6a877d577391dfa38a1032cfec2c7c63a511fe610344f3b914c",
+          "end_line": 154,
+          "line": 103
+        },
+        "_map_response_body": {
+          "ast_sha256": "4dc4415a8b1e56c74d870f684b7cc9c2cd6464509b9ef7086b67e3bf8d630b34",
+          "end_line": 278,
+          "line": 171
+        }
+      },
+      "symbols": [
+        "OpenAIGenerationAdapter.generate",
+        "_map_response_body"
+      ]
+    },
+    {
+      "path": "frontend/app.js",
+      "pre_bytes": 25188,
+      "pre_sha256_lf": "e453430c2a0a1a0800fb0a8e05c9d20465b23140fc7f24048229951f16648d8a",
+      "pre_sha256_raw": "e453430c2a0a1a0800fb0a8e05c9d20465b23140fc7f24048229951f16648d8a",
+      "reason": "E08 static message only after known failed receipt/readback; uncertainty protections unchanged.",
+      "symbol_checks": {
+        "r3Command": {
+          "status": "JS_DECLARATION_OBSERVED"
+        }
+      },
+      "symbols": [
+        "r3Command"
+      ]
+    },
+    {
+      "path": "tests/support/r3_guard_oracle.py",
+      "pre_bytes": 27964,
+      "pre_sha256_lf": "34c8b0f2330c863cc070167b3a0c4a9798caf5591e8ab0e03de787116b80172a",
+      "pre_sha256_raw": "34c8b0f2330c863cc070167b3a0c4a9798caf5591e8ab0e03de787116b80172a",
+      "reason": "Add authenticated D3 exact union, preserve all previous checks.",
+      "symbol_checks": {
+        "active_inventory": {
+          "ast_sha256": "e78d597a2bf609084e9c6b40fe6009190a68596576955d7580f90c77aa899c09",
+          "end_line": 384,
+          "line": 321
+        }
+      },
+      "symbols": [
+        "active_inventory"
+      ]
+    },
+    {
+      "path": "tests/support/r3_parse_observability_guard.py",
+      "pre_bytes": 9079,
+      "pre_sha256_lf": "920f31c96736a2c8c80ffd9e898c781752ed6ff83f5ace58dd3b730d4e228316",
+      "pre_sha256_raw": "920f31c96736a2c8c80ffd9e898c781752ed6ff83f5ace58dd3b730d4e228316",
+      "reason": "Add D3 exact union after successor validation.",
+      "symbol_checks": {
+        "patch_violations": {
+          "ast_sha256": "676d5fef1809ba520c5686dfa7af1648f45f7fd7d71a5f0eac9b91e7ba18797b",
+          "end_line": 126,
+          "line": 97
+        }
+      },
+      "symbols": [
+        "patch_violations"
+      ]
+    },
+    {
+      "path": "tests/support/r3_prepare_contract_alignment_guard.py",
+      "pre_bytes": 12329,
+      "pre_sha256_lf": "3d3d2de2e4946dc12ec1b1d4438ac64decaca16f2ba04a4e6946c78f84c721e5",
+      "pre_sha256_raw": "3d3d2de2e4946dc12ec1b1d4438ac64decaca16f2ba04a4e6946c78f84c721e5",
+      "reason": "Account for exact D3 successor, never ignore unvalidated files.",
+      "symbol_checks": {
+        "assert_successor_git_state": {
+          "ast_sha256": "9659adb7e4b8b1892e2471d3f71879c096cde64eefbe9663f4d456de0df3c09c",
+          "end_line": 219,
+          "line": 161
+        },
+        "successor_violations": {
+          "ast_sha256": "bcac720243af9082a9166e633a3f33d1a4efce1c4ccd5bf75105dd7552829745",
+          "end_line": 111,
+          "line": 86
+        }
+      },
+      "symbols": [
+        "successor_violations",
+        "assert_successor_git_state"
+      ]
+    },
+    {
+      "path": "tests/support/r3_serializer_8192_guard.py",
+      "pre_bytes": 7710,
+      "pre_sha256_lf": "52adce9e71a95695693dc5c89c2f9c0d69a17464861077aebc1772c933d57902",
+      "pre_sha256_raw": "52adce9e71a95695693dc5c89c2f9c0d69a17464861077aebc1772c933d57902",
+      "reason": "Account for exact D3 successor, historical serializer unchanged.",
+      "symbol_checks": {
+        "assert_git_state": {
+          "ast_sha256": "b17e92399732fc940d6725446dc9a237b62b3ea6bc580b1f74ae1f3f882c727c",
+          "end_line": 152,
+          "line": 109
+        },
+        "violations": {
+          "ast_sha256": "be7747fca8b8f1f8131ff3c4dfa9b84aa83f9f87bdfb40e23cb3ef7c9ca89a47",
+          "end_line": 91,
+          "line": 71
+        }
+      },
+      "symbols": [
+        "violations",
+        "assert_git_state"
+      ]
+    },
+    {
+      "path": "tests/support/r3_cap_a01_guard.py",
+      "pre_bytes": 12425,
+      "pre_sha256_lf": "1f2a17be26637258342cf107795d54a700bfb16b3f31c82a3399cbd956036e22",
+      "pre_sha256_raw": "1f2a17be26637258342cf107795d54a700bfb16b3f31c82a3399cbd956036e22",
+      "reason": "Account for exact D3 successor; all CAP predicates unchanged.",
+      "symbol_checks": {
+        "assert_git_state": {
+          "ast_sha256": "535d0d29cf5b29b02eaee77c8c6b897b161b1376874acc660090c8be66ad9d82",
+          "end_line": 237,
+          "line": 190
+        },
+        "violations": {
+          "ast_sha256": "a6e62f19f88571f0b77ffc48a6edd6f7337fc8e729404a14a7d83cc3f2323890",
+          "end_line": 135,
+          "line": 115
+        }
+      },
+      "symbols": [
+        "violations",
+        "assert_git_state"
+      ]
+    },
+    {
+      "path": "tests/support/r3_locator_materialization_guard.py",
+      "pre_bytes": 15586,
+      "pre_sha256_lf": "a547524602d677ef3f5133c7bc2cade8e64ab921ced965af62b7c7ebe4eb4766",
+      "pre_sha256_raw": "a547524602d677ef3f5133c7bc2cade8e64ab921ced965af62b7c7ebe4eb4766",
+      "reason": "Account for exact D3 successor; public locator helpers unchanged.",
+      "symbol_checks": {
+        "assert_git_state": {
+          "ast_sha256": "0d5ebedf29307858e6a7793dfbb3e4d46b8e6c1c54f523ed7136e5257f341d66",
+          "end_line": 296,
+          "line": 262
+        },
+        "violations": {
+          "ast_sha256": "b7f97f906ecd0cdc4c14197c8e796ae59f68a5f910816e0bcdf2d6c41ad91f9c",
+          "end_line": 206,
+          "line": 191
+        }
+      },
+      "symbols": [
+        "violations",
+        "assert_git_state"
+      ]
+    },
+    {
+      "path": "tests/support/r3_editorial_correction_guard.py",
+      "pre_bytes": 19696,
+      "pre_sha256_lf": "b31950522adc29909c7dd017d4b16ffa1a8da15f641c36d3733170bc0df0aecd",
+      "pre_sha256_raw": "b31950522adc29909c7dd017d4b16ffa1a8da15f641c36d3733170bc0df0aecd",
+      "reason": "Add exact D3 union after portable succession verification; historical pin unchanged.",
+      "symbol_checks": {
+        "assert_git_state": {
+          "ast_sha256": "681183adad4b71a3597ef1229cdcad35f2424d39d12ab5e2a144bf35c091a5a9",
+          "end_line": 355,
+          "line": 326
+        },
+        "violations": {
+          "ast_sha256": "f8ac46dc025f959e2671925991f678bdc1e6b571aa25fa6bd513c1404aec17ed",
+          "end_line": 244,
+          "line": 227
+        }
+      },
+      "symbols": [
+        "violations",
+        "assert_git_state"
+      ]
+    },
+    {
+      "path": "tests/support/r3_portable_clone_guard.py",
+      "pre_bytes": 14050,
+      "pre_sha256_lf": "72ceadc15196b34b29e84c70f50b25095cc5ad6e0e96761a7d5653bcd85a6808",
+      "pre_sha256_raw": "72ceadc15196b34b29e84c70f50b25095cc5ad6e0e96761a7d5653bcd85a6808",
+      "reason": "Authenticated D3 delegations + one new literal pin inside authenticated; private-preparation implementation unchanged.",
+      "symbol_checks": {
+        "assert_git_state": {
+          "ast_sha256": "d60183680ee6a6752f8d87aeb4595e4f64e25bfe7e88c0878dc5ff585f0da45b",
+          "end_line": 303,
+          "line": 286
+        },
+        "assert_scope": {
+          "ast_sha256": "bc3bd0f5090b71cf0f49af3eedf8c6ebe9c608d94c81e480b361213dfed9d397",
+          "end_line": 240,
+          "line": 237
+        },
+        "authenticated": {
+          "ast_sha256": "05cc89125f29ff9be5568f317ef8d82bd1c0531f4e4d1bb3d13ee0bf9fcb4e26",
+          "end_line": 173,
+          "line": 160
+        },
+        "baseline_view": {
+          "ast_sha256": "4669fa4254ce0e642bcacb442f6b3065d567c44b7ef6849d589cad19839bdd40",
+          "end_line": 196,
+          "line": 194
+        },
+        "index_matches": {
+          "ast_sha256": "7d647fe9bddf20ac4cd1562e994f4377f68f5ac29ec2d6923829d21eb1bbfc50",
+          "end_line": 209,
+          "line": 199
+        },
+        "source_matches": {
+          "ast_sha256": "3b47462e37dc4368cdd799894d4f5cae02a418a477a90b2023e153533065c559",
+          "end_line": 181,
+          "line": 176
+        },
+        "violations": {
+          "ast_sha256": "9b1ab545cefeaf23611c0a29af57d1b390a07a98ee05e7b1fd129938762baee0",
+          "end_line": 226,
+          "line": 212
+        }
+      },
+      "symbols": [
+        "authenticated",
+        "source_matches",
+        "baseline_view",
+        "index_matches",
+        "violations",
+        "assert_scope",
+        "assert_git_state"
+      ]
+    },
+    {
+      "path": "tests/architecture/test_r3_editorial_correction_boundary.py",
+      "pre_bytes": 4574,
+      "pre_sha256_lf": "35aa4b37e08927e91ca29f45ce94ee55c187ff93eeed5235d3af083b1c377997",
+      "pre_sha256_raw": "35aa4b37e08927e91ca29f45ce94ee55c187ff93eeed5235d3af083b1c377997",
+      "reason": "Extend synthetic source-copy union; replace poll whole-AST prohibition with precise E08 delta assertion.",
+      "symbol_checks": {
+        "test_each_source_mutation_missing_or_replaced_is_rejected": {
+          "ast_sha256": "83f2ab7a6d22390dad64a3ceae84df82715f7d71236e20c7376b232dfc45b88f",
+          "end_line": 58,
+          "line": 43
+        },
+        "test_m09_pure_contract_and_no_provider_editorial_route": {
+          "ast_sha256": "e861ca194c1bfa6ef7b135e3a95306e6a6d5ebcab428ad28f979075bba950b88",
+          "end_line": 114,
+          "line": 91
+        }
+      },
+      "symbols": [
+        "test_each_source_mutation_missing_or_replaced_is_rejected",
+        "test_m09_pure_contract_and_no_provider_editorial_route"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_portable_clone_guard.py",
+      "pre_bytes": 10022,
+      "pre_sha256_lf": "890999df2339943cc6b3d4bec581cbeef25e6faacf7e838d29ee8a369568de78",
+      "pre_sha256_raw": "890999df2339943cc6b3d4bec581cbeef25e6faacf7e838d29ee8a369568de78",
+      "reason": "Extend exact source-copy union; check actual D3 then historical AST; all mutation cases retained.",
+      "symbol_checks": {
+        "copy_successor": {
+          "ast_sha256": "2c9bd645ee6386abcc0da831ce12b68538fa063ab7cdd2a85d77c8ed291a2322",
+          "end_line": 45,
+          "line": 40
+        },
+        "test_signatures_and_outside_scope_nodes_remain_protected": {
+          "ast_sha256": "13210a8e4d7985c44b4c78adb6af0d00695c1da6cdc1e3ab3ddbde2eecde4093",
+          "end_line": 197,
+          "line": 193
+        }
+      },
+      "symbols": [
+        "copy_successor",
+        "test_signatures_and_outside_scope_nodes_remain_protected"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_parse_observability.py",
+      "pre_bytes": 13436,
+      "pre_sha256_lf": "b1289897fc165677730ea922433667057dcba075f739875f05a0bedd9e2c3f96",
+      "pre_sha256_raw": "b1289897fc165677730ea922433667057dcba075f739875f05a0bedd9e2c3f96",
+      "reason": "Extend source-copy union only.",
+      "symbol_checks": {
+        "test_every_patch_source_mutation_is_rejected": {
+          "ast_sha256": "7507fa97360cbb48bbb0754263e2ea0fdb2409bb21a2ad3d0072ab04f47371a3",
+          "end_line": 251,
+          "line": 237
+        }
+      },
+      "symbols": [
+        "test_every_patch_source_mutation_is_rejected"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_prepare_contract_alignment.py",
+      "pre_bytes": 11057,
+      "pre_sha256_lf": "48b8359ac6618632a12faf4e98f51e53f93ab221b00f019bf4c5d07538efdf4c",
+      "pre_sha256_raw": "48b8359ac6618632a12faf4e98f51e53f93ab221b00f019bf4c5d07538efdf4c",
+      "reason": "Extend copy union; HARDEN parameter only now expects refusal without dedicated marker.",
+      "symbol_checks": {
+        "copied_sources": {
+          "ast_sha256": "03d234a75c9758e15c55f2953d55dcaaf28e2bb1dc46d6eb9037fe878cd33f91",
+          "end_line": 218,
+          "line": 209
+        },
+        "test_selection_is_exact_and_other_requests_byte_equivalent": {
+          "ast_sha256": "b3a6e827b38f050d1727022e21f3b151e2a8b8a7351dfe30edea8b06be7a4588",
+          "end_line": 206,
+          "line": 197
+        }
+      },
+      "symbols": [
+        "copied_sources",
+        "test_selection_is_exact_and_other_requests_byte_equivalent"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_prepare_serialization.py",
+      "pre_bytes": 11135,
+      "pre_sha256_lf": "246ac04d79fb43d6421a7d621d28c076dd4c7886404fec497dea8e1a689c4a44",
+      "pre_sha256_raw": "246ac04d79fb43d6421a7d621d28c076dd4c7886404fec497dea8e1a689c4a44",
+      "reason": "Extend source-copy union only; all PREPARE tests unchanged.",
+      "symbol_checks": {
+        "test_each_successor_source_mutation_is_rejected": {
+          "ast_sha256": "5988bcfd0735330877c2ee05d6e0bee6a4eecf67277d5126e1de0919e9b1de86",
+          "end_line": 212,
+          "line": 197
+        }
+      },
+      "symbols": [
+        "test_each_successor_source_mutation_is_rejected"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_cap_a01_targeted.py",
+      "pre_bytes": 20601,
+      "pre_sha256_lf": "96414f9921541cdbb9cf6c85e5e5a19bf1764ffcdc52351d22128d60ac5e018b",
+      "pre_sha256_raw": "96414f9921541cdbb9cf6c85e5e5a19bf1764ffcdc52351d22128d60ac5e018b",
+      "reason": "Extend source-copy union only.",
+      "symbol_checks": {
+        "test_each_targeted_successor_identity_is_closed": {
+          "ast_sha256": "ad3d99d142a99f19c29ef67edec5fee0c05d03142e7ae0b1461b9444adb5ffbe",
+          "end_line": 565,
+          "line": 551
+        }
+      },
+      "symbols": [
+        "test_each_targeted_successor_identity_is_closed"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_locator_materialization.py",
+      "pre_bytes": 9000,
+      "pre_sha256_lf": "fb1b5990d5ae67ddd9448eb6d8bd6d7f2005f1fd7f5870e56bcf0663d0cd359e",
+      "pre_sha256_raw": "fb1b5990d5ae67ddd9448eb6d8bd6d7f2005f1fd7f5870e56bcf0663d0cd359e",
+      "reason": "Extend source-copy union only.",
+      "symbol_checks": {
+        "test_every_successor_file_mutation_is_rejected": {
+          "ast_sha256": "1526c435eb208cfdc103ca9fde4dc0eaa649c7726d47523c1ef5d55458663a1b",
+          "end_line": 174,
+          "line": 161
+        }
+      },
+      "symbols": [
+        "test_every_successor_file_mutation_is_rejected"
+      ]
+    }
+  ],
+  "creations": [
+    {
+      "path": "backend/modules/work_orchestration/contracts/dto/r3_restoration.py",
+      "entry_symbols": [
+        "R3RestorationSnapshot"
+      ]
+    },
+    {
+      "path": "backend/infrastructure/composition/factories/r3_d3_recovery.py",
+      "entry_symbols": [
+        "R3RestorationAuthority",
+        "RestoredR3Session",
+        "verify_restoration_sources",
+        "build_restored_r3"
+      ]
+    },
+    {
+      "path": "backend/infrastructure/composition/bindings/r3_harden_projection.py",
+      "entry_symbols": [
+        "harden_projection"
+      ]
+    },
+    {
+      "path": "backend/adapters/outbound/generation/openai/harden_contract.py",
+      "entry_symbols": [
+        "HARDEN_CONTRACT_ID",
+        "FIELDS",
+        "INSTRUCTIONS",
+        "is_harden_request",
+        "harden_output_schema",
+        "normalized_harden_text"
+      ]
+    },
+    {
+      "path": "backend/adapters/outbound/generation/openai/harden_materialization.py",
+      "entry_symbols": [
+        "materialized_harden_text"
+      ]
+    },
+    {
+      "path": "backend/infrastructure/composition/factories/r3_harden_serialization.py",
+      "entry_symbols": [
+        "r3_harden_request_parameters",
+        "r3_harden_count_parameters"
+      ]
+    },
+    {
+      "path": "backend/infrastructure/composition/factories/r3_harden_profile.py",
+      "entry_symbols": [
+        "load_harden_profile",
+        "validate_harden_profile"
+      ]
+    },
+    {
+      "path": "backend/infrastructure/composition/factories/r3_harden_execution.py",
+      "entry_symbols": [
+        "HardenExecutionEvidence",
+        "validate_harden_grant",
+        "build_harden_adapter"
+      ]
+    },
+    {
+      "path": "tests/support/r3_d3_scope_guard.py",
+      "entry_symbols": [
+        "BASELINE",
+        "PRE",
+        "POST",
+        "CREATES",
+        "PATHS",
+        "SYMBOLS",
+        "ORACLE_SHA256",
+        "authenticated",
+        "source_matches",
+        "baseline_view",
+        "index_matches",
+        "violations",
+        "assert_scope",
+        "assert_git_state"
+      ]
+    },
+    {
+      "path": "tests/support/r3_d3_fixtures.py",
+      "entry_symbols": [
+        "synthetic_restoration",
+        "synthetic_harden_request",
+        "synthetic_dependency_failure"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_restoration.py",
+      "entry_symbols": [
+        "test_*"
+      ]
+    },
+    {
+      "path": "tests/integration/test_r3_d3_recovery.py",
+      "entry_symbols": [
+        "test_*"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_dependency_refusal.py",
+      "entry_symbols": [
+        "test_*"
+      ]
+    },
+    {
+      "path": "tests/integration/test_r3_d3_product.py",
+      "entry_symbols": [
+        "test_*"
+      ]
+    },
+    {
+      "path": "tests/integration/test_r3_d3_http.py",
+      "entry_symbols": [
+        "test_*"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_harden_wire.py",
+      "entry_symbols": [
+        "test_*"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_harden_execution.py",
+      "entry_symbols": [
+        "test_*"
+      ]
+    },
+    {
+      "path": "tests/architecture/test_r3_d3_boundary.py",
+      "entry_symbols": [
+        "test_*"
+      ]
+    },
+    {
+      "path": "tests/unit/test_r3_d3_scope_guard.py",
+      "entry_symbols": [
+        "test_*"
+      ]
+    },
+    {
+      "path": "architecture/adr/ADR-r3-d3-restoration-harden-boundary.md",
+      "entry_symbols": []
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r3_d3/README.md",
+      "entry_symbols": []
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r3_d3/RESTORATION_CONTRACT.json",
+      "entry_symbols": []
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r3_d3/HARDEN_CONTRACT.json",
+      "entry_symbols": []
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r3_d3/IMPLEMENTATION_SCOPE.json",
+      "entry_symbols": []
+    }
+  ],
+  "protected": [
+    "AGENTS.md",
+    "docs/development/ENVIRONMENT.md",
+    "backend/modules/pedagogical_design/contracts/dto/assessment_bundle.py",
+    "backend/modules/pedagogical_design/contracts/dto/assessment_revision.py",
+    "backend/modules/pedagogical_design/domain/policies/assessment_revision.py",
+    "backend/modules/validation_control/contracts/dto/editorial_scope.py",
+    "backend/modules/validation_control/domain/policies/assessment_checks.py",
+    "backend/modules/validation_control/application/commands/validate_assessment.py",
+    "backend/modules/work_orchestration/contracts/dto/production_read_view.py",
+    "backend/modules/work_orchestration/contracts/dto/conversation.py",
+    "backend/modules/work_orchestration/ports/outbound/r3_store.py",
+    "backend/adapters/inbound/application/r3_review_modify.py",
+    "backend/adapters/inbound/api/r3_review_modify.py",
+    "backend/adapters/inbound/api/routes.py",
+    "backend/infrastructure/composition/factories/r3_review_modify.py",
+    "backend/infrastructure/composition/factories/conversation.py",
+    "backend/infrastructure/composition/factories/r3_prepare_serialization.py",
+    "backend/infrastructure/config/schemas/provider.py",
+    "backend/infrastructure/config/loaders/provider.py",
+    "backend/adapters/outbound/generation/openai/locator_materialization.py",
+    "backend/adapters/outbound/generation/openai/prepare_contract.py",
+    "backend/adapters/outbound/openai/transport.py",
+    "backend/adapters/outbound/system/r3_job.py"
+  ],
+  "tests_required": [
+    "tests/architecture/test_r3_product_boundary.py",
+    "tests/architecture/test_r3_guard_non_regression.py",
+    "tests/architecture/test_r3_editorial_correction_boundary.py",
+    "tests/unit/test_r3_assets.py",
+    "tests/unit/test_assessment_revision.py",
+    "tests/unit/test_assessment_deterministic_validation.py",
+    "tests/unit/test_r3_commands.py",
+    "tests/unit/test_r3_generation_mapping.py",
+    "tests/unit/test_r3_review_mapping.py",
+    "tests/unit/test_r3_editorial_validation_scope.py",
+    "tests/unit/test_r3_editorial_corrections.py",
+    "tests/unit/test_r3_routes_security.py",
+    "tests/unit/test_r3_parse_observability.py",
+    "tests/unit/test_r3_prepare_contract_alignment.py",
+    "tests/unit/test_r3_prepare_serialization.py",
+    "tests/unit/test_r3_cap_a01_targeted.py",
+    "tests/unit/test_r3_locator_materialization.py",
+    "tests/unit/test_r3_portable_clone_guard.py",
+    "tests/integration/test_r3_product.py",
+    "tests/integration/test_r3_http.py",
+    "tests/integration/test_r3_jobs.py",
+    "tests/integration/test_r3_editorial_corrections.py",
+    "tests/integration/test_r3_parse_observability.py",
+    "tests/integration/test_r3_prepare_contract_alignment.py",
+    "tests/integration/test_r3_cap_a01_targeted.py",
+    "tests/integration/test_r3_locator_materialization.py",
+    "tests/unit/test_openai_conversation_mapping.py",
+    "tests/unit/test_r3_restoration.py",
+    "tests/integration/test_r3_d3_recovery.py",
+    "tests/unit/test_r3_dependency_refusal.py",
+    "tests/integration/test_r3_d3_product.py",
+    "tests/integration/test_r3_d3_http.py",
+    "tests/unit/test_r3_harden_wire.py",
+    "tests/unit/test_r3_harden_execution.py",
+    "tests/architecture/test_r3_d3_boundary.py",
+    "tests/unit/test_r3_d3_scope_guard.py"
+  ],
+  "post_identities": "tests/support/r3_d3_scope_guard.py:POST",
+  "historical_strict_typing": "Archived 476 diagnostics not reproduced here. Locked-environment strict check of 21 modified historical Python files: 220 errors in 10 files, identical PRE/POST; NOT_PASS, no new diagnostic.",
+  "live_authorization": false,
+  "sqlite": "Only nine explicitly authorized historical test cases, fresh synthetic temporary external databases."
+}

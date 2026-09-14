@@ -105,7 +105,7 @@ class OpenAIGenerationAdapter:
         if type(request) is not GenerationPortRequest:
             raise TypeError("request must be a GenerationPortRequest")
         self._parse_diagnostic = ParseDiagnostic(enabled=(
-            request.objective == "PREPARE_SUPPLEMENTS"
+            request.objective in {"PREPARE_SUPPLEMENTS", "HARDEN_DOSSIER_3"}
             and request.output_contract.get("contract_id") == "R3-TRANSFORMATION-1.0"))
         _require_supported_operation(request.operation, self._model_profile)
         provider_request = build_openai_request(
@@ -176,6 +176,10 @@ def _map_response_body(
     model_profile: ModelProfileConfig,
     diagnostic: ParseDiagnostic,
 ) -> GenerationPortResult:
+    from backend.adapters.outbound.generation.openai.harden_contract import is_harden_request
+    from backend.adapters.outbound.generation.openai.harden_materialization import (
+        materialized_harden_text,
+    )
     from backend.adapters.outbound.generation.openai.locator_materialization import (
         materialized_prepare_text,
     )
@@ -199,8 +203,10 @@ def _map_response_body(
             GenerationPortErrorCode.UNAVAILABLE,
             "OPENAI_RESPONSE_FAILED",
         )
-    if is_prepare_request(request):
-        text = materialized_prepare_text(response.output_text, request, diagnostic)
+    if is_prepare_request(request) or is_harden_request(request):
+        text = (materialized_harden_text(response.output_text, request, diagnostic)
+                if is_harden_request(request)
+                else materialized_prepare_text(response.output_text, request, diagnostic))
         incomplete = response.status is OpenAIResponseStatus.INCOMPLETE
         with diagnostic.at(ParseStage.DOMAIN_MAP, expected=(TypeError, ValueError),
                            code=ParseCode.DOMAIN_MAPPING_FAILURE):

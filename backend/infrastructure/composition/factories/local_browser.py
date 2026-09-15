@@ -3,16 +3,22 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from secrets import token_urlsafe
 
 from backend.adapters.inbound.api.read15 import Read15Endpoint, Read15ValidationRejected
 from backend.adapters.inbound.api.routes import ASSET_NAMES
+from backend.adapters.inbound.api.saved_production import SavedProductionEndpoint
 from backend.adapters.inbound.api.search import SearchEndpoint, SearchValidationRejected
 from backend.adapters.inbound.api.server import LocalRead15Server, LocalRead15Service
 from backend.adapters.inbound.application.local_search import LocalSearchUseCaseInbound
 from backend.adapters.inbound.application.resource_library import ResourceLibraryUseCaseInbound
+from backend.adapters.inbound.application.saved_production import SavedProductionInbound
+from backend.adapters.outbound.export.word import OOXMLWordWriter
+from backend.adapters.outbound.persistence.saved_production import LocalSavedProductionStore
 from backend.adapters.outbound.persistence.sqlite import connect_sqlite
 from backend.adapters.outbound.resource_library.sqlite import SQLiteResourceStoreAdapter
 from backend.adapters.outbound.search.local import SQLiteLocalSearchAdapter
@@ -42,6 +48,10 @@ from backend.infrastructure.filesystem import (
     hash_file_nofollow,
     read_file_nofollow,
 )
+from backend.modules.materialization_export.application.commands.export_saved import (
+    ExportSavedCommand,
+)
+from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import as_plain
 from backend.modules.resource_library.application.dto.input.search_local import SearchLocalRequest
 from backend.modules.resource_library.application.queries import GetResourceQuery
 from backend.modules.resource_library.application.queries.search_local import SearchLocalQuery
@@ -50,6 +60,16 @@ from backend.modules.resource_library.domain.value_objects import ResourceRef
 from backend.modules.resource_library.domain.value_objects.search_text import (
     InvalidSearchTextError,
     SearchText,
+)
+from backend.modules.work_orchestration.application.queries.read_production import (
+    ReadProductionQuery,
+)
+from backend.modules.work_orchestration.application.services.saved_production import (
+    SavedProductionService,
+)
+from backend.modules.work_orchestration.contracts.dto.saved_production import (
+    SAVED_CONTRACT,
+    SavedProduction,
 )
 from backend.modules.work_orchestration.ports.outbound.generation_job import GenerationJobPort
 from backend.modules.work_orchestration.ports.outbound.r3_job import R3JobPort
@@ -86,6 +106,7 @@ class LocalRead15Composition:
     _closed: bool = False
     conversation: ConversationComposition | None = None
     r3: R3Composition | None = None
+    saved: SavedProductionInbound | None = None
 
     @property
     def url(self) -> str:
@@ -183,6 +204,7 @@ def build_local_read15(
     configuration: LocalBrowserHttpConfiguration, target: Read15RuntimeTarget,
     *, enable_conversation: bool = False, generation_jobs: GenerationJobPort | None = None,
     enable_review_modify: bool = False, r3_jobs: R3JobPort | None = None,
+    saved_root: Path | None = None, create_saved: bool = False,
 ) -> LocalRead15Composition:
     """Receive an explicit existing target; never read ambient environment settings."""
     if generation_jobs is not None and not enable_conversation:
@@ -205,6 +227,21 @@ def build_local_read15(
     observability = build_local_observability_session(target.data_root)
     conversation = build_conversation(jobs=generation_jobs) if enable_conversation else None
     r3 = build_r3(conversation, r3_jobs) if enable_review_modify and conversation else None
+    saved = None
+    if saved_root is not None:
+        def source(production_ref: str, version_ref: str) -> SavedProduction:
+            if conversation is None:
+                raise ValueError("R4_SOURCE_NOT_AVAILABLE")
+            view = conversation.store.read_version(conversation_id=str(conversation.service.snapshot()["conversation_id"]),
+                production_ref=production_ref, version_ref=version_ref)
+            if view is None:
+                raise ValueError("R4_SOURCE_NOT_AVAILABLE")
+            snapshot = conversation.store.r3_snapshot(production_ref, version_ref)
+            return SavedProduction({"contract_id": SAVED_CONTRACT, "view": as_plain(view.data),
+                "bundle": snapshot["bundle"], "reviews": snapshot["reviews"],
+                "validations": snapshot["validations"], "origin": "LOCAL_APPLICATION",
+                "provenance": {}, "reservations": []})
+        saved = build_saved_application(saved_root, create=create_saved, source=source)
     def harvest() -> None:
         if conversation:
             conversation.service.poll()
@@ -218,6 +255,7 @@ def build_local_read15(
             production_endpoint=conversation.production if conversation else None,
             harvest=harvest if conversation else None,
             r3_endpoint=r3.endpoint if r3 else None,
+            saved_endpoint=SavedProductionEndpoint(saved.execute, nonce=token_urlsafe(32)) if saved else None,
         )
         server = LocalRead15Server(service)
     except Exception:
@@ -230,4 +268,33 @@ def build_local_read15(
     observability.startup(
         app_version="v2.0", config_profile_id="local.read15", runtime_mode="LOCAL_BROWSER"
     )
-    return LocalRead15Composition(server, observability, conversation=conversation, r3=r3)
+    return LocalRead15Composition(server, observability, conversation=conversation, r3=r3, saved=saved)
+
+
+def build_saved_application(root: Path, *, create: bool = False,
+        source: Callable[[str, str], SavedProduction] | None = None) -> SavedProductionInbound:
+    store = LocalSavedProductionStore(root, create=create)
+    return SavedProductionInbound(SavedProductionService(store), ReadProductionQuery(store),
+                                  ExportSavedCommand(OOXMLWordWriter()), source=source)
+
+
+def build_local_saved(configuration: LocalBrowserHttpConfiguration, root: Path, *,
+                      create: bool = False,
+                      source: Callable[[str, str], SavedProduction] | None = None) -> LocalRead15Composition:
+    """Existing local app in R4-only mode: no library target, SQLite or generation job."""
+    saved = build_saved_application(root, create=create, source=source)
+    assets_root = _ROOT / "frontend"
+    assets = {name: read_file_nofollow(assets_root / name, allowed_root=assets_root,
+                                      maximum_bytes=128 * 1024) for name in sorted(ASSET_NAMES)}
+    observability = build_local_observability_session(root)
+    def unavailable(reference: str, correlation: str) -> UseCaseResult[object, object]:
+        raise Read15ValidationRejected("READ15_REQUEST_REJECTED")
+    try:
+        service = LocalRead15Service(configuration, Read15Endpoint(unavailable), observability, assets,
+            saved_endpoint=SavedProductionEndpoint(saved.execute, nonce=token_urlsafe(32)))
+        server = LocalRead15Server(service)
+    except Exception:
+        observability.shutdown()
+        raise
+    observability.startup(app_version="v2.0", config_profile_id="local.r4", runtime_mode="LOCAL_BROWSER")
+    return LocalRead15Composition(server, observability, saved=saved)

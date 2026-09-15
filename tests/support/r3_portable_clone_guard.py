@@ -214,6 +214,9 @@ def baseline_view(root: Path, path: str) -> bytes:
 
 
 def index_matches(root: Path, path: str, raw: bytes) -> bool:
+    from tests.support.r4_scope_guard import index_matches as r4_index
+    if r4_index(root, path, raw):
+        return True
     from tests.support.r3_d3_scope_guard import index_matches as d3_index_matches
 
     if d3_index_matches(root, path, raw):
@@ -234,6 +237,7 @@ def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
     from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
     from tests.support.r3_d3_scope_guard import baseline_view as d3_view
     from tests.support.r3_d3_scope_guard import violations as d3_violations
+    from tests.support.r4_scope_guard import PATHS as R4_PATHS
 
     assert set(POST) == set(PATHS) - {SELF} and len(PATHS) == 16
     errors = d3_violations(root)
@@ -247,7 +251,7 @@ def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
             errors.append("PORTABLE_IDENTITY:" + path)
     if changed is not None:
         errors += ["PORTABLE_MISSING:" + p for p in sorted(set(PATHS) - changed)]
-        errors += ["PORTABLE_UNAPPROVED:" + p for p in sorted(changed - set(PATHS) - set(D3_PATHS))]
+        errors += ["PORTABLE_UNAPPROVED:" + p for p in sorted(changed - set(PATHS) - set(D3_PATHS) - set(R4_PATHS))]
     return errors
 
 

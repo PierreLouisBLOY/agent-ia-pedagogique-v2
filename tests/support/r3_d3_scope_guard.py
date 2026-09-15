@@ -204,8 +204,9 @@ def digest(raw: bytes) -> str:
 
 
 def source_bytes(root: Path, path: str) -> bytes:
-    from tests.support.r3_portable_clone_guard import source_bytes as read
-    return read(root, path)
+    from tests.support.r4_scope_guard import baseline_view
+    r4_successor_sha256 = "82088bbc687b3aa1b781a65cbdf0f4dd2388f154a80de3c63e17733519b71364"
+    return baseline_view(root, path, expected=r4_successor_sha256)
 
 
 def canonical_bytes(path: str, raw: bytes) -> bytes:
@@ -295,12 +296,16 @@ def baseline_view(root: Path, path: str) -> bytes:
 
 
 def index_matches(root: Path, path: str, raw: bytes) -> bool:
+    from tests.support.r4_scope_guard import index_matches as r4_index
+    if r4_index(root, path, raw):
+        return True
     if path not in PATHS or not authenticated(root) or not _exact(root, path):
         return False
     return digest(raw) == digest(source_bytes(root, path)) or (path in PRE and digest(raw) == PRE[path])
 
 
 def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
+    from tests.support.r4_scope_guard import PATHS as R4_PATHS
     errors = []
     if set(POST) != set(PATHS) - {SELF} or len(PATHS) != 46 or not authenticated(root):
         errors.append("D3_ORACLE_IDENTITY")
@@ -309,7 +314,7 @@ def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
             errors.append("D3_IDENTITY:" + path)
     if changed is not None:
         errors += ["D3_MISSING:" + path for path in sorted(set(PATHS) - changed)]
-        errors += ["D3_UNAPPROVED:" + path for path in sorted(changed - set(PATHS))]
+        errors += ["D3_UNAPPROVED:" + path for path in sorted(changed - set(PATHS) - set(R4_PATHS))]
     return errors
 
 

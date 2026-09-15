@@ -102,4 +102,10 @@ def test_read15_keeps_one_field_and_deprecations_without_http_implementation() -
         (("GET", "HEAD"), "/", "index.html"),
         (("GET", "HEAD"), "/assets/app.js", "app.js"),
         (("GET", "HEAD"), "/assets/styles.css", "styles.css"),
+        (("GET", "POST"), "/api/v2/conversation/saved", None),
+        (("GET",), "/api/v2/productions/{production_ref}/versions/{version_ref}/saved", None),
+        (("POST",), "/api/v2/productions/{production_ref}/versions/{version_ref}/saved-validation", None),
+        (("GET", "POST"), "/api/v2/productions/{production_ref}/versions/{version_ref}/promotion", None),
+        (("GET",), "/api/v2/productions/{production_ref}/versions/{version_ref}/preview/{document_kind}", None),
+        (("GET",), "/api/v2/productions/{production_ref}/versions/{version_ref}/word/{document_kind}", None),
     )

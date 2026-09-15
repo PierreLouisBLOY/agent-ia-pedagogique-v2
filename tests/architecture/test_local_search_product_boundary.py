@@ -36,7 +36,7 @@ from tests.architecture.test_local_browser_product_boundary import (
 
 def test_exact_five_routes_preserve_read15() -> None:
     assert routes.ROUTE_SPECS == _EXPECTED_ROUTES
-    assert len(_EXPECTED_ROUTES) == 16
+    assert len(_EXPECTED_ROUTES) == 22
     assert tuple(r for r in _EXPECTED_ROUTES if r in HISTORICAL_R1_ROUTES) == HISTORICAL_R1_ROUTES
     assert route_contract_violations(ROOT) == []
     assert frontend_violations(ROOT) == []

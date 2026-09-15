@@ -227,6 +227,7 @@ def baseline_view(root: Path, path: str) -> bytes:
 def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
     from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
     from tests.support.r3_d3_scope_guard import violations as d3_violations
+    from tests.support.r4_scope_guard import PATHS as R4_PATHS
 
     assert len(PRE) == 23 and len(CREATES) == 8 and len(set(PATHS)) == 31
     assert set(POST) == set(PATHS) - {SELF}
@@ -243,7 +244,7 @@ def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
         errors.append("EDITORIAL_ORACLE_IDENTITY")
     if changed is not None:
         errors += ["EDITORIAL_MISSING:" + p for p in sorted(set(PATHS) - changed)]
-        errors += ["EDITORIAL_UNAPPROVED:" + p for p in sorted(changed - set(D3_PATHS) - set(PATHS) - set(PORTABLE_PATHS))]
+        errors += ["EDITORIAL_UNAPPROVED:" + p for p in sorted(changed - set(D3_PATHS) - set(PATHS) - set(PORTABLE_PATHS) - set(R4_PATHS))]
     return errors
 
 

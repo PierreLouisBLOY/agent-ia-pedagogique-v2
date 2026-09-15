@@ -23,7 +23,7 @@ def test_exact_assets(method: str, target: str, asset: str) -> None:
 
 
 def test_registry_has_one_business_operation_and_three_assets() -> None:
-    assert len(ROUTE_SPECS) == 16
+    assert len(ROUTE_SPECS) == 22
     assert ASSET_NAMES == {"index.html", "app.js", "styles.css"}
     match = resolve_route("GET", "/api/v2/resources/resource%3A1")
     assert match.template == READ15_TEMPLATE

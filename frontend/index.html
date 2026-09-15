@@ -25,7 +25,7 @@
       <p class="eyebrow">R2 · Génération conversationnelle</p>
       <h2 id="conversation-heading">Préparer une candidate pédagogique</h2>
       <p class="scope-note">Conversation locale volatile, limitée à 2 heures et 3 candidates.
-        Tout est perdu à l’arrêt. Une autorisation fournisseur distincte est nécessaire pour générer.</p>
+        Tout est perdu à l’arrêt sans sauvegarde explicite des versions. Une autorisation fournisseur distincte est nécessaire pour générer.</p>
       <ol id="conversation-messages" aria-label="Conversation"></ol>
       <form id="conversation-form">
         <label for="conversation-text">Votre demande ou vos précisions</label>
@@ -58,7 +58,7 @@
       <p class="eyebrow">R3 · Vérifier et modifier une version exacte</p>
       <h2 id="r3-heading">Sujet, correction et barème</h2>
       <p class="candidate-label">CANDIDATE — NON VALIDÉE</p>
-      <p>Une review V1 ne couvre jamais V2. Session volatile : tout est perdu à l’arrêt.</p>
+      <p>Une review V1 ne couvre jamais V2. Sauvegardez explicitement les versions à conserver.</p>
       <button id="r3-load" type="button">Afficher la candidate courante</button>
       <label for="r3-version">Version consultée (pas un alias latest)</label>
       <select id="r3-version" aria-label="Version exacte"></select>
@@ -71,6 +71,27 @@
       <p id="r3-status" role="status" aria-live="polite">R3 inactif tant qu’aucune version n’est consultée.</p>
       <p id="r3-identities" class="scope-note"></p>
       <div id="r3-content"></div>
+    </section>
+    <section class="workspace" aria-labelledby="r4-heading">
+      <p class="eyebrow">R4 · Conservation locale et Word</p>
+      <h2 id="r4-heading">Sauvegarder, rouvrir, exporter</h2>
+      <p>Sauvegarder n’est pas promouvoir. Les imports historiques sont documentaires et non modifiables.</p>
+      <button id="r4-save" type="button">Sauvegarder la version R3 consultée</button>
+      <button id="r4-refresh" type="button">Retrouver les versions sauvegardées</button>
+      <label for="r4-version">Version sauvegardée exacte</label>
+      <select id="r4-version"></select>
+      <button id="r4-open" type="button">Rouvrir</button>
+      <p id="r4-status" role="status" aria-live="polite">R4 non connecté.</p>
+      <div id="r4-details"></div>
+      <label for="r4-kind">Document Word</label>
+      <select id="r4-kind"><option value="student">Sujet élève</option><option value="correction">Corrigé professeur</option><option value="marking">Barème</option></select>
+      <button id="r4-preview" type="button" disabled>Prévisualiser</button>
+      <button id="r4-download" type="button" disabled>Télécharger le DOCX éditable</button>
+      <div id="r4-preview-content"></div>
+      <h3>Actions distinctes sur une version locale</h3>
+      <button id="r4-validate" type="button" disabled>Nouvelle validation CAP-A01</button>
+      <button id="r4-promote" type="button" disabled>Demander la promotion explicite</button>
+      <p>A16 et les réserves restent visibles. Aucun import historique du pilote ne peut être promu ici.</p>
     </section>
     <section class="workspace search-workspace" aria-labelledby="search-heading">
       <h2 id="search-heading">Rechercher des passages</h2>

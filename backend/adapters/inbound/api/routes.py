@@ -20,6 +20,12 @@ R3_VALIDATIONS_TEMPLATE: Final = "/api/v2/conversation/validations"
 R3_MODIFICATIONS_TEMPLATE: Final = "/api/v2/conversation/modifications"
 R3_OPERATION_TEMPLATE: Final = "/api/v2/conversation/operations/{operation_ref}"
 R3_ASSESSMENT_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{version_ref}/assessment"
+R4_SAVED_TEMPLATE: Final = "/api/v2/conversation/saved"
+R4_VERSION_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{version_ref}/saved"
+R4_VALIDATE_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{version_ref}/saved-validation"
+R4_PROMOTE_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{version_ref}/promotion"
+R4_PREVIEW_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{version_ref}/preview/{document_kind}"
+R4_WORD_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{version_ref}/word/{document_kind}"
 _PRODUCTION_PREFIX: Final = "/api/v2/productions/"
 _RESOURCE_PREFIX: Final = "/api/v2/resources/"
 ROUTE_SPECS: Final = (
@@ -39,6 +45,12 @@ ROUTE_SPECS: Final = (
     (("GET", "HEAD"), "/", "index.html"),
     (("GET", "HEAD"), "/assets/app.js", "app.js"),
     (("GET", "HEAD"), "/assets/styles.css", "styles.css"),
+    (("GET", "POST"), R4_SAVED_TEMPLATE, None),
+    (("GET",), R4_VERSION_TEMPLATE, None),
+    (("POST",), R4_VALIDATE_TEMPLATE, None),
+    (("GET", "POST"), R4_PROMOTE_TEMPLATE, None),
+    (("GET",), R4_PREVIEW_TEMPLATE, None),
+    (("GET",), R4_WORD_TEMPLATE, None),
 )
 ASSET_NAMES: Final = frozenset({"index.html", "app.js", "styles.css"})
 MAX_TARGET_BYTES: Final = 8 * 1_024
@@ -71,6 +83,8 @@ class RouteMatch:
     version_ref: str | None = None
     operation_ref: str | None = None
     review_ref: str | None = None
+    r4_operation: str | None = None
+    document_kind: str | None = None
 
 
 def is_conversation_target(target: str) -> bool:
@@ -116,6 +130,10 @@ def resolve_route(method: str, target: str) -> RouteMatch:
     if is_conversation_target(target):
         if "?" in target:
             raise RouteRejected(conversation=True)
+        if path == R4_SAVED_TEMPLATE:
+            if method not in {"GET", "POST"}:
+                raise RouteRejected(method=True, conversation=True)
+            return RouteMatch(R4_SAVED_TEMPLATE, r4_operation="list" if method == "GET" else "save")
         if path.startswith(_PRODUCTION_PREFIX):
             if re.search(r"%(?:2f|5c|25)", path, re.IGNORECASE):
                 raise RouteRejected(conversation=True)
@@ -123,6 +141,24 @@ def resolve_route(method: str, target: str) -> RouteMatch:
                 segments = unquote_to_bytes(path[len(_PRODUCTION_PREFIX):]).decode("ascii").split("/")
             except UnicodeDecodeError:
                 raise RouteRejected(conversation=True) from None
+            if (len(segments) in {4, 5} and segments[1] == "versions"
+                    and re.fullmatch(r"prod:[0-9a-f]{32}", segments[0])
+                    and re.fullmatch(r"ver:[0-9a-f]{32}", segments[2])):
+                operations = {"saved": (R4_VERSION_TEMPLATE, "open", {"GET"}),
+                    "saved-validation": (R4_VALIDATE_TEMPLATE, "validate", {"POST"}),
+                    "promotion": (R4_PROMOTE_TEMPLATE, "gate" if method == "GET" else "promote", {"GET", "POST"}),
+                    "preview": (R4_PREVIEW_TEMPLATE, "preview", {"GET"}),
+                    "word": (R4_WORD_TEMPLATE, "word", {"GET"})}
+                selected = operations.get(segments[3])
+                if selected is not None:
+                    template, operation, r4_methods = selected
+                    export = operation in {"preview", "word"}
+                    if (export and (len(segments) != 5 or segments[-1] not in {"student", "correction", "marking"})) or (not export and len(segments) != 4):
+                        raise RouteRejected(conversation=True)
+                    if method not in r4_methods:
+                        raise RouteRejected(method=True, conversation=True)
+                    return RouteMatch(template, production_ref=segments[0], version_ref=segments[2],
+                        r4_operation=operation, document_kind=segments[-1] if export else None)
             assessment = len(segments) == 4 and segments[-1] == "assessment"
             if ((len(segments) != 3 and not assessment) or segments[1] != "versions"
                     or re.fullmatch(r"prod:[0-9a-f]{32}", segments[0]) is None

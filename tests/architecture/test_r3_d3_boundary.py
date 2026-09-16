@@ -22,7 +22,8 @@ def test_exact_scope_and_protected_contracts() -> None:
         raw = subprocess.run(
             ["git", "show", f"{BASELINE}:{path}"], cwd=ROOT, check=True, capture_output=True
         ).stdout
-        assert digest(raw) == digest((ROOT / path).read_bytes()), path
+        from tests.support.r4_scope_guard import baseline_view as r4_view
+        assert digest(raw) == digest(r4_view(ROOT, path)), path
 
 
 def test_restoration_dto_pure_and_default_factories_not_live_wired() -> None:

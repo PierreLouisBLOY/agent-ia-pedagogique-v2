@@ -90,13 +90,15 @@ def successor_violations(root: Path, *, changed: set[str] | None = None) -> list
     from tests.support.r3_locator_materialization_guard import source_matches as locator_matches
     from tests.support.r3_serializer_8192_guard import PRE as SERIALIZER_PRE
     from tests.support.r3_serializer_8192_guard import source_matches as serializer_source_matches
+    from tests.support.r4_scope_guard import PATHS as R4_PATHS
+    from tests.support.r4_scope_guard import baseline_view as r4_view
 
     assert len(PATHS) == len(set(PATHS)) == 12
     assert set(POST) == set(PATHS) - {SELF}
     errors = d3_violations(root)
     for path, expected in POST.items():
         file = root / path
-        if (not file.is_file() or digest(file.read_bytes()) != expected) and not locator_matches(root, path, expected) and not cap_source_matches(root, path, expected) and not (
+        if (not file.is_file() or digest(r4_view(root, path)) != expected) and not locator_matches(root, path, expected) and not cap_source_matches(root, path, expected) and not (
                 path in SERIALIZER_PRE and expected == SERIALIZER_PRE[path]
                 and serializer_source_matches(root, path, expected)):
             errors.append("PREPARE_SUCCESSOR_IDENTITY:" + path)
@@ -109,7 +111,7 @@ def successor_violations(root: Path, *, changed: set[str] | None = None) -> list
         errors.append("PREPARE_SUCCESSOR_ORACLE_UNREADABLE")
     if changed is not None:
         errors += ["PREPARE_SUCCESSOR_MISSING:" + p for p in sorted(set(PATHS) - changed)]
-        errors += ["PREPARE_SUCCESSOR_UNAPPROVED:" + p for p in sorted(changed - set(D3_PATHS) - set(PATHS))]
+        errors += ["PREPARE_SUCCESSOR_UNAPPROVED:" + p for p in sorted(changed - set(D3_PATHS) - set(PATHS) - set(R4_PATHS))]
     return errors
 
 

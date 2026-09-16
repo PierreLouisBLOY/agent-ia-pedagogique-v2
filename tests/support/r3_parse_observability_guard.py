@@ -77,7 +77,8 @@ def assert_guard_extension(root: Path, path: str, *, repository: Path | None = N
                          cwd=repository, capture_output=True, check=True).stdout
     assert PRE[path] in {hashlib.sha256(raw).hexdigest(),
         hashlib.sha256(raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")).hexdigest()}
-    current = (root / path).read_bytes()
+    from tests.support.r4_scope_guard import baseline_view as r4_view
+    current = r4_view(root, path)
     from tests.support.r3_prepare_contract_alignment_guard import (
         PRE as SUCCESSOR_PRE,
     )
@@ -106,6 +107,8 @@ def patch_violations(root: Path, *, changed: set[str] | None = None) -> list[str
     from tests.support.r3_prepare_contract_alignment_guard import PATHS, successor_violations
     from tests.support.r3_serializer_8192_guard import PATHS as SERIALIZER_PATHS
     from tests.support.r3_serializer_8192_guard import source_matches as serializer_source_matches
+    from tests.support.r4_scope_guard import PATHS as R4_PATHS
+    from tests.support.r4_scope_guard import baseline_view as r4_view
 
     assert set(POST) == set(PATCH_PATHS) - {SELF}
     errors = d3_violations(root) + successor_violations(root) + editorial_violations(root)
@@ -113,7 +116,7 @@ def patch_violations(root: Path, *, changed: set[str] | None = None) -> list[str
         if path in PATHS:
             continue  # The independent exact successor oracle checked these bytes above.
         file = root / path
-        if (not file.is_file() or digest(file.read_bytes()) != expected) and not locator_matches(root, path, expected):
+        if (not file.is_file() or digest(r4_view(root, path)) != expected) and not locator_matches(root, path, expected):
             errors.append("PARSE_PATCH_IDENTITY:" + path)
     oracle = root / SELF
     from tests.support.r3_prepare_contract_alignment_guard import POST as SUCCESSOR_POST
@@ -124,7 +127,7 @@ def patch_violations(root: Path, *, changed: set[str] | None = None) -> list[str
         # Complete new successor working/index identities are checked by assert_patch_git_state.
         allowed = set(PATCH_PATHS) | set(PATHS) | (set(SERIALIZER_PATHS) & changed) | (set(CAP_PATHS) & changed) | (set(LOCATOR_PATHS) & changed) | (set(EDITORIAL_PATHS) & changed) | (set(PORTABLE_PATHS) & changed) | (set(D3_PATHS) & changed)
         errors += ["PARSE_PATCH_MISSING:" + p for p in sorted(allowed - changed)]
-        errors += ["PARSE_PATCH_UNAPPROVED:" + p for p in sorted(changed - allowed)]
+        errors += ["PARSE_PATCH_UNAPPROVED:" + p for p in sorted(changed - allowed - set(R4_PATHS))]
     return errors
 
 

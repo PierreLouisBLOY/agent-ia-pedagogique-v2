@@ -164,6 +164,12 @@ _EXPECTED_ROUTES = (
     (("GET", "HEAD"), "/", "index.html"),
     (("GET", "HEAD"), "/assets/app.js", "app.js"),
     (("GET", "HEAD"), "/assets/styles.css", "styles.css"),
+    (("GET", "POST"), "/api/v2/conversation/saved", None),
+    (("GET",), "/api/v2/productions/{production_ref}/versions/{version_ref}/saved", None),
+    (("POST",), "/api/v2/productions/{production_ref}/versions/{version_ref}/saved-validation", None),
+    (("GET", "POST"), "/api/v2/productions/{production_ref}/versions/{version_ref}/promotion", None),
+    (("GET",), "/api/v2/productions/{production_ref}/versions/{version_ref}/preview/{document_kind}", None),
+    (("GET",), "/api/v2/productions/{production_ref}/versions/{version_ref}/word/{document_kind}", None),
 )
 
 
@@ -271,10 +277,11 @@ def _literal(node: ast.expr, constants: dict[str, object]) -> object:
 
 def route_contract_violations(root: Path) -> list[str]:
     from tests.support.r3_guard_oracle import R3_CONTRACT, R3_ROUTES
+    from tests.support.r4_scope_guard import R4_ROUTES
     constants: dict[str, object] = {}
     for node in ast.parse((root / ROUTES_PATH).read_text(encoding="utf-8")).body:
         if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.value:
-            if node.target.id in {"READ15_TEMPLATE", "SEARCH_TEMPLATE", "_RESOURCE_PREFIX", "ROUTE_SPECS",
+            if node.target.id.startswith("R4_") or node.target.id in {"READ15_TEMPLATE", "SEARCH_TEMPLATE", "_RESOURCE_PREFIX", "ROUTE_SPECS",
                                   "CONVERSATION_TEMPLATE", "CONVERSATION_MESSAGES_TEMPLATE",
                                   "CONVERSATION_GENERATIONS_TEMPLATE", "PRODUCTION_VERSION_TEMPLATE",
                                   "R3_PREPARATION_TEMPLATE", "R3_REVIEWS_TEMPLATE", "R3_REVIEW_TEMPLATE",
@@ -290,9 +297,9 @@ def route_contract_violations(root: Path) -> list[str]:
     contract = json.loads((active_path if active_path.is_file() else ROOT / R3_CONTRACT).read_text("utf-8"))
     documented = tuple((tuple(r["methods"]), r["path"], r["asset"]) for r in contract["routes"])
     violations = []
-    if constants.get("ROUTE_SPECS") != R3_ROUTES:
+    if constants.get("ROUTE_SPECS") != R3_ROUTES + R4_ROUTES:
         violations.append("AST_REGISTRY_DRIFT")
-    if ROUTE_SPECS != R3_ROUTES or documented != R3_ROUTES or _EXPECTED_ROUTES != R3_ROUTES:
+    if ROUTE_SPECS != R3_ROUTES + R4_ROUTES or documented != R3_ROUTES or _EXPECTED_ROUTES != R3_ROUTES + R4_ROUTES:
         violations.append("CONTRACT_REGISTRY_DRIFT")
     if documented_r2 != R3_ROUTES[:6] + R3_ROUTES[-3:]:
         violations.append("HISTORICAL_R2_REGISTRY_DRIFT")
@@ -413,8 +420,8 @@ def test_a7_closed_registry_rejects_extra_routes_outside_or_inside_registry(
 
     routes.write_text(
         approved_source.replace(
-            "    ((\"GET\", \"HEAD\"), \"/assets/styles.css\", \"styles.css\"),\n)",
-            "    ((\"GET\", \"HEAD\"), \"/assets/styles.css\", \"styles.css\"),\n"
+            "    ((\"GET\",), R4_WORD_TEMPLATE, None),\n)",
+            "    ((\"GET\",), R4_WORD_TEMPLATE, None),\n"
             "    ((\"GET\",), \"/api/v2/extra\", None),\n)",
         ),
         encoding="utf-8",

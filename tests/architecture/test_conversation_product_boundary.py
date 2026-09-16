@@ -367,7 +367,7 @@ def test_only_closed_r2_routes_and_pure_security_evolution():
     from backend.adapters.inbound.api.routes import ROUTE_SPECS
     from tests.architecture.test_local_browser_product_boundary import _EXPECTED_ROUTES
     assert ROUTE_SPECS == _EXPECTED_ROUTES
-    assert len(ROUTE_SPECS) == 16
+    assert len(ROUTE_SPECS) == 22
     assert tuple(r for r in ROUTE_SPECS if r in HISTORICAL_R1_ROUTES) == HISTORICAL_R1_ROUTES
     path = "backend/adapters/inbound/api/local_browser.py"
     old, current = git_source(BASELINE_R2, path).decode("utf-8"), (ROOT / path).read_text("utf-8")
@@ -488,7 +488,10 @@ def test_historical_source_reader_fails_closed_on_unknown_corrupt_or_unavailable
 def test_active_lineage_rejects_unapproved_class_or_constant_change(tmp_path):
     paths = ("backend/adapters/outbound/generation/openai/adapter.py",
              "backend/adapters/outbound/generation/openai/mapping.py")
-    for relative in paths:
+    from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
+    from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
+    # Only public source fixtures; complete successor identities, no private exports.
+    for relative in set(paths) | set(D3_PATHS) | set(PORTABLE_PATHS):
         dest = tmp_path / relative
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_bytes((ROOT / relative).read_bytes())
@@ -557,7 +560,18 @@ def test_exact_65_path_inventory_at_all_git_states(monkeypatch, stage, mutation)
     if mutation == "substitution":
         assert len(actual) == 67
     calls = []
+    original_run = subprocess.run
+    mocked = (
+        ["git", "diff", "--name-only", BASELINE_R2, R3_BASELINE, "--"],
+        ["git", "diff", "--cached", "--name-only", R3_BASELINE, "--"],
+        ["git", "diff", "--name-only", R3_BASELINE, "--"],
+        ["git", "ls-files", "--others", "--exclude-standard"],
+    )
     def git(args, **kwargs):
+        if args not in mocked:
+            # Later lineage guards inspect real immutable blobs and private-file
+            # exclusion separately; this fixture only simulates the four R2/R3 inventories.
+            return original_run(args, **kwargs)
         calls.append(args[1:])
         if args == ["git", "diff", "--name-only", BASELINE_R2, R3_BASELINE, "--"]:
             return subprocess.CompletedProcess(args, 0, stdout="\n".join(sorted(actual)))

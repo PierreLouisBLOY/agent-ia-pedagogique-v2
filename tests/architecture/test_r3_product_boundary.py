@@ -28,7 +28,8 @@ def test_exact_closed_inventory_owners_and_protected_identities():
     assert len(R3_PATHS) == len(set(R3_PATHS)) == 59
     assert len(PRE_HASHES) == 15 and len(BACKEND_CREATES) == 23
     assert active_inventory(ROOT) == []
-    assert ROUTE_SPECS == R3_ROUTES and len(ROUTE_SPECS) == 16
+    from tests.support.r4_scope_guard import R4_ROUTES
+    assert ROUTE_SPECS == R3_ROUTES + R4_ROUTES and len(ROUTE_SPECS) == 22
     for path, digest in PRE_HASHES.items():
         assert digest in hash_variants(git_bytes(ROOT, R3_BASELINE, path))
     for path, digest in READ_ONLY.items():
@@ -60,4 +61,6 @@ def test_no_r3_live_grant_route_export_promotion_or_credential_discovery():
         source = (ROOT / path).read_text("utf-8")
         assert "getenv(" not in source and "os.environ" not in source
         assert "CAP-A02" not in source and "CAP-A03" not in source
-    assert all("export" not in p and "promot" not in p for _, p, _ in ROUTE_SPECS)
+    from tests.support.r4_scope_guard import R4_ROUTES
+    assert ROUTE_SPECS == R3_ROUTES + R4_ROUTES
+    assert all("export" not in p and "promot" not in p for _, p, _ in ROUTE_SPECS[:16])

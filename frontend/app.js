@@ -505,3 +505,125 @@ for (const [name, operation] of [["prepare", "assessment-preparations"], ["revie
     ["validate", "validations"], ["modify", "modifications"]]) {
   document.getElementById("r3-" + name).addEventListener("click", () => r3Command(operation));
 }
+
+// R4: a saved document is not a restored session. No automatic command replay.
+let r4Nonce = "";
+let r4Record = null;
+let r4Busy = false;
+let r4Uncertain = false;
+const r4Status = document.getElementById("r4-status");
+const r4Versions = document.getElementById("r4-version");
+function r4Base() {
+  const view = r4Record?.record?.view;
+  if (!view) throw new Error("R4_NOT_OPEN");
+  return "/api/v2/productions/" + view.production_ref + "/versions/" + view.version_ref;
+}
+function r4Controls() {
+  for (const id of ["r4-preview", "r4-download", "r4-validate", "r4-promote"])
+    document.getElementById(id).disabled = r4Busy || !r4Record ||
+      (["r4-validate", "r4-promote"].includes(id) &&
+       (r4Uncertain || r4Record.record.origin !== "LOCAL_APPLICATION"));
+  document.getElementById("r4-save").disabled = r4Busy || r4Uncertain || !r4Nonce;
+}
+async function r4Fetch(path, body = null, binary = false) {
+  const options = {method: body ? "POST" : "GET", credentials: "omit", cache: "no-store",
+    redirect: "error", headers: {"X-Local-Intent": "conversation-v1"}};
+  if (body) {
+    options.headers["Content-Type"] = "application/json; charset=utf-8";
+    options.headers["X-R2-Nonce"] = r4Nonce;
+    options.body = JSON.stringify(body);
+  }
+  const response = await fetch(path, options);
+  if (binary && response.ok) {
+    if (response.headers.get("Content-Type") !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+      throw new Error("R4_INVALID_DOCUMENT");
+    return response.blob();
+  }
+  const envelope = await response.json();
+  if (!response.ok || envelope?.meta?.contract_id !== "SAVE-REOPEN-WORD-HTTP-LOCAL-1.0")
+    throw new Error(envelope?.error?.code || "R4_REFUSED");
+  return envelope.data;
+}
+async function r4Refresh() {
+  const data = await r4Fetch("/api/v2/conversation/saved");
+  r4Nonce = data.transport_nonce;
+  const selected = r4Versions.value;
+  r4Versions.replaceChildren();
+  for (const version of data.versions) {
+    const option = document.createElement("option");
+    option.value = version.production_ref + "/" + version.version_ref;
+    option.textContent = version.version_ref + " · " + version.origin;
+    option.selected = option.value === selected;
+    r4Versions.append(option);
+  }
+  r4Status.textContent = data.versions.length + " version(s) conservée(s) sur disque. Aucune autorité restaurée.";
+  r4Controls();
+}
+async function r4Open() {
+  const refs = r4Versions.value.split("/");
+  if (refs.length !== 2 || !/^prod:[0-9a-f]{32}$/.test(refs[0]) || !/^ver:[0-9a-f]{32}$/.test(refs[1]))
+    throw new Error("R4_INVALID_SELECTION");
+  r4Record = await r4Fetch("/api/v2/productions/" + refs[0] + "/versions/" + refs[1] + "/saved");
+  const details = document.getElementById("r4-details");
+  details.replaceChildren();
+  appendSearchText(details, "p", r4Record.status === "PROMOTED" ? "Promotion explicite enregistrée" : "CANDIDATE — NON VALIDÉE");
+  appendSearchText(details, "p", "Origine : " + r4Record.record.origin + " · SHA-256 : " + r4Record.record_sha256);
+  for (const note of r4Record.record.reservations) appendSearchText(details, "p", note);
+  appendSearchText(details, "h3", "Rapports historiques — attachés à cette version uniquement");
+  appendSearchText(details, "pre", JSON.stringify({reviews: r4Record.record.reviews, validations: r4Record.record.validations}, null, 2));
+  appendSearchText(details, "h3", "Nouvelles actions R4 distinctes");
+  appendSearchText(details, "pre", JSON.stringify(r4Record.new_actions, null, 2));
+  document.getElementById("r4-preview-content").replaceChildren();
+  r4Status.textContent = "Version rouverte. Aucune revalidation automatique ; A16 reste visible.";
+  r4Controls();
+}
+async function r4Run(action, writes = false) {
+  if (r4Busy || (writes && r4Uncertain)) return;
+  r4Busy = true;
+  r4Controls();
+  try { await action(); }
+  catch (error) {
+    if (writes) r4Uncertain = true;
+    r4Status.textContent = "Opération refusée ou incertaine : " + error.message + ". Aucun rejeu automatique.";
+  } finally { r4Busy = false; r4Controls(); }
+}
+document.getElementById("r4-refresh").addEventListener("click", () => r4Run(r4Refresh));
+document.getElementById("r4-open").addEventListener("click", () => r4Run(r4Open));
+document.getElementById("r4-save").addEventListener("click", () => r4Run(async () => {
+  if (!r3State) throw new Error("Consultez d’abord une version R3 de la session");
+  await r4Fetch("/api/v2/conversation/saved", {production_ref: r3State.production_ref, version_ref: r3State.version_ref});
+  await r4Refresh();
+  r4Versions.value = r3State.production_ref + "/" + r3State.version_ref;
+  await r4Open();
+}, true));
+document.getElementById("r4-preview").addEventListener("click", () => r4Run(async () => {
+  const data = await r4Fetch(r4Base() + "/preview/" + document.getElementById("r4-kind").value);
+  const target = document.getElementById("r4-preview-content");
+  target.replaceChildren();
+  appendSearchText(target, "h3", data.title);
+  for (const block of data.blocks) appendSearchText(target, block.style === "Heading1" ? "h4" : "p", block.text);
+}));
+document.getElementById("r4-download").addEventListener("click", () => r4Run(async () => {
+  const kind = document.getElementById("r4-kind").value;
+  const data = await r4Fetch(r4Base() + "/word/" + kind, null, true);
+  const url = URL.createObjectURL(data);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = kind + "-" + r4Record.record.view.version_ref.slice(4) + ".docx";
+  anchor.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}));
+document.getElementById("r4-validate").addEventListener("click", () => r4Run(async () => {
+  await r4Fetch(r4Base() + "/saved-validation", {action_id: "action:" + crypto.randomUUID().replaceAll("-", ""),
+    record_sha256: r4Record.record_sha256});
+  await r4Open();
+}, true));
+document.getElementById("r4-promote").addEventListener("click", () => r4Run(async () => {
+  const gate = await r4Fetch(r4Base() + "/promotion");
+  if (!window.confirm("Promouvoir cette version exacte ? Vous reconnaissez A16, les réserves affichées et la distinction avec une simple sauvegarde.")) return;
+  await r4Fetch(r4Base() + "/promotion", {action_id: "action:" + crypto.randomUUID().replaceAll("-", ""),
+    record_sha256: gate.record_sha256, gate_id: gate.gate_id,
+    confirmation: "PROMOTE_EXACT_VERSION", acknowledge_a16: true});
+  await r4Open();
+}, true));
+r4Run(r4Refresh);

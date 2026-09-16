@@ -34,6 +34,7 @@ from backend.adapters.inbound.api.routes import (
     is_conversation_target,
     resolve_route,
 )
+from backend.adapters.inbound.api.saved_production import SavedProductionEndpoint, r4_error
 from backend.adapters.inbound.api.search import SearchEndpoint, public_search_error
 from backend.infrastructure.config.schemas.http import LocalBrowserHttpConfiguration
 
@@ -66,6 +67,7 @@ class LocalRead15Service:
         production_endpoint: ProductionEndpoint | None = None,
         harvest: Callable[[], None] | None = None,
         r3_endpoint: R3Endpoint | None = None,
+        saved_endpoint: SavedProductionEndpoint | None = None,
     ) -> None:
         if configuration.cors_enabled:
             raise ValueError("CORS must remain disabled for READ15-HTTP-LOCAL-1.0")
@@ -76,6 +78,7 @@ class LocalRead15Service:
         self.search_endpoint = search_endpoint
         self.conversation_endpoint = conversation_endpoint
         self.r3_endpoint = r3_endpoint
+        self.saved_endpoint = saved_endpoint
         self.production_endpoint = production_endpoint
         self.harvest = harvest
         self.observability = observability
@@ -127,6 +130,20 @@ class LocalRead15Service:
     def _conversation(
         self, method: str, target: str, headers: Mapping[str, str], correlation: str, raw: bytes,
     ) -> tuple[int, str, bytes, str]:
+        try:
+            r4_match = resolve_route(method, target)
+        except RouteRejected:
+            r4_match = None
+        if r4_match is not None and r4_match.r4_operation is not None:
+            saved = self.saved_endpoint
+            if saved is None:
+                return (*r4_error("R4_NOT_ENABLED", correlation), r4_match.template)
+            code = self.security.authorize_command(method=method, headers=headers, nonce=saved.nonce)
+            if code:
+                return self.r2_error(code, correlation)
+            return (*saved.respond(r4_match.r4_operation, r4_match.production_ref or "",
+                r4_match.version_ref or "", r4_match.document_kind or "", raw, correlation),
+                r4_match.template)
         endpoint = self.conversation_endpoint
         if endpoint is None:
             return self.r2_error("R2_NOT_ENABLED", correlation)

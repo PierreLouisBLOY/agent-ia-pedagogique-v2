@@ -185,6 +185,16 @@ def test_later_provider_work_preserves_phase_f_backend_owners() -> None:
         "backend/infrastructure/composition/bindings/r3_agents.py",
         "backend/infrastructure/composition/bootstrap/r3_worker.py",
         "backend/infrastructure/composition/factories/r3_review_modify.py",
+        "backend/modules/work_orchestration/contracts/dto/saved_production.py",
+        "backend/modules/work_orchestration/ports/outbound/saved_production.py",
+        "backend/modules/work_orchestration/application/services/saved_production.py",
+        "backend/modules/lifecycle_promotion/contracts/dto/promotion.py",
+        "backend/modules/lifecycle_promotion/application/commands/promote_saved.py",
+        "backend/modules/materialization_export/contracts/dto/word_document.py",
+        "backend/modules/materialization_export/ports/outbound/word_writer.py",
+        "backend/modules/materialization_export/application/commands/export_saved.py",
+        "backend/adapters/inbound/application/saved_production.py",
+        "backend/adapters/inbound/api/saved_production.py",
     }
     assert all(
         path.startswith(allowed)

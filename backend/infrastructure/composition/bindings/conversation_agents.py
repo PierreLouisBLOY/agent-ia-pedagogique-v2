@@ -21,6 +21,7 @@ from backend.agent_runtime.agents.generation import (
     GenerationGuardRequest,
     GenerationOutputGuard,
     GenerationPort,
+    GenerationPortRequest,
     GenerationPortResultStatus,
     GenerationPreparationRequest,
     GeneratorAgent,
@@ -51,8 +52,10 @@ from backend.agent_runtime.runtime import Plan, RunState
 from backend.agent_runtime.security.content_isolation import label_evidence_item
 from backend.core_contracts.capability import CapabilityId
 from backend.modules.pedagogical_design.contracts.dto.conversation_draft import (
+    LOCAL_REFERENCE_LABEL,
     OUTPUT_CONTRACT_ID,
     SECTION_IDS,
+    SYNTHETIC_REFERENCE_LABEL,
     ConversationDraftRequest,
 )
 from backend.modules.work_orchestration.contracts.dto.conversation import ConversationRejected
@@ -66,7 +69,12 @@ class ConversationAgentBindings:
         self, *, request: ConversationDraftRequest,
         evidence: Callable[[], AbstractContextManager[EvidenceAgent]], generation: GenerationPort,
         capability_policy: CapabilityAuthorizationPolicy, new_id: Callable[[str], str],
+        provenance_label: str = SYNTHETIC_REFERENCE_LABEL, prepare_only: bool = False,
     ) -> None:
+        if provenance_label not in (SYNTHETIC_REFERENCE_LABEL, LOCAL_REFERENCE_LABEL) or type(prepare_only) is not bool:
+            raise ValueError("REFERENCE_PROVENANCE_REJECTED")
+        self.provenance_label, self.prepare_only = provenance_label, prepare_only
+        self.prepared_projection: GenerationPortRequest | None = None
         self.request, self.evidence_factory, self.generation = request, evidence, generation
         self.policy, self.new_id = capability_policy, new_id
         self.evidence_set: EvidenceSet | None = None
@@ -154,7 +162,7 @@ class ConversationAgentBindings:
                                    "locator": locator, "version_ref": version,
                                    "checksum_sha256": hashlib.sha256(
                                        str(item.excerpt_or_summary).encode()).hexdigest(),
-                                   "provenance_label": SYNTHETIC_PROVENANCE,
+                                   "provenance_label": self.provenance_label,
                                    "declared_used": False})
             self.evidence_set, self.references = evidence_set, tuple(references)
             result_ref = "r2-evidence-" + self.request.generation_id[4:]
@@ -176,33 +184,39 @@ class ConversationAgentBindings:
                     "evidence_id": item.evidence_id, "text": item.excerpt_or_summary,
                     "source_ref": item.source_ref, "locator": item.locator,
                     "version_or_checksum": item.checksum_or_version,
-                    "provenance_label": SYNTHETIC_PROVENANCE,
+                    "provenance_label": self.provenance_label,
                 } for item in evidence_items)},
                 labeled_evidence=tuple(label_evidence_item(item) for item in evidence_items),
             )
-            generator = GeneratorAgent(GenerationCoordinator(self.generation))
-            self.trace.extend(("GeneratorAgent.generate_production", "GenerationCoordinator"))
-            prepared, technical = generator.generate_production(request=preparation)
-            self.trace.append("GenerationOutputGuard.assess")
-            assessment_generation = GenerationOutputGuard().assess(request=GenerationGuardRequest(
-                prepared, technical, GenerationGuardPolicy(
-                    grounding_required=True, require_structured_payload=True,
-                    required_payload_keys=("sections",), allowed_payload_keys=("sections",),
-                    section_container_key="sections",
-                ),
-            ))
-            if (assessment_generation.disposition not in {
-                GenerationGuardDisposition.ALLOW, GenerationGuardDisposition.ALLOW_WITH_WARNINGS,
-            } or not technical.evidence_refs_used):
-                raise ConversationRejected("GENERATION_OUTPUT_INVALID")
-            result_meta = replace(meta, status=AgentResultStatus.SUCCEEDED
-                                  if technical.status is GenerationPortResultStatus.SUCCEEDED
-                                  else AgentResultStatus.PARTIAL)
-            self.trace.append("GeneratorAgent.build_candidate")
-            self.candidate = generator.build_candidate(request=ProductionCandidateBuildRequest(
-                canonical, prepared, technical, assessment_generation, result_meta, self.new_id("prod"),
-            ))
-            result_ref = self.candidate.production_id
+            if self.prepare_only:
+                self.prepared_projection = GenerationCoordinator(self.generation).prepare(
+                    request=preparation).port_request
+                self.trace.append("GenerationCoordinator.prepare")
+                result_ref = "r5-projection-" + self.request.generation_id[4:]
+            else:
+                generator = GeneratorAgent(GenerationCoordinator(self.generation))
+                self.trace.extend(("GeneratorAgent.generate_production", "GenerationCoordinator"))
+                prepared, technical = generator.generate_production(request=preparation)
+                self.trace.append("GenerationOutputGuard.assess")
+                assessment_generation = GenerationOutputGuard().assess(request=GenerationGuardRequest(
+                    prepared, technical, GenerationGuardPolicy(
+                        grounding_required=True, require_structured_payload=True,
+                        required_payload_keys=("sections",), allowed_payload_keys=("sections",),
+                        section_container_key="sections",
+                    ),
+                ))
+                if (assessment_generation.disposition not in {
+                    GenerationGuardDisposition.ALLOW, GenerationGuardDisposition.ALLOW_WITH_WARNINGS,
+                } or not technical.evidence_refs_used):
+                    raise ConversationRejected("GENERATION_OUTPUT_INVALID")
+                result_meta = replace(meta, status=AgentResultStatus.SUCCEEDED
+                                      if technical.status is GenerationPortResultStatus.SUCCEEDED
+                                      else AgentResultStatus.PARTIAL)
+                self.trace.append("GeneratorAgent.build_candidate")
+                self.candidate = generator.build_candidate(request=ProductionCandidateBuildRequest(
+                    canonical, prepared, technical, assessment_generation, result_meta, self.new_id("prod"),
+                ))
+                result_ref = self.candidate.production_id
         else:
             raise ConversationRejected("GENERATION_NOT_AUTHORIZED")
         agent_result: AgentResult[object] = AgentResult(meta=meta, invocation_id=invocation.invocation_id,

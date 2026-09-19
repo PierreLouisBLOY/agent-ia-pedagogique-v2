@@ -244,7 +244,10 @@ def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
         errors.append("EDITORIAL_ORACLE_IDENTITY")
     if changed is not None:
         errors += ["EDITORIAL_MISSING:" + p for p in sorted(set(PATHS) - changed)]
-        errors += ["EDITORIAL_UNAPPROVED:" + p for p in sorted(changed - set(D3_PATHS) - set(PATHS) - set(PORTABLE_PATHS) - set(R4_PATHS))]
+        from tests.support.r5_scope_guard import PATHS as R5_PATHS
+        from tests.support.r5_scope_guard import violations as r5_violations
+        errors += r5_violations(root)
+        errors += ["EDITORIAL_UNAPPROVED:" + p for p in sorted(changed - set(D3_PATHS) - set(PATHS) - set(PORTABLE_PATHS) - set(R4_PATHS) - set(R5_PATHS))]
     return errors
 
 

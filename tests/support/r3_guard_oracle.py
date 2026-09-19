@@ -343,6 +343,7 @@ def active_inventory(
     from tests.support.r3_serializer_8192_guard import violations as serializer_violations
     from tests.support.r4_scope_guard import PATHS as R4_PATHS
     from tests.support.r4_scope_guard import violations as r4_violations
+    from tests.support.r5_scope_guard import PATHS as R5_PATHS
     doc = json.loads((root / R3_CONTRACT).read_text("utf-8"))
     assert doc["baseline_commit"] == R3_BASELINE
     assert doc["package_manifest_sha256"] == R3_MANIFEST
@@ -362,7 +363,7 @@ def active_inventory(
             if "--cached" in args:
                 indexed.update(result.stdout.splitlines())
     violations = sorted(changed - set(R3_PATHS) - set(PREPARATION) - set(PATCH_PATHS)
-                        - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS) - set(LOCATOR_PATHS) - set(EDITORIAL_PATHS) - set(PORTABLE_PATHS) - set(D3_PATHS) - set(R4_PATHS))
+                        - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS) - set(LOCATOR_PATHS) - set(EDITORIAL_PATHS) - set(PORTABLE_PATHS) - set(D3_PATHS) - set(R4_PATHS) - set(R5_PATHS))
     violations += r4_violations(root)
     if changed & (set(LOCATOR_PATHS) - set(R3_PATHS) - set(SUCCESSOR_PATHS) - set(SERIALIZER_PATHS) - set(CAP_PATHS)):
         violations += locator_violations(root, changed=changed & set(LOCATOR_PATHS))

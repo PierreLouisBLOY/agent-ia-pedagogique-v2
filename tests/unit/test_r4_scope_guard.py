@@ -4,7 +4,8 @@ from tests.support import r4_scope_guard as guard
 
 
 def test_each_r4_source_mutation_is_rejected(tmp_path):
-    for path in guard.PATHS:
+    from tests.support.r5_scope_guard import PATHS as R5_PATHS
+    for path in set(guard.PATHS) | set(R5_PATHS):
         target = tmp_path / path
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(guard.ROOT / path, target)

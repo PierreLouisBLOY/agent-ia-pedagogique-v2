@@ -110,8 +110,11 @@ def successor_violations(root: Path, *, changed: set[str] | None = None) -> list
     except (OSError, SyntaxError, ValueError):
         errors.append("PREPARE_SUCCESSOR_ORACLE_UNREADABLE")
     if changed is not None:
+        from tests.support.r5_scope_guard import PATHS as R5_PATHS
+        from tests.support.r5_scope_guard import violations as r5_violations
+        errors += r5_violations(root)
         errors += ["PREPARE_SUCCESSOR_MISSING:" + p for p in sorted(set(PATHS) - changed)]
-        errors += ["PREPARE_SUCCESSOR_UNAPPROVED:" + p for p in sorted(changed - set(D3_PATHS) - set(PATHS) - set(R4_PATHS))]
+        errors += ["PREPARE_SUCCESSOR_UNAPPROVED:" + p for p in sorted(changed - set(D3_PATHS) - set(PATHS) - set(R4_PATHS) - set(R5_PATHS))]
     return errors
 
 

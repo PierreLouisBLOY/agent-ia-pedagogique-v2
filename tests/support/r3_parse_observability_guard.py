@@ -58,6 +58,9 @@ def oracle_digest(raw: bytes) -> str:
 
 
 def active_source_matches(root: Path, path: str, historical: str) -> bool:
+    from tests.support.r5_scope_guard import source_matches as r5_matches
+    if r5_matches(root, path, historical):
+        return True
     from tests.support.r3_prepare_contract_alignment_guard import PRODUCERS, source_matches
 
     if path in PRODUCERS:
@@ -127,7 +130,10 @@ def patch_violations(root: Path, *, changed: set[str] | None = None) -> list[str
         # Complete new successor working/index identities are checked by assert_patch_git_state.
         allowed = set(PATCH_PATHS) | set(PATHS) | (set(SERIALIZER_PATHS) & changed) | (set(CAP_PATHS) & changed) | (set(LOCATOR_PATHS) & changed) | (set(EDITORIAL_PATHS) & changed) | (set(PORTABLE_PATHS) & changed) | (set(D3_PATHS) & changed)
         errors += ["PARSE_PATCH_MISSING:" + p for p in sorted(allowed - changed)]
-        errors += ["PARSE_PATCH_UNAPPROVED:" + p for p in sorted(changed - allowed - set(R4_PATHS))]
+        from tests.support.r5_scope_guard import PATHS as R5_PATHS
+        from tests.support.r5_scope_guard import violations as r5_violations
+        errors += r5_violations(root)
+        errors += ["PARSE_PATCH_UNAPPROVED:" + p for p in sorted(changed - allowed - set(R4_PATHS) - set(R5_PATHS))]
     return errors
 
 

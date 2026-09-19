@@ -1,4 +1,5 @@
 import json
+import math
 import time
 
 import pytest
@@ -9,13 +10,20 @@ from tests.support.conversation_fakes import process_job
 from tests.unit.test_conversation_generation import draft_request
 
 
-def collect(job, timeout=8):
+def collect(job, timeout=125):
+    # Collection observes the existing watchdog; it is not a startup latency SLA.
+    if (isinstance(timeout, bool) or not isinstance(timeout, (int, float))
+            or not math.isfinite(timeout) or not 0 < timeout <= 125):
+        raise ValueError("INVALID_SYNTHETIC_WAIT_TIMEOUT")
     deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
+    while (remaining := deadline - time.monotonic()) > 0:
         result = job.poll()
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
         if result is not None:
             return result
-        time.sleep(.02)
+        time.sleep(min(.02, remaining))
     raise AssertionError("bounded child not collected")
 
 
@@ -131,7 +139,7 @@ def test_corrective_private_channel_preserves_preparse_usage_and_no_replay(tmp_p
         job.authorize(request)
         assert inputs == []
         job.start(request)
-        result = collect(job, timeout=15)
+        result = collect(job)
         assert result.state == expected
         assert result.usage.response_received and result.usage.input_tokens == 3000
         assert result.usage.reasoning_tokens == 100

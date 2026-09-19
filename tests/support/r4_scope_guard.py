@@ -33,8 +33,9 @@ def canonical(path: str, raw: bytes) -> bytes:
 
 
 def read(root: Path, path: str) -> bytes:
-    from tests.support.r3_portable_clone_guard import source_bytes
-    return source_bytes(root, path)
+    from tests.support.r5_scope_guard import baseline_view
+    r5_successor_sha256 = "aee6c0dc70529120635149acf0dd053eac832f1c74db5278307fcab650c04e68"
+    return baseline_view(root, path, expected=r5_successor_sha256)
 
 
 @lru_cache(maxsize=64)
@@ -102,17 +103,23 @@ def baseline_view(root: Path, path: str, *, expected: str = SELF_SHA256) -> byte
 
 
 def index_matches(root: Path, path: str, raw: bytes) -> bool:
+    from tests.support.r5_scope_guard import index_matches as r5_index
+    if r5_index(root, path, raw):
+        return True
     return (path in PATHS and authenticated() and exact(root, path)
             and (digest(raw) == digest(read(root, path)) or digest(raw) == PRE.get(path)))
 
 
 def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
+    from tests.support.r5_scope_guard import PATHS as R5_PATHS
+    from tests.support.r5_scope_guard import violations as r5_violations
     errors = [] if authenticated() else ["R4_ORACLE_IDENTITY"]
+    errors += r5_violations(root)
     if set(POST) != set(PATHS) - {SELF}:
         errors.append("R4_INVENTORY_IDENTITY")
     errors += ["R4_IDENTITY:" + path for path in PATHS if not exact(root, path)]
     if changed is not None:
-        errors += ["R4_UNAPPROVED:" + p for p in sorted(changed - set(PATHS))]
+        errors += ["R4_UNAPPROVED:" + p for p in sorted(changed - set(PATHS) - set(R5_PATHS))]
         errors += ["R4_MISSING:" + p for p in sorted(set(PATHS) - changed)]
     return errors
 

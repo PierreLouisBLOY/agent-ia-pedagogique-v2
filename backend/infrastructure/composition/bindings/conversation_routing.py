@@ -144,13 +144,14 @@ class ConversationCompletion:
         self.agents = agents
 
     def evaluate(self, *, plan: Plan, run_state: RunState) -> WorkflowCompletionDecision:
+        prepared = self.agents.prepare_only and self.agents.prepared_projection is not None
         complete = (len(plan.steps) == 2 and self.agents.evidence_set is not None
-                    and self.agents.candidate is not None and all(
+                    and (prepared or self.agents.candidate is not None) and all(
                         state.status is StepRuntimeStatus.SUCCEEDED
                         for state in run_state.step_states.values()))
         return WorkflowCompletionDecision(
             CompletionDisposition.SUCCEEDED if complete else CompletionDisposition.STOP_REQUIRED,
-            "R2_CANDIDATE_MATERIALIZED" if complete else "R2_INCOMPLETE",
+            ("R5_PROJECTION_PREPARED" if prepared else "R2_CANDIDATE_MATERIALIZED") if complete else "R2_INCOMPLETE",
         )
 
 
@@ -167,7 +168,8 @@ def execute_conversation_plan(
     run_id = "r2-" + agents.request.generation_id[4:]
     plan = PlanCompiler().compile(PlanCompilationRequest(
         selection=selection, plan_id=run_id + "-plan", run_id=run_id, plan_version=1,
-        objective="Create one contextualized candidate", success_criteria={"candidate_present": True},
+        objective="Prepare without dispatch" if agents.prepare_only else "Create one contextualized candidate",
+        success_criteria={"projection_present" if agents.prepare_only else "candidate_present": True},
         stop_conditions={"failure": "stop", "retry": False}, budget_envelope=budget,
         bindings=(
             PlanStepBinding(0, WorkflowResponsibility.EVIDENCE, "r2-evidence", "Gather admitted evidence",
@@ -175,9 +177,9 @@ def execute_conversation_plan(
                             budget=budget, output_contract={"type": "EvidenceSet",
                                 "evidence_mandate": "R2-EVIDENCE-MANDATE-1.0"}),
             PlanStepBinding(0, WorkflowResponsibility.GENERATE_TRANSFORM, "r2-generation",
-                            "Generate one unvalidated candidate", capability_id=CapabilityId("CAP-G01"),
+                            "Prepare only" if agents.prepare_only else "Generate one unvalidated candidate", capability_id=CapabilityId("CAP-G01"),
                             permission_scope_ref="r2-scope", budget=budget,
-                            output_contract={"type": "ProductionCandidate"}),
+                            output_contract={"type": "PreparedGenerationCall" if agents.prepare_only else "ProductionCandidate"}),
         ),
     ))
     resolver = ConversationRoutingResolver(agents, now, budget)
@@ -218,5 +220,6 @@ def execute_conversation_plan(
             raise ConversationRejected("GENERATION_OUTPUT_INVALID" if agents.operations["CAP-G01"]
                                        else "INSUFFICIENT_EVIDENCE")
         state, consumption = decision.run_state, prospective
-    if state.status is not WorkflowStatus.SUCCEEDED or agents.candidate is None:
+    complete = agents.prepared_projection is not None if agents.prepare_only else agents.candidate is not None
+    if state.status is not WorkflowStatus.SUCCEEDED or not complete:
         raise ConversationRejected("GENERATION_OUTPUT_INVALID")

@@ -13,6 +13,9 @@ from backend.shared_kernel._safe_data import freeze_safe_mapping
 
 SECTION_IDS = ("CONSIGNES", "CONTEXTE_ET_ANNEXES", "DOSSIER_1", "DOSSIER_2", "DOSSIER_3")
 OUTPUT_CONTRACT_ID = "R2-ASSESSMENT-SECTIONS-1.0"
+REFERENCE_PROVENANCE_CONTRACT = "CONVERSATION-REFERENCE-PROVENANCE-1.1"
+SYNTHETIC_REFERENCE_LABEL = "SUPPORT_SYNTHETIQUE_R2 — aucune source officielle attestée"
+LOCAL_REFERENCE_LABEL = "REFERENCE_LOCALE_R5_V1 — aucune autorité officielle attestée"
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,11 +77,13 @@ class ConversationDraft:
             if not isinstance(sha, str) or re.fullmatch(r"[0-9a-f]{64}", sha) is None:
                 raise ValueError("INVALID_DRAFT_REFERENCE")
             if (type(reference["declared_used"]) is not bool
-                    or reference["provenance_label"] != "SUPPORT_SYNTHETIQUE_R2 — aucune source officielle attestée"
+                    or reference["provenance_label"] not in (SYNTHETIC_REFERENCE_LABEL, LOCAL_REFERENCE_LABEL)
                     or reference["evidence_id"] in ids):
                 raise ValueError("INVALID_DRAFT_REFERENCE")
             ids.add(reference["evidence_id"])
             used += int(reference["declared_used"] is True)
+        if len({reference["provenance_label"] for reference in self.references}) != 1:
+            raise ValueError("MIXED_REFERENCE_PROVENANCE")
         if not used or set(self.lineage) != {"source_run_id", "source_step_id", "evidence_set_ref"}:
             raise ValueError("INVALID_DRAFT_LINEAGE_OR_GROUNDING")
         for value in self.lineage.values():

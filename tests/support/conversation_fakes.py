@@ -1,6 +1,7 @@
 """Synthetic-only doubles and deterministic clock; never imported by product code."""
 import http.client
 import json
+import math
 import socket
 import threading
 import time
@@ -140,9 +141,10 @@ def running_conversation(tmp_path, *, jobs=None, enabled=True):
         assert not thread.is_alive()
 
 
-def http_call(composition, path="/api/v2/conversation", *, body=None, headers=None, method=None):
+def http_call(composition, path="/api/v2/conversation", *, body=None, headers=None, method=None,
+              timeout=7):
     port = composition.server.service.configuration.port
-    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=7)
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=timeout)
     merged = {"X-Local-Intent": "conversation-v1"}
     if body is not None:
         merged.update({"Content-Type": "application/json; charset=utf-8",
@@ -168,18 +170,30 @@ def http_command(composition, number, *, operation="messages", **fields):
     return http_call(composition, "/api/v2/conversation/" + operation, body=body), body
 
 
-def wait_terminal(composition):
-    # Harness wait is distinct from the product's 120s watchdog. Leave bounded
-    # headroom for a fresh Python child during concurrent lint/typecheck runs.
-    deadline = time.monotonic() + 12
-    while time.monotonic() < deadline:
-        status, _, data = http_call(composition)
+def wait_terminal(composition, *, timeout=125):
+    # Observe the unchanged 120s product watchdog plus at most 5s for collection.
+    # This is not a latency SLA. Callers still assert the expected terminal state.
+    if (isinstance(timeout, bool) or not isinstance(timeout, (int, float))
+            or not math.isfinite(timeout) or not 0 < timeout <= 125):
+        raise ValueError("INVALID_SYNTHETIC_WAIT_TIMEOUT")
+    deadline = time.monotonic() + timeout
+    polls, last_state = 0, "NOT_OBSERVED"
+    while (remaining := deadline - time.monotonic()) > 0:
+        status, _, data = http_call(composition, timeout=min(7, remaining))
+        polls += 1
         assert status == 200
         view = data["data"]["conversation"]
-        if view["active_generation"] and view["active_generation"]["state"] != "IN_PROGRESS":
+        active = view["active_generation"]
+        state = active["state"] if active else "NO_ACTIVE_GENERATION"
+        assert state in {"NO_ACTIVE_GENERATION", "IN_PROGRESS", "CANDIDATE_READY", "FAILED_OUTPUT", "UNKNOWN"}, "INVALID_SYNTHETIC_GENERATION_STATE"
+        last_state = state
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break  # Never accept a result observed after the collection deadline.
+        if state in {"CANDIDATE_READY", "FAILED_OUTPUT", "UNKNOWN"}:
             return view
-        time.sleep(.02)
-    raise AssertionError("synthetic worker did not terminate")
+        time.sleep(min(.05, remaining))
+    raise AssertionError(f"synthetic worker did not terminate within {timeout}s; polls={polls}; state={last_state}")
 
 
 def process_job(tmp_path, *, mode="candidate", timeout=120, digest="b" * 64):

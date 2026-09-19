@@ -53,6 +53,7 @@ def build_openai_request(
         is_prepare_request,
         prepare_output_schema,
     )
+    from backend.adapters.outbound.generation.openai.r5_contract import instructions_for
     from backend.infrastructure.composition.factories.r3_harden_profile import (
         validate_harden_profile,
     )
@@ -165,7 +166,8 @@ def build_openai_request(
             "Do not infer official provenance or approval. Produce all five requested "
             "substantial sections, including the fictional case, numerical annexes and questions."
             if conversation else ""
-        ) + (INSTRUCTIONS if prepare else "") + (HARDEN_INSTRUCTIONS if harden else ""),
+        ) + (INSTRUCTIONS if prepare else "") + (HARDEN_INSTRUCTIONS if harden else "")
+        + (instructions_for(request) if conversation else ""),
         input_json=input_json,
         output_schema=provider_schema,
         max_output_tokens=max_output_tokens,

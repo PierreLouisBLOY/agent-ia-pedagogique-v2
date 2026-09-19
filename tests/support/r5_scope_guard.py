@@ -8,6 +8,8 @@ import subprocess
 from functools import lru_cache
 from pathlib import Path
 
+from tests.support.r5_worker_guard import PATHS as WORKER_PATHS
+
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = "1eca5e3c3a1029c4d72c3955871c8aa1c44169d3"
 SELF = "tests/support/r5_scope_guard.py"
@@ -17,10 +19,14 @@ SYMBOLS = {"backend/modules/pedagogical_design/contracts/dto/conversation_draft.
 PATHS = tuple(["backend/modules/pedagogical_design/contracts/dto/conversation_draft.py","backend/modules/pedagogical_design/ports/outbound/conversation_generation.py","backend/modules/pedagogical_design/application/commands/create_conversation_draft.py","backend/adapters/outbound/generation/conversation.py","backend/infrastructure/composition/bindings/conversation_agents.py","backend/infrastructure/composition/bindings/conversation_routing.py","tests/support/r4_scope_guard.py","tests/support/r3_guard_oracle.py","tests/support/r3_parse_observability_guard.py","backend/adapters/outbound/evidence/local_reference.py","backend/infrastructure/composition/factories/local_reference.py","backend/adapters/inbound/cli/local_references.py","tests/integration/test_r5_local_reference.py","tests/unit/test_r5_scope_guard.py","tests/architecture/test_r5_product_boundary.py","tests/support/r5_scope_guard.py","architecture/adr/ADR-r5-local-reference-provenance.md","docs/development/R5_REAL_REFERENCES.md","tests/support/r3_prepare_contract_alignment_guard.py","tests/support/r3_d3_scope_guard.py","tests/support/r3_portable_clone_guard.py","tests/support/r3_editorial_correction_guard.py","tests/architecture/test_r3_product_boundary.py","tests/unit/test_r4_scope_guard.py","tests/support/conversation_fakes.py","tests/unit/test_conversation_wait.py","tests/integration/test_conversation_job_lifecycle.py"])
 SELF_SHA256 = "aee6c0dc70529120635149acf0dd053eac832f1c74db5278307fcab650c04e68"
 
+HISTORICAL_PATHS = PATHS
+PATHS = tuple(dict.fromkeys((*HISTORICAL_PATHS, *WORKER_PATHS)))
+
 
 def source(root: Path, path: str) -> bytes:
-    from tests.support.r3_portable_clone_guard import source_bytes
-    return source_bytes(root, path)
+    from tests.support.r5_worker_guard import baseline_view
+    worker_successor_sha256 = "88c9a0838924b80ef325fdd62c9e356aa976c028c1922201ae73e8f3f2d57be4"
+    return baseline_view(root, path, expected=worker_successor_sha256)
 
 
 def digest(raw: bytes) -> str:
@@ -78,6 +84,9 @@ def authenticated(*, expected: str = SELF_SHA256) -> bool:
 
 
 def exact(root: Path, path: str) -> bool:
+    from tests.support.r5_worker_guard import exact as worker_exact
+    if path in WORKER_PATHS:
+        return worker_exact(root, path)
     try:
         raw = source(root, path)
         if path == SELF:
@@ -102,13 +111,18 @@ def source_matches(root: Path, path: str, historical: str) -> bool:
 
 
 def index_matches(root: Path, path: str, raw: bytes) -> bool:
+    from tests.support.r5_worker_guard import index_matches as worker_index
+    if path in WORKER_PATHS:
+        return worker_index(root, path, raw)
     return (path in PATHS and authenticated() and exact(root, path)
             and digest(raw) in {digest(source(root, path)), PRE.get(path)})
 
 
 def violations(root: Path, *, changed: set[str] | None = None) -> list[str]:
+    from tests.support.r5_worker_guard import violations as worker_violations
     errors = [] if authenticated() else ["R5_ORACLE_IDENTITY"]
-    if set(POST) != set(PATHS) - {SELF}:
+    errors += worker_violations(root)
+    if set(POST) != set(HISTORICAL_PATHS) - {SELF}:
         errors.append("R5_INVENTORY_IDENTITY")
     errors += ["R5_IDENTITY:" + p for p in PATHS if not exact(root, p)]
     if changed is not None:

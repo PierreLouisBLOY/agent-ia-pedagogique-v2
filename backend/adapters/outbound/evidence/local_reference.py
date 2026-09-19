@@ -107,7 +107,8 @@ class SelectedLocalEvidenceSearch(SQLiteEvidenceSearchAdapter):
                    FROM search_chunk AS sc JOIN object_registry AS r ON r.object_id = sc.object_id
                    WHERE sc.id = ? AND sc.status = 'CURRENT'""", (selected["passage_ref"],),
             ).fetchone()
-            if row is None or row[0] != selected["object_ref"] or row[3] != selected["version_or_checksum"]:
+            if (row is None or row[0] != selected["object_ref"] or row[3] != selected["version_or_checksum"]
+                    or row[5] != selected.get("object_kind")):
                 raise LocalReferenceRejected("REFERENCE_STALE_OR_MISSING")
             candidate = _candidate(SearchHit(str(row[0]), str(row[1]), str(row[2]), str(row[3]),
                                             str(row[4]), float(rank), str(row[5])), channel, rank)

@@ -48,7 +48,9 @@ def test_closed_versioned_provenance_keeps_synthetic_and_rejects_forgery():
 
 
 def test_new_entry_has_no_network_credentials_provider_or_http_route():
-    paths = [p for p in guard.PATHS if p.startswith("backend/") and p not in guard.PRE]
+    from tests.support.r5_worker_guard import violations as worker_violations
+    assert worker_violations(ROOT) == []
+    paths = [p for p in guard.HISTORICAL_PATHS if p.startswith("backend/") and p not in guard.PRE]
     forbidden = {"openai", "anthropic", "socket", "urllib", "requests", "getpass", "os"}
     for path in paths:
         tree = ast.parse((ROOT / path).read_bytes())

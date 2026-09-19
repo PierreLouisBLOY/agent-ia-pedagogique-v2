@@ -39,7 +39,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                         help="R3 volatile ; aucun provider autorisé")
     parser.add_argument("--live-authorization", type=Path,
                         help="Fichier explicite réservé au handoff live ; refusé tant que ses préconditions ne sont pas établies")
+    parser.add_argument("--r5-scope", type=Path, help="Sélection R5 exacte, opt-in distinct de R2")
+    parser.add_argument("--r5-authorization", type=Path, help="Accord R5 distinct ; aucun accord live implicite")
     args = parser.parse_args(argv)
+    if (bool(args.r5_scope) != bool(args.r5_authorization) or
+            (args.r5_scope and (args.live_authorization or args.saved_only or args.enable_review_modify
+                               or not args.enable_conversation))):
+        print("R5_EXPLICIT_SCOPE_AND_AUTHORITY_REQUIRED")
+        return 1
     if args.saved_only:
         if (args.saved_root is None or any((args.runtime, args.data_root, args.runtime_sha256,
                 args.enable_conversation, args.enable_review_modify, args.live_authorization))):
@@ -68,6 +75,28 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     jobs = None
     secret_value = ""
+    if args.r5_scope is not None:
+        try:
+            from backend.infrastructure.composition.factories.r5_generation import (
+                build_r5_process_job,
+                current_baseline,
+                load_document,
+            )
+            if not sys.stdin.isatty():
+                raise ValueError("R5_MASKED_CONSOLE_REQUIRED")
+            # R5 input is deferred until the exact user request and selection pass preflight.
+            def r5_masked_input() -> str:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("error", getpass.GetPassWarning)
+                    return getpass.getpass("Clé OpenAI R5 (masquée, non conservée) : ")
+            jobs = build_r5_process_job(grant=load_document(args.r5_authorization),
+                scope=load_document(args.r5_scope), baseline=current_baseline(),
+                target=Read15RuntimeTarget(args.runtime, args.data_root, args.runtime_sha256),
+                receipt_root=args.data_root / "r5-private-receipts", private_temp=Path(tempfile.gettempdir()),
+                credential_input=r5_masked_input)
+        except Exception:
+            print("R5_LIVE_PREFLIGHT_NOT_READY")
+            return 1
     if args.live_authorization is not None:
         try:
             if not args.enable_conversation:

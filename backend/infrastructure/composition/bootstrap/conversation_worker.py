@@ -114,7 +114,10 @@ def read_private_packet(source: BinaryIO) -> dict[str, object]:
         chunks.extend(chunk)
     packet = decode_frame(header + chunks)
     chunks[:] = b"\x00" * len(chunks)
-    if set(packet) != {"grant", "runtime_path", "data_root", "secret"}:
+    if set(packet) not in ({"grant", "runtime_path", "data_root", "secret"},
+                          {"schema", "scope", "grant", "runtime_path", "data_root", "secret"}):
+        raise ValueError("PRIVATE_CHANNEL_REJECTED")
+    if "schema" in packet and packet["schema"] != "R5-PRIVATE-WORKER-1.0":
         raise ValueError("PRIVATE_CHANNEL_REJECTED")
     return packet
 
@@ -122,6 +125,12 @@ def read_private_packet(source: BinaryIO) -> dict[str, object]:
 def run_authorized_generation(packet: dict[str, object], *, request: ConversationDraftRequest,
     sink: BinaryIO, material: tuple[str, dict[str, object]] | None = None,
     transport_factory: OpenAIResponsesTransportFactory | None = None) -> GenerationJobResult:
+    if "schema" in packet:
+        from backend.infrastructure.composition.factories.r5_generation import run_r5_worker
+        if material is not None and material[1] != packet.get("scope"):
+            raise ValueError("R5_TEST_MATERIAL_REJECTED")
+        return run_r5_worker(packet, request=request, sink=sink, transport_factory=transport_factory,
+                             baseline=material[0] if material is not None else None)
     from backend.adapters.outbound.openai.transport import OpenAISDKResponsesTransportFactory
     from backend.infrastructure.composition.factories.conversation import (
         R2ExecutionEvidence,

@@ -139,7 +139,7 @@ def test_corrective_private_channel_preserves_preparse_usage_and_no_replay(tmp_p
         job.authorize(request)
         assert inputs == []
         job.start(request)
-        result = collect(job, timeout=15)
+        result = collect(job)
         assert result.state == expected
         assert result.usage.response_received and result.usage.input_tokens == 3000
         assert result.usage.reasoning_tokens == 100

@@ -153,11 +153,12 @@ def collection(monkeypatch):
     return lifecycle.collect, clock
 
 
-def test_collect_observes_job_after_old_8_second_cutoff(collection):
+@pytest.mark.parametrize("ready_at", [9, 16])
+def test_collect_observes_job_after_old_startup_cutoffs(collection, ready_at):
     collect, clock = collection
     expected = object()
-    job = SimpleNamespace(poll=lambda: expected if clock.value >= 9 else None)
-    assert collect(job) is expected and 9 <= clock.value < 9.1
+    job = SimpleNamespace(poll=lambda: expected if clock.value >= ready_at else None)
+    assert collect(job) is expected and ready_at <= clock.value < ready_at + .1
 
 
 def test_collect_default_timeout_is_finite_and_no_result_is_synthesized(collection):

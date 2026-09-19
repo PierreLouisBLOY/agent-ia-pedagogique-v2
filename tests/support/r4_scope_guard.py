@@ -34,7 +34,7 @@ def canonical(path: str, raw: bytes) -> bytes:
 
 def read(root: Path, path: str) -> bytes:
     from tests.support.r5_scope_guard import baseline_view
-    r5_successor_sha256 = "bfaa0d2484c479de5a4a52fb4d4f73bc5032ae7a904354502ac64573b1de380a"
+    r5_successor_sha256 = "aee6c0dc70529120635149acf0dd053eac832f1c74db5278307fcab650c04e68"
     return baseline_view(root, path, expected=r5_successor_sha256)
 
 

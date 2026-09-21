@@ -1,0 +1,37 @@
+{
+  "asset_id": "PROJET_V2_CANONICAL_PEDAGOGICAL_SEED_CP645",
+  "filename": "CP645_FINALISATION_628_SUR_628.sqlite",
+  "sha256": "9d64d15e9c246924edeff16e7bbb5fb7a53791fc2ddf217541824771b34053e1",
+  "size_bytes": 227557376,
+  "canonical_notions": 628,
+  "notion_rows_total": 637,
+  "formula_rows_total": 210,
+  "formula_approved": 210,
+  "sqlite_inventory": {
+    "tables": 121,
+    "explicit_indexes": 23,
+    "triggers": 7,
+    "views": 11,
+    "integrity_check": "ok",
+    "quick_check": "ok",
+    "foreign_key_errors": 0
+  },
+  "binary_committed_to_git": false,
+  "default_windows_seed_path": "%LOCALAPPDATA%\\ProjetV2\\seed\\base_pedagogique_v2.sqlite",
+  "environment_override": "PROJET_V2_CANONICAL_DB",
+  "runtime_default_path": "%LOCALAPPDATA%\\ProjetV2\\runtime\\base_pedagogique_v2.runtime.sqlite",
+  "runtime_environment_override": "PROJET_V2_RUNTIME_DB",
+  "migration_smoke_test": {
+    "migration_001": "PASS_ON_COPY",
+    "migration_002": "PASS_ON_COPY",
+    "seed_mutated": false,
+    "document_rows_before": 67,
+    "document_rows_after": 67
+  },
+  "policy": [
+    "Never commit the SQLite binary to Git.",
+    "Never migrate or mutate the canonical seed.",
+    "Provision a distinct runtime copy and apply allowlisted migrations only to the runtime.",
+    "Keep agents and the Application core unaware of sqlite3, local paths and SQL."
+  ]
+}

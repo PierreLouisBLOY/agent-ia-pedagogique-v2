@@ -20,8 +20,8 @@ from tests.support.retrieval_quality_cases import (
     run_retrieval_benchmark,
 )
 
-EXPECTED_SEED_SIZE = 105_553_920
-EXPECTED_SEED_SHA256 = "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134"
+EXPECTED_SEED_SIZE = 227_557_376
+EXPECTED_SEED_SHA256 = "9d64d15e9c246924edeff16e7bbb5fb7a53791fc2ddf217541824771b34053e1"
 MIGRATION = Path("database/migrations/001_document_sha256_check.sql")
 
 

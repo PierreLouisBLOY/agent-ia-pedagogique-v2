@@ -18,8 +18,10 @@ from backend.adapters.outbound.persistence.migrations import (
     RuntimeProvisioningError,
     SeedAuthenticationError,
     apply_migrations,
+    apply_registered_migrations,
     create_runtime_backup,
     inspect_database,
+    inspect_migration_history,
     migration_registry,
     provision_runtime,
     restore_runtime_backup,
@@ -130,6 +132,27 @@ def test_runtime_absent_is_copied_migrated_and_atomically_published(
     assert report.explicit_indexes == 2
 
 
+def test_adapter_migration_inspection_and_application_are_readable_and_idempotent(
+    canonical_seed: Path, tmp_path: Path
+) -> None:
+    runtime = tmp_path / "admin-boundary-runtime.sqlite"
+    shutil.copy2(canonical_seed, runtime)
+    registry = migration_registry(MIGRATION)
+
+    assert inspect_migration_history(runtime, registry) == ()
+    first = apply_registered_migrations(runtime, registry)
+    second = apply_registered_migrations(runtime, registry)
+
+    assert first.applied == ("001", "002")
+    assert first.skipped == ()
+    assert second.applied == ()
+    assert second.skipped == ("001", "002")
+    assert tuple(version for version, _ in inspect_migration_history(runtime, registry)) == (
+        "001",
+        "002",
+    )
+
+
 def test_runtime_can_be_provisioned_from_an_explicit_registry(
     canonical_seed: Path, tmp_path: Path
 ) -> None:
@@ -165,16 +188,11 @@ def test_existing_runtime_is_not_overwritten_and_replay_is_idempotent(
     with sqlite3.connect(runtime) as connection:
         assert connection.execute("SELECT count(*) FROM document").fetchone()[0] == 1
         assert (
-            connection.execute(
-                "SELECT count(*) FROM _runtime_migration_ledger"
-            ).fetchone()[0]
-            == 2
+            connection.execute("SELECT count(*) FROM _runtime_migration_ledger").fetchone()[0] == 2
         )
 
 
-def test_existing_001_runtime_is_advanced_only_to_002(
-    canonical_seed: Path, tmp_path: Path
-) -> None:
+def test_existing_001_runtime_is_advanced_only_to_002(canonical_seed: Path, tmp_path: Path) -> None:
     runtime = tmp_path / "runtime-at-001.sqlite"
     shutil.copy2(canonical_seed, runtime)
     full_registry = migration_registry(MIGRATION)
@@ -255,9 +273,7 @@ def test_runtime_backup_and_fresh_restore_are_authenticated(
 
     backup_report = create_runtime_backup(runtime, backup)
     restored_path = tmp_path / "restored" / "runtime.sqlite"
-    restored = restore_runtime_backup(
-        backup, restored_path, canonical_seed_path=canonical_seed
-    )
+    restored = restore_runtime_backup(backup, restored_path, canonical_seed_path=canonical_seed)
 
     assert backup_report.backup_sha256 == _sha256(backup)
     assert backup_report.manifest_sha256 == _sha256(
@@ -275,6 +291,4 @@ def test_restore_to_seed_is_blocked(canonical_seed: Path, tmp_path: Path) -> Non
     create_runtime_backup(runtime, backup)
 
     with pytest.raises(RuntimeProvisioningError, match="distinct"):
-        restore_runtime_backup(
-            backup, canonical_seed, canonical_seed_path=canonical_seed
-        )
+        restore_runtime_backup(backup, canonical_seed, canonical_seed_path=canonical_seed)

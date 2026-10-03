@@ -18,6 +18,8 @@ class ExportSavedCommand:
         titles = {"student": "Sujet élève", "correction": "Corrigé professeur", "marking": "Barème"}
         if kind not in titles:
             raise ValueError("R4_EXPORT_KIND")
+        if record.p0_bundle is not None:
+            return self._preview_p0(record, kind, promoted=promoted)
         blocks: list[WordBlock] = []
         if kind == "student":
             # No correction, metadata, calculations or report is handed to the writer.
@@ -53,6 +55,50 @@ class ExportSavedCommand:
                     for criterion in items(question["criteria"]):
                         blocks.append(WordBlock("Normal", str(criterion["criterion_id"]) + " : "
                             + str(criterion["description"]) + " — " + str(criterion["points"]) + " points"))
+        return WordDocument(kind, titles[kind], tuple(blocks))
+
+    @staticmethod
+    def _preview_p0(record: SavedProduction, kind: str, *, promoted: bool) -> WordDocument:
+        bundle = record.p0_bundle
+        if bundle is None:
+            raise ValueError("R6_P0_BUNDLE_REQUIRED")
+        titles = {"student": "Document élève", "correction": "Corrigé professeur",
+                  "marking": "Barème"}
+        blocks: list[WordBlock] = []
+        if kind != "student":
+            blocks.append(WordBlock(
+                "Note",
+                "PROMOTION EXPLICITE ENREGISTRÉE"
+                if promoted
+                else "CANDIDATE — NON VALIDÉE. Sauvegarder/exporter ne vaut pas valider.",
+            ))
+            blocks.append(WordBlock("Note", "Version exacte : " + record.version_ref))
+        if kind == "student":
+            for section in items(bundle.data["sections"], 16):
+                blocks.extend((WordBlock("Heading1", str(section["heading"])),
+                               WordBlock("Normal", str(section["text"]))))
+            for question in items(bundle.data["questions"], 60):
+                blocks.append(WordBlock("Heading2", str(question["question_id"])))
+                blocks.append(WordBlock("Normal", str(question["prompt"])))
+                for option in cast(tuple[str, ...], question["options"]):
+                    blocks.append(WordBlock("Normal", "• " + option))
+        elif kind == "correction":
+            for correction in items(bundle.data["corrections"], 60):
+                blocks.extend((WordBlock("Heading1", str(correction["question_id"])),
+                               WordBlock("Normal", str(correction["expected_answer"])),
+                               WordBlock("Heading2", "Justification"),
+                               WordBlock("Normal", str(correction["rationale"]))))
+        else:
+            marking = items(bundle.data["marking"], 60)
+            if not marking:
+                blocks.append(WordBlock("Normal", "Aucun barème chiffré pour cette typologie."))
+            for entry in marking:
+                blocks.append(WordBlock(
+                    "Heading1", str(entry["question_id"]) + " — " + str(entry["points"])
+                    + " points",
+                ))
+                for criterion in cast(tuple[str, ...], entry["criteria"]):
+                    blocks.append(WordBlock("Normal", criterion))
         return WordDocument(kind, titles[kind], tuple(blocks))
 
     def execute(self, record: SavedProduction, kind: str, *, promoted: bool = False) -> bytes:

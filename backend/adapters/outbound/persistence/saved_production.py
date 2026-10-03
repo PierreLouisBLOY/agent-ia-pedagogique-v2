@@ -214,6 +214,8 @@ class LocalSavedProductionStore:
             if str(error) == "R4_NOT_FOUND":
                 return None
             raise
+        if not isinstance(view, ProductionReadView):
+            return None
         return view if view.conversation_id == conversation_id else None
 
     def contains_production(self, *, conversation_id: str, production_ref: str) -> bool:

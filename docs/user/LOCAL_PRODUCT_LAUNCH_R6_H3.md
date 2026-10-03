@@ -28,4 +28,4 @@ Le lanceur refuse une configuration incomplète, une empreinte invalide, un port
 
 La validation automatisée du lanceur couvre la configuration absente/invalide, le port occupé et le rejet fermé du runtime absent ou à empreinte différente. La campagne R6 « toutes notions » est une qualification Application hors ligne sur 628 identités ; elle ne prouve pas à elle seule le parcours visuel du navigateur.
 
-À la date de cette livraison, le runtime exact attendu n’est pas accessible à la session de qualification. Le lancement réel et la vérification visuelle navigateur restent donc à exécuter sur la machine qui détient le runtime provisionné. Aucune base métier n’est modifiée par cette notice ou par les tests R6 hors ligne.
+À la date de cette livraison, le runtime est présent sur l’hôte, mais son identité SHA-256 ne correspond pas à celle attendue par le reçu de provisionnement Boréal (`RUNTIME_IDENTITY_MISMATCH`). Le contrôle Application a refusé le démarrage. Le lancement réel et la vérification visuelle navigateur restent donc en attente du runtime exact. Aucune base métier n’est modifiée par cette notice ou par les tests R6 hors ligne.

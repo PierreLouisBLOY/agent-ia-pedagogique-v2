@@ -1,0 +1,508 @@
+{
+  "schema_version": "12.18-h1-integration-gaps-v1",
+  "baseline_commit": "24b7a9850bc4644391dee2307c8a8a31036cd503",
+  "status": "AUDIT_TERMINE_INTEGRATION_NON_RECETTEE",
+  "gap_count": 9,
+  "gaps": [
+    {
+      "id": "S01",
+      "severity": "BLOQUANT_EXHAUSTIVITE_CANONIQUE",
+      "title": "Sources canoniques 12.1 et critères détaillés 12.18 non authentifiés",
+      "evidence": "Sources locales 12.2–12.17 identifiées ; macro 12.18 confirmée par 12.13/12.15. Le ZIP H1 cite mais ne contient pas la décision navigateur ni la feuille de route originale.",
+      "sources": [
+        {
+          "path": "docs/development/PHASE_12_13_LIVRABLE_COMPLET_CANONIQUE_FINAL.md",
+          "sha256": "d60f905baf43ce12000a62a1687402eb63c1f8bc14e691470600e261b94fcc9d"
+        },
+        {
+          "path": "docs/development/PHASE_12_15_LIVRABLE_COMPLET_CANONIQUE_FINAL.md",
+          "sha256": "1b525ba7f1998848e48b9f93125fadfd03550be0be2eba01e888d4453060be04"
+        }
+      ],
+      "impact": {
+        "H2": "Validation du périmètre global conditionnelle, sans bloquer l'audit H1 borné",
+        "browser": "Critères exacts non authentifiés",
+        "delivery": "Exhaustivité non revendicable"
+      },
+      "minimal_work": "Rapprocher la décision navigateur et le catalogue canonique applicables ; conserver les handoffs récents et ne pas renuméroter les gates.",
+      "decision_needed": "Fournir la source canonique applicable ou confirmer explicitement les critères/nomenclature du paquet H1 ; pas de nouvelle gate intermédiaire inventée.",
+      "dependencies": [],
+      "exit_evidence": "Source identifiée/versionnée et portée/critères rapprochés, y compris statut 12.1."
+    },
+    {
+      "id": "I01",
+      "severity": "BLOQUANT_EXECUTION_H2_SERVEUR",
+      "title": "Serveur/composition produit absent et guard global d'absence serveur",
+      "evidence": "API contient __init__.py et contrat pur local_browser.py seulement ; test_b04_adds_no_http_server_framework_or_route parcourt tout backend et interdit frameworks, server.py/routes.py et chaîne /api/v2.",
+      "sources": [
+        {
+          "path": "backend/adapters/inbound/api/local_browser.py",
+          "sha256": "cc7ee88ebbb41d17feb301c9707d1ab05efe3d1fa3118be8612c1b4c735d1148"
+        },
+        {
+          "path": "tests/architecture/test_local_browser_http_boundary_fitness.py",
+          "sha256": "d324d383351cce3039225a8439338f6059abbd2b34bebf286b0e29b8933d56e6"
+        },
+        {
+          "path": "pyproject.toml",
+          "sha256": "d3aaf2cc2abd2ad35a1112c3bebc998ffbe0925943adcaad46018c7282fcacbc"
+        }
+      ],
+      "impact": {
+        "H2": "Choix et transition architecturale préalables",
+        "browser": "Aucun listener/URL de produit",
+        "delivery": "Démarrage indisponible"
+      },
+      "minimal_work": "Définir composition host/serveur, port explicite et montage de la frontière inbound sans SQL métier dans le transport. Faire évoluer le périmètre du guard via décision canonique/versionnement en préservant ses invariants ; aucune suppression/skip de confort.",
+      "decision_needed": "Choix serveur/framework/dépendances et évolution du contrat d'absence de serveur à faire approuver par ADR avant implémentation, conformément à AGENTS.md.",
+      "dependencies": [
+        "S01"
+      ],
+      "exit_evidence": "Contrat d'architecture approuvé puis tests de serveur réel loopback et non-régression de confidentialité/frontières."
+    },
+    {
+      "id": "I02",
+      "severity": "BLOQUANT_RECETTE",
+      "title": "Frontend, lanceur simple et package absents",
+      "evidence": "Aucun frontend, asset HTML/JS applicatif, script de lancement ou project.scripts suivi ; CLI inbound structural. La CLI calibration n'est pas le lanceur du produit.",
+      "sources": [
+        {
+          "path": "README.md",
+          "sha256": "f34e27db69c1b85357ad9a679845a344d8d4bd54b33a15ed8c292f31acf0451f"
+        },
+        {
+          "path": "pyproject.toml",
+          "sha256": "d3aaf2cc2abd2ad35a1112c3bebc998ffbe0925943adcaad46018c7282fcacbc"
+        },
+        {
+          "path": "backend/adapters/inbound/cli/__init__.py",
+          "sha256": "560efc09c8b9622efbae0d758ab6a88f5180283fb9ad71bcdf07cf600048b66a"
+        }
+      ],
+      "impact": {
+        "H2": "UI et service des assets à spécifier",
+        "browser": "Aucun écran/parcours",
+        "delivery": "Aucun package simple"
+      },
+      "minimal_work": "Définir UI minimale des parcours retenus, service local des assets, configuration portable, lanceur et gestion du port/conflits ; H3A reste la préparation package.",
+      "decision_needed": "Choix UI/dépendances si non couvert par S01 ; pas d'obligation de produire un .exe.",
+      "dependencies": [
+        "S01",
+        "I01",
+        "I03"
+      ],
+      "exit_evidence": "Lancement documenté depuis un environnement propre, frontend accessible sans stockage cloud, erreurs de démarrage lisibles."
+    },
+    {
+      "id": "I03",
+      "severity": "BLOQUANT_RECETTE_READ15",
+      "title": "READ-15 implémenté côté Application mais aucun endpoint HTTP enregistré",
+      "evidence": "ResourceLibraryUseCaseInbound délègue GetResourceQuery/OP03 ; GET /api/v2/resources/{resource_ref} est un handoff, pas une route. Le dernier B06 impose availability_status, contrairement au vieux B09 identity_status.",
+      "sources": [
+        {
+          "path": "backend/adapters/inbound/application/resource_library.py",
+          "sha256": "0145faffd8a18f0fc45b1bbe7f857f7ac8f8e3ba79f9a225663a40f4e727cc92"
+        },
+        {
+          "path": "backend/modules/resource_library/application/queries/get_resource.py",
+          "sha256": "6b41c71002c025d46f8d75b9ee40374ba36992bc62b06ebca91adc67ccffa4c7"
+        },
+        {
+          "path": "docs/development/phase_12_17_05b_b05_resource_ref_contract/06_API_HANDOFF_ALIGNMENT.md",
+          "sha256": "a335e1ab8c229bea38ded0ac75b28660fc8d1fd7c996a5a6a634a26c3b1c6a65"
+        },
+        {
+          "path": "docs/development/phase_12_17_05b_b06_active_canonical_semantics/07_API_HANDOFF_ALIGNMENT.md",
+          "sha256": "731ad348a84ed669329856a09442c059fb027c50b0d058a5fab97995f2cb82f6"
+        }
+      ],
+      "impact": {
+        "H2": "Travail fonctionnel déjà suffisamment spécifié, infrastructure dépendante I01",
+        "browser": "Consultation impossible par navigateur",
+        "delivery": "Première tranche locale manquante"
+      },
+      "minimal_work": "Brancher route GET, inbound, query et ResourceStorePort dans composition runtime ; projection exacte 4 champs et mapping 400/404/500 minimisé, rejet de toute query inconnue/dépréciée.",
+      "decision_needed": "Aucune nouvelle décision métier sur ResourceRef/availability_status/version_ref/include ; respecter décisions déjà appliquées.",
+      "dependencies": [
+        "I01",
+        "I06"
+      ],
+      "exit_evidence": "HTTP réel 200/400/404/500, ResourceRef invalide distinct d'absent, aucune I/O SQL dans inbound, aucune canonicalité inventée."
+    },
+    {
+      "id": "I04",
+      "severity": "BLOQUANT_PARCOURS_PEDAGOGIQUE_COMPLET",
+      "title": "Composition des workflows et trois owners Application différés",
+      "evidence": "CAP-R02/A01/A02 n'ont que des entrées registry et handoff ; WorkflowCompletionEvaluator est injecté comme Protocol. Les sondes SCN-06/07/08 ne prouvent pas des owners métier persistants.",
+      "sources": [
+        {
+          "path": "backend/agent_runtime/application_routing/registry.py",
+          "sha256": "86f4ae646767549e9e21e61048d78562478d44a27fe72f8a6917f84ddaceea94"
+        },
+        {
+          "path": "backend/agent_runtime/orchestration/coordination/completion.py",
+          "sha256": "060accb5b780f31160ce07d0cb1771a8acdb75bf21c1aaaeceb57e42ee8b3446"
+        },
+        {
+          "path": "docs/development/phase_12_17_04e_b09_legacy_review_api_handoff/API_HANDOFF.json",
+          "sha256": "92165fbc6d83c8314b8aaf7d538a9c9f64ec859ace199803c1c41ecb6a859266"
+        },
+        {
+          "path": "docs/development/phase_12_17_08_closure/09_RESIDUAL_REGISTER.json",
+          "sha256": "8f6af2997ed98587c4b98a6548e48e84fa3d94290afebf6119e35f4504c3b0ef"
+        }
+      ],
+      "impact": {
+        "H2": "Contrats manquants au-delà du simple câblage",
+        "browser": "Parcours génération/review/gates incomplet",
+        "delivery": "Pas de livraison métier complète sur santé/READ15 seuls"
+      },
+      "minimal_work": "Matérialiser les contrats/ports manquants dans l'ordre CAP-R02 work_orchestration, CAP-A01 validation_control, CAP-A02 lifecycle_promotion ; composer input refs, completion et effets/idempotence sans élargir autorité runtime.",
+      "decision_needed": "Confirmer inclusion et contrats détaillés des capacités différées dans le périmètre H2/recette ; ownership déjà décidé, à ne pas redécider. DTO/conditions d'effet encore à fermer.",
+      "dependencies": [
+        "S01",
+        "I01",
+        "I05",
+        "I06"
+      ],
+      "exit_evidence": "Read exact-version/absent ; validation déterministe sans provider ; promotion interdite sans gate fiable et idempotence, réconciliation avant replay. Aucune auto-approbation."
+    },
+    {
+      "id": "I05",
+      "severity": "BLOQUANT_COMMANDES_HTTP",
+      "title": "Politique HTTP active limitée à GET/HEAD",
+      "evidence": "authorize_request et LocalBrowserHttpConfiguration refusent méthodes hors GET/HEAD ; OPTIONS est un preflight borné, pas une commande métier.",
+      "sources": [
+        {
+          "path": "backend/adapters/inbound/api/local_browser.py",
+          "sha256": "cc7ee88ebbb41d17feb301c9707d1ab05efe3d1fa3118be8612c1b4c735d1148"
+        },
+        {
+          "path": "backend/infrastructure/config/schemas/http.py",
+          "sha256": "511336250f3a3274fe4f2f17f328771111250b0ec916a4e18723abc6b4ecf298"
+        }
+      ],
+      "impact": {
+        "H2": "READ15 compatible, commandes non spécifiées",
+        "browser": "Création/correction/décisions ne peuvent devenir des POST implicites",
+        "delivery": "Sécurité des écritures non définie"
+      },
+      "minimal_work": "Si les parcours approuvés requièrent des commandes HTTP, définir un contrat versionné avec validation d'origin/host, protection contre requêtes cross-site, méthode/route allowlist, erreurs minimisées et autorité des gates ; conserver le contrat GET courant.",
+      "decision_needed": "Approbation du contrat HTTP des commandes avant exposition ; pas d'ouverture permissive pour faire passer la recette.",
+      "dependencies": [
+        "S01",
+        "I01"
+      ],
+      "exit_evidence": "Tests négatifs cross-origin/host/méthodes/payload/permission et tests positifs limités aux commandes approuvées."
+    },
+    {
+      "id": "I06",
+      "severity": "BLOQUANT_DEPLOIEMENT_DONNEES",
+      "title": "Runtime utilisateur et configuration de lancement non vérifiées dans H1",
+      "evidence": "B04 atteste USER_RUNTIME_002_APPLIED=FALSE sur runtime utilisateur inchangée ; B07 teste 001→002 et recovery sur copies externes. Configuration seed rebind B07 limitée au processus ; alias legacy non accepté par loader produit.",
+      "sources": [
+        {
+          "path": "docs/development/phase_12_17_05b_b04_real_chain_recovery/13_FINAL_HANDOFF.md",
+          "sha256": "8dd94c81ea8d8c1f7f1f101fa1c661f0cacb1c3f4ddbd69a210f5e663a662f66"
+        },
+        {
+          "path": "docs/development/phase_12_17_08_closure/06_SEED_RUNTIME_002_BOUNDARY.md",
+          "sha256": "a35529ef0631776b874a2cee6e98c63863266b43cf7ad2e1155538f6eaa4307f"
+        },
+        {
+          "path": "backend/infrastructure/config/loaders/sqlite.py",
+          "sha256": "2517373e9169bb9807a78e029f9c811f50918caa8ea461b5596358cb1a7e0155"
+        },
+        {
+          "path": "backend/infrastructure/composition/factories/sqlite.py",
+          "sha256": "c5be08b4d30732342a804ff33f5f81eb80291083e5ce9effd1b376929f163e6d"
+        }
+      ],
+      "impact": {
+        "H2": "Cible et procédure de données à définir sans ouverture automatique",
+        "browser": "LOCAL_DATA_RUNTIME non attesté pour utilisateur",
+        "delivery": "Pas de migration/déploiement présumé"
+      },
+      "minimal_work": "Prévoir validation des identités avant ouverture, chemins locaux portables distincts seed/runtime, politique de bootstrap explicite et backup/restore ; utiliser copie contrôlée en recette jusqu'à autorisation de cible utilisateur.",
+      "decision_needed": "Autorisation distincte si accès/migration runtime utilisateur requis ; pas nécessaire pour inventer de nouvelles règles 001/002 déjà approuvées.",
+      "dependencies": [
+        "S01"
+      ],
+      "exit_evidence": "État exact et autorisé de la cible ; seed/sidecars intacts, ledger/checksums/postconditions validés et récupération prouvée ; démarrage/consultation sans Drive."
+    },
+    {
+      "id": "I07",
+      "severity": "BLOQUANT_RECETTE_OPERATIONNELLE",
+      "title": "Observabilité et fermeture pas raccordées à un serveur produit",
+      "evidence": "Session/sink local et événements HTTP/SQLite/provider sont implémentés et testés ; factories disponibles mais aucun host produit ne les instancie et ne gère son arrêt.",
+      "sources": [
+        {
+          "path": "backend/infrastructure/composition/bootstrap/observability.py",
+          "sha256": "c6fcacd9ec6f49b54b31acd12c204747ea5160262d76da171f0dfed4b3f35bcc"
+        },
+        {
+          "path": "backend/infrastructure/composition/factories/sqlite.py",
+          "sha256": "c5be08b4d30732342a804ff33f5f81eb80291083e5ce9effd1b376929f163e6d"
+        },
+        {
+          "path": "tests/integration/test_local_browser_http_observability.py",
+          "sha256": "84124fb4506df3fb2921e91fb19298ad6dc27103ae114d732af56f450af1e16b"
+        },
+        {
+          "path": "tests/integration/test_minimal_local_observability_signals.py",
+          "sha256": "f393470305e9b46b4882e7b488d9dae7f12dd5b56c382cc394550b8ab823e7a2"
+        }
+      ],
+      "impact": {
+        "H2": "Raccordement déjà spécifié par OBS_A",
+        "browser": "Aucune preuve stop/restart/logs serveur",
+        "delivery": "Ressources/lifecycle non attestés"
+      },
+      "minimal_work": "Composer une session, corrélation, fermeture des ressources et flush <=2 s ; rotation totale 5 fichiers de 5 MiB, 14 jours, allowlist événements sans payloads/secrets ; panne sink isolée.",
+      "decision_needed": "Aucune nouvelle politique d'observabilité ; appliquer OBS_A existante.",
+      "dependencies": [
+        "I01",
+        "I06"
+      ],
+      "exit_evidence": "Démarrage/arrêt/redémarrage réel, logs locaux minimisés, flush/rotation/rétention et panne sink observés sans data leak."
+    },
+    {
+      "id": "I08",
+      "severity": "BLOQUANT_RECETTE_LIVE_SI_EXIGEE",
+      "title": "Preuves de tests/doubles et live historique ne constituent pas recette produit",
+      "evidence": "Trois opt-ins restent skippés B07 ; calibration close sur cinq observations spécifiques ; aucune autorisation réutilisable. Embedding fournisseur reste distinct d'un parcours local offline.",
+      "sources": [
+        {
+          "path": "docs/development/phase_12_17_08_closure/13_RESUMED_GLOBAL_EVIDENCE.json",
+          "sha256": "108b2d55d1e623afd1ef1311cc363c9f74da12183786be2bda2dcbe6318ed4e5"
+        },
+        {
+          "path": "docs/development/phase_12_16_closure_canonical/06_KNOWN_LIMITATIONS_AND_NON_GOALS.md",
+          "sha256": "a69d25039e56be197219f5029f0c267f9b450250a1148086999a46511bdbd4e8"
+        },
+        {
+          "path": "backend/infrastructure/composition/factories/semantic.py",
+          "sha256": "7bc643a0a8d716dcc1a5a9578dd370a1ab6c61b97029e94c3426ad275911e83f"
+        }
+      ],
+      "impact": {
+        "H2": "Modes offline/doubles/live explicitement séparés",
+        "browser": "Pas de succès live à inférer",
+        "delivery": "Aucune garantie pédagogique globale ni seuil release"
+      },
+      "minimal_work": "Préparer recette locale puis avec doubles contrôlés ; absence credential compréhensible et fail-closed sans appel. Si live requis, définir matrice, transferts minimisés, prix, nombre d'appels et nouvelles approbations.",
+      "decision_needed": "Nouvelle autorisation de live/transfert/budget seulement si la recette canonique l'exige ; ne pas rouvrir les canaries consommés.",
+      "dependencies": [
+        "S01",
+        "I02",
+        "I04",
+        "I05"
+      ],
+      "exit_evidence": "Résultats séparés local/doubles/live ; aucun résultat sur doubles reclassé live ; RELEASE_THRESHOLD reste NONE."
+    }
+  ],
+  "canonical_source_gaps": [
+    {
+      "id": "S01-12.1",
+      "requested": "Contrat/livrable 12.1",
+      "status": "NON_IDENTIFIE_DANS_SOURCES_LOCALES_BORNEES"
+    },
+    {
+      "id": "S01-BROWSER",
+      "requested": "PROJET_V2_DECISION_EXECUTION_NAVIGATEUR_LOCAL.md",
+      "reported_sha256": "c75d98d572c1f1ccd6438bcbc32e30f5bc521d328c1e9b037432248df7f00936",
+      "hash_verification": "NON_EFFECTUEE_DOCUMENT_ORIGINAL_NON_FOURNI",
+      "note": "H1 ZIP contient la citation et la nomenclature, pas le document original ; aucune preuve d'absence sur tout le PC."
+    },
+    {
+      "id": "S01-ROADMAP",
+      "requested": "PROJET V2 Feuille de Route",
+      "reported_sha256": "a6302abadcb919cdf1f14bb1343e668c9b4b82d877175bdc17c06b8c7e0b0e01",
+      "hash_verification": "NON_EFFECTUEE_DOCUMENT_ORIGINAL_NON_FOURNI",
+      "note": "Description du bundle : macro ancienne Phase3/13/14, pas contrat détaillé 12.18 ; aucune réécriture ni autorité supérieure aux sources récentes."
+    }
+  ],
+  "resolved_supersessions": [
+    {
+      "old": "B09 READ15 identity_status",
+      "current": "B06 availability_status",
+      "action": "Appliquer handoff courant ; conserver archives intactes.",
+      "owner_decision_needed": false
+    },
+    {
+      "old": "READ15 version_ref/include deferred",
+      "current": "DEPRECATED_FOR_ACTIVE_READ15",
+      "action": "Rejeter ; réintroduction uniquement contrat versionné.",
+      "owner_decision_needed": false
+    },
+    {
+      "old": "Admission retrieval par présence STRUCTURED obligatoire",
+      "current": "F2A EvidenceAdmissibilityPort avant fusion",
+      "action": "Maintenir admission canonique explicite, pas du rang.",
+      "owner_decision_needed": false
+    }
+  ],
+  "browser_criteria": [
+    {
+      "id": "LOCAL_BROWSER_EXECUTION",
+      "source_status": "NOM_PRESENT_DANS_BUNDLE_H1_CRITERE_ORIGINAL_NON_AUTHENTIFIE",
+      "proposed_acceptance": "Lanceur/URL loopback, consultation locale sans Drive ni credentials, aucun port public.",
+      "depends_on": [
+        "I01",
+        "I02",
+        "I06"
+      ],
+      "status": "NON_EXECUTE",
+      "requires_source_reconciliation": "S01"
+    },
+    {
+      "id": "BACKEND_STARTUP",
+      "source_status": "NOM_PRESENT_DANS_BUNDLE_H1_CRITERE_ORIGINAL_NON_AUTHENTIFIE",
+      "proposed_acceptance": "Configuration portable, port explicite (aucun 8765 de test imposé), conflit de port et double lancement maîtrisés, bootstrap data autorisé seulement.",
+      "depends_on": [
+        "I01",
+        "I06",
+        "I07"
+      ],
+      "status": "NON_EXECUTE",
+      "requires_source_reconciliation": "S01"
+    },
+    {
+      "id": "FRONTEND_ACCESS",
+      "source_status": "NOM_PRESENT_DANS_BUNDLE_H1_CRITERE_ORIGINAL_NON_AUTHENTIFIE",
+      "proposed_acceptance": "Assets locaux, affichage nominal/erreurs minimisées, pas de dépendance cloud de stockage au chargement.",
+      "depends_on": [
+        "I02",
+        "I03"
+      ],
+      "status": "FRONTEND_ABSENT",
+      "requires_source_reconciliation": "S01"
+    },
+    {
+      "id": "LOCAL_DATA_RUNTIME",
+      "source_status": "NOM_PRESENT_DANS_BUNDLE_H1_CRITERE_ORIGINAL_NON_AUTHENTIFIE",
+      "proposed_acceptance": "Seed identifié avant SQLite ; runtime distincte, état 001/002 explicite, absence d'écriture seed/sidecars, récupération sur cible autorisée.",
+      "depends_on": [
+        "I06"
+      ],
+      "status": "COPIES_TESTEES_UTILISATEUR_NON_VERIFIE",
+      "requires_source_reconciliation": "S01"
+    },
+    {
+      "id": "END_TO_END_ACCEPTANCE",
+      "source_status": "NOM_PRESENT_DANS_BUNDLE_H1_CRITERE_ORIGINAL_NON_AUTHENTIFIE",
+      "proposed_acceptance": "Parcours pédagogique au-delà d'un healthcheck : consultation/recherche, génération/review/correction et gates selon périmètre confirmé ; effets explicitement séparés.",
+      "depends_on": [
+        "I03",
+        "I04",
+        "I05",
+        "I08"
+      ],
+      "status": "NON_RECETTE",
+      "requires_source_reconciliation": "S01"
+    }
+  ],
+  "prepared_acceptance_scenarios": [
+    {
+      "id": "REC-01",
+      "mode": "LOCAL_SQLITE_SANS_PROVIDER",
+      "basis": "SCN-01 / READ-15",
+      "acceptance": "Consulter ResourceRef valide, absent puis invalide ; voir les 4 champs exacts et erreurs fermées ; version_ref/include/paramètre inconnu refusés. URL HTTP réelle vers Application/OP03, jamais accès SQL direct du navigateur.",
+      "dependencies": [
+        "I02",
+        "I03",
+        "I06"
+      ],
+      "status": "PREPARE_NON_EXECUTE",
+      "local_audit_identifier_not_canonical_gate": true
+    },
+    {
+      "id": "REC-02",
+      "mode": "LOCAL_RETRIEVAL_SANS_PROVIDER",
+      "basis": "SCN-02",
+      "acceptance": "Recherche locale SQLite sur copie autorisée, résultats/materialisation provenance stable ; ne pas activer automatiquement query embedding réseau ni déclarer sémantique live testée.",
+      "dependencies": [
+        "I02",
+        "I04",
+        "I06"
+      ],
+      "status": "PREPARE_NON_EXECUTE",
+      "local_audit_identifier_not_canonical_gate": true
+    },
+    {
+      "id": "REC-03",
+      "mode": "DOUBLES_EXPLICITES_NON_LIVE",
+      "basis": "SCN-03/04/05/06/07/08",
+      "acceptance": "Créer candidat, review puis correction versionnée ; parcours assessment/QCM représentatif ; tests des owners réels et des gates positives/négatives sans conférer de canonicalité par un score. Ne pas maquiller les sondes CAP en implémentations.",
+      "dependencies": [
+        "I02",
+        "I04",
+        "I05"
+      ],
+      "status": "PREPARE_NON_EXECUTE",
+      "local_audit_identifier_not_canonical_gate": true
+    },
+    {
+      "id": "REC-04",
+      "mode": "OPERATIONNEL_LOCAL",
+      "basis": "B02/B03/B04 et critères navigateur du bundle",
+      "acceptance": "Démarrer, consulter sans credential, arrêter et redémarrer ; port occupé, host/origin invalide, panne sink et paths rejetés ; logs minimisés/flush <=2s ; aucune fuite SQLite ou secret.",
+      "dependencies": [
+        "I01",
+        "I02",
+        "I05",
+        "I06",
+        "I07"
+      ],
+      "status": "PREPARE_NON_EXECUTE",
+      "local_audit_identifier_not_canonical_gate": true
+    },
+    {
+      "id": "REC-05",
+      "mode": "LIVE_CONDITIONNEL_NON_AUTORISE",
+      "basis": "Limites 12.16 et S01",
+      "acceptance": "Uniquement si requis et nouvellement autorisé : périmètre/coûts/transferts/stop/no-retry définis avant toute résolution de credential. Résultat indépendant des doubles.",
+      "dependencies": [
+        "I08"
+      ],
+      "status": "PREPARE_NON_EXECUTE",
+      "local_audit_identifier_not_canonical_gate": true
+    }
+  ],
+  "next_milestone": {
+    "name": "12.18-H2",
+    "source": "Nomenclature préparatoire du bundle H1, à rapprocher via S01 ; macro 12.18 confirmée localement.",
+    "readiness": "CONDITIONAL_SCOPE_AND_ARCHITECTURE_DECISIONS",
+    "ready_specified_work": [
+      "READ15 et ResourceRef/projection/dépréciations",
+      "Raccordement OBS_A aux ressources du futur host",
+      "Règles seed/runtime/001/002 et fermeture de configuration déjà définies"
+    ],
+    "decisions_before_implementation": [
+      "S01",
+      "I01",
+      "I02",
+      "I04",
+      "I05"
+    ],
+    "authority": "H1_ONLY_NO_H2_STARTED",
+    "no_new_gate_series": true
+  },
+  "boundary": {
+    "provider_calls": 0,
+    "credentials_resolved": 0,
+    "network_calls": 0,
+    "sqlite_opens": 0,
+    "application_changes": 0,
+    "test_changes": 0,
+    "config_changes": 0,
+    "sqlite_writes": 0,
+    "server_start": 0,
+    "staging": false,
+    "commit": false,
+    "push": false,
+    "merge": false,
+    "H2_started": false,
+    "project_closed": false
+  }
+}

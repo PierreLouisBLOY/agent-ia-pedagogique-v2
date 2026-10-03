@@ -1,0 +1,774 @@
+{
+  "schema_version": "LOCAL_SEARCH_PREPARATION_1",
+  "status": "PROPOSED_NOT_APPROVED",
+  "baseline_commit": "3f724ca81843b5d45ac534e9654ff16281c55713",
+  "read15_manifest_sha256": "0b21d5ed85751b89c8bd55182392a2de99507b817d351a8211ba9834f54eddb7",
+  "implementation_authorized": false,
+  "future_inventory_count": 30,
+  "future_create_count": 20,
+  "future_modify_count": 10,
+  "architecture_guard_file_count": 3,
+  "architecture_guard_evolution_count": 4,
+  "unit_assertion_file_count": 1,
+  "unit_assertion_evolution_count": 1,
+  "guard_count_convention": "G01 et G02 modifient des helpers contrôlés par les assertions existantes ; G03/G04 et U01 remplacent chacun une assertion de test. Le test A7 à contre-exemples n’est pas modifié.",
+  "proposed_routes": [
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/resources/{resource_ref}",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET"
+      ],
+      "path": "/api/v2/search",
+      "asset": null
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/",
+      "asset": "index.html"
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/assets/app.js",
+      "asset": "app.js"
+    },
+    {
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "path": "/assets/styles.css",
+      "asset": "styles.css"
+    }
+  ],
+  "future_inventory": [
+    {
+      "path": "backend/adapters/inbound/api/routes.py",
+      "action": "MODIFY",
+      "sha256_pre": "9448d114c4299cd9e26576c4fdb7ad81beeb74a87beefaaab67bcc2a4160778b",
+      "responsibility": "Registre fermé cinq routes ; décodage borné uniquement sur /api/v2/search.",
+      "justification": "Incrément proposé complet, non simple câblage ; voir contrat et décision.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "backend/adapters/inbound/api/server.py",
+      "action": "MODIFY",
+      "sha256_pre": "a2833c18ceeed3d31a3cadc3bc6fba50e6981acac1b89d13f6228a057504072c",
+      "responsibility": "Dispatcher un endpoint de recherche injecté, erreurs minimisées ; sécurité et serveur unique inchangés.",
+      "justification": "Incrément proposé complet, non simple câblage ; voir contrat et décision.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "backend/infrastructure/composition/factories/local_browser.py",
+      "action": "MODIFY",
+      "sha256_pre": "4e30600a2933c3f736f6fd10d055a8d8e3e7ae5c0d8abdb46ae0e9e0690b2fb1",
+      "responsibility": "Composer la recherche par inbound Application et adapters existants ; ouverture readonly explicite par requête.",
+      "justification": "Incrément proposé complet, non simple câblage ; voir contrat et décision.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "frontend/index.html",
+      "action": "MODIFY",
+      "sha256_pre": "dcc50fdc6fb665c93407066ecdd99b0e312489969b3fc6e33b9c8ec012d51df1",
+      "responsibility": "Ajouter formulaire recherche et liste accessible ; conserver la consultation READ-15.",
+      "justification": "Incrément proposé complet, non simple câblage ; voir contrat et décision.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "frontend/app.js",
+      "action": "MODIFY",
+      "sha256_pre": "7fff53b147fa1511432382e1f8f1604b9ee71d2b700e0650ecd3e7e7429cb46d",
+      "responsibility": "GET recherche same-origin, textContent, annulation ; ouvrir seulement les références prouvées via READ-15.",
+      "justification": "Incrément proposé complet, non simple câblage ; voir contrat et décision.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "frontend/styles.css",
+      "action": "MODIFY",
+      "sha256_pre": "62d29c45a03cb90d43b31d2d534043a36deadaea7b93a12c3908110bf4f37232",
+      "responsibility": "Styles locaux de la recherche dans l’asset existant.",
+      "justification": "Incrément proposé complet, non simple câblage ; voir contrat et décision.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "tests/architecture/test_local_browser_product_boundary.py",
+      "action": "MODIFY",
+      "sha256_pre": "9f3f8ea7b596e8e0b07baeea7d89ad17a82b238b02fc568258059c88efe6677d",
+      "responsibility": "G01/G02 : helpers du registre et inventaire fermé ; tests/contre-exemples existants conservés.",
+      "justification": "Incrément proposé complet, non simple câblage ; voir contrat et décision.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "tests/architecture/test_resource_ref_contract_fitness.py",
+      "action": "MODIFY",
+      "sha256_pre": "66b6b6bfafc300c5298d722417c80a483f39fafb4aa6b158b54aedfda8e11f6f",
+      "responsibility": "G03 : seule assertion ROUTE_SPECS de l’ancien A7 ; autres assertions conservées.",
+      "justification": "Incrément proposé complet, non simple câblage ; voir contrat et décision.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+      "action": "MODIFY",
+      "sha256_pre": "0ef6c9e275406fe450976588fce3face0461eeb69616b69a171d81a624d4c7e8",
+      "responsibility": "G04 : ajout exact des nouveaux owners M03/inbound à la seule assertion concernée.",
+      "justification": "Incrément proposé complet, non simple câblage ; voir contrat et décision.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "tests/unit/test_local_browser_product_routes.py",
+      "action": "MODIFY",
+      "sha256_pre": "c5b3db9a0559d9314eddc1007a7ad596bc034ecaa43ac6edffbb4aa9cf4a0b38",
+      "responsibility": "U01 : cardinalité 4 vers 5 ; tous les tests et autres assertions conservés.",
+      "justification": "Incrément proposé complet, non simple câblage ; voir contrat et décision.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "backend/modules/resource_library/domain/value_objects/search_text.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "SearchText et erreur de validation ; normalisation Unicode et tokens sans HTTP/SQL.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "backend/modules/resource_library/application/dto/input/search_local.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "SearchLocalRequest text typé et limit 1..20.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "backend/modules/resource_library/application/dto/output/local_search_view.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "Vues bornées passage/provenance/ouverture ; aucun type agent, HTTP ou SQLite.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "backend/modules/resource_library/application/queries/search_local.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "SearchLocalQuery ; admission via port puis liaison ResourceRef via READ-15 Application.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "backend/modules/resource_library/ports/inbound/local_search.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "LocalSearchInbound Protocol ; recherche typée avec CorrelationId.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "backend/modules/resource_library/ports/outbound/local_search.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "LocalSearchPort, AdmittedLocalPassage et fenêtre de candidats ; contrat neutre.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "backend/adapters/inbound/application/local_search.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "application.search_local_passages via UseCaseRequest/Result ; mapping fermé.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "backend/adapters/outbound/search/local.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "Pont vers OP-11 LEXICAL, admission F2A puis OP-13 ; aucun provider, aucune écriture.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "backend/adapters/inbound/api/search.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "SearchEndpoint : invocation injectée et projection JSON bornée ; sans accès M03/SQL.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "tests/unit/test_local_search_text.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "Cas Unicode, tailles, ponctuation, FTS littéral.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "tests/unit/test_local_search_application.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "Doubles de ports : admissions, bornes, ordre et liaison READ-15 conditionnelle.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "tests/unit/test_local_search_http_projection.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "Projection et erreurs sans fuite ; interdiction de types/champs supplémentaires.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "tests/unit/test_local_search_routes.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "Paramètres, décodage, limites et méthodes de la seule nouvelle route.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "tests/integration/test_local_search_sqlite.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "FTS5/OP-11/OP-13/OP-03 sur fixture synthétique hors dépôt ; lecture seule.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "tests/integration/test_local_search_http.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "Chaîne HTTP loopback réelle, recherche puis READ-15, sécurité, arrêt et confidentialité.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "tests/architecture/test_local_search_product_boundary.py",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "Non-régression exacte G01..G04/U01 ; port M03, absence SQL HTTP/provider/semantic et mutations négatives.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "architecture/adr/ADR-local-lexical-search-product-boundary.md",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "Nouvel ADR proposé ; adoption uniquement après décision propriétaire. ADR-P12-069 intact.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_local_search/SEARCH_HTTP_LOCAL_V1.json",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "Contrat actif futur dérivé sans changement sémantique de cette proposition approuvée ; inventaire exact.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_local_search/IMPLEMENTATION_EVIDENCE.md",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "Preuves réelles et périmètre des tests futurs ; aucune réussite présumée.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_local_search/MANIFEST_SHA256.txt",
+      "action": "CREATE",
+      "sha256_pre": null,
+      "responsibility": "Empreintes des preuves futures, sans auto-référence.",
+      "justification": "Élément absent de la baseline ; création soumise à approbation globale.",
+      "references": [
+        "02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+        "04_DECISION_ET_PLAN_IMPLEMENTATION.md"
+      ]
+    }
+  ],
+  "guard_evolutions": [
+    {
+      "id": "G01",
+      "path": "tests/architecture/test_local_browser_product_boundary.py",
+      "sha256_pre": "9f3f8ea7b596e8e0b07baeea7d89ad17a82b238b02fc568258059c88efe6677d",
+      "symbol": "_EXPECTED_ROUTES / _CONTRACT / route_contract_violations",
+      "nodeids": [
+        "test_approved_registry_and_frontend",
+        "test_a7_closed_registry_rejects_extra_routes_outside_or_inside_registry"
+      ],
+      "expression_pre": "_EXPECTED_ROUTES = (\n    ((\"GET\",), \"/api/v2/resources/{resource_ref}\", None),\n    ((\"GET\", \"HEAD\"), \"/\", \"index.html\"),\n    ((\"GET\", \"HEAD\"), \"/assets/app.js\", \"app.js\"),\n    ((\"GET\", \"HEAD\"), \"/assets/styles.css\", \"styles.css\"),\n)\n_CONTRACT = \"docs/development/phase_12_18_h2_local_read15/READ15_HTTP_LOCAL_V1.json\"\nif constants.get(\"ROUTE_SPECS\") != _EXPECTED_ROUTES: violations.append(\"AST_REGISTRY_DRIFT\")\nif ROUTE_SPECS != _EXPECTED_ROUTES or documented != _EXPECTED_ROUTES: violations.append(\"CONTRACT_REGISTRY_DRIFT\")",
+      "expression_post_proposed": "_EXPECTED_ROUTES = (\n    ((\"GET\",), \"/api/v2/resources/{resource_ref}\", None),\n    ((\"GET\",), \"/api/v2/search\", None),\n    ((\"GET\", \"HEAD\"), \"/\", \"index.html\"),\n    ((\"GET\", \"HEAD\"), \"/assets/app.js\", \"app.js\"),\n    ((\"GET\", \"HEAD\"), \"/assets/styles.css\", \"styles.css\"),\n)\n_CONTRACT = \"docs/development/phase_12_18_h2_local_search/SEARCH_HTTP_LOCAL_V1.json\"\n# Ajouter SEARCH_TEMPLATE aux seuls symboles AnnAssign décodés par _literal.\n# Les deux comparaisons ci-dessous restent strictes :\nif constants.get(\"ROUTE_SPECS\") != _EXPECTED_ROUTES: violations.append(\"AST_REGISTRY_DRIFT\")\nif ROUTE_SPECS != _EXPECTED_ROUTES or documented != _EXPECTED_ROUTES: violations.append(\"CONTRACT_REGISTRY_DRIFT\")",
+      "invariant_preserved": "Registre AST statique, registre importé et document approuvé égaux au même tuple littéral fermé de cinq routes. Scanner /api/v2 hors routes.py inchangé. ASSET_NAMES et frontend_violations inchangés. Les assertions des deux tests restent identiques ; le contrat de leur helper évolue.",
+      "positive_test_proposed": "tests/architecture/test_local_search_product_boundary.py::test_exact_five_routes_preserve_read15",
+      "negative_test_proposed": "tests/architecture/test_local_search_product_boundary.py::test_extra_route_method_or_off_registry_declaration_rejected",
+      "tests_status": "NOT_RUN; new nodeids are proposed, not existing execution evidence"
+    },
+    {
+      "id": "G02",
+      "path": "tests/architecture/test_local_browser_product_boundary.py",
+      "sha256_pre": "9f3f8ea7b596e8e0b07baeea7d89ad17a82b238b02fc568258059c88efe6677d",
+      "symbol": "inventory_violations / _SEARCH_BASELINE / EXPECTED_SEARCH_INVENTORY",
+      "nodeids": [
+        "test_inventory_survives_staging_and_updated_head"
+      ],
+      "expression_pre": "assert contract[\"baseline_commit\"] == BASELINE\nallowed = set(contract[\"approved_inventory\"])\nviolations = sorted(changed - allowed - set(protected))",
+      "expression_post_proposed": "_SEARCH_BASELINE = \"3f724ca81843b5d45ac534e9654ff16281c55713\"\n# BASELINE=24b7a9850bc4644391dee2307c8a8a31036cd503 reste inchangé pour le contrôle AST historique.\nassert contract[\"baseline_commit\"] == _SEARCH_BASELINE\nassert contract[\"approved_inventory\"] == list(EXPECTED_SEARCH_INVENTORY)\nallowed = set(EXPECTED_SEARCH_INVENTORY)\nviolations = sorted(changed - allowed - set(protected))\n# EXPECTED_SEARCH_INVENTORY = tuple littéral trié des 30 paths future_inventory ci-dessous.\n# changed = git diff --name-only _SEARCH_BASELINE -- + git ls-files --others --exclude-standard.\n# protected : 11 H1/H1A + six fichiers exacts de préparation, chacun hashé ; jamais un préfixe permissif.\n# Vérifier le hash du manifest de préparation fourni avec la décision, puis ses cinq entrées.\n# Conserver tous les contrôles de hash des protected ; protéger aussi les snapshots historiques décrits ci-dessous.",
+      "invariant_preserved": "Pas de reset du scope à HEAD après commit, pas de wildcard. GetResourceQuery, extra.py, extra.js, locks demeurent interdits. Le test d’inventaire existant et ses quatre contre-exemples restent byte-identiques. Le test AST des anciennes assertions garde BASELINE historique.",
+      "positive_test_proposed": "tests/architecture/test_local_search_product_boundary.py::test_exact_inventory_before_and_after_commit",
+      "negative_test_proposed": "tests/architecture/test_local_search_product_boundary.py::test_unlisted_staged_untracked_or_protected_file_rejected",
+      "tests_status": "NOT_RUN; new nodeids are proposed, not existing execution evidence"
+    },
+    {
+      "id": "G03",
+      "path": "tests/architecture/test_resource_ref_contract_fitness.py",
+      "sha256_pre": "66b6b6bfafc300c5298d722417c80a483f39fafb4aa6b158b54aedfda8e11f6f",
+      "symbol": "test_read15_keeps_one_field_and_deprecations_without_http_implementation / seule assertion ROUTE_SPECS",
+      "nodeids": [
+        "test_read15_keeps_one_field_and_deprecations_without_http_implementation"
+      ],
+      "expression_pre": "assert ROUTE_SPECS == (\n    ((\"GET\",), \"/api/v2/resources/{resource_ref}\", None),\n    ((\"GET\", \"HEAD\"), \"/\", \"index.html\"),\n    ((\"GET\", \"HEAD\"), \"/assets/app.js\", \"app.js\"),\n    ((\"GET\", \"HEAD\"), \"/assets/styles.css\", \"styles.css\"),\n)",
+      "expression_post_proposed": "assert ROUTE_SPECS == (\n    ((\"GET\",), \"/api/v2/resources/{resource_ref}\", None),\n    ((\"GET\",), \"/api/v2/search\", None),\n    ((\"GET\", \"HEAD\"), \"/\", \"index.html\"),\n    ((\"GET\", \"HEAD\"), \"/assets/app.js\", \"app.js\"),\n    ((\"GET\", \"HEAD\"), \"/assets/styles.css\", \"styles.css\"),\n)",
+      "invariant_preserved": "Ancien A7 inclus explicitement. Les six assertions précédentes et les trois autres tests restent identiques : un champ resource_ref, aucun query READ-15, état historique du handoff, version_ref/include dépréciés, source unique ResourceRef. Ni suppression ni exemption de l’API.",
+      "positive_test_proposed": "tests/architecture/test_local_search_product_boundary.py::test_a7_accepts_only_approved_five_routes",
+      "negative_test_proposed": "tests/architecture/test_local_search_product_boundary.py::test_a7_rejects_sixth_route_and_read15_parameter_drift",
+      "tests_status": "NOT_RUN; new nodeids are proposed, not existing execution evidence"
+    },
+    {
+      "id": "G04",
+      "path": "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+      "sha256_pre": "0ef6c9e275406fe450976588fce3face0461eeb69616b69a171d81a624d4c7e8",
+      "symbol": "test_later_provider_work_preserves_phase_f_backend_owners / assertion all et inventaire",
+      "nodeids": [
+        "test_later_provider_work_preserves_phase_f_backend_owners"
+      ],
+      "expression_pre": "assert all(\n    path.startswith(allowed)\n    or path in f2a_retrieval_files\n    or path in b02_local_boundary_files\n    or path in b03_observability_files\n    or path in b04_http_contract_files\n    or path in h2_read15_inbound_files\n    for path in changed\n) and inventory_violations(ROOT) == []",
+      "expression_post_proposed": "h2_local_search_owner_files = {\n    \"backend/modules/resource_library/domain/value_objects/search_text.py\",\n    \"backend/modules/resource_library/application/dto/input/search_local.py\",\n    \"backend/modules/resource_library/application/dto/output/local_search_view.py\",\n    \"backend/modules/resource_library/application/queries/search_local.py\",\n    \"backend/modules/resource_library/ports/inbound/local_search.py\",\n    \"backend/modules/resource_library/ports/outbound/local_search.py\",\n    \"backend/adapters/inbound/application/local_search.py\",\n    \"backend/adapters/inbound/api/search.py\",\n}\nassert all(\n    path.startswith(allowed)\n    or path in f2a_retrieval_files\n    or path in b02_local_boundary_files\n    or path in b03_observability_files\n    or path in b04_http_contract_files\n    or path in h2_read15_inbound_files\n    or path in h2_local_search_owner_files\n    for path in changed\n) and inventory_violations(ROOT) == []",
+      "invariant_preserved": "Les préfixes historiques ne sont pas élargis ; huit nouveaux chemins exacts M03/inbound uniquement. L’inventaire G02 reste la seconde condition indispensable. Les autres assertions du fichier ne changent pas.",
+      "positive_test_proposed": "tests/architecture/test_local_search_product_boundary.py::test_phase_f_exact_search_owners_accepted",
+      "negative_test_proposed": "tests/architecture/test_local_search_product_boundary.py::test_phase_f_unlisted_module_and_backend_owner_rejected",
+      "tests_status": "NOT_RUN; new nodeids are proposed, not existing execution evidence"
+    }
+  ],
+  "unit_assertion_evolutions": [
+    {
+      "id": "U01",
+      "path": "tests/unit/test_local_browser_product_routes.py",
+      "sha256_pre": "c5b3db9a0559d9314eddc1007a7ad596bc034ecaa43ac6edffbb4aa9cf4a0b38",
+      "symbol": "test_registry_has_one_business_operation_and_three_assets / seule assertion len",
+      "nodeids": [
+        "test_registry_has_one_business_operation_and_three_assets"
+      ],
+      "expression_pre": "assert len(ROUTE_SPECS) == 4",
+      "expression_post_proposed": "assert len(ROUTE_SPECS) == 5",
+      "invariant_preserved": "Nom historique du test conservé ; autres assertions et tests inchangés. L’égalité exacte du registre est vérifiée par G01/G03, pas seulement sa longueur.",
+      "positive_test_proposed": "tests/architecture/test_local_search_product_boundary.py::test_route_count_and_three_assets",
+      "negative_test_proposed": "tests/architecture/test_local_search_product_boundary.py::test_duplicate_missing_or_sixth_route_rejected",
+      "tests_status": "NOT_RUN; new nodeids are proposed, not existing execution evidence"
+    }
+  ],
+  "indirect_or_preserved_guards": [
+    {
+      "path": "tests/architecture/test_local_browser_http_boundary_fitness.py",
+      "sha256_pre": "0c9d07e647ec0fd6c37b032f6731d11498f33de8a7587e2e60beaa06edcf230d",
+      "nodeids": [
+        "test_b04_adds_no_http_server_framework_or_route",
+        "test_b04_adds_no_frontend_public_url_or_drive_runtime_dependency"
+      ],
+      "action": "PRESERVE",
+      "reason": "Anciens A1..A4 : délèguent aux helpers produit G01/G02 ; imports/serveur unique et trois assets restent fermés. Aucun diff dans ce fichier."
+    },
+    {
+      "path": "tests/architecture/test_minimal_local_observability_fitness.py",
+      "sha256_pre": "b92e320b93e22a66a3eed0e4cafd95da4bc5c92cb6c2361632aac5c52aa92403",
+      "nodeids": [
+        "test_http_observability_adds_no_server_framework_or_route"
+      ],
+      "action": "PRESERVE",
+      "reason": "Ancien A5 : pas de serveur dans observabilité, zéro changement."
+    },
+    {
+      "path": "tests/architecture/test_canonical_contract_boundaries.py",
+      "sha256_pre": "6a5472d7fe7c656c022f2f9a08baa0d7666353b2a4cd7e358376fdbce90fc228",
+      "nodeids": [
+        "test_business_modules_do_not_depend_on_agent_runtime",
+        "test_agent_runtime_does_not_depend_on_modules_adapters_or_infrastructure"
+      ],
+      "action": "PRESERVE",
+      "reason": "Le pont outbound traduit les DTO agent ; M03 ne les importe jamais."
+    },
+    {
+      "path": "tests/architecture/test_repository_baseline.py",
+      "sha256_pre": "5c0a7f5eaa4c0b7f5ce9386eca97ccb95485181caaace5c00d997441a23abd6a",
+      "nodeids": [
+        "test_all_canonical_modules_and_templates_exist",
+        "test_no_production_dependency_is_declared"
+      ],
+      "action": "PRESERVE",
+      "reason": "13 modules inchangés, aucun package/lock supplémentaire."
+    },
+    {
+      "path": "tests/architecture/test_resource_library_application_sqlite_fitness.py",
+      "sha256_pre": "d6e5f00c3b64a095d5a669c9b81fced58c271404b3d1c84ba21c33bc00c7ce01",
+      "nodeids": [
+        "test_m03_application_and_inbound_boundary_have_no_storage_dependency",
+        "test_sqlite_mapping_is_outbound_and_reuses_c0_op03_without_duplicate_sql"
+      ],
+      "action": "PRESERVE",
+      "reason": "Domain/Application neutres ; OP-03 et inbound READ-15 conservés."
+    },
+    {
+      "path": "tests/architecture/test_retrieval_admissibility_decoupling_fitness.py",
+      "sha256_pre": "7ecf2ce4d92602d506aa49f904ac7e0ee66ce6718929b283dc721859eb12d718",
+      "nodeids": [],
+      "action": "PRESERVE",
+      "reason": "F2A inchangée ; passage lexical soumis à is_admissible indépendamment du canal STRUCTURED."
+    },
+    {
+      "path": "tests/architecture/test_evidence_retrieval_boundary_fitness.py",
+      "sha256_pre": "42a6b545c640f0a562e6444fb2f05c43c2320efc9a39fcd0e276ff0face77cc7",
+      "nodeids": [],
+      "action": "PRESERVE",
+      "reason": "Pas de modification des contrats AG-02 ni d’accès applicatif ajouté à l’agent."
+    },
+    {
+      "path": "tests/architecture/test_retrieval_coordinator_fitness.py",
+      "sha256_pre": "debaa2b73ce93c67adb044b90ee644430dc59e1c4888bf70d700a8a814fb0b09",
+      "nodeids": [],
+      "action": "PRESERVE",
+      "reason": "Coordinator, ordre/fusion RRF inchangés ; incrément explicitement lexical-only."
+    },
+    {
+      "path": "tests/architecture/test_active_canonical_semantics_fitness.py",
+      "sha256_pre": "377e9d8136d59a5d48442e361f7fe24bd6cc4cd532a83e239b9e50b862b77627",
+      "nodeids": [],
+      "action": "PRESERVE",
+      "reason": "Disponibilité != canonicalité ; aucun champ identity_status/score promu en preuve."
+    },
+    {
+      "path": "tests/architecture/test_phase_12_17_04e_b09_documentary_handoff.py",
+      "sha256_pre": "b5d1d4b5ce43bf3cd1484f8ffa1664cee279ef6c3ef70ac5911c11ebd1e2477f",
+      "nodeids": [],
+      "action": "PRESERVE",
+      "reason": "Handoff historique et ses assertions ne sont pas réécrits pour simuler un original OpenAPI."
+    }
+  ],
+  "read_only_dependencies": [
+    {
+      "path": "backend/adapters/outbound/search/sqlite.py",
+      "sha256": "cc7e375a1f55d06dbdd8c595d0bad269df980f828a356b2145c53109d9de9c69"
+    },
+    {
+      "path": "backend/adapters/outbound/evidence/sqlite.py",
+      "sha256": "a0585306f7d4ef2fc55059e137151985da169b480573a410fce500279123953c"
+    },
+    {
+      "path": "backend/adapters/outbound/document_content/sqlite.py",
+      "sha256": "e17fabf68f09054592a87db3c3c040cf270d966b529ae6afe683295bf30a88f1"
+    },
+    {
+      "path": "backend/adapters/outbound/resource_library/sqlite.py",
+      "sha256": "641238bc3b9af1c0a61ec19e747936004a3df3979da28fd547e5ebee78efb79e"
+    },
+    {
+      "path": "backend/adapters/outbound/persistence/sqlite.py",
+      "sha256": "ff9aa89793b0d485432d365623b9eca8fb3d1c021184c19f038b91056061e560"
+    },
+    {
+      "path": "backend/adapters/inbound/application/resource_library.py",
+      "sha256": "0145faffd8a18f0fc45b1bbe7f857f7ac8f8e3ba79f9a225663a40f4e727cc92"
+    },
+    {
+      "path": "backend/modules/resource_library/application/queries/get_resource.py",
+      "sha256": "6b41c71002c025d46f8d75b9ee40374ba36992bc62b06ebca91adc67ccffa4c7"
+    },
+    {
+      "path": "backend/modules/resource_library/domain/value_objects/resource_ref.py",
+      "sha256": "f33c591de1774cb937e0bdc7d622efbd32f28be6e048669dae67d3e336da634d"
+    },
+    {
+      "path": "backend/adapters/inbound/api/read15.py",
+      "sha256": "1eb34a1fc8341fa7f8ab86a46c923683b9d12a368ceb92f01b134664dc63b68e"
+    },
+    {
+      "path": "backend/adapters/inbound/api/local_browser.py",
+      "sha256": "cc7ee88ebbb41d17feb301c9707d1ab05efe3d1fa3118be8612c1b4c735d1148"
+    },
+    {
+      "path": "backend/adapters/inbound/cli/local_browser.py",
+      "sha256": "f88bd7ea434fd821c1bbfc0c04c78f5514383b7886a7616cfa5d682b92b3f607"
+    },
+    {
+      "path": "backend/infrastructure/config/schemas/http.py",
+      "sha256": "511336250f3a3274fe4f2f17f328771111250b0ec916a4e18723abc6b4ecf298"
+    },
+    {
+      "path": "backend/infrastructure/observability/operational.py",
+      "sha256": "e85d496abbef63b2c68404297af385d69c2d41123558b7789a0262ea05b134a0"
+    },
+    {
+      "path": "tests/architecture/test_local_browser_http_boundary_fitness.py",
+      "sha256": "0c9d07e647ec0fd6c37b032f6731d11498f33de8a7587e2e60beaa06edcf230d"
+    },
+    {
+      "path": "tests/architecture/test_minimal_local_observability_fitness.py",
+      "sha256": "b92e320b93e22a66a3eed0e4cafd95da4bc5c92cb6c2361632aac5c52aa92403"
+    },
+    {
+      "path": "tests/architecture/test_canonical_contract_boundaries.py",
+      "sha256": "6a5472d7fe7c656c022f2f9a08baa0d7666353b2a4cd7e358376fdbce90fc228"
+    },
+    {
+      "path": "tests/architecture/test_repository_baseline.py",
+      "sha256": "5c0a7f5eaa4c0b7f5ce9386eca97ccb95485181caaace5c00d997441a23abd6a"
+    },
+    {
+      "path": "tests/architecture/test_resource_library_application_sqlite_fitness.py",
+      "sha256": "d6e5f00c3b64a095d5a669c9b81fced58c271404b3d1c84ba21c33bc00c7ce01"
+    },
+    {
+      "path": "tests/architecture/test_retrieval_admissibility_decoupling_fitness.py",
+      "sha256": "7ecf2ce4d92602d506aa49f904ac7e0ee66ce6718929b283dc721859eb12d718"
+    },
+    {
+      "path": "tests/architecture/test_evidence_retrieval_boundary_fitness.py",
+      "sha256": "42a6b545c640f0a562e6444fb2f05c43c2320efc9a39fcd0e276ff0face77cc7"
+    },
+    {
+      "path": "tests/architecture/test_retrieval_coordinator_fitness.py",
+      "sha256": "debaa2b73ce93c67adb044b90ee644430dc59e1c4888bf70d700a8a814fb0b09"
+    },
+    {
+      "path": "tests/architecture/test_active_canonical_semantics_fitness.py",
+      "sha256": "377e9d8136d59a5d48442e361f7fe24bd6cc4cd532a83e239b9e50b862b77627"
+    },
+    {
+      "path": "tests/architecture/test_phase_12_17_04e_b09_documentary_handoff.py",
+      "sha256": "b5d1d4b5ce43bf3cd1484f8ffa1664cee279ef6c3ef70ac5911c11ebd1e2477f"
+    },
+    {
+      "path": "architecture/adr/ADR-P12-069-local-browser-read15-product-boundary.md",
+      "sha256": "8970146f2561b91cc999e18f7faa11ccc305b7b1415091f455358d361d7dda9d"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_local_read15/MANIFEST_SHA256.txt",
+      "sha256": "0b21d5ed85751b89c8bd55182392a2de99507b817d351a8211ba9834f54eddb7"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_local_read15/IMPLEMENTATION_EVIDENCE.md",
+      "sha256": "979732d0b5ae8996b4eafae51df3550b63e5f0308125321d66cbd3af22d86b5b"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_local_read15/READ15_HTTP_LOCAL_V1.json",
+      "sha256": "7bee880ab6a982e520d3ca69284d1d311789b8e32397d1f26c25dcd217934d7a"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/03_PAQUET_DECISION_ET_PLAN_H2.md",
+      "sha256": "2e90d55cd1600f71032f197c3aaa61c8aaebb291e792fea5d27a7b89e50a1dad"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/01_SOURCES_ET_ECARTS_RECONCILIES.json",
+      "sha256": "a8dd8edc13d505e504a3983bf5598a834f2fb57ba4fead0d3545f1d2848448d3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/02_PROPOSITION_EVOLUTION_GUARD.md",
+      "sha256": "f019d1e74e079ca2ecfc48f77da8ef3bee6904affa59346b48b59d8d9840a80c"
+    },
+    {
+      "path": "docs/development/ENVIRONMENT.md",
+      "sha256": "b0eac827ddc3eda533a3587da1c65e9bc2ba4c638f0da3db85eb477655ab7701"
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "3cf1d27558425d01157b5c06cd9de985222ab4f0f2cfb9b60c26ebc666b1e9b8"
+    },
+    {
+      "path": "tests/non_functional/test_retrieval_quality_real_gate.py",
+      "sha256": "6e0aa0121a7076c33b20eadc64190dc29eba2eb1d5067f27214e7a608c80156e"
+    }
+  ],
+  "protected_h1_h1a": [
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/01_BASELINE_ET_PERIMETRE.md",
+      "sha256": "1a220b89864c0b01634996b04b4784e38faee5fe7fea596f65c51ce8d0d9cecb"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/02_MATRICE_CUMULATIVE_12_1_12_17.json",
+      "sha256": "3f1120df875476dc1f140ae394de27831d517c8b4d49ec07c8271075c42029b3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/03_ETAT_INTEGRATION_PRODUIT.md",
+      "sha256": "1d844c64b5e44dd798de3fb81807b1a8a7098f4cc7fa9d5eeeabf87432b8f811"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/04_ECARTS_ET_PREPARATION_RECETTE.json",
+      "sha256": "af7e112116448cb076244349bf1de9cdd823ed2071ddeadda84bda4c7821d282"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/LIVRABLE_12_18_H1_AUDIT_CUMULATIF.md",
+      "sha256": "c2723ab6f9d943397cc7eb8d36642f76ee555ea36d1ebe96bf31b28a84bfaefd"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/MANIFEST_SHA256.txt",
+      "sha256": "259a50779d6c75231e3a3cad8f5d78dc69442b696613719c128fcb4320674ab3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/01_SOURCES_ET_ECARTS_RECONCILIES.json",
+      "sha256": "a8dd8edc13d505e504a3983bf5598a834f2fb57ba4fead0d3545f1d2848448d3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/02_PROPOSITION_EVOLUTION_GUARD.md",
+      "sha256": "f019d1e74e079ca2ecfc48f77da8ef3bee6904affa59346b48b59d8d9840a80c"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/03_PAQUET_DECISION_ET_PLAN_H2.md",
+      "sha256": "2e90d55cd1600f71032f197c3aaa61c8aaebb291e792fea5d27a7b89e50a1dad"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/LIVRABLE_H1A_SOURCES_ET_GUARD.md",
+      "sha256": "398a6e2b68e4deb0c720cb309d33ef41c12644c2b49951749739e3b224afc998"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/MANIFEST_SHA256.txt",
+      "sha256": "2c7f3d2b93e4852f9243f6d6631492fc1d413bfb3ab0df4141672fa1ccd932a8"
+    }
+  ],
+  "protected_preparation_paths": [
+    "docs/development/phase_12_18_h2_recherche_locale_preparation/01_BASELINE_ET_REUTILISATION.md",
+    "docs/development/phase_12_18_h2_recherche_locale_preparation/02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+    "docs/development/phase_12_18_h2_recherche_locale_preparation/03_INVENTAIRE_FICHIERS_ET_GUARDS.json",
+    "docs/development/phase_12_18_h2_recherche_locale_preparation/04_DECISION_ET_PLAN_IMPLEMENTATION.md",
+    "docs/development/phase_12_18_h2_recherche_locale_preparation/LIVRABLE_PROPOSITION_RECHERCHE_LOCALE.md",
+    "docs/development/phase_12_18_h2_recherche_locale_preparation/MANIFEST_SHA256.txt"
+  ],
+  "preparation_binding": "Six nouveaux documents exclus du snapshot initial. Pour l’exécution future : hash externe du MANIFEST approuvé, puis ses cinq entrées ; copier ces six hashes dans le nouveau contrat sans modifier ces documents ni créer d’auto-référence.",
+  "historical_protection": "Ancien contrat, ADR-P12-069 et manifest READ-15 inchangés. Le manifest historique décrit la baseline READ-15 : ses entrées techniques modifiées par la future allowlist se vérifient sur les blobs Git 3f724ca..., pas en exigeant à tort que les nouveaux fichiers portent les anciens hashes.",
+  "historical_ast_preservation": "Conserver BASELINE=24b7a... pour test_existing_pure_contracts_and_original_guards_other_tests_preserved. Introduire _SEARCH_BASELINE=3f724ca... uniquement pour le nouvel inventaire. Tous les tests hors G01..G04/U01 sont inchangés.",
+  "validation_mode": "DOCUMENTARY_ONLY; aucun test ou import applicatif dans cette préparation",
+  "future_test_files": [
+    "tests/unit/test_local_search_text.py",
+    "tests/unit/test_local_search_application.py",
+    "tests/unit/test_local_search_http_projection.py",
+    "tests/unit/test_local_search_routes.py",
+    "tests/integration/test_local_search_sqlite.py",
+    "tests/integration/test_local_search_http.py",
+    "tests/architecture/test_local_search_product_boundary.py"
+  ],
+  "no_additional_owner_arbitration_for_recommendation": true,
+  "owner_execution_decision": "REQUIRED_FOR_WHOLE_PACKAGE; no owner approval or timestamp fabricated",
+  "forbidden": [
+    "user_seed_runtime_metadata",
+    "sqlite_access_now",
+    "application_import_now",
+    "tests_now",
+    "socket_now",
+    "provider",
+    "credential",
+    "external_network",
+    "code_change_now",
+    "accepted_adr_change",
+    "historical_document_change",
+    "staging_now",
+    "commit_now",
+    "push",
+    "merge",
+    "H3"
+  ]
+}

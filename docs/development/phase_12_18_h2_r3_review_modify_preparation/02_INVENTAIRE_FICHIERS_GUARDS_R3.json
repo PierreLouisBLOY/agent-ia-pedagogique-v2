@@ -1,0 +1,1108 @@
+{
+  "schema": "R3-PREPARATION-INVENTORY-1.0",
+  "status": "PROPOSED_NOT_APPROVED",
+  "baseline_commit": "817ad474d93c78c602a22bd30cf77fe7621e68b1",
+  "scope": "H2_CONVERSATIONAL_REVIEW_MODIFY_V1",
+  "contract": "REVIEW-MODIFY-HTTP-LOCAL-1.0",
+  "pre_hash_semantics": "SHA-256 des octets de la copie de travail lus pendant la préparation. Ne pas normaliser EOF/EOL silencieusement ; comparer aussi à la baseline Git avant modification.",
+  "counts": {
+    "implementation_files": 59,
+    "create": 44,
+    "modify": 15,
+    "existing_components_reused": 12,
+    "new_components": 8,
+    "guards_modified": 6,
+    "guards_created": 2,
+    "guards_total": 8,
+    "routes_new": 7,
+    "routes_preserved": 9,
+    "routes_final": 16,
+    "deterministic_checks": 16,
+    "provider_needed_step_kinds": 3,
+    "preparation_files": 6,
+    "protected_prior_preparation_files": 21
+  },
+  "files": [
+    {
+      "id": "M01",
+      "action": "MODIFY",
+      "path": "backend/adapters/inbound/api/routes.py",
+      "pre_sha256": "a0b28cbddca5a161867e1436e93814e78058482ca42309b47f78f3609719dcc7",
+      "purpose": "Registre fermé R3, références review/operation exactes ; 9 routes préservées + 7."
+    },
+    {
+      "id": "M02",
+      "action": "MODIFY",
+      "path": "backend/adapters/inbound/api/server.py",
+      "pre_sha256": "9c52906d5aa2842fb143ec2340bf9981a9d8c1a1bb53e225290ad23b5d38d9ab",
+      "purpose": "Dispatch R3 et harvest/close bornés ; sécurité HTTP existante inchangée."
+    },
+    {
+      "id": "M03",
+      "action": "MODIFY",
+      "path": "backend/adapters/outbound/persistence/conversation_memory.py",
+      "pre_sha256": "d22e0357f52ee3ae9c107f379a141ecdd54fb729333aab279ac2e4f3766abf4c",
+      "purpose": "Bundle/report/opération volatils, lease partagé R2/R3, publication atomique sous le verrou existant."
+    },
+    {
+      "id": "M04",
+      "action": "MODIFY",
+      "path": "backend/infrastructure/composition/factories/conversation.py",
+      "pre_sha256": "db2cfbbc46a370ff402c585f76a2faf929635609ff6c11c18372a6f47f74462f",
+      "purpose": "Exposer le même store et l'identité de session à la composition R3 ; aucun changement du live R2."
+    },
+    {
+      "id": "M05",
+      "action": "MODIFY",
+      "path": "backend/infrastructure/composition/factories/local_browser.py",
+      "pre_sha256": "187d25613d9234264f13d9a555c67c229f09cd072dd4b1cf1a52d3aaf277aa39",
+      "purpose": "Injection R3 explicitement activée, partage session/nonce, harvest et arrêt."
+    },
+    {
+      "id": "M06",
+      "action": "MODIFY",
+      "path": "backend/adapters/inbound/cli/local_browser.py",
+      "pre_sha256": "5aad3a77581f3d4fa1b1b1860d429115363cac182a7e7091713c39abba3236b4",
+      "purpose": "Flag --enable-review-modify lié à --enable-conversation ; refus provider par défaut."
+    },
+    {
+      "id": "M07",
+      "action": "MODIFY",
+      "path": "frontend/index.html",
+      "pre_sha256": "94a5613bdbfb8e6c76f20c6934f4b63442f354262f9b7960bae63dc86eff833f",
+      "purpose": "Contrôles review, validation, préparation du corrigé, modification et sélection V1/V2."
+    },
+    {
+      "id": "M08",
+      "action": "MODIFY",
+      "path": "frontend/app.js",
+      "pre_sha256": "172da3bee09ff7da73bd08ec09b9850fbcc8cfb02868d422d3063f44708ff61e",
+      "purpose": "Commandes explicites à version exacte, rendu sûr et polling GET borné sans retry POST."
+    },
+    {
+      "id": "M09",
+      "action": "MODIFY",
+      "path": "frontend/styles.css",
+      "pre_sha256": "6de4e923bb067ad4cff3844de2a489b143788b760f1624995f6639710186829a",
+      "purpose": "Affichage des états et versions dans les trois seuls assets existants."
+    },
+    {
+      "id": "M10",
+      "action": "MODIFY",
+      "path": "tests/architecture/test_local_browser_product_boundary.py",
+      "pre_sha256": "0314ac3cbfe75ef65391ce8b3520117d01ebdde7307c5b9388253b27e347b256",
+      "purpose": "G01 : registre 16, inventaire actif R3 fermé et conservation des oracles R2."
+    },
+    {
+      "id": "M11",
+      "action": "MODIFY",
+      "path": "tests/architecture/test_local_search_product_boundary.py",
+      "pre_sha256": "d0b3781596cba9001bb18ee6b03a0a77f0084e119a83d8bfe8c4200eec6e20e0",
+      "purpose": "G02 : cardinalité active, fixtures documentaires et preuve des guards préservés."
+    },
+    {
+      "id": "M12",
+      "action": "MODIFY",
+      "path": "tests/architecture/test_resource_ref_contract_fitness.py",
+      "pre_sha256": "30129394db8ba1bbc3ca220824d6e0e8bd1c9894cab9f8a4e7214e2d6e50b227",
+      "purpose": "G03 : seule dernière assertion READ-15 remplace registre 9 par registre fermé 16."
+    },
+    {
+      "id": "M13",
+      "action": "MODIFY",
+      "path": "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+      "pre_sha256": "252af97bf10d13e6279c54b0084019fe911bcad3634476c1acf59ed3d05d5554",
+      "purpose": "G04 : extension exacte des owners backend R3 dans un seul test Phase F."
+    },
+    {
+      "id": "M14",
+      "action": "MODIFY",
+      "path": "tests/architecture/test_conversation_product_boundary.py",
+      "pre_sha256": "c58e8f8feb14f455a6ba14b5bcafea2d7e853b9df239e78f6cbb8305a141e442",
+      "purpose": "G05 : distinguer histoire R2 gelée à 817ad474 et delta actif R3, sans perdre les contre-exemples."
+    },
+    {
+      "id": "M15",
+      "action": "MODIFY",
+      "path": "tests/unit/test_local_browser_product_routes.py",
+      "pre_sha256": "56c91b80ab76ffe8db5eb6356de1f18743522f1ebf5453eb4b00c5910cf80499",
+      "purpose": "G06 : seule première assertion de cardinalité 9 devient 16 ; reste inchangé."
+    },
+    {
+      "id": "C01",
+      "action": "CREATE",
+      "path": "backend/modules/pedagogical_design/contracts/dto/assessment_bundle.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "M04 : bundle sujet/correction/barème immutable, chemins et calculs typés."
+    },
+    {
+      "id": "C02",
+      "action": "CREATE",
+      "path": "backend/modules/pedagogical_design/contracts/dto/assessment_revision.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "M04 : commandes PREPARE_SUPPLEMENTS et HARDEN_DOSSIER_3, delta typé."
+    },
+    {
+      "id": "C03",
+      "action": "CREATE",
+      "path": "backend/modules/pedagogical_design/domain/policies/assessment_revision.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "M04 : portée D3, dépendances, identités, assemblage sans mutation."
+    },
+    {
+      "id": "C04",
+      "action": "CREATE",
+      "path": "backend/modules/pedagogical_design/ports/outbound/assessment_revision.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Port neutre de proposition générée ; aucun SDK."
+    },
+    {
+      "id": "C05",
+      "action": "CREATE",
+      "path": "backend/modules/pedagogical_design/ports/inbound/revise_assessment.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Frontière Application M04."
+    },
+    {
+      "id": "C06",
+      "action": "CREATE",
+      "path": "backend/modules/pedagogical_design/application/commands/revise_assessment.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Assembler candidat complet, vérifier le delta et refuser les sorties partielles."
+    },
+    {
+      "id": "C07",
+      "action": "CREATE",
+      "path": "backend/modules/validation_control/contracts/dto/deterministic_validation.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Rapport/checks typés PASS/FAIL/WARNING et référence exacte."
+    },
+    {
+      "id": "C08",
+      "action": "CREATE",
+      "path": "backend/modules/validation_control/domain/policies/assessment_checks.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "16 checks purs, nombres décimaux et codes fermés."
+    },
+    {
+      "id": "C09",
+      "action": "CREATE",
+      "path": "backend/modules/validation_control/ports/inbound/validate_assessment.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Port CAP-A01 Application sans provider."
+    },
+    {
+      "id": "C10",
+      "action": "CREATE",
+      "path": "backend/modules/validation_control/application/commands/validate_assessment.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Orchestration pure du rapport déterministe."
+    },
+    {
+      "id": "C11",
+      "action": "CREATE",
+      "path": "backend/modules/work_orchestration/contracts/dto/r3_review_modify.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Commandes/résultats/jobs/reviews neutres et références exactes."
+    },
+    {
+      "id": "C12",
+      "action": "CREATE",
+      "path": "backend/modules/work_orchestration/ports/inbound/r3_review_modify.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Use cases review/validation/préparation/modification/lectures."
+    },
+    {
+      "id": "C13",
+      "action": "CREATE",
+      "path": "backend/modules/work_orchestration/ports/outbound/r3_store.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Réservation/publication atomique et lectures immutables, sans type infrastructure."
+    },
+    {
+      "id": "C14",
+      "action": "CREATE",
+      "path": "backend/modules/work_orchestration/ports/outbound/r3_job.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Port de travail borné, autorisation et usage neutres."
+    },
+    {
+      "id": "C15",
+      "action": "CREATE",
+      "path": "backend/modules/work_orchestration/application/services/r3_review_modify.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "CAS/idempotence, M04/M09, revue indépendante et zéro promotion."
+    },
+    {
+      "id": "C16",
+      "action": "CREATE",
+      "path": "backend/adapters/inbound/application/r3_review_modify.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Frontière Application fermée et mapping CAP-A01 ; agents sans accès aux stores."
+    },
+    {
+      "id": "C17",
+      "action": "CREATE",
+      "path": "backend/adapters/inbound/api/r3_review_modify.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Enveloppes HTTP R3 ; aucune déclaration de route hors routes.py."
+    },
+    {
+      "id": "C18",
+      "action": "CREATE",
+      "path": "backend/adapters/outbound/generation/assessment_revision.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Pont M04 vers AG03 CAP-G02 ; JSON borné au sein d'une section générique existante."
+    },
+    {
+      "id": "C19",
+      "action": "CREATE",
+      "path": "backend/adapters/outbound/review/assessment_review.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Pont de review vers AG04 CAP-V01 ; adaptation Findings sans autorité métier."
+    },
+    {
+      "id": "C20",
+      "action": "CREATE",
+      "path": "backend/adapters/outbound/system/r3_job.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Job supervisé borné et refus par défaut ; doubles synthétiques, aucun live implicite."
+    },
+    {
+      "id": "C21",
+      "action": "CREATE",
+      "path": "backend/infrastructure/composition/bindings/r3_agents.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Bindings AG03/AG04, requêtes canoniques, policies existantes et projections en mémoire."
+    },
+    {
+      "id": "C22",
+      "action": "CREATE",
+      "path": "backend/infrastructure/composition/bootstrap/r3_worker.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Worker R3 à protocole fermé, port injecté, sans découverte de credential/SQLite."
+    },
+    {
+      "id": "C23",
+      "action": "CREATE",
+      "path": "backend/infrastructure/composition/factories/r3_review_modify.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Composition des modules/ports, provider désactivé et fake injecté explicitement."
+    },
+    {
+      "id": "C24",
+      "action": "CREATE",
+      "path": "tests/support/r3_synthetic.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "V1 synthétique entièrement inventée en code, données financières fermées ; aucun fichier réel."
+    },
+    {
+      "id": "C25",
+      "action": "CREATE",
+      "path": "tests/support/r3_fakes.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Doubles generation/review/clock/ids/jobs et erreurs déterministes."
+    },
+    {
+      "id": "C26",
+      "action": "CREATE",
+      "path": "tests/support/r3_guard_oracle.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Oracle indépendant : listes exactes, pré-identités et contrôle Git/AST actif + historique."
+    },
+    {
+      "id": "C27",
+      "action": "CREATE",
+      "path": "tests/unit/test_assessment_bundle.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Structure, références, suppléments immutables et bornes."
+    },
+    {
+      "id": "C28",
+      "action": "CREATE",
+      "path": "tests/unit/test_assessment_deterministic_validation.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "16 checks et tous les refus arithmétiques/structurels."
+    },
+    {
+      "id": "C29",
+      "action": "CREATE",
+      "path": "tests/unit/test_assessment_revision.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "D3 ciblé, questions/correction/barème et interdiction de mutation D1/D2."
+    },
+    {
+      "id": "C30",
+      "action": "CREATE",
+      "path": "tests/unit/test_r3_review_mapping.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Review V1 exacte, catégories/sévérités et absence d'autorité provider."
+    },
+    {
+      "id": "C31",
+      "action": "CREATE",
+      "path": "tests/unit/test_r3_generation_mapping.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Protocole de sortie générique JSON, schéma strict local, corruptions et mapping AG03."
+    },
+    {
+      "id": "C32",
+      "action": "CREATE",
+      "path": "tests/unit/test_r3_commands.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Cible/base obligatoires, CAP-A01, idempotence, états et erreurs."
+    },
+    {
+      "id": "C33",
+      "action": "CREATE",
+      "path": "tests/unit/test_r3_routes_security.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Les 7 routes, méthodes, anti-traversal, nonce/origin, JSON fermé et erreurs sûres."
+    },
+    {
+      "id": "C34",
+      "action": "CREATE",
+      "path": "tests/unit/test_r3_assets.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "UI sans persistance navigateur, badges/version/report binding et DOM sûr."
+    },
+    {
+      "id": "C35",
+      "action": "CREATE",
+      "path": "tests/integration/test_r3_product.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Flux synthétique préparation/review/validation/modification/CAP-R02 V1/V2."
+    },
+    {
+      "id": "C36",
+      "action": "CREATE",
+      "path": "tests/integration/test_r3_http.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Flux sur loopback, commandes concurrentes, polling GET et erreurs non sensibles."
+    },
+    {
+      "id": "C37",
+      "action": "CREATE",
+      "path": "tests/integration/test_r3_jobs.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Sous-processus fake borné, timeout, arrêt, UNKNOWN, zéro répétition."
+    },
+    {
+      "id": "C38",
+      "action": "CREATE",
+      "path": "tests/architecture/test_r3_product_boundary.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "G07 nouveau : ownership, frontières, routes, comptes, aucun provider/data access."
+    },
+    {
+      "id": "C39",
+      "action": "CREATE",
+      "path": "tests/architecture/test_r3_guard_non_regression.py",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "G08 nouveau : mutations négatives de tous G01–G06, index/HEAD/working et histoire."
+    },
+    {
+      "id": "C40",
+      "action": "CREATE",
+      "path": "architecture/adr/ADR-conversational-review-modify-product-boundary.md",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "ADR actif R3 à relire avant implémentation, delta explicite G01–G08."
+    },
+    {
+      "id": "C41",
+      "action": "CREATE",
+      "path": "docs/development/phase_12_18_h2_r3_review_modify/R3_HTTP_LOCAL_V1.json",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Contrat actif versionné, inventaire et identités de la proposition approuvée."
+    },
+    {
+      "id": "C42",
+      "action": "CREATE",
+      "path": "docs/development/phase_12_18_h2_r3_review_modify/IMPLEMENTATION_EVIDENCE.md",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Preuves réellement exécutées, écarts et limites ; aucun contenu runtime."
+    },
+    {
+      "id": "C43",
+      "action": "CREATE",
+      "path": "docs/development/phase_12_18_h2_r3_review_modify/LIVE_SCOPE_PROPOSAL.json",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Scénarios/projections de futur live proposés ; tous grants désactivés."
+    },
+    {
+      "id": "C44",
+      "action": "CREATE",
+      "path": "docs/development/phase_12_18_h2_r3_review_modify/MANIFEST_SHA256.txt",
+      "pre_sha256": null,
+      "pre_state": "ABSENT_VERIFIED",
+      "purpose": "Manifest de livraison R3 sans réécrire les manifests historiques."
+    }
+  ],
+  "guards": [
+    {
+      "id": "G01",
+      "path": "tests/architecture/test_local_browser_product_boundary.py",
+      "action": "MODIFY",
+      "mutable_functions": [
+        "route_contract_violations",
+        "inventory_violations",
+        "test_existing_pure_contracts_and_original_guards_other_tests_preserved"
+      ],
+      "delta": "Imports R3 explicites, _EXPECTED_ROUTES 9→16 ; nouvelles constantes de routes dans le parseur AST. Garder _CONTRACT/R2 inventaires historiques, 65/22, les 17+4 préservés. Appel de validation active R3 en plus de l'oracle R2 ; aucun préfixe permissif. Boucle historique terminale et sécurité pure préservées.",
+      "approval_status": "PENDING_OWNER_REVIEW"
+    },
+    {
+      "id": "G02",
+      "path": "tests/architecture/test_local_search_product_boundary.py",
+      "action": "MODIFY",
+      "mutable_functions": [
+        "test_exact_five_routes_preserve_read15",
+        "registry_copy",
+        "test_exact_inventory_before_and_after_commit",
+        "test_protected_document_mutation_is_rejected"
+      ],
+      "delta": "Seul count actif 9→16 ; fixtures recopient aussi le nouveau contrat R3 si requis. Historique 30/65/67 inchangé ; comparaison explicite R2 arrêté à 817 et R3 actif. Tous contre-exemples de routes/owners/protection conservés, fonctions restantes inchangées.",
+      "approval_status": "PENDING_OWNER_REVIEW"
+    },
+    {
+      "id": "G03",
+      "path": "tests/architecture/test_resource_ref_contract_fitness.py",
+      "action": "MODIFY",
+      "mutable_functions": [
+        "test_read15_keeps_one_field_and_deprecations_without_http_implementation"
+      ],
+      "delta": "Dernière assertion seulement : comparer le tuple fermé 16 routes à un oracle indépendant. Corps[:-1] byte/AST identique, READ-15 resource_ref seul et dépréciations inchangés.",
+      "approval_status": "PENDING_OWNER_REVIEW"
+    },
+    {
+      "id": "G04",
+      "path": "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+      "action": "MODIFY",
+      "mutable_functions": [
+        "test_later_provider_work_preserves_phase_f_backend_owners"
+      ],
+      "delta": "Ajouter les seuls chemins backend CREATE R3 à l'allowlist existante ; ne pas exempter modules/ ou API. Valeurs historiques et autres fonctions identiques.",
+      "approval_status": "PENDING_OWNER_REVIEW"
+    },
+    {
+      "id": "G05",
+      "path": "tests/architecture/test_conversation_product_boundary.py",
+      "action": "MODIFY",
+      "mutable_functions": [
+        "test_correction_exact_delta_and_delivered_65_path_snapshot",
+        "test_corrective_inventory_guard_has_exactly_one_approved_assertion_delta",
+        "assert_r2_guard_nodes_preserved",
+        "test_only_closed_r2_routes_and_pure_security_evolution",
+        "test_exact_65_path_inventory_at_all_git_states",
+        "test_index_cannot_be_hidden_by_clean_working_bytes"
+      ],
+      "delta": "Ajouter R3_BASELINE=817... et imports oracle explicites. Clore les 22 corrections à ce commit, vérifier séparément le delta R3 aux trois états Git. Oracle de la seule ancienne assertion testé sur blob 817 authentifié, puis nouveau contrôle actif des 6 guards. Adapter mocks Git pour les deux baselines sans retirer leurs mutations. CAP-R02, constantes R2_PATHS/PRE_HASHES/PROTECTED/PREPARATION/CORRECTED_GENERATION_HASHES, HIST020 et helpers de hash restent inchangés. Les fonctions non listées ne sont pas modifiables.",
+      "approval_status": "PENDING_OWNER_REVIEW"
+    },
+    {
+      "id": "G06",
+      "path": "tests/unit/test_local_browser_product_routes.py",
+      "action": "MODIFY",
+      "mutable_functions": [
+        "test_registry_has_one_business_operation_and_three_assets"
+      ],
+      "delta": "Première assertion uniquement, 9→16 ; corps[1:] inchangé.",
+      "approval_status": "PENDING_OWNER_REVIEW"
+    },
+    {
+      "id": "G07",
+      "path": "tests/architecture/test_r3_product_boundary.py",
+      "action": "CREATE",
+      "mutable_functions": [],
+      "delta": "Nouveau : frontières M04/M08/M09, CAP-A01 local, absence SDK/FS/SQL côté métier, 16 routes fermées, 3 assets, badge, scopes R3.",
+      "approval_status": "PENDING_OWNER_REVIEW"
+    },
+    {
+      "id": "G08",
+      "path": "tests/architecture/test_r3_guard_non_regression.py",
+      "action": "CREATE",
+      "mutable_functions": [],
+      "delta": "Nouveau : source R3 indépendante, G01–G06 AST exact hors nœuds listés et assertions internes préservées ; mutants route/owner/index/hash/manifests refusés.",
+      "approval_status": "PENDING_OWNER_REVIEW"
+    }
+  ],
+  "routes_new": [
+    {
+      "id": "H1",
+      "method": "POST",
+      "path": "/api/v2/conversation/assessment-preparations",
+      "purpose": "Préparer une seule fois les suppléments de la version existante ; 202 opération."
+    },
+    {
+      "id": "H2",
+      "method": "POST",
+      "path": "/api/v2/conversation/reviews",
+      "purpose": "Lancer AG04 sur version+bundle exacts ; 202 review_ref et operation_ref."
+    },
+    {
+      "id": "H3",
+      "method": "GET",
+      "path": "/api/v2/conversation/reviews/{review_ref}",
+      "purpose": "Lire état et rapport de review exacts ; aucun appel."
+    },
+    {
+      "id": "H4",
+      "method": "POST",
+      "path": "/api/v2/conversation/validations",
+      "purpose": "CAP-A01 synchrone local ; 200 rapport PASS/FAIL/WARNING."
+    },
+    {
+      "id": "H5",
+      "method": "POST",
+      "path": "/api/v2/conversation/modifications",
+      "purpose": "HARDEN_DOSSIER_3 ; 202 opération, aucune publication anticipée."
+    },
+    {
+      "id": "H6",
+      "method": "GET",
+      "path": "/api/v2/conversation/operations/{operation_ref}",
+      "purpose": "Polling borné d'une opération R3 déjà réservée ; lecture uniquement."
+    },
+    {
+      "id": "H7",
+      "method": "GET",
+      "path": "/api/v2/productions/{production_ref}/versions/{version_ref}/assessment",
+      "purpose": "Bundle exact et rapports liés ; pas de latest."
+    }
+  ],
+  "deterministic_checks": [
+    {
+      "id": "A01",
+      "code": "VERSION_BINDING",
+      "rule": "Cible/production/version exactes ; sujet, correction, barème liés au même couple."
+    },
+    {
+      "id": "A02",
+      "code": "REQUIRED_STRUCTURE",
+      "rule": "Cinq sections sujet exactes et bundle complet typé ; absence de bundle = FAIL."
+    },
+    {
+      "id": "A03",
+      "code": "QUESTION_IDENTITY",
+      "rule": "IDs questions uniques et stables, dossier et locator valides ; aucune question omise/dupliquée."
+    },
+    {
+      "id": "A04",
+      "code": "CORRECTION_COVERAGE",
+      "rule": "Une correction par question, aucun orphelin ; réponse et justification non vides."
+    },
+    {
+      "id": "A05",
+      "code": "MARKING_REFERENTIAL_INTEGRITY",
+      "rule": "Une entrée par question et critères uniques ; aucune référence pendante."
+    },
+    {
+      "id": "A06",
+      "code": "TOTAL_TWENTY",
+      "rule": "Points de critères = points question = points dossier ; somme exacte 20.00."
+    },
+    {
+      "id": "A07",
+      "code": "NUMERIC_DOMAIN",
+      "rule": "Décimaux finis de précision bornée, unité EUR, points positifs ; pas de bool/float/NaN."
+    },
+    {
+      "id": "A08",
+      "code": "CASE_COMPONENT_TOTALS",
+      "rule": "Ressources/emplois stables, actif/passif circulants et trésorerie : composants exhaustifs, totaux recalculés."
+    },
+    {
+      "id": "A09",
+      "code": "FRNG",
+      "rule": "FRNG = ressources stables - emplois stables ; calcul exact au centime."
+    },
+    {
+      "id": "A10",
+      "code": "BFR",
+      "rule": "BFR = actif circulant hors trésorerie - passif circulant hors trésorerie."
+    },
+    {
+      "id": "A11",
+      "code": "NET_TREASURY",
+      "rule": "TN = FRNG - BFR = trésorerie active - trésorerie passive ; même scénario et même unité."
+    },
+    {
+      "id": "A12",
+      "code": "CONTEXT_PRESERVATION",
+      "rule": "BTS CG, ASSESSMENT, 60 minutes, français et /20 ; somme des durées de dossiers = 60."
+    },
+    {
+      "id": "A13",
+      "code": "EVIDENCE_AND_PROVENANCE",
+      "rule": "Refs exactes disponibles en session et allowlistées ; aucun label officiel/canonique ou validation inventé."
+    },
+    {
+      "id": "A14",
+      "code": "IMMUTABLE_TARGETED_DELTA",
+      "rule": "V1 préservée ; seuls D3 et ses suppléments changent ; dépendances D1/D2 sans approbation explicite refusées."
+    },
+    {
+      "id": "A15",
+      "code": "ANSWER_CALCULATION_AND_LOCATORS",
+      "rule": "Résultats numériques et expressions typées de la correction concordent avec les données/scénarios ; locators textuels exacts."
+    },
+    {
+      "id": "A16",
+      "code": "COVERAGE_LIMITS",
+      "rule": "Couverture déclarée et limites : toute assertion hors calcul formalisé est WARNING, jamais validée pédagogiquement par CAP-A01."
+    }
+  ],
+  "components_reused": [
+    {
+      "id": "E01",
+      "status": "EXISTS",
+      "component": "AG04 ReviewerAgent, ReviewPort, ReviewResult/Finding",
+      "limitation": "Pont produit à ajouter sans modifier l'agent."
+    },
+    {
+      "id": "E02",
+      "status": "EXISTS",
+      "component": "AG03 GenerationAgent CAP-G02 et GenerationPort",
+      "limitation": "Transformation technique, jamais publication ou validation."
+    },
+    {
+      "id": "E03",
+      "status": "EXISTS",
+      "component": "Adaptateurs OpenAI generation/review et transport propriétaire",
+      "limitation": "Réutilisation de contrats/mapping génériques ; aucun SDK modifié."
+    },
+    {
+      "id": "E04",
+      "status": "EXISTS",
+      "component": "CAP-R02, ProductionReadView et exact-version query",
+      "limitation": "Projection R2 inchangée ; V1 et V2 lisibles exactement."
+    },
+    {
+      "id": "E05",
+      "status": "EXISTS",
+      "component": "Registre CAP-V01/CAP-G02/CAP-A01",
+      "limitation": "Aucun nouveau code capability ou registre."
+    },
+    {
+      "id": "E06",
+      "status": "EXISTS",
+      "component": "Sécurité loopback/nonce/Origin et parsing JSON fermé",
+      "limitation": "Transport pur R2 conservé."
+    },
+    {
+      "id": "E07",
+      "status": "PARTIAL",
+      "component": "M04 ConversationDraft, cinq sections et références",
+      "limitation": "Ne fournit ni correction ni barème typés ; nouveau bundle auxiliaire R3."
+    },
+    {
+      "id": "E08",
+      "status": "PARTIAL",
+      "component": "M08 conversation et mémoire CAS",
+      "limitation": "Ajouter opérations/reports et publication atomique des bundles sans toucher le DTO R2."
+    },
+    {
+      "id": "E09",
+      "status": "PARTIAL",
+      "component": "UI conversation à trois assets",
+      "limitation": "Ajouter actions et états R3 ; aucun nouvel asset ni stockage navigateur."
+    },
+    {
+      "id": "E10",
+      "status": "PARTIAL",
+      "component": "Jobs bornés, OneShotReceipt et observabilité existants",
+      "limitation": "Patron réutilisé, port R3 séparé ; grant R2 consommé et jamais accepté."
+    },
+    {
+      "id": "E11",
+      "status": "EXISTS",
+      "component": "Références partagées et contexte pédagogique confirmé",
+      "limitation": "Données résolues en mémoire, pas de nouvelle lecture corpus."
+    },
+    {
+      "id": "E12",
+      "status": "EXISTS",
+      "component": "Oracles architecture/hygiène et identité historique",
+      "limitation": "Conserver preuve historique et ajouter contrôle actif exact."
+    }
+  ],
+  "components_new": [
+    {
+      "id": "N01",
+      "status": "TO_MATERIALIZE",
+      "component": "Bundle M04 et suppléments versionnés"
+    },
+    {
+      "id": "N02",
+      "status": "TO_MATERIALIZE",
+      "component": "Commande/politique M04 de modification ciblée"
+    },
+    {
+      "id": "N03",
+      "status": "TO_MATERIALIZE",
+      "component": "Service CAP-A01 M09 et 16 contrôles"
+    },
+    {
+      "id": "N04",
+      "status": "TO_MATERIALIZE",
+      "component": "Pont produit review AG04 et rapport neutre M08"
+    },
+    {
+      "id": "N05",
+      "status": "TO_MATERIALIZE",
+      "component": "Service de session M08, opérations/idempotence et extensions atomiques du store"
+    },
+    {
+      "id": "N06",
+      "status": "TO_MATERIALIZE",
+      "component": "Job/worker R3 et bindings AG03/AG04 refusant le live par défaut"
+    },
+    {
+      "id": "N07",
+      "status": "TO_MATERIALIZE",
+      "component": "Frontières Application/HTTP et interaction UI R3"
+    },
+    {
+      "id": "N08",
+      "status": "TO_MATERIALIZE",
+      "component": "Oracle R3 indépendant, fixtures et non-régressions"
+    }
+  ],
+  "out_of_scope": [
+    "CAP-A02 promotion",
+    "CAP-A03 export Word/PDF",
+    "Persistance durable/R4",
+    "H3",
+    "Calibration/Anthropic scorer",
+    "Données utilisateur/seed/runtime/sidecars et leurs métadonnées",
+    "Nouvelle génération R2 ou reprise du grant consommé"
+  ],
+  "read_only_dependencies": [
+    {
+      "path": "backend/agent_runtime/agents/review/review_agent.py",
+      "sha256": "34ee91cbedaf2360d4e4f8d41a1aeb56b4deb4c039b96153640f6a5e9228f959"
+    },
+    {
+      "path": "backend/agent_runtime/agents/review/review_model.py",
+      "sha256": "3f5846c458a5ef132ef1fea7e9feb09c127ba16c6dd90d0fa1ad5c4e1e079bc9"
+    },
+    {
+      "path": "backend/agent_runtime/agents/review/review_ports.py",
+      "sha256": "42ad6ad7516a9c4bef42c15295a16af8e724d3163197ef114f25bee0dfd31d22"
+    },
+    {
+      "path": "backend/agent_runtime/contracts/review/review_result.py",
+      "sha256": "58b9cb3e93d5711035c8ae85906dffdb5c93a3bc49af3e0f0d0a3137c22fced9"
+    },
+    {
+      "path": "backend/agent_runtime/contracts/review/finding.py",
+      "sha256": "1ebc6cfc0d429a62f6abe1c35b23b23533cf1932d5d0792fc339ba1e420bda37"
+    },
+    {
+      "path": "backend/agent_runtime/agents/generation/generation_agent.py",
+      "sha256": "187a3fd2565ed7a94e392830bcf5ecde0e82cf38823a0665d92967f4b5bec42c"
+    },
+    {
+      "path": "backend/agent_runtime/agents/generation/generation_model.py",
+      "sha256": "b943f3a660691ff68f197ad53e1d1b1bc9f90501cc29c39f9c045fad62184128"
+    },
+    {
+      "path": "backend/agent_runtime/registry/capabilities.py",
+      "sha256": "4467bc96d8e8df81ee8a5a66b24853d43b3ca569972fc55a3552c9dfea8bb5bf"
+    },
+    {
+      "path": "backend/modules/work_orchestration/contracts/dto/production_read_view.py",
+      "sha256": "a01e51387c11c6749c57f1f1d25a41121e72cc3d5d1e0c713c7ec57800a96b70"
+    },
+    {
+      "path": "backend/modules/work_orchestration/contracts/dto/conversation.py",
+      "sha256": "4a08dc4b38b5507b0266996e0459a6c103a353fa8fd3d1b7ed20c6daf1e1bf00"
+    },
+    {
+      "path": "backend/modules/work_orchestration/application/services/conversation.py",
+      "sha256": "ea1d7f9b18b13660f9a7d0e0abd0b43a3ccd0548ba0b39dbc3651d109437d2f6"
+    },
+    {
+      "path": "backend/modules/work_orchestration/application/queries/read_production.py",
+      "sha256": "443b14bf8669277bb9f99c4f6bdae68f1135581cf694e0d6ac9a49a797e6cddb"
+    },
+    {
+      "path": "backend/modules/pedagogical_design/contracts/dto/conversation_draft.py",
+      "sha256": "367232b6f91e1b07ddff2a58a5300c69067b66ed98838d28eef193045c1c89ee"
+    },
+    {
+      "path": "backend/adapters/inbound/application/production.py",
+      "sha256": "5367785f507da237f5fd408294c76fb5698fbb6aead78addd171513b27515aa0"
+    },
+    {
+      "path": "backend/adapters/inbound/api/production.py",
+      "sha256": "2260eb2b36a48da075f70bbe3197103b8590de94fb8cee0de87f49c882a905f1"
+    },
+    {
+      "path": "backend/adapters/inbound/api/local_browser.py",
+      "sha256": "03686d1539e4826fb7fc7fe9f936f704989f454460ef23539b20a1e3e543c4ef"
+    },
+    {
+      "path": "backend/adapters/outbound/generation/openai/adapter.py",
+      "sha256": "8854f9b5dea7d9ddb713d27211a77fe36dff4577ee080f63f5f71925fccc3088"
+    },
+    {
+      "path": "backend/adapters/outbound/generation/openai/mapping.py",
+      "sha256": "ace7fe0d46f38dd03270160259e2858e86d9bfe98ba57c8492213c29f7f855b7"
+    },
+    {
+      "path": "backend/adapters/outbound/openai/transport.py",
+      "sha256": "9d46fc6874ab05693e3159893caa3f2c21602613d150ae35c430fec45dd8c7d1"
+    },
+    {
+      "path": "backend/adapters/outbound/openai/contracts.py",
+      "sha256": "2d9829b1fbf18a2e87dcddff386682e8c92fa976104514bbc11683ae5a2429c2"
+    },
+    {
+      "path": "backend/adapters/outbound/review/openai/adapter.py",
+      "sha256": "588111262f21075f8731e9d7513e5a93d4f1ed1bf37009f197922c5ccfabda9e"
+    },
+    {
+      "path": "backend/adapters/outbound/review/openai/mapping.py",
+      "sha256": "78a777f34fd0917644b006179dd6979d30456fa069831982bb050ded8167f62c"
+    },
+    {
+      "path": "tests/architecture/test_repository_hygiene_b06.py",
+      "sha256": "8ceffb8d460a759ec90371e246aef43d346801ca6fc064c8ba2877d439ae51e9"
+    },
+    {
+      "path": "tests/architecture/test_calibration_tooling_boundary.py",
+      "sha256": "dfa0f3ad3e7db0c12a6b4ed349f76f722f3e1326133e02f451a28e9c6dd2b39a"
+    },
+    {
+      "path": "tests/architecture/test_pedagogical_calibration_fitness.py",
+      "sha256": "8083956e2eba2a892d8ada6b47799bff1e5e02515979307200b4ef0dd1039313"
+    },
+    {
+      "path": "tests/calibration/pedagogical/repair_tranche_v4_2.py",
+      "sha256": "9b85e5496ed9177bfd11fff896b7bd9bd87b4bf919216c6327172a784cf952d9"
+    },
+    {
+      "path": "tests/architecture/test_openai_generation_adapter_fitness.py",
+      "sha256": "2035c17b4d2b26cd406ffe1d6f2b80bd1979036748073b607a2554861ad269c5"
+    },
+    {
+      "path": "tests/architecture/test_openai_review_anthropic_scorer_fitness.py",
+      "sha256": "e5bc143a181dca1d95b47e88091284a4b618978e55ea045aeffcadea60d92ee3"
+    },
+    {
+      "path": "tests/architecture/test_review_boundary_fitness.py",
+      "sha256": "b8eaa8ce884fba2fc12eeae0eb331086599f58564c2052ca67c1d8d89c4b5385"
+    },
+    {
+      "path": "tests/architecture/test_local_browser_http_boundary_fitness.py",
+      "sha256": "0c9d07e647ec0fd6c37b032f6731d11498f33de8a7587e2e60beaa06edcf230d"
+    },
+    {
+      "path": "tests/architecture/test_canonical_contract_boundaries.py",
+      "sha256": "6a5472d7fe7c656c022f2f9a08baa0d7666353b2a4cd7e358376fdbce90fc228"
+    },
+    {
+      "path": "docs/development/ENVIRONMENT.md",
+      "sha256": "b0eac827ddc3eda533a3587da1c65e9bc2ba4c638f0da3db85eb477655ab7701"
+    },
+    {
+      "path": "architecture/adr/ADR-conversational-generation-product-boundary.md",
+      "sha256": "a5576aab15c17b269b62b7efb52f5e8baf1d15e5c92762f78b0b0fe68a387a82"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r2_generation/CONVERSATION_HTTP_LOCAL_V1.json",
+      "sha256": "b65f7927ff0b8605be3038600f365ada359680596051a57ddae5282d81ce5332"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r2_generation/IMPLEMENTATION_EVIDENCE.md",
+      "sha256": "f9aa511c0a05367a34f9326c4f29123607779b62c256dbf563ba443f2504460b"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r2_generation/LIVE_GENERATION_SCOPE.json",
+      "sha256": "ea3b57a7309e639554be5fc417349ce6eac228c384db71da221b38acbab544fa"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r2_generation/MANIFEST_SHA256.txt",
+      "sha256": "212c8cbf6ef21145d8fd73add3b607fe55274c66462876c0c5d99fa07f26b0ee"
+    }
+  ],
+  "protected_prior_preparation": [
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/01_BASELINE_ET_PERIMETRE.md",
+      "sha256": "1a220b89864c0b01634996b04b4784e38faee5fe7fea596f65c51ce8d0d9cecb"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/02_MATRICE_CUMULATIVE_12_1_12_17.json",
+      "sha256": "3f1120df875476dc1f140ae394de27831d517c8b4d49ec07c8271075c42029b3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/03_ETAT_INTEGRATION_PRODUIT.md",
+      "sha256": "1d844c64b5e44dd798de3fb81807b1a8a7098f4cc7fa9d5eeeabf87432b8f811"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/04_ECARTS_ET_PREPARATION_RECETTE.json",
+      "sha256": "af7e112116448cb076244349bf1de9cdd823ed2071ddeadda84bda4c7821d282"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/LIVRABLE_12_18_H1_AUDIT_CUMULATIF.md",
+      "sha256": "c2723ab6f9d943397cc7eb8d36642f76ee555ea36d1ebe96bf31b28a84bfaefd"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1_audit_cumulatif/MANIFEST_SHA256.txt",
+      "sha256": "259a50779d6c75231e3a3cad8f5d78dc69442b696613719c128fcb4320674ab3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/01_SOURCES_ET_ECARTS_RECONCILIES.json",
+      "sha256": "a8dd8edc13d505e504a3983bf5598a834f2fb57ba4fead0d3545f1d2848448d3"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/02_PROPOSITION_EVOLUTION_GUARD.md",
+      "sha256": "f019d1e74e079ca2ecfc48f77da8ef3bee6904affa59346b48b59d8d9840a80c"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/03_PAQUET_DECISION_ET_PLAN_H2.md",
+      "sha256": "2e90d55cd1600f71032f197c3aaa61c8aaebb291e792fea5d27a7b89e50a1dad"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/LIVRABLE_H1A_SOURCES_ET_GUARD.md",
+      "sha256": "398a6e2b68e4deb0c720cb309d33ef41c12644c2b49951749739e3b224afc998"
+    },
+    {
+      "path": "docs/development/phase_12_18_h1a_sources_et_evolution_guard/MANIFEST_SHA256.txt",
+      "sha256": "2c7f3d2b93e4852f9243f6d6631492fc1d413bfb3ab0df4141672fa1ccd932a8"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r2_generation_preparation/01_CONTRAT_R2_GENERATION_CONVERSATIONNELLE.md",
+      "sha256": "aac3f81f5a3a10017a305f5005dd373ccd598cdaee5815fcdb2c5606050df66f"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r2_generation_preparation/02_INVENTAIRE_GUARDS_TESTS_PERMISSIONS_R2.json",
+      "sha256": "b5ed6c00d616b2f7319f2089637f9f0778c7e3eab601caf73a377de00fdd7699"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r2_generation_preparation/03_DECISION_ET_PLAN_EXECUTION_R2.md",
+      "sha256": "f4dfa5de3ed8674c4ed24aeeeeee6bd3c72f214db427357447a3e7975df815ea"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_r2_generation_preparation/MANIFEST_SHA256.txt",
+      "sha256": "359b06ab34aa092831bd0d0eea909fc4b030776eef49414edbe7932f97eb9d6c"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/01_BASELINE_ET_REUTILISATION.md",
+      "sha256": "86916ecaf2fbfc2f0d98d39ae18636264c2f02049e7e4dae8ff3d254a3f8c31e"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+      "sha256": "664df97c350324af087597f7d17ec4e71ab837129a871959ee3305d61e7ebf0b"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/03_INVENTAIRE_FICHIERS_ET_GUARDS.json",
+      "sha256": "856c7017b6f943c8575895a3844bfa62053c7574272422be3e8e1bbedb53606a"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/04_DECISION_ET_PLAN_IMPLEMENTATION.md",
+      "sha256": "777e86b5584eebc59990568b4e82985e89901ea6a2e6b58cf4f032b4eda7df4b"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/LIVRABLE_PROPOSITION_RECHERCHE_LOCALE.md",
+      "sha256": "b03bbb1be99b2698dff717b864ee59e968f3abe2d366e9e7c658aab60ac450d4"
+    },
+    {
+      "path": "docs/development/phase_12_18_h2_recherche_locale_preparation/MANIFEST_SHA256.txt",
+      "sha256": "7e210975e1c64ecc29aa73bbbaf48c2e4b099501625fd061f33f0ef13d8f15f4"
+    }
+  ],
+  "historical_guard_disposition": [
+    {
+      "paths": [
+        "tests/architecture/test_repository_hygiene_b06.py",
+        "tests/architecture/test_calibration_tooling_boundary.py",
+        "tests/architecture/test_pedagogical_calibration_fitness.py",
+        "tests/calibration/pedagogical/repair_tranche_v4_2.py"
+      ],
+      "status": "UNCHANGED_REQUIRED_REGRESSION",
+      "reason": "Aucun des 40 fichiers historiques ni HIST020 touché. Aucun import de tooling/calibration dans le produit. Pas d'élargissement des exemptions."
+    },
+    {
+      "paths": [
+        "tests/architecture/test_openai_generation_adapter_fitness.py",
+        "tests/architecture/test_openai_review_anthropic_scorer_fitness.py",
+        "tests/architecture/test_review_boundary_fitness.py",
+        "tests/architecture/test_local_browser_http_boundary_fitness.py",
+        "tests/architecture/test_canonical_contract_boundaries.py"
+      ],
+      "status": "UNCHANGED_REQUIRED_REGRESSION",
+      "reason": "Un seul propriétaire SDK, protocoles AG03/04 inchangés, aucun nouvel import SDK/HTTP/SQL métier. API ne dépend que de l'inbound Application."
+    }
+  ],
+  "permissions": {
+    "P_R3_IMPL": "PENDING_OWNER_DECISION",
+    "P_R3_DOC_NETWORK": "PENDING_OWNER_DECISION_BEFORE_LIVE_PREPARATION",
+    "P_R3_LIVE_REVIEW": "NOT_AUTHORIZED",
+    "P_R3_LIVE_MODIFY": "NOT_AUTHORIZED",
+    "P_R3_LIVE_PREPARE_SUPPLEMENTS": "NOT_AUTHORIZED"
+  },
+  "preparation_activity": {
+    "code_changes": 0,
+    "technical_tests": 0,
+    "provider_calls": 0,
+    "credential_resolution": 0,
+    "user_data_or_metadata_access": 0,
+    "sqlite_opens": 0,
+    "external_network": 0,
+    "git_staging": 0,
+    "git_commits": 0
+  },
+  "documentary_method": "Lecture sélective de sources et ZIP, hashes, Git read-only. Inventaire de réalisation proposé, non prouvé par exécution technique.",
+  "future_validation": {
+    "profile": "SYNTHETIC_AUTHORIZATION_TO_REAPPROVE_FOR_R3",
+    "requested_only_ignore": "tests/non_functional/test_retrieval_quality_real_gate.py",
+    "real_seed_gate": "NOT_RUN / NOT_PASS",
+    "additional_ignore_skip_xfail": "FORBIDDEN",
+    "technical_status": "NOT_RUN"
+  }
+}

@@ -1,0 +1,786 @@
+{
+  "schema_version": "12.18-h1a-source-reconciliation-v1",
+  "status": "DOCUMENTARY_PROPOSAL_NOT_APPROVED",
+  "baseline_commit": "24b7a9850bc4644391dee2307c8a8a31036cd503",
+  "bundle": {
+    "name": "PROJET_V2_12_18_H1A_SOURCES_ET_EVOLUTION_GUARD.zip",
+    "sha256": "a4ae5268736afc8d5b7ac9f0eda1c24ff123bface3a7a2d10416d2d7bb78ccbd",
+    "members": 22,
+    "manifest_entries_verified": 21,
+    "source_manifest_entries_verified": 14,
+    "source_index_entries_verified": 14,
+    "location": "EXTERNAL_INTAKE_AND_TASK_TEMP_ONLY",
+    "repository_import": false
+  },
+  "namespace_rule": "H1 gap S01 != external source EXT-S01 (Phase 1). H1 requirement IDs and counts are preserved.",
+  "h1_snapshot": {
+    "directory": "docs/development/phase_12_18_h1_audit_cumulatif",
+    "files": [
+      {
+        "name": "01_BASELINE_ET_PERIMETRE.md",
+        "sha256": "1a220b89864c0b01634996b04b4784e38faee5fe7fea596f65c51ce8d0d9cecb"
+      },
+      {
+        "name": "02_MATRICE_CUMULATIVE_12_1_12_17.json",
+        "sha256": "3f1120df875476dc1f140ae394de27831d517c8b4d49ec07c8271075c42029b3"
+      },
+      {
+        "name": "03_ETAT_INTEGRATION_PRODUIT.md",
+        "sha256": "1d844c64b5e44dd798de3fb81807b1a8a7098f4cc7fa9d5eeeabf87432b8f811"
+      },
+      {
+        "name": "04_ECARTS_ET_PREPARATION_RECETTE.json",
+        "sha256": "af7e112116448cb076244349bf1de9cdd823ed2071ddeadda84bda4c7821d282"
+      },
+      {
+        "name": "LIVRABLE_12_18_H1_AUDIT_CUMULATIF.md",
+        "sha256": "c2723ab6f9d943397cc7eb8d36642f76ee555ea36d1ebe96bf31b28a84bfaefd"
+      },
+      {
+        "name": "MANIFEST_SHA256.txt",
+        "sha256": "259a50779d6c75231e3a3cad8f5d78dc69442b696613719c128fcb4320674ab3"
+      }
+    ],
+    "requirements": 33,
+    "gaps": 9,
+    "changed": false
+  },
+  "supplied_sources": [
+    {
+      "source_id": "EXT-S00",
+      "package_source_id": "S00",
+      "relative_path": "sources_fournies/Projet_V2_Phase_0_Livrable_final_RELU(1).pdf",
+      "sha256": "8b01991be6ff068c4e3a67fcf9bc4d8943b3cedefde0c6ff706ea760192ba496",
+      "size_bytes": 250121,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Original PDF fourni ; périmètre produit local individuel.",
+      "reading_scope": "Pages 1–2 et 19 lues, page 19 inspectée visuellement ; lecture ciblée, pas réaudit des 19 pages.",
+      "role_and_limit": "Définit recherche, création/transformation, vérification, conservation et export ; READ-15 seul ne livre pas toute V2."
+    },
+    {
+      "source_id": "EXT-S01",
+      "package_source_id": "S01",
+      "relative_path": "sources_fournies/Projet_V2_Phase_1_Livrable_final_RELU-1.pdf",
+      "sha256": "76aa1abb760e948043dd630fe521edcf6333e2682d84e7551d01628393f50de5",
+      "size_bytes": 4599544,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Compilation métier Phase 1, pas sous-phase 12.1.",
+      "reading_scope": "Pages 1–2 et 350 lues ; titre inspecté visuellement ; pas réaudit des 350 pages.",
+      "role_and_limit": "Ne ferme pas l'absence du contrat/livrable 12.1."
+    },
+    {
+      "source_id": "EXT-S02",
+      "package_source_id": "S02",
+      "relative_path": "sources_fournies/Projet_V2_Phase_2_Livrable_COMPLET_CANONIQUE(1).docx",
+      "sha256": "7292a6c6ea421a52a7c653d70a583e2ff55a4b9dc02e9f30e64ebe6372e8a80a",
+      "size_bytes": 58327,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Compilation modèle de données cible, pas base migrée.",
+      "reading_scope": "Ouverture et conclusion lues ; texte/tableaux extraits pour recherche ciblée.",
+      "role_and_limit": "Ne remplace pas une preuve de migration effective ni les décisions SQLite ultérieures."
+    },
+    {
+      "source_id": "EXT-S03",
+      "package_source_id": "S03",
+      "relative_path": "sources_fournies/00_PHASE_3_LIVRABLE_COMPLET_CANONIQUE(1).docx",
+      "sha256": "9e1bd3f3b052ac79cf3c8e03690a4349d999cbe36f577c718845df82cf8c24c4",
+      "size_bytes": 44766,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Compilation de migration ; réserve documentaire 3.24 explicite.",
+      "reading_scope": "Ouverture, chronologie finale et empreintes lues.",
+      "role_and_limit": "Seed hash identique à B07 ; ne relancer ni 3.24 ni contrôle physique seed sous H1A."
+    },
+    {
+      "source_id": "EXT-S04",
+      "package_source_id": "S04",
+      "relative_path": "sources_fournies/00_PHASE_4_LIVRABLE_COMPLET_CANONIQUE_FINAL(1).docx",
+      "sha256": "0ec1443050ae9e20e8eab716aee3881dec5a4c3cd7d4366dff952c1fc859f8a7",
+      "size_bytes": 51957,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Compilation cumulative dont l'ouverture 4.1 est historique.",
+      "reading_scope": "Ouverture et section finale 4.15 lues, tables de clôture examinées.",
+      "role_and_limit": "4.15 conclut bien PASS/CLOSED ; ne bloquer ni rouvrir Phase 4 à cause de sa seule page d'ouverture. P13-001 reste une référence historique."
+    },
+    {
+      "source_id": "EXT-S05",
+      "package_source_id": "S05",
+      "relative_path": "sources_fournies/00_PHASE_5_LIVRABLE_COMPLET_CANONIQUE(1).docx",
+      "sha256": "3f682dcd9ef69165fa960a361c754a89e6da14f887584e9d1a3a698c12601337",
+      "size_bytes": 143017,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Compilation des contrats des services métier.",
+      "reading_scope": "Ouverture, limites et conclusion lues ; extraction structurée disponible hors dépôt.",
+      "role_and_limit": "Owners/services ne valent pas endpoints implémentés ; Phase 6 et décisions locales affinent interfaces/identités."
+    },
+    {
+      "source_id": "EXT-S06",
+      "package_source_id": "S06",
+      "relative_path": "sources_fournies/00_PHASE_6_LIVRABLE_COMPLET_CANONIQUE_FINAL(1).docx",
+      "sha256": "e8bf2b9e4ecff2ba2fc428fa839a320f150b58e699526c02f1ea60a1b653b838",
+      "size_bytes": 67372,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Compilation canonique PHASE-6-FINAL-1.0, 16 ADR de Phase 6.",
+      "reading_scope": "Texte et tableaux du corps entièrement lus (102 blocs structurels).",
+      "role_and_limit": "Z07 autorise framework/protocole dans inbound ; Z10 composition ; Domain/Application restent indépendants. Aucun framework concret imposé."
+    },
+    {
+      "source_id": "EXT-S07",
+      "package_source_id": "S07",
+      "relative_path": "sources_fournies/00_PHASE_7_LIVRABLE_COMPLET_CANONIQUE_FINAL-1.docx",
+      "sha256": "c257358bb9bf980a5c40d924637d257f16168a5b65baef75ab4c33aa1b7188d7",
+      "size_bytes": 43978,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Compilation finale persistance et choix sqlite3.",
+      "reading_scope": "Texte et tableaux du corps entièrement lus (93 blocs).",
+      "role_and_limit": "§10 décrit des fixtures historiques CANONICAL ; B06 actuel sépare disponibilité/canonicalité. Pas de retour à l'assimilation ancienne. 002/user runtime non déduites de cette source."
+    },
+    {
+      "source_id": "EXT-S08",
+      "package_source_id": "S08",
+      "relative_path": "sources_fournies/00_PHASE_8_LIVRABLE_COMPLET_CANONIQUE_FINAL(1).docx",
+      "sha256": "3de6051912a189f1e24831fa6f99cc0cc7fc1045d8eab6152bdcc604288a552d",
+      "size_bytes": 44199,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Compilation API ; sept annexes séparées non fournies.",
+      "reading_scope": "Texte et tableaux du corps entièrement lus (93 blocs), notamment §§8–11 et 17–18.",
+      "role_and_limit": "54 opérations, 52 path objects, 93 schemas, 49 liaisons UI/11 écrans ; 35 tests de spécification rapportés, 18 intégrations HTTP réelles non exécutées à cette phase. Aucun original OpenAPI reconstruit."
+    },
+    {
+      "source_id": "EXT-S09",
+      "package_source_id": "S09",
+      "relative_path": "sources_fournies/00_PHASE_9_LIVRABLE_COMPLET_CANONIQUE_FINAL(1).docx",
+      "sha256": "0122d31ab45ed051b43e43731933f225e30892ee9e4b8b8de46f5747714d620d",
+      "size_bytes": 81181,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Compilation architecture IA/RAG.",
+      "reading_scope": "Ouverture et statuts de compilation lus ; extraction structurée disponible.",
+      "role_and_limit": "Anciennes règles retrieval rapprochées d'ADR-P12-061/F2A ; provider jamais autorité métier ; aucun live autorisé ici."
+    },
+    {
+      "source_id": "EXT-S10",
+      "package_source_id": "S10",
+      "relative_path": "sources_fournies/00_PHASE_10_LIVRABLE_COMPLET_CANONIQUE_FINAL(1).docx",
+      "sha256": "52d2e0582853a63e1d74777694e2a9c87636a175fed56fac3934279c1bc1f77f",
+      "size_bytes": 180461,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Compilation de spécification validation/qualité.",
+      "reading_scope": "Ouverture, table 10.1–10.16 et conclusion lues.",
+      "role_and_limit": "SPÉCIFICATION CLÔTURÉE ne prouve pas contrôles exécutés sur produit ; RELEASE_THRESHOLD=NONE reste décision locale."
+    },
+    {
+      "source_id": "EXT-S11",
+      "package_source_id": "S11",
+      "relative_path": "sources_fournies/00_PHASE_11_LIVRABLE_COMPLET_CANONIQUE_FINAL(1).docx",
+      "sha256": "9a303daef5fbfd60696d486b6cbb02639e2bb685ad33721a78230678b0b3b293",
+      "size_bytes": 46937,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Compilation finale agents/orchestration.",
+      "reading_scope": "Texte et tableaux du corps entièrement lus (153 blocs).",
+      "role_and_limit": "P11-CORE préservé ; backlog 12-A..12-H, pas catalogue numéroté 12.1..12.18 ; frameworks ouverts à l'implémentation."
+    },
+    {
+      "source_id": "EXT-S12",
+      "package_source_id": "S12",
+      "relative_path": "sources_fournies/PROJET V2 Feuille de Route",
+      "sha256": "a6302abadcb919cdf1f14bb1343e668c9b4b82d877175bdc17c06b8c7e0b0e01",
+      "size_bytes": 41006,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Original PDF sans extension, identité attendue par H1 confirmée.",
+      "reading_scope": "Page unique lue et inspectée visuellement.",
+      "role_and_limit": "Vue macro historique positionnée en Phase 3, Phases 13/14 conservées comme références ; ne prime pas sur adaptation 12.18 récente."
+    },
+    {
+      "source_id": "EXT-S13",
+      "package_source_id": "S13",
+      "relative_path": "sources_fournies/PROJET_V2_DECISION_EXECUTION_NAVIGATEUR_LOCAL.md",
+      "sha256": "c75d98d572c1f1ccd6438bcbc32e30f5bc521d328c1e9b037432248df7f00936",
+      "size_bytes": 2456,
+      "identity_status": "VERIFIED_AGAINST_SOURCE_INDEX_AND_TWO_MANIFESTS",
+      "repository_presence": "NOT_IMPORTED",
+      "form": "Original Markdown de décision navigateur, identité attendue par H1 confirmée.",
+      "reading_scope": "Lecture complète.",
+      "role_and_limit": "Ferme la lacune d'identité/nomenclature navigateur ; ne prouve pas serveur/UI/recette ni approbation de l'évolution de guard."
+    }
+  ],
+  "source_gap_reconciliation": [
+    {
+      "source_expected": "Contrat/livrable 12.1",
+      "h1_source_id": "S01-12.1",
+      "expected_sha256": null,
+      "status": "NOT_IDENTIFIED",
+      "found": null,
+      "proof_required": "Contrat/livrable explicitement numéroté 12.1 ou décision de correspondance",
+      "action": "Ne pas renommer Phase 1 ni le §12.1 E2E de Phase 6 en sous-phase 12.1. Lacune conservée, pas obstacle inventé au READ-15 borné.",
+      "gaps": [
+        "S01"
+      ]
+    },
+    {
+      "source_expected": "PROJET_V2_DECISION_EXECUTION_NAVIGATEUR_LOCAL.md",
+      "h1_source_id": "S01-BROWSER",
+      "expected_sha256": "c75d98d572c1f1ccd6438bcbc32e30f5bc521d328c1e9b037432248df7f00936",
+      "status": "ORIGINAL_PRESENT_IDENTITY_CONFIRMED_EXTERNAL_ONLY",
+      "found": "EXT-S13",
+      "proof_required": "Original au hash attendu",
+      "action": "Rétablir critères/nomenclature dans la présente matrice ; H1 historique reste inchangé.",
+      "gaps": [
+        "S01",
+        "I01",
+        "I02",
+        "I06",
+        "I07",
+        "I08"
+      ]
+    },
+    {
+      "source_expected": "PROJET V2 Feuille de Route",
+      "h1_source_id": "S01-ROADMAP",
+      "expected_sha256": "a6302abadcb919cdf1f14bb1343e668c9b4b82d877175bdc17c06b8c7e0b0e01",
+      "status": "ORIGINAL_PRESENT_IDENTITY_CONFIRMED_HISTORICAL_MACRO",
+      "found": "EXT-S12",
+      "proof_required": "Original au hash attendu",
+      "action": "Conserver Phases 13/14 historiques ; S13 adapte clôture Phase 12 sans supprimer ces références ni clore tout le projet.",
+      "gaps": [
+        "S01"
+      ]
+    }
+  ],
+  "phase8_separate_artifacts": [
+    {
+      "source_expected": "PHASE_8_15_GATE_FINAL_CANONIQUE.xlsx",
+      "expected_sha256": null,
+      "source_parent": "EXT-S08",
+      "source_section": "18. Artefacts finaux et dépendances canoniques",
+      "status": "NOT_INCLUDED_NOT_FOUND_IN_BOUNDED_LOCAL_SEARCH",
+      "form": "SEPARATE_ORIGINAL_REQUIRED_NOT_REPLACED_BY_COMPILATION",
+      "gaps": [
+        "S01",
+        "I01",
+        "I02",
+        "I03",
+        "I04",
+        "I05",
+        "I08"
+      ],
+      "needed_for_first_increment": "NOT_IF_NEW_BOUNDED_READ15_CONTRACT_EXPLICITLY_APPROVED",
+      "needed_for_full_surface": "Original or separately approved versioned contract/disposition required before claiming 54-operation/11-screen conformity",
+      "action": "Retrieve original or approve D-SOURCE limited alternative; do not fabricate original hash, 35-test result or 18-test implementation."
+    },
+    {
+      "source_expected": "PHASE_8_11_OPENAPI_V2_CANONIQUE.yaml",
+      "expected_sha256": null,
+      "source_parent": "EXT-S08",
+      "source_section": "18. Artefacts finaux et dépendances canoniques",
+      "status": "NOT_INCLUDED_NOT_FOUND_IN_BOUNDED_LOCAL_SEARCH",
+      "form": "SEPARATE_ORIGINAL_REQUIRED_NOT_REPLACED_BY_COMPILATION",
+      "gaps": [
+        "S01",
+        "I01",
+        "I02",
+        "I03",
+        "I04",
+        "I05",
+        "I08"
+      ],
+      "needed_for_first_increment": "NOT_IF_NEW_BOUNDED_READ15_CONTRACT_EXPLICITLY_APPROVED",
+      "needed_for_full_surface": "Original or separately approved versioned contract/disposition required before claiming 54-operation/11-screen conformity",
+      "action": "Retrieve original or approve D-SOURCE limited alternative; do not fabricate original hash, 35-test result or 18-test implementation."
+    },
+    {
+      "source_expected": "PHASE_8_11_OPENAPI_V2_CANONIQUE.json",
+      "expected_sha256": null,
+      "source_parent": "EXT-S08",
+      "source_section": "18. Artefacts finaux et dépendances canoniques",
+      "status": "NOT_INCLUDED_NOT_FOUND_IN_BOUNDED_LOCAL_SEARCH",
+      "form": "SEPARATE_ORIGINAL_REQUIRED_NOT_REPLACED_BY_COMPILATION",
+      "gaps": [
+        "S01",
+        "I01",
+        "I02",
+        "I03",
+        "I04",
+        "I05",
+        "I08"
+      ],
+      "needed_for_first_increment": "NOT_IF_NEW_BOUNDED_READ15_CONTRACT_EXPLICITLY_APPROVED",
+      "needed_for_full_surface": "Original or separately approved versioned contract/disposition required before claiming 54-operation/11-screen conformity",
+      "action": "Retrieve original or approve D-SOURCE limited alternative; do not fabricate original hash, 35-test result or 18-test implementation."
+    },
+    {
+      "source_expected": "PHASE_8_12_CONTRACT_TEST_SUITE_CANONIQUE.zip",
+      "expected_sha256": null,
+      "source_parent": "EXT-S08",
+      "source_section": "18. Artefacts finaux et dépendances canoniques",
+      "status": "NOT_INCLUDED_NOT_FOUND_IN_BOUNDED_LOCAL_SEARCH",
+      "form": "SEPARATE_ORIGINAL_REQUIRED_NOT_REPLACED_BY_COMPILATION",
+      "gaps": [
+        "S01",
+        "I01",
+        "I02",
+        "I03",
+        "I04",
+        "I05",
+        "I08"
+      ],
+      "needed_for_first_increment": "NOT_IF_NEW_BOUNDED_READ15_CONTRACT_EXPLICITLY_APPROVED",
+      "needed_for_full_surface": "Original or separately approved versioned contract/disposition required before claiming 54-operation/11-screen conformity",
+      "action": "Retrieve original or approve D-SOURCE limited alternative; do not fabricate original hash, 35-test result or 18-test implementation."
+    },
+    {
+      "source_expected": "PHASE_8_12_PYTEST_JUNIT_CANONIQUE.xml",
+      "expected_sha256": null,
+      "source_parent": "EXT-S08",
+      "source_section": "18. Artefacts finaux et dépendances canoniques",
+      "status": "NOT_INCLUDED_NOT_FOUND_IN_BOUNDED_LOCAL_SEARCH",
+      "form": "SEPARATE_ORIGINAL_REQUIRED_NOT_REPLACED_BY_COMPILATION",
+      "gaps": [
+        "S01",
+        "I01",
+        "I02",
+        "I03",
+        "I04",
+        "I05",
+        "I08"
+      ],
+      "needed_for_first_increment": "NOT_IF_NEW_BOUNDED_READ15_CONTRACT_EXPLICITLY_APPROVED",
+      "needed_for_full_surface": "Original or separately approved versioned contract/disposition required before claiming 54-operation/11-screen conformity",
+      "action": "Retrieve original or approve D-SOURCE limited alternative; do not fabricate original hash, 35-test result or 18-test implementation."
+    },
+    {
+      "source_expected": "PHASE_8_13_MATRICE_FRONTEND_ENDPOINTS_CANONIQUE.xlsx",
+      "expected_sha256": null,
+      "source_parent": "EXT-S08",
+      "source_section": "18. Artefacts finaux et dépendances canoniques",
+      "status": "NOT_INCLUDED_NOT_FOUND_IN_BOUNDED_LOCAL_SEARCH",
+      "form": "SEPARATE_ORIGINAL_REQUIRED_NOT_REPLACED_BY_COMPILATION",
+      "gaps": [
+        "S01",
+        "I01",
+        "I02",
+        "I03",
+        "I04",
+        "I05",
+        "I08"
+      ],
+      "needed_for_first_increment": "NOT_IF_NEW_BOUNDED_READ15_CONTRACT_EXPLICITLY_APPROVED",
+      "needed_for_full_surface": "Original or separately approved versioned contract/disposition required before claiming 54-operation/11-screen conformity",
+      "action": "Retrieve original or approve D-SOURCE limited alternative; do not fabricate original hash, 35-test result or 18-test implementation."
+    },
+    {
+      "source_expected": "PHASE_8_14_AUDIT_TRANSVERSAL_RATIONALISATION_CANONIQUE.xlsx",
+      "expected_sha256": null,
+      "source_parent": "EXT-S08",
+      "source_section": "18. Artefacts finaux et dépendances canoniques",
+      "status": "NOT_INCLUDED_NOT_FOUND_IN_BOUNDED_LOCAL_SEARCH",
+      "form": "SEPARATE_ORIGINAL_REQUIRED_NOT_REPLACED_BY_COMPILATION",
+      "gaps": [
+        "S01",
+        "I01",
+        "I02",
+        "I03",
+        "I04",
+        "I05",
+        "I08"
+      ],
+      "needed_for_first_increment": "NOT_IF_NEW_BOUNDED_READ15_CONTRACT_EXPLICITLY_APPROVED",
+      "needed_for_full_surface": "Original or separately approved versioned contract/disposition required before claiming 54-operation/11-screen conformity",
+      "action": "Retrieve original or approve D-SOURCE limited alternative; do not fabricate original hash, 35-test result or 18-test implementation."
+    }
+  ],
+  "search_scope": {
+    "targets": [
+      {
+        "name": "PHASE_8_15_GATE_FINAL_CANONIQUE.xlsx",
+        "repo_matches": [],
+        "desktop_project_present": false,
+        "downloads_exact_present": false
+      },
+      {
+        "name": "PHASE_8_11_OPENAPI_V2_CANONIQUE.yaml",
+        "repo_matches": [],
+        "desktop_project_present": false,
+        "downloads_exact_present": false
+      },
+      {
+        "name": "PHASE_8_11_OPENAPI_V2_CANONIQUE.json",
+        "repo_matches": [],
+        "desktop_project_present": false,
+        "downloads_exact_present": false
+      },
+      {
+        "name": "PHASE_8_12_CONTRACT_TEST_SUITE_CANONIQUE.zip",
+        "repo_matches": [],
+        "desktop_project_present": false,
+        "downloads_exact_present": false
+      },
+      {
+        "name": "PHASE_8_12_PYTEST_JUNIT_CANONIQUE.xml",
+        "repo_matches": [],
+        "desktop_project_present": false,
+        "downloads_exact_present": false
+      },
+      {
+        "name": "PHASE_8_13_MATRICE_FRONTEND_ENDPOINTS_CANONIQUE.xlsx",
+        "repo_matches": [],
+        "desktop_project_present": false,
+        "downloads_exact_present": false
+      },
+      {
+        "name": "PHASE_8_14_AUDIT_TRANSVERSAL_RATIONALISATION_CANONIQUE.xlsx",
+        "repo_matches": [],
+        "desktop_project_present": false,
+        "downloads_exact_present": false
+      }
+    ],
+    "phase_12_1_filenames": [],
+    "desktop_project_subdirectories": [],
+    "scope": "REPO_TRACKED_AND_UNIGNORED_PLUS_EXACT_PROJECT_AND_INTAKE_NAMES_NO_DRIVE_ACCESS"
+  },
+  "gaps": [
+    {
+      "id": "S01",
+      "title_exact_h1": "Sources canoniques 12.1 et critères détaillés 12.18 non authentifiés",
+      "h1_status_preserved": true,
+      "status": "PARTIALLY_RESOLVED_SOURCE_IDENTITY_ONLY",
+      "sources": [
+        "EXT-S12",
+        "EXT-S13",
+        "EXT-S06",
+        "EXT-S08",
+        "EXT-S11"
+      ],
+      "finding": "Décision navigateur et macro restaurées avec hashes attendus. Contrat/livrable 12.1 non identifié ; sept annexes Phase 8 non retrouvées. Ne pas confondre EXT-S01 (Phase 1) avec cet écart.",
+      "action": "Décision D-SOURCE : retenir sources réconciliées et, pour le seul premier incrément, contrat borné nouveau distinct des originaux absents."
+    },
+    {
+      "id": "I01",
+      "title_exact_h1": "Serveur/composition produit absent et guard global d'absence serveur",
+      "h1_status_preserved": true,
+      "status": "SPECIFIED_CHANGE_PROPOSED_NOT_APPROVED",
+      "sources": [
+        "EXT-S06",
+        "EXT-S08",
+        "EXT-S13"
+      ],
+      "finding": "Absence de serveur est le scope B04 explicite, non interdiction durable dans Phase 6/8. Trois fichiers/four nodeids/six assertions doivent évoluer selon ADR-P12-069 proposée.",
+      "action": "Décision D-GUARD ; aucun guard modifié."
+    },
+    {
+      "id": "I02",
+      "title_exact_h1": "Frontend, lanceur simple et package absents",
+      "h1_status_preserved": true,
+      "status": "IMPLEMENTATION_MISSING",
+      "sources": [
+        "EXT-S00",
+        "EXT-S08",
+        "EXT-S13"
+      ],
+      "finding": "Interface/launcher absents. Proposition HTML/CSS/JS same-origin et HTTP stdlib pour incrément local ; pas une architecture déjà approuvée ni package final.",
+      "action": "Décision D-INCREMENT puis implementation ; H3A package reste distinct."
+    },
+    {
+      "id": "I03",
+      "title_exact_h1": "READ-15 implémenté côté Application mais aucun endpoint HTTP enregistré",
+      "h1_status_preserved": true,
+      "status": "APPLICATION_READY_TRANSPORT_CONTRACT_TO_APPROVE",
+      "sources": [
+        "EXT-S06",
+        "EXT-S08"
+      ],
+      "finding": "READ-15/ResourceRef/availability_status/dépréciations déjà décidés ; enveloppe et exposition bornées proposées, pas original OpenAPI récupéré.",
+      "action": "D-SOURCE/READ15-HTTP-LOCAL-1.0 ; brancher les owners existants, pas réécrire le métier."
+    },
+    {
+      "id": "I04",
+      "title_exact_h1": "Composition des workflows et trois owners Application différés",
+      "h1_status_preserved": true,
+      "status": "CAPABILITIES_STILL_MISSING",
+      "sources": [
+        "EXT-S05",
+        "EXT-S06",
+        "EXT-S11"
+      ],
+      "finding": "CAP-R02/A01/A02 et complétion produit non livrés par les documents ; ownership existant maintenu.",
+      "action": "Hors premier incrément ; conserver l'ordre CAP-R02 puis CAP-A01 puis CAP-A02 et fermer leurs contrats avant leur développement."
+    },
+    {
+      "id": "I05",
+      "title_exact_h1": "Politique HTTP active limitée à GET/HEAD",
+      "h1_status_preserved": true,
+      "status": "GET_HEAD_POLICY_RETAINED_COMMAND_CONTRACT_STILL_MISSING",
+      "sources": [
+        "EXT-S08",
+        "EXT-S13"
+      ],
+      "finding": "Le premier incrément n'ouvre aucune commande HTTP. GET/HEAD et preflight strict conservés ; source générale sur mutations n'autorise pas de POST générique.",
+      "action": "Contrat versionné futur pour commandes ; aucune évolution de méthodes dans l'ADR proposée."
+    },
+    {
+      "id": "I06",
+      "title_exact_h1": "Runtime utilisateur et configuration de lancement non vérifiées dans H1",
+      "h1_status_preserved": true,
+      "status": "USER_RUNTIME_NOT_VERIFIED_NO_ACCESS",
+      "sources": [
+        "EXT-S03",
+        "EXT-S07",
+        "EXT-S13"
+      ],
+      "finding": "002 prouvée sur copies, non vérifiée chez l'utilisateur ; le backup B04 nettoyé n'est pas disponible. Premier incrément proposé sur fixtures synthétiques temporaires uniquement.",
+      "action": "Autorisation distincte pour toute cible réelle, preuve identité/backup/recovery avant migration éventuelle."
+    },
+    {
+      "id": "I07",
+      "title_exact_h1": "Observabilité et fermeture pas raccordées à un serveur produit",
+      "h1_status_preserved": true,
+      "status": "WIRING_AND_ACCEPTANCE_MISSING",
+      "sources": [
+        "EXT-S06",
+        "EXT-S13"
+      ],
+      "finding": "OBS_A et session implémentés, lifecycle serveur non raccordé ; aucune nouvelle policy nécessaire.",
+      "action": "Raccorder session/corrélation/fermeture dans composition H2, réutiliser tests B03."
+    },
+    {
+      "id": "I08",
+      "title_exact_h1": "Preuves de tests/doubles et live historique ne constituent pas recette produit",
+      "h1_status_preserved": true,
+      "status": "PRODUCT_ACCEPTANCE_AND_LIVE_NOT_PROVEN",
+      "sources": [
+        "EXT-S08",
+        "EXT-S10",
+        "EXT-S11",
+        "EXT-S13"
+      ],
+      "finding": "Les 18 tests live de Phase 8 sont des intégrations HTTP, pas une autorisation provider. Doubles/calibration historique ne valent pas recette produit.",
+      "action": "Recette locale puis doubles distincts ; réseau/provider et transferts seulement sur nouvelles autorisations si requis."
+    }
+  ],
+  "restored_acceptance_criteria": [
+    {
+      "id": "LOCAL_BROWSER_EXECUTION",
+      "source": "EXT-S13 / Décision et Architecture cible",
+      "criterion": "Navigateur local accepté ; backend local, lanceur simple et interface ; aucun .exe/MSI obligatoire.",
+      "status": "SOURCE_RESTORED_ACCEPTANCE_NOT_RUN"
+    },
+    {
+      "id": "BACKEND_STARTUP",
+      "source": "EXT-S13 / Conditions et H3B 1–3,8–9",
+      "criterion": "Backend démarre localement ; URL donnée ou navigateur automatique ; arrêt et redémarrage propres.",
+      "status": "SOURCE_RESTORED_ACCEPTANCE_NOT_RUN"
+    },
+    {
+      "id": "FRONTEND_ACCESS",
+      "source": "EXT-S13 / Conditions et H3B 3–4",
+      "criterion": "Interface ouverte et fonctionnelle dans le navigateur.",
+      "status": "SOURCE_RESTORED_ACCEPTANCE_NOT_RUN"
+    },
+    {
+      "id": "LOCAL_DATA_RUNTIME",
+      "source": "EXT-S13 / Conditions et H3B 5–6,10",
+      "criterion": "Seed immuable, runtime distincte, migrations runtime seulement, chemins configurables/portables, aucun stockage cloud requis.",
+      "status": "SOURCE_RESTORED_USER_RUNTIME_NOT_VERIFIED"
+    },
+    {
+      "id": "END_TO_END_ACCEPTANCE",
+      "source": "EXT-S13 / Conditions et H3B 7",
+      "criterion": "Au moins un scénario pédagogique représentatif validé de bout en bout ; logs exploitables, credentials optionnels et absence fail-closed.",
+      "status": "SOURCE_RESTORED_ACCEPTANCE_NOT_RUN"
+    }
+  ],
+  "supersessions": [
+    {
+      "old": "S07 §10 identity_status=CANONICAL fixture history; B09 identity_status handoff",
+      "current": "B06 availability_status and independent canonicality",
+      "local_evidence": {
+        "path": "docs/development/phase_12_17_05b_b06_active_canonical_semantics/07_API_HANDOFF_ALIGNMENT.md",
+        "sha256": "731ad348a84ed669329856a09442c059fb027c50b0d058a5fab97995f2cb82f6"
+      },
+      "action": "Preserve source; use current contract, never infer CANONICAL from ACTIVE."
+    },
+    {
+      "old": "READ15 version_ref/include previously deferred",
+      "current": "DEPRECATED_FOR_ACTIVE_READ15 rejected",
+      "local_evidence": {
+        "path": "docs/development/phase_12_17_05b_b05_resource_ref_contract/06_API_HANDOFF_ALIGNMENT.md",
+        "sha256": "a335e1ab8c229bea38ded0ac75b28660fc8d1fd7c996a5a6a634a26c3b1c6a65"
+      },
+      "action": "No new owner vote; no silent legacy query support."
+    },
+    {
+      "old": "S09 structured-first retrieval phrasing",
+      "current": "Explicit EvidenceAdmissibilityPort and F2A decoupling",
+      "local_evidence": {
+        "path": "architecture/adr/ADR-P12-061-retrieval-admissibility-decoupling.md",
+        "sha256": "9e321dfefc7e7f5bae2d5a263b9af047be18a7eced8845b8da08ff136aeb9d31"
+      },
+      "action": "No rollback of current admission policy."
+    },
+    {
+      "old": "S04 opening current-step 4.1",
+      "current": "Same compilation §4.15 PASS/CLOSED",
+      "local_evidence": null,
+      "external_evidence": "EXT-S04 / §4.15",
+      "action": "Chronology within compilation, not missing final closure."
+    },
+    {
+      "old": "S12 macro Phases 13/14",
+      "current": "S13 H3A/B/C for local Phase12 delivery",
+      "local_evidence": {
+        "path": "docs/development/PHASE_12_13_LIVRABLE_COMPLET_CANONIQUE_FINAL.md",
+        "sha256": "d60f905baf43ce12000a62a1687402eb63c1f8bc14e691470600e261b94fcc9d"
+      },
+      "action": "No deletion/recreation of historical phases, no project-wide closure inferred."
+    }
+  ],
+  "guard_bindings": [
+    {
+      "path": "tests/architecture/test_local_browser_http_boundary_fitness.py",
+      "sha256": "d324d383351cce3039225a8439338f6059abbd2b34bebf286b0e29b8933d56e6",
+      "last_commit": "b63a1463046141512739e4c8f4618ab967002c78"
+    },
+    {
+      "path": "tests/architecture/test_minimal_local_observability_fitness.py",
+      "sha256": "87adef3498b85d2bf9f9c462b8b493b29b4d6a474c36976ba775297fde249d7e",
+      "last_commit": "2650ae7616fc7067e6c6341f854a10efee633d6f"
+    },
+    {
+      "path": "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+      "sha256": "9b7d9a25430a41dd5a1c6696b11d582dbfe37d7b5cf425ccc0946d6baf37b501",
+      "last_commit": "b63a1463046141512739e4c8f4618ab967002c78"
+    },
+    {
+      "path": "backend/adapters/inbound/api/local_browser.py",
+      "sha256": "cc7ee88ebbb41d17feb301c9707d1ab05efe3d1fa3118be8612c1b4c735d1148",
+      "last_commit": "b63a1463046141512739e4c8f4618ab967002c78"
+    },
+    {
+      "path": "backend/infrastructure/config/schemas/http.py",
+      "sha256": "511336250f3a3274fe4f2f17f328771111250b0ec916a4e18723abc6b4ecf298",
+      "last_commit": "b63a1463046141512739e4c8f4618ab967002c78"
+    }
+  ],
+  "adr_proposed": "ADR-P12-069",
+  "adr_number_inventory": "ADR-P12-001..068 observed, 069 not found in architecture or development docs before proposal; recheck at any later promotion.",
+  "readiness": "READY_FOR_SINGLE_OWNER_REVIEW_NOT_H2_AUTHORIZED",
+  "technical_gaps_closed": 0,
+  "technical_tests_executed": 0,
+  "source_reading_limit": "Targeted reconciliation, not exhaustive re-audit of all 0–11 rules or visual certification of DOCX layouts. No binary source imported.",
+  "boundaries": {
+    "H2_started": false,
+    "guard_modified": false,
+    "code_or_config_modified": 0,
+    "sqlite_accessed_or_written": 0,
+    "provider_calls": 0,
+    "network_calls": 0,
+    "credentials_read": 0,
+    "staging": false,
+    "commit": false,
+    "push": false,
+    "merge": false
+  },
+  "local_reference_bindings": [
+    {
+      "path": "architecture/adr/ADR-P12-001-python-runtime-baseline.md",
+      "sha256": "543483724b2e8fab4022d8aa666faf376e0ab149910086a010ef40584d03c1ab"
+    },
+    {
+      "path": "architecture/adr/ADR-P12-068-active-calibration-tooling-boundary.md",
+      "sha256": "4cac693a66d09bf5708b050eceeb82f9e249dbd1f32537d6b312cba8c4a6ffbd"
+    },
+    {
+      "path": "docs/development/ENVIRONMENT.md",
+      "sha256": "b0eac827ddc3eda533a3587da1c65e9bc2ba4c638f0da3db85eb477655ab7701"
+    },
+    {
+      "path": "docs/development/phase_12_17_08_b04_local_browser_http_fail_closed/01_B04_SCOPE_RESOLUTION.md",
+      "sha256": "a53f74cbaf7f2389e93d33043faf0d8d2e4f125c839d4a6ebe6198d23028f37d"
+    },
+    {
+      "path": "docs/development/phase_12_17_08_b04_local_browser_http_fail_closed/07_FRONTEND_LOCAL_BROWSER_ASSUMPTIONS.md",
+      "sha256": "659fd6786fdbf63bf85977d4d4027a0ef11a01dd031f5db6a2e1892a72ee8a50"
+    },
+    {
+      "path": "docs/development/phase_12_17_08_b04_local_browser_http_fail_closed/08_IMPLEMENTATION_EVIDENCE.md",
+      "sha256": "f0d8079f58bfb0ad4c97bb01d15e9ecc2ff833bf5fb9a7d672ff327086998609"
+    },
+    {
+      "path": "docs/development/phase_12_17_08_b03_minimal_local_observability/08_IMPLEMENTATION_EVIDENCE.md",
+      "sha256": "5f8ea2d3551c15a640f244a42877c54295c089c5a4e37fa15694ccea0b0b417b"
+    },
+    {
+      "path": "docs/development/phase_12_17_08_closure/13_RESUMED_GLOBAL_EVIDENCE.json",
+      "sha256": "108b2d55d1e623afd1ef1311cc363c9f74da12183786be2bda2dcbe6318ed4e5"
+    },
+    {
+      "path": "docs/development/phase_12_17_08_closure/MANIFEST_SHA256.txt",
+      "sha256": "8dd32e9eda71dc86ba3bd3dd740291b85f172630bd979807d9558d8b686fde5b"
+    },
+    {
+      "path": "docs/development/phase_12_17_04e_b09_legacy_review_api_handoff/API_HANDOFF.json",
+      "sha256": "92165fbc6d83c8314b8aaf7d538a9c9f64ec859ace199803c1c41ecb6a859266"
+    },
+    {
+      "path": "backend/adapters/inbound/application/resource_library.py",
+      "sha256": "0145faffd8a18f0fc45b1bbe7f857f7ac8f8e3ba79f9a225663a40f4e727cc92"
+    },
+    {
+      "path": "backend/modules/resource_library/application/queries/get_resource.py",
+      "sha256": "6b41c71002c025d46f8d75b9ee40374ba36992bc62b06ebca91adc67ccffa4c7"
+    },
+    {
+      "path": "backend/modules/resource_library/ports/inbound/resource_library.py",
+      "sha256": "06d6f5806042d0c1e7a7f3e6ac342c2e97354fcceaf8ffd1455c6f46803eb9fb"
+    },
+    {
+      "path": "backend/infrastructure/composition/factories/sqlite.py",
+      "sha256": "c5be08b4d30732342a804ff33f5f81eb80291083e5ce9effd1b376929f163e6d"
+    },
+    {
+      "path": "backend/infrastructure/composition/bootstrap/observability.py",
+      "sha256": "c6fcacd9ec6f49b54b31acd12c204747ea5160262d76da171f0dfed4b3f35bcc"
+    },
+    {
+      "path": "requirements/lock/runtime-py312-win.txt",
+      "sha256": "47540b39687a39f627c76e138596abfa752792fa54cef439660c5daba9665a63"
+    },
+    {
+      "path": "requirements/lock/dev-py312-win.txt",
+      "sha256": "30a3ceec14d10432cd45f4ddddcd54868dd6da55001c8a74c6d125eac97a6c65"
+    },
+    {
+      "path": "requirements/lock/calibration-py312-win.txt",
+      "sha256": "e044cdb328a65f0d24ad4e82868171c6f96f7ef1e6cbcd6be78d402e3e8d7960"
+    }
+  ],
+  "guard_protection_check": {
+    "b07_protected_record_count": 48,
+    "affected_guard_membership": [
+      {
+        "path": "tests/architecture/test_local_browser_http_boundary_fitness.py",
+        "in_b07_protected_records": false
+      },
+      {
+        "path": "tests/architecture/test_minimal_local_observability_fitness.py",
+        "in_b07_protected_records": false
+      },
+      {
+        "path": "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+        "in_b07_protected_records": false
+      }
+    ],
+    "historical_reference_policy": "Keep historical H1/B03/B04/F manifests and tests at their historical commits; future approved evolution gets a separate PRE/POST binding, not a rewritten proof."
+  }
+}

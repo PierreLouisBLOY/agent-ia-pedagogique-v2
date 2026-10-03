@@ -33,12 +33,12 @@ from backend.infrastructure.filesystem import (
     resolve_secure_path,
 )
 
-CANONICAL_SEED_SIZE = 105_553_920
-CANONICAL_SEED_SHA256 = "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134"
-CANONICAL_SEED_TABLES = 98
-CANONICAL_SEED_EXPLICIT_INDEXES = 20
+CANONICAL_SEED_SIZE = 227_557_376
+CANONICAL_SEED_SHA256 = "9d64d15e9c246924edeff16e7bbb5fb7a53791fc2ddf217541824771b34053e1"
+CANONICAL_SEED_TABLES = 121
+CANONICAL_SEED_EXPLICIT_INDEXES = 23
 CANONICAL_SEED_TRIGGERS = 7
-CANONICAL_SEED_VIEWS = 2
+CANONICAL_SEED_VIEWS = 11
 MIGRATION_VERSION = "001"
 MIGRATION_001_SHA256 = "5b4c603d19e9eb195ca1d0d19d5e6755d136d6d13399aeb33c0e90b5bb9b0102"
 MIGRATION_001_NAME = "document-sha256-check"
@@ -743,6 +743,37 @@ def _existing_migrations_are_current(
             artifact.version for artifact in artifacts if artifact.applicable
         )
         return applied == expected
+
+
+def inspect_migration_history(
+    path: Path, registry: MigrationRegistry
+) -> tuple[tuple[str, str], ...]:
+    """Read the validated migration ledger through the persistence adapter."""
+
+    artifacts = registry.load_artifacts()
+    with closing(connect_sqlite(path, readonly=True)) as connection:
+        ledger_exists = connection.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+            (LEDGER_TABLE,),
+        ).fetchone()
+        if ledger_exists is None:
+            return ()
+        versions = _validate_migration_history(connection, artifacts)
+        return tuple(
+            (version, next(item.checksum for item in artifacts if item.version == version))
+            for version in versions
+        )
+
+
+def apply_registered_migrations(
+    path: Path, registry: MigrationRegistry
+) -> MigrationSequenceResult:
+    """Apply an already-authenticated registry to an adapter-owned runtime."""
+
+    with closing(connect_sqlite(path)) as connection:
+        result = apply_migrations(connection, registry)
+        connection.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        return result
 
 
 def _temporary_path(parent: Path, *, prefix: str, data_root: Path) -> Path:

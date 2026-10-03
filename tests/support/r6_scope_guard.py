@@ -10,8 +10,8 @@ BASELINE = "5bdd49be35149a7134e866fa4473926b65a5ee69"
 ROOT = Path(__file__).resolve().parents[2]
 SELF = "tests/support/r6_scope_guard.py"
 MANIFEST = "tests/support/r6_scope_manifest.json"
-SELF_SHA256 = "f8c7baaebbf0315aa098eee6518a9a861a86c3c2e846aefd8ccb82cd337715e1"
-MANIFEST_SHA256 = "aecc27a10365426145513353ba293a380b2501b2aa9ff69e8930368f12ea4b05"
+SELF_SHA256 = "ab446fe66374921e22aac873546067ee703fdc0094696132c987a2182ebc38cf"
+MANIFEST_SHA256 = "0b4b2962896606de09564c7b6115e3429f9d5d02899298bf4e1dba8969825b08"
 
 
 def digest(raw: bytes) -> str:
@@ -93,6 +93,21 @@ def violations(root: Path = ROOT, *, changed: set[str] | None = None) -> list[st
         allowed = set(cp645) | set(r6)
         errors.extend("R6_UNAPPROVED:" + path for path in sorted(changed - allowed))
         errors.extend("R6_MISSING:" + path for path in sorted(allowed - changed))
+    return errors
+
+
+def active_delta_violations(root: Path, changed: set[str]) -> list[str]:
+    """Authenticate the declared fabrication delta separately from protected reuse."""
+    errors = violations(root)
+    if errors:
+        return errors
+    value = _manifest(root)
+    declared = set(value["active_delta_paths"])
+    protected = set(value["sha256"]) | {SELF, MANIFEST}
+    if not declared <= protected:
+        return ["R6_ACTIVE_DELTA_NOT_PROTECTED"]
+    errors.extend("R6_ACTIVE_UNAPPROVED:" + p for p in sorted(changed - declared))
+    errors.extend("R6_ACTIVE_MISSING:" + p for p in sorted(declared - changed))
     return errors
 
 

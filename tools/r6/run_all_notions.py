@@ -15,13 +15,7 @@ from typing import Any
 _REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(_REPOSITORY_ROOT))
 
-from backend.adapters.inbound.application.local_search import (
-    SEARCH_USE_CASE_ID,
-    LocalSearchUseCaseInbound,
-)
-from backend.adapters.outbound.persistence.sqlite import connect_sqlite
-from backend.adapters.outbound.resource_library.sqlite import SQLiteResourceStoreAdapter
-from backend.adapters.outbound.search.local import SQLiteLocalSearchAdapter
+from backend.adapters.inbound.application.exact_notion_evidence import ExactNotionEvidenceInbound
 from backend.agent_runtime.agents.generation.generation_coordination_model import (
     GenerationPreparationRequest,
 )
@@ -38,16 +32,13 @@ from backend.agent_runtime.contracts import (
     ContractMeta,
     InvocationStatus,
     ProductionRequest,
-    UseCaseRequest,
 )
 from backend.core_contracts.capability import CapabilityId
-from backend.core_contracts.invocation import UseCaseContext
 from backend.infrastructure.composition.factories.local_browser import Read15RuntimeTarget
 from backend.infrastructure.composition.factories.r6_all_notions import (
     enumerate_canonical_notions,
+    exact_notion_evidence,
 )
-from backend.modules.resource_library.application.queries.get_resource import GetResourceQuery
-from backend.modules.resource_library.application.queries.search_local import SearchLocalQuery
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.time import Instant
 
@@ -80,26 +71,6 @@ def _json_bytes(value: object) -> bytes:
     return (
         json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
     ).encode("utf-8")
-
-
-def _use_case_request(index: int, label: str) -> UseCaseRequest:
-    correlation = CorrelationId(f"r6-notion-{index:04d}")
-    meta = ContractMeta(
-        schema_version=AGENT_CONTRACT_SCHEMA_V1_0,
-        run_id="r6-all-notions-campaign",
-        step_id=f"search-{index:04d}",
-        parent_step_id=None,
-        correlation_id=correlation,
-        created_at=Instant(datetime(2026, 10, 3, tzinfo=UTC)),
-        actor=ActorRef(ActorKind.APPLICATION, "r6-all-notions-campaign"),
-        status=InvocationStatus.PLANNED,
-    )
-    return UseCaseRequest(
-        meta=meta,
-        use_case_id=SEARCH_USE_CASE_ID,
-        payload={"q": label, "limit": 20},
-        actor_context=UseCaseContext(correlation),
-    )
 
 
 def _prepare_ag03(
@@ -171,23 +142,12 @@ def _prepare_ag03(
 
 
 def _run_one(
-    index: int, notion: Any, inbound: LocalSearchUseCaseInbound, search: SQLiteLocalSearchAdapter
+    index: int, notion: Any, inbound: ExactNotionEvidenceInbound
 ) -> dict[str, object]:
     try:
-        with search.read_snapshot():
-            response = inbound.invoke(request=_use_case_request(index, notion.canonical_label))
-        outcome = response.outcome
-        if (
-            response.use_case_id != SEARCH_USE_CASE_ID
-            or response.meta.correlation_id != outcome.correlation_id
-            or not outcome.success
-            or outcome.data is None
-            or outcome.side_effects
-            or outcome.business_errors
-            or outcome.application_failure is not None
-        ):
-            raise ValueError("R6_APPLICATION_SEARCH_OUTCOME_INVALID")
-        data = outcome.data
+        data = inbound.inspect(notion.notion_id)
+        if data.get("status") != "CANONICAL":
+            raise ValueError("R6_EXACT_CANONICAL_IDENTITY_UNAVAILABLE")
         if not isinstance(data, dict) or not isinstance(data.get("items"), list):
             raise ValueError("R6_APPLICATION_SEARCH_SHAPE_INVALID")
         items = data["items"]
@@ -268,7 +228,7 @@ def _run_one(
             else "ERROR"
         )
         if not exact:
-            reason = "Exact canonical identity was not returned by Application search."
+            reason = "Exact canonical identity has no admitted CURRENT passage."
         elif not related:
             reason = "Only the canonical label was retrieved; supporting current linked content is missing."
         elif not valid_provenance:
@@ -282,6 +242,7 @@ def _run_one(
         return {
             "notion_id": notion.notion_id,
             "canonical_label": notion.canonical_label,
+            "retrieval_path": "EXACT_ID_AND_EXPLICIT_LINKS",
             "identity_status": identity_status,
             "source_or_provenance_status": "PASS" if exact and valid_provenance else "CONTENT_GAP",
             "retrieval_status": retrieval_status,
@@ -357,16 +318,10 @@ def run(database: Path, output_dir: Path) -> dict[str, object]:
     ]
     universe_bytes = _json_bytes(universe)
     output_dir.mkdir(parents=True, exist_ok=True)
-    connection = connect_sqlite(database, readonly=True, allowed_root=target.data_root)
-    search = SQLiteLocalSearchAdapter(connection)
-    resources = SQLiteResourceStoreAdapter(connection)
-    inbound = LocalSearchUseCaseInbound(SearchLocalQuery(search, GetResourceQuery(resources)))
     results: list[dict[str, object]] = []
-    try:
+    with exact_notion_evidence(target) as inbound:
         for index, notion in enumerate(notions, start=1):
-            results.append(_run_one(index, notion, inbound, search))
-    finally:
-        connection.close()
+            results.append(_run_one(index, notion, inbound))
     target.validate()
     result_bytes = b"".join(_json_bytes(result) for result in results)
     universe_path = output_dir / "258_R6_ALL_NOTIONS_UNIVERSE.json"
@@ -407,9 +362,12 @@ def run(database: Path, output_dir: Path) -> dict[str, object]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--database", type=Path, default=Path(os.environ["PROJET_V2_CANONICAL_DB"]))
+    configured = os.environ.get("PROJET_V2_CANONICAL_DB")
+    parser.add_argument("--database", type=Path, default=Path(configured) if configured else None)
     parser.add_argument("--output-dir", type=Path, default=Path(__file__).resolve().parent)
     args = parser.parse_args()
+    if args.database is None:
+        parser.error("--database or PROJET_V2_CANONICAL_DB is required")
     summary = run(args.database, args.output_dir)
     print(json.dumps(summary, ensure_ascii=True, sort_keys=True))
     return (

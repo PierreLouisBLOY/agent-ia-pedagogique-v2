@@ -63,6 +63,14 @@ class SavedProductionInbound:
         self.clock = clock
         self.pending: dict[str, GateRequest] = {}
 
+    def admit_documentary(self, record: SavedProduction) -> dict[str, object]:
+        """Offline import of a typed documentary projection, restoring no authority."""
+        if type(record) is not SavedProduction or record.data["origin"] != "IMPORTED_DOCUMENTARY":
+            raise ValueError("R4_DOCUMENTARY_IMPORT_REQUIRED")
+        if record.data["reviews"] or record.data["validations"]:
+            raise ValueError("R4_DOCUMENTARY_REPORT_ADMISSION_REQUIRED")
+        return self.service.save(record)
+
     def execute(self, operation: str, production_ref: str = "", version_ref: str = "",
                 *, body: Mapping[str, object] | None = None, kind: str = "",
                 correlation: str) -> dict[str, object] | bytes:

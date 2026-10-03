@@ -81,6 +81,10 @@ def test_r6_scope_guard_covers_exact_current_baseline_delta() -> None:
 @pytest.mark.parametrize("path", [
     "database/reference/CP645.json",
     "backend/infrastructure/composition/factories/r6_p0.py",
+    "backend/adapters/outbound/resource_library/exact_notion_evidence.py",
+    "backend/adapters/outbound/resource_library/boreal_documentary.py",
+    "backend/adapters/inbound/application/saved_production.py",
+    "tools/r6/run_all_notions.py",
 ])
 def test_r6_scope_guard_rejects_mutated_exact_artifact(tmp_path: Path, path: str) -> None:
     from tests.support import r6_scope_guard as guard
@@ -108,3 +112,17 @@ def test_cp645_index_substitution_is_rejected() -> None:
         raw = (ROOT / path).read_bytes()
         assert guard.index_matches(ROOT, path, raw)
         assert not guard.index_matches(ROOT, path, raw + b"\n# substituted index\n")
+
+
+def test_active_successor_delta_rejects_missing_and_extra_paths() -> None:
+    from tests.support import r6_scope_guard as guard
+
+    manifest = json.loads((ROOT / guard.MANIFEST).read_text("utf-8"))
+    declared = set(manifest["active_delta_paths"])
+    assert guard.active_delta_violations(ROOT, declared) == []
+    assert guard.active_delta_violations(ROOT, declared | {"backend/unauthorized.py"}) == [
+        "R6_ACTIVE_UNAPPROVED:backend/unauthorized.py"
+    ]
+    assert guard.active_delta_violations(ROOT, declared - {guard.SELF}) == [
+        "R6_ACTIVE_MISSING:" + guard.SELF
+    ]

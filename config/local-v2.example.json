@@ -1,0 +1,8 @@
+{
+  "runtime_path": "%LOCALAPPDATA%\\ProjetV2\\runtime\\base_pedagogique_v2.runtime.sqlite",
+  "data_root": "%LOCALAPPDATA%\\ProjetV2",
+  "runtime_sha256": "REPLACE_WITH_THE_RUNTIME_SHA256_FROM_YOUR_PROVISIONING_RECEIPT",
+  "port": 8765,
+  "saved_root": "%LOCALAPPDATA%\\ProjetV2\\library\\saved-productions",
+  "create_saved": false
+}

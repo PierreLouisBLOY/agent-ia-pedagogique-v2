@@ -123,6 +123,9 @@ def test_no_authority_refusal_and_unknown_dispatch_never_retry(tmp_path, mode):
     double = None if mode == "unbound" else P0GenerationDouble(allowed=mode != "refused", failure=mode == "failed")
     app, thread, port = start(tmp_path, double)
     try:
+        metadata = call(port, "")
+        assert metadata["live_binding"] == ("NONE" if mode == "unbound" else "EXPLICIT_PORT")
+        assert metadata["review_binding"] == "NONE"
         prepared, nonce = prepare(port, context("BTS_CG_YEAR_2", "ASSESSMENT", None))
         body = {"command_id": token_hex(16), "preparation_ref": prepared["preparation_ref"],
                 "preparation_sha256": prepared["preparation_sha256"]}

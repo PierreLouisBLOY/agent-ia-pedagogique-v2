@@ -707,7 +707,7 @@ const p0 = {nonce: null, references: [], prepared: null, view: null, teacher: nu
 const p0Element = id => document.getElementById("p0-" + id);
 function p0Controls() {
   p0Element("prepare").disabled = p0.busy || p0.uncertain || !p0.nonce;
-  p0Element("generate").disabled = p0.busy || p0.uncertain || !p0.prepared;
+  p0Element("generate").disabled = p0.busy || p0.uncertain || !p0.prepared || p0.liveBinding === "NONE";
   for (const id of ["teacher", "revise", "validate", "save"])
     p0Element(id).disabled = p0.busy || p0.uncertain || !p0.view;
 }
@@ -871,6 +871,8 @@ p0Element("save").addEventListener("click", () => p0Run(async () => {
 async function p0Connect() {
   const metadata = await p0Fetch("/api/v2/p0");
   p0.nonce = metadata.transport_nonce; p0.references = metadata.references;
+  p0.liveBinding = metadata.live_binding;
+  p0Element("generate").textContent = metadata.live_binding === "NONE" ? "Génération indisponible dans cette composition" : "Demander la génération autorisée";
   p0Element("reference").replaceChildren();
   const empty = document.createElement("option"); empty.value = ""; empty.textContent = "Choisir une référence";
   p0Element("reference").append(empty);

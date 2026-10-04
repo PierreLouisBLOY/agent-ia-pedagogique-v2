@@ -79,5 +79,6 @@ def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
                  "title": binding.canonical_title, "scenarios": list(binding.scenarios),
                  "authority": "NONE", "lifecycle_status": binding.lifecycle_status,
                  "validation_status": binding.validation_status} for binding in R6_EXACT_SOURCE_BINDINGS]
-    endpoint = P0CreationEndpoint(service.execute, service.read, metadata, nonce=nonce)
+    endpoint = P0CreationEndpoint(service.execute, service.read, metadata, nonce=nonce,
+        generation_bound=generation is not None, review_bound=review is not None)
     return service, endpoint

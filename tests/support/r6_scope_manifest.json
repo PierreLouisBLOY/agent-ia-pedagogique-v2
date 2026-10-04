@@ -169,7 +169,7 @@
     "backend/infrastructure/composition/factories/saved_p0_documentary.py": "43c876268574f269ffaefd2a5d50b75a7b56871088dbd3e740776261b6ad6fb5",
     "backend/modules/materialization_export/contracts/dto/lot1_word_table.py": "d49b6fc0b8e88ca7bf55c8a06c100c2ee5136bd6f3591cf418c0571cce5d9cfd",
     "docs/development/R6_P0_RECIPE_2026-10-04.md": "288007467931ade787525da2eebea626cf5113e235cc6a00a09a7b54b3c84844",
-    "tests/integration/test_r6_p0_matrix_application.py": "885a065b3f84b6da07ef696e1f988815637adf502f58a6038b0fae689f1dcba6",
+    "tests/integration/test_r6_p0_matrix_application.py": "f2fd429ffa41446c96d4047c500f82f0f8ceb216d3d94b459647e4adb1386b29",
     "tests/unit/test_r6_readable_word.py": "df8fa9effac591ee81e76e316c5b42db65f038a1390c4d584ef4a7b0180c0d53",
     "tests/unit/test_r6_recipe_guard.py": "481ebcb5829bac05010e33f2a2d6913c35de9c4e0a771c183f7f5290433b3c5b",
     "tests/unit/test_r6_saved_p0_documentary.py": "5c63237b844a30c0c778e0ff4175c1cf1ae14949f7ec363557b5f56e81cfadba",

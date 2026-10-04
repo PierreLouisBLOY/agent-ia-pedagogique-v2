@@ -122,7 +122,7 @@ def test_exact_matrix_cell_application_lifecycle(
             if block["style"] == "Note" and text.startswith("Version exacte : ver:"):
                 assert text not in content
                 assert parent.version_ref not in content
-            elif block["style"] == "Heading2" and text.startswith("Q") and text[1:3].isdigit():
+            elif block["style"] in {"Heading1", "Heading2"} and text.startswith("Q") and text[1:3].isdigit():
                 assert "Question " + str(int(text[1:3])) + text[3:] in content
                 assert text not in content
             else:

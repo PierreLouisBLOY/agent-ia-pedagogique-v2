@@ -43,6 +43,10 @@ existants sont réutilisés. Le méga-lot ne crée pas de nouveau worker décide
 ne remplace pas leurs autorisations et ne change pas les frontières Phases 6/11.
 Cette extension reste dans les propriétaires Application/adaptateurs existants :
 elle ne constitue pas une déviation architecturale nécessitant une nouvelle ADR.
+Le parcours P0 conserve ses commandes synchrones bornées ; il n'est pas annoncé
+comme un nouveau job persistant. Les cycles de jobs R3/R5 gardent leurs propres
+contrats et tests. Les objectifs déclarés participent aussi à la détection d'un
+calcul : « part de marché » avec un objectif de calcul exige un oracle indépendant.
 
 ## Statuts et présentation
 
@@ -61,3 +65,14 @@ utilise V5 pour le preview et le DOCX ; cela n'admet pas une version pédagogiqu
 Le dossier privé de livraison contient les diffs de contenu et les preuves de
 toutes les pages Word, l'identité de fabrication et la seule décision live à
 soumettre. La phase B reste NOT_EXECUTED jusqu'à cette décision.
+
+## Qualification locale du delta
+
+La sélection applicable de 37 fichiers comporte 424 tests exécutés avec succès,
+sans FAIL, ERROR ou SKIP, après ajout des cas positif/négatif du calcul déclaré
+dans l'objectif. Ruff, mypy, les contrôles JavaScript et pip check ont été exécutés.
+Les cinq tests historiques de pin/inventaire sont conservés et suivis dans une
+sélection séparée ; ces 424 succès ne les déclarent pas corrigés. La qualification
+de la copie propre, les réceptions navigateur et l'inspection Word sont attachées
+au dossier privé consolidé. La campagne fournisseur et la recette enseignante
+restent à effectuer après leur décision respective.

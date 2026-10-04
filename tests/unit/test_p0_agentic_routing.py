@@ -86,6 +86,19 @@ def test_effort_is_explainable_and_has_no_spend_authority(kind, topics, difficul
     assert plan["budget"]["retry"] == 0 and len(plan["subtasks"]) == 4
 
 
+@pytest.mark.parametrize("objective,required", [
+    ("Calculer la part de marché en pourcentage.", True),
+    ("Distinguer part de marché et croissance.", False),
+])
+def test_quantitative_objective_requires_an_oracle_even_without_quantitative_topic(objective, required):
+    data = context("FINAL_STMG", "QUESTION_SET", "OPEN_QUESTIONS")
+    data.update(topics=["Part de marché"], objectives=[objective])
+    plan = effort_plan(P0Context(data))
+    assert plan["quantitative_review_required"] is required
+    assert ("INDEPENDENT_CALCULATION_ORACLE_REQUIRED" in plan["validations"]) is required
+    assert plan["effort"] == ("HAUT_RISQUE_PEDAGOGIQUE" if required else "STANDARD")
+
+
 @pytest.mark.parametrize("mutation", ["hash", "scope", "oversized"])
 def test_evidence_pack_refuses_substitution_incomplete_or_oversized(mutation):
     app = service(P0GenerationDouble())

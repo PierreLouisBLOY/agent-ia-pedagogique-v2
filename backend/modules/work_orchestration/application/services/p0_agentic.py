@@ -21,7 +21,10 @@ def effort_plan(context: P0Context) -> dict[str, object]:
     data = context.as_dict()
     topics = data["topics"]
     assert isinstance(topics, list)
-    quantitative = any(word in " ".join(topics).casefold() for word in (
+    objectives = data["objectives"]
+    assert isinstance(objectives, list)
+    declared_work = " ".join([*topics, *objectives]).casefold()
+    quantitative = any(word in declared_work for word in (
         "calcul", "bfr", "frng", "trésorerie", "coût", "seuil", "amortissement", "lettrage", "proportion"))
     if data["resource_type"] == "ASSESSMENT" or quantitative:
         effort = "HAUT_RISQUE_PEDAGOGIQUE"

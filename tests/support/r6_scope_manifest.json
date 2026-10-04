@@ -208,10 +208,10 @@
     "backend/adapters/outbound/export/diffusion_word.py": "c85607c2ddaccdad1dd6b8c785ada6df6e0c10abf2ce710b181936124fc52d5a",
     "backend/adapters/outbound/review/p0_review.py": "2104e71c82c687045445187df5ca3e0a1591c7048ab0d45d0f1d81894f77eb6f",
     "backend/modules/quality_evaluation/ports/outbound/p0_review.py": "bbb4db8044b7ac632ab765ac11989880770e27d03d05c0bc69da1eb1a2c74062",
-    "backend/modules/work_orchestration/application/services/p0_agentic.py": "628b9d6fb87e394c4752cef0e5e5180ed745a2ae3cac4d1b4ac6af05f5db1615",
-    "docs/development/MEGA_LOT_POST_20D6B49.md": "8a3e28bd45cc622b9b05f9eb6aef1aa69edfefb082d1e06e652f2c4a930c0734",
+    "backend/modules/work_orchestration/application/services/p0_agentic.py": "6af21ace2215b33a5170d6c8c2a0a0a1a7a49552f4da214aab1b0b7c3cc31e24",
+    "docs/development/MEGA_LOT_POST_20D6B49.md": "32f2541c066e07413f8e618175f7936eebd09a39d9c0f49c2c18000cb8742cf8",
     "tests/unit/test_diffusion_word_profile.py": "0e738e6824c716ba0634b14e038385048a6a64b0974bf66aee980e546c384da5",
-    "tests/unit/test_p0_agentic_routing.py": "b92cb7555ca32cb45eb4cbf31616a04d4c9c3534062ca6b54ad8c16c8bd5f632",
+    "tests/unit/test_p0_agentic_routing.py": "fea5d16ec58c33a924334145858b1694bac1b27a4cf268655f821e79ecd1c338",
     "tools/tests/p0_conversation_shell.test.cjs": "e44b377d3fc9ea30b1aa446ae45f3a54e4c466b73986c9083198f1a3f29866f8"
   },
   "active_delta_paths": [

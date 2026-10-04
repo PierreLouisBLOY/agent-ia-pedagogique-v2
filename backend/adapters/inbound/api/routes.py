@@ -54,6 +54,30 @@ ROUTE_SPECS: Final = (
 )
 ASSET_NAMES: Final = frozenset({"index.html", "app.js", "styles.css"})
 MAX_TARGET_BYTES: Final = 8 * 1_024
+# Versioned P0 companion, registered in this same closed local registry.
+# ROUTE_SPECS retains the historical R2/R3/R4 contract and its literal oracle.
+P0_ROOT: Final = "/api/v2/p0"
+P0_ROUTE_SPECS: Final = (("GET", P0_ROOT),
+    *(("POST", P0_ROOT + "/" + operation) for operation in ("prepare", "generate", "revise", "validate")),
+    ("GET", P0_ROOT + "/versions/{production_ref}/{version_ref}"),
+    ("GET", P0_ROOT + "/versions/{production_ref}/{version_ref}/teacher"))
+_P0_VERSION = re.compile(P0_ROOT + r"/versions/(prod:[0-9a-f]{32})/(ver:[0-9a-f]{32})(/teacher)?")
+
+
+def is_p0_target(target: str) -> bool:
+    return target == P0_ROOT or target.startswith(P0_ROOT + "/")
+
+
+def resolve_p0_route(method: str, target: str) -> tuple[str, str, str, bool, str]:
+    if method == "GET" and target == P0_ROOT:
+        return "metadata", "", "", False, target
+    if method == "POST" and (method, target) in P0_ROUTE_SPECS:
+        return target.rsplit("/", 1)[1], "", "", False, target
+    if method == "GET" and (match := _P0_VERSION.fullmatch(target)):
+        return "version", match[1], match[2], bool(match[3]), P0_ROUTE_SPECS[-1 if match[3] else -2][1]
+    raise ValueError("P0_ROUTE_REJECTED")
+
+
 _BAD_ESCAPE = re.compile(r"%(?![0-9a-fA-F]{2})")
 
 

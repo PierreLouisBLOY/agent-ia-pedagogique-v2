@@ -21,6 +21,7 @@ ADDITIONS = (
     "backend/modules/work_orchestration/application/services/p0_creation.py",
     "backend/infrastructure/composition/factories/p0_creation.py",
     "backend/adapters/inbound/api/server.py",
+    "backend/adapters/inbound/api/routes.py",
     "frontend/app.js",
     "frontend/index.html",
     "tests/integration/test_p0_creation_http.py",

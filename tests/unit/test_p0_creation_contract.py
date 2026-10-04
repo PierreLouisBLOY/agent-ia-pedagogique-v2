@@ -76,3 +76,22 @@ def test_incomplete_context_refused_before_reference_and_dispatch():
     with pytest.raises(ValueError):
         app.execute("prepare", {"command_id": token_hex(16), "context": {}, "reference": {}})
     assert calls == [] and app.records == {}
+
+
+def test_p0_companion_registry_is_closed_and_historical_registry_unchanged():
+    from backend.adapters.inbound.api.routes import P0_ROUTE_SPECS, resolve_p0_route
+    from tests.architecture.test_local_browser_product_boundary import route_contract_violations
+    from tests.unit.test_r6_recipe_guard import ROOT
+
+    assert P0_ROUTE_SPECS == (("GET", "/api/v2/p0"),
+        ("POST", "/api/v2/p0/prepare"), ("POST", "/api/v2/p0/generate"),
+        ("POST", "/api/v2/p0/revise"), ("POST", "/api/v2/p0/validate"),
+        ("GET", "/api/v2/p0/versions/{production_ref}/{version_ref}"),
+        ("GET", "/api/v2/p0/versions/{production_ref}/{version_ref}/teacher"))
+    assert route_contract_violations(ROOT) == []
+    for target in ("/api/v2/p0?latest=true", "/api/v2/p0/unknown", "/api/v2/p0/generate/",
+                   "/api/v2/p0/versions/prod:wrong/ver:wrong", "/api/v2/p0/%67enerate"):
+        with pytest.raises(ValueError, match="P0_ROUTE_REJECTED"):
+            resolve_p0_route("GET", target)
+    with pytest.raises(ValueError, match="P0_ROUTE_REJECTED"):
+        resolve_p0_route("GET", "/api/v2/p0/generate")

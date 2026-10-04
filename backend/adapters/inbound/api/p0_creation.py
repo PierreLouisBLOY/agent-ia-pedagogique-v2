@@ -3,16 +3,9 @@ import json
 import re
 from collections.abc import Callable
 
+from backend.adapters.inbound.api.routes import resolve_p0_route
+
 P0_HTTP_CONTRACT = "R6-P0-HTTP-LOCAL-1.0"
-P0_ROUTES = (("GET", "/api/v2/p0"), *(('POST', '/api/v2/p0/' + operation)
-    for operation in ("prepare", "generate", "revise", "validate")),
-    ("GET", "/api/v2/p0/versions/{production_ref}/{version_ref}"),
-    ("GET", "/api/v2/p0/versions/{production_ref}/{version_ref}/teacher"))
-_VERSION = re.compile(r"/api/v2/p0/versions/(prod:[0-9a-f]{32})/(ver:[0-9a-f]{32})(/teacher)?")
-
-
-def is_p0_target(target: str) -> bool:
-    return target == "/api/v2/p0" or target.startswith("/api/v2/p0/")
 
 
 class P0CreationEndpoint:
@@ -24,11 +17,11 @@ class P0CreationEndpoint:
         status, template = 200, "/{unmatched}"
         result: dict[str, object]
         try:
-            if method == "GET" and target == "/api/v2/p0":
+            operation, production, version, teacher, template = resolve_p0_route(method, target)
+            if operation == "metadata":
                 result = {"transport_nonce": self.nonce, "state": "READY", "references": self.metadata,
                           "live_binding": "NONE", "authority": "NONE"}
-                template = target
-            elif method == "POST" and (method, target) in P0_ROUTES:
+            elif method == "POST":
                 def pairs(entries: list[tuple[str, object]]) -> dict[str, object]:
                     if len(dict(entries)) != len(entries):
                         raise ValueError("P0_REQUEST_REJECTED")
@@ -36,11 +29,9 @@ class P0CreationEndpoint:
                 data = json.loads(raw, object_pairs_hook=pairs)
                 if not isinstance(data, dict):
                     raise ValueError("P0_REQUEST_REJECTED")
-                result = self.execute(target.rsplit("/", 1)[1], data)
-                template = target
-            elif method == "GET" and (match := _VERSION.fullmatch(target)):
-                result = self.read(match[1], match[2], teacher=bool(match[3]))
-                template = P0_ROUTES[-1 if match[3] else -2][1]
+                result = self.execute(operation, data)
+            elif operation == "version":
+                result = self.read(production, version, teacher=teacher)
             else:
                 raise ValueError("P0_ROUTE_REJECTED")
             envelope = {"data": result}

@@ -27,6 +27,15 @@ qualification. Les 36 tests de garde ont ensuite été rejoués avec succès sur
 doivent être consultés dans le paquet privé de cette continuation ; ce document
 ne déclare aucun résultat non encore exécuté.
 
+La première copie propre du successeur documentaire `39cca0c…` a obtenu
+351 PASS et un FAIL architectural : les déclarations de routes P0 étaient
+hors du registre central. Le correctif ordinaire suivant les place, avec leur
+résolution fermée, dans `routes.py`. L'inventaire littéral R2/R3/R4 et son
+assertion sont conservés. Un test supplémentaire vérifie les sept routes P0,
+le rejet des cibles étrangères et la préservation de l'inventaire historique.
+Le rejeu final figure séparément dans les preuves de livraison ; le résultat
+351/1 reste conservé comme résultat de cette version intermédiaire.
+
 ## Démarrage et historique
 
 La version d'entrée a reproduit un blocage d'initialisation navigateur. Trois

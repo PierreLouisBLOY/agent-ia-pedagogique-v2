@@ -17,7 +17,7 @@ from backend.adapters.inbound.api.local_browser import (
     HttpObservabilityPort,
     LocalBrowserHttpSecurityContract,
 )
-from backend.adapters.inbound.api.p0_creation import P0CreationEndpoint, is_p0_target
+from backend.adapters.inbound.api.p0_creation import P0CreationEndpoint
 from backend.adapters.inbound.api.production import ProductionEndpoint
 from backend.adapters.inbound.api.r3_review_modify import R3Endpoint
 from backend.adapters.inbound.api.r3_review_modify import error as r3_error
@@ -33,6 +33,7 @@ from backend.adapters.inbound.api.routes import (
     SEARCH_TEMPLATE,
     RouteRejected,
     is_conversation_target,
+    is_p0_target,
     resolve_route,
 )
 from backend.adapters.inbound.api.saved_production import SavedProductionEndpoint, r4_error

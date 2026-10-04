@@ -103,7 +103,11 @@
     "docs/development/MEGA_LOT_POST_20D6B49.md",
     "tests/unit/test_diffusion_word_profile.py",
     "tests/unit/test_p0_agentic_routing.py",
-    "tools/tests/p0_conversation_shell.test.cjs"
+    "tools/tests/p0_conversation_shell.test.cjs",
+    "backend/adapters/outbound/review/openai/adapter.py",
+    "tests/unit/test_mega_closure_review.py",
+    "docs/development/MEGA_LOT_LOCAL_CLOSURE_REVIEW.md",
+    "tests/unit/test_mega_closure_guard.py"
   ],
   "cp645_pre_sha256": {
     "backend/adapters/outbound/persistence/migrations.py": "8664c33b91e3060bf1d198bddeef820f8eac6119a7551b49e9412918cf3824b9",
@@ -206,13 +210,17 @@
     "tests/unit/test_p0_selected_source_boundary.py": "bd57319d208f2a7fdd960fdc5624c5aecf75bb6dc5e8a9e3e5125f5e752ed81c",
     "docs/development/SUPER_MACRO_POST_62AF2BB.md": "5ea4c34b3855599be7050057a23891f944424c0a141c5fa1b44212e502ead75f",
     "backend/adapters/outbound/export/diffusion_word.py": "c85607c2ddaccdad1dd6b8c785ada6df6e0c10abf2ce710b181936124fc52d5a",
-    "backend/adapters/outbound/review/p0_review.py": "2104e71c82c687045445187df5ca3e0a1591c7048ab0d45d0f1d81894f77eb6f",
+    "backend/adapters/outbound/review/p0_review.py": "fb4011cc4ca1aed0ab2880abf190657adcb8cad7499a2b993a4435f060e140da",
     "backend/modules/quality_evaluation/ports/outbound/p0_review.py": "bbb4db8044b7ac632ab765ac11989880770e27d03d05c0bc69da1eb1a2c74062",
     "backend/modules/work_orchestration/application/services/p0_agentic.py": "6af21ace2215b33a5170d6c8c2a0a0a1a7a49552f4da214aab1b0b7c3cc31e24",
     "docs/development/MEGA_LOT_POST_20D6B49.md": "32f2541c066e07413f8e618175f7936eebd09a39d9c0f49c2c18000cb8742cf8",
     "tests/unit/test_diffusion_word_profile.py": "0e738e6824c716ba0634b14e038385048a6a64b0974bf66aee980e546c384da5",
     "tests/unit/test_p0_agentic_routing.py": "fea5d16ec58c33a924334145858b1694bac1b27a4cf268655f821e79ecd1c338",
-    "tools/tests/p0_conversation_shell.test.cjs": "a20695802bc2d39a4ae979e64e3dbcb07e2aa637f50ae370a8e1ac8e96f675b2"
+    "tools/tests/p0_conversation_shell.test.cjs": "a20695802bc2d39a4ae979e64e3dbcb07e2aa637f50ae370a8e1ac8e96f675b2",
+    "backend/adapters/outbound/review/openai/adapter.py": "2324ca1d3ba2ece5b8a9b5a8466bc4e3c115ec4f02535a985c80e9ea20510e6f",
+    "tests/unit/test_mega_closure_review.py": "fcd38616efb5d3e532288582eff681f9056057aa525199d1b1d50db790a5a19d",
+    "docs/development/MEGA_LOT_LOCAL_CLOSURE_REVIEW.md": "396e3c73d116efe87375c166374c1f932713eec5cfb3cc07861b6f2481942a87",
+    "tests/unit/test_mega_closure_guard.py": "8a1705cfe3d0dd404cb68e30b3682192179ece91cf7ce1a93e195c7b3e29a3c7"
   },
   "active_delta_paths": [
     "backend/adapters/inbound/application/exact_notion_evidence.py",
@@ -311,10 +319,28 @@
     "docs/development/MEGA_LOT_POST_20D6B49.md",
     "tests/unit/test_diffusion_word_profile.py",
     "tests/unit/test_p0_agentic_routing.py",
-    "tools/tests/p0_conversation_shell.test.cjs"
+    "tools/tests/p0_conversation_shell.test.cjs",
+    "backend/adapters/outbound/review/openai/adapter.py",
+    "tests/unit/test_mega_closure_review.py",
+    "docs/development/MEGA_LOT_LOCAL_CLOSURE_REVIEW.md",
+    "tests/unit/test_mega_closure_guard.py"
   ],
   "active_delta_entry": "03bd272074810b9ef4a29d77b059b3efefbfd2ea",
   "recipe_continuation_entry": "a0b83aa4a83f1b91d8b3f492fe93d17053376034",
   "reuse_source_commit": "0729aa8afdee1737d3bca978b06f1da66cfeada4",
-  "audit_continuation_entry": "49b804b53db785ca3572e172b838ca69742e3fde"
+  "audit_continuation_entry": "49b804b53db785ca3572e172b838ca69742e3fde",
+  "successors": [
+    {
+      "entry": "d20857e88c1a82d3cd274fb0d1456e45782db9b2",
+      "purpose": "MEGA_LOCAL_CLOSURE_M06_M07",
+      "predecessor_manifest_sha256": "dab8d3d04fff88b8d3d13c8424b183d7ee59508431aec8278bfa39c6689af10b",
+      "changed_owners": [
+        "backend/adapters/outbound/review/p0_review.py",
+        "backend/adapters/outbound/review/openai/adapter.py",
+        "tests/unit/test_mega_closure_review.py",
+        "docs/development/MEGA_LOT_LOCAL_CLOSURE_REVIEW.md"
+      ],
+      "canonical_security_guards_changed": false
+    }
+  ]
 }

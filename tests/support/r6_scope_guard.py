@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SELF = "tests/support/r6_scope_guard.py"
 MANIFEST = "tests/support/r6_scope_manifest.json"
 SELF_SHA256 = "ab446fe66374921e22aac873546067ee703fdc0094696132c987a2182ebc38cf"
-MANIFEST_SHA256 = "dab8d3d04fff88b8d3d13c8424b183d7ee59508431aec8278bfa39c6689af10b"
+MANIFEST_SHA256 = "e57bb94436c4505f56e6bb1085b2012b9ae44fdb94f7d37bf48c142a61b2236a"
 
 
 def digest(raw: bytes) -> str:

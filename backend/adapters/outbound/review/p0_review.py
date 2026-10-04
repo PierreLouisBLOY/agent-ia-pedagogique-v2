@@ -10,6 +10,7 @@ from backend.agent_runtime.agents.review import (
     ReviewPreparationRequest,
     ReviewResultMaterializationRequest,
 )
+from backend.agent_runtime.agents.review.review_security_model import ReviewSecurityPolicy
 from backend.agent_runtime.contracts import (
     AGENT_CONTRACT_SCHEMA_V1_0,
     ActorKind,
@@ -60,7 +61,9 @@ class P0ReviewAdapter:
         status = ReviewStatus.COMPLETED if result.status.value == "SUCCEEDED" else ReviewStatus.INCOMPLETE
         output_meta = ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, meta.run_id, meta.step_id, None,
             meta.correlation_id, now, ActorRef(ActorKind.AGENT, "AG-04"), status)
-        report = agent.build_review_result(request=ReviewResultMaterializationRequest(prepared, result, output_meta, "p0-review"))
+        report = agent.build_review_result(request=ReviewResultMaterializationRequest(
+            prepared, result, output_meta, "p0-review",
+            security_policy=ReviewSecurityPolicy(allow_whole_target_locator=True)))
         return {"contract_id": "P0-REVIEW-1.0", "status": report.meta.status.value,
             "production_ref": production["production_ref"], "version_ref": production["version_ref"],
             "bundle_sha256": request["bundle_sha256"], "overall_assessment": report.overall_assessment.value,

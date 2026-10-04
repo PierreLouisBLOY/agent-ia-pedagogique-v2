@@ -86,6 +86,7 @@ def test_p0_companion_registry_is_closed_and_historical_registry_unchanged():
     assert P0_ROUTE_SPECS == (("GET", "/api/v2/p0"),
         ("POST", "/api/v2/p0/prepare"), ("POST", "/api/v2/p0/generate"),
         ("POST", "/api/v2/p0/revise"), ("POST", "/api/v2/p0/validate"),
+        ("POST", "/api/v2/p0/review"), ("POST", "/api/v2/p0/correct"),
         ("GET", "/api/v2/p0/versions/{production_ref}/{version_ref}"),
         ("GET", "/api/v2/p0/versions/{production_ref}/{version_ref}/teacher"))
     assert route_contract_violations(ROOT) == []

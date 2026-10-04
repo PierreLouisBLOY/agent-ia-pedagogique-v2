@@ -14,6 +14,7 @@ from backend.adapters.outbound.export.classroom_word import (
     apply_page_profile,
     presentation_document,
 )
+from backend.adapters.outbound.export.diffusion_word import diffusion_document
 from backend.adapters.outbound.export.lot1_word import Lot1OOXMLWordWriter, _table
 from backend.modules.materialization_export.contracts.dto.lot1_word_table import (
     Lot1WordDocument,
@@ -67,11 +68,14 @@ def readable_document(document: WordDocument) -> tuple[WordDocument, tuple[Lot1W
 
 class R6ReadableWordWriter(Lot1OOXMLWordWriter):
     def __init__(self, *, profile: str = "classroom-v2") -> None:
-        if profile not in {"classroom-v2", "readable-v1"}:
+        if profile not in {"classroom-v2", "readable-v1", "diffusion-v5"}:
             raise ValueError("R6_WORD_PROFILE_REJECTED")
-        self.classroom = profile == "classroom-v2"
+        self.classroom = profile != "readable-v1"
+        self.diffusion = profile == "diffusion-v5"
 
     def write(self, document: WordDocument) -> bytes:
+        if self.diffusion:
+            document = diffusion_document(document)
         if self.classroom:
             document = presentation_document(document)
         projected, tables = readable_document(document)

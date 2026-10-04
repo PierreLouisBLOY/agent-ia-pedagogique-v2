@@ -20,7 +20,7 @@ class P0CreationEndpoint:
             operation, production, version, teacher, template = resolve_p0_route(method, target)
             if operation == "metadata":
                 result = {"transport_nonce": self.nonce, "state": "READY", "references": self.metadata,
-                          "live_binding": "NONE", "authority": "NONE"}
+                          "live_binding": "NONE", "review_binding": "NONE", "authority": "NONE"}
             elif method == "POST":
                 def pairs(entries: list[tuple[str, object]]) -> dict[str, object]:
                     if len(dict(entries)) != len(entries):

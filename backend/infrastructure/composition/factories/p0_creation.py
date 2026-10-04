@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from backend.adapters.inbound.api.p0_creation import P0CreationEndpoint
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import items, object_data
 from backend.modules.pedagogical_design.ports.outbound.p0_generation import P0GenerationPort
+from backend.modules.quality_evaluation.ports.outbound.p0_review import P0ReviewPort
 from backend.modules.work_orchestration.application.services.p0_creation import P0CreationService
 
 if TYPE_CHECKING:
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
 
 
 def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
-                      generation: P0GenerationPort | None = None) -> tuple[P0CreationService, P0CreationEndpoint]:
+                      generation: P0GenerationPort | None = None, review: P0ReviewPort | None = None) -> tuple[P0CreationService, P0CreationEndpoint]:
     # Local import avoids the existing target/factory dependency cycle.
     from backend.infrastructure.composition.factories.r6_p0 import (
         R6_EXACT_SOURCE_BINDINGS,
@@ -73,7 +74,7 @@ def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
         descriptor["excerpt_sha256"] = hashlib.sha256(excerpt.encode()).hexdigest()
         return {"reference": descriptor, "excerpt": excerpt}
 
-    service = P0CreationService(reference, generation=generation)
+    service = P0CreationService(reference, generation=generation, review=review)
     metadata: list[dict[str, object]] = [{"resource_ref": binding.resource_ref, "resource_version_ref": binding.resource_version_ref,
                  "title": binding.canonical_title, "scenarios": list(binding.scenarios),
                  "authority": "NONE", "lifecycle_status": binding.lifecycle_status,

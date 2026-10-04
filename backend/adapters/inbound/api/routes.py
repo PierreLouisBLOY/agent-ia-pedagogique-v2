@@ -58,7 +58,7 @@ MAX_TARGET_BYTES: Final = 8 * 1_024
 # ROUTE_SPECS retains the historical R2/R3/R4 contract and its literal oracle.
 P0_ROOT: Final = "/api/v2/p0"
 P0_ROUTE_SPECS: Final = (("GET", P0_ROOT),
-    *(("POST", P0_ROOT + "/" + operation) for operation in ("prepare", "generate", "revise", "validate")),
+    *(("POST", P0_ROOT + "/" + operation) for operation in ("prepare", "generate", "revise", "validate", "review", "correct")),
     ("GET", P0_ROOT + "/versions/{production_ref}/{version_ref}"),
     ("GET", P0_ROOT + "/versions/{production_ref}/{version_ref}/teacher"))
 _P0_VERSION = re.compile(P0_ROOT + r"/versions/(prod:[0-9a-f]{32})/(ver:[0-9a-f]{32})(/teacher)?")

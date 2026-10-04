@@ -1,4 +1,5 @@
 """CAP-A03 from complete structured fields, never from locator slices."""
+from collections.abc import Callable
 from typing import cast
 
 from backend.modules.materialization_export.contracts.dto.word_document import (
@@ -11,10 +12,18 @@ from backend.modules.work_orchestration.contracts.dto.saved_production import Sa
 
 
 class ExportSavedCommand:
-    def __init__(self, writer: WordWriter) -> None:
+    def __init__(self, writer: WordWriter, *, presentation: Callable[[WordDocument], WordDocument] | None = None) -> None:
         self.writer = writer
+        self.presentation = presentation
 
     def preview(self, record: SavedProduction, kind: str, *, promoted: bool = False) -> WordDocument:
+        document = self._preview(record, kind, promoted=promoted)
+        if (self.presentation and kind != "student" and record.p0_bundle is not None
+                and "fictif" in str(record.p0_bundle.data["title"]).casefold()):
+            document = WordDocument(document.kind, document.title, (WordBlock("Note", "Cas fictif"), *document.blocks))
+        return self.presentation(document) if self.presentation else document
+
+    def _preview(self, record: SavedProduction, kind: str, *, promoted: bool = False) -> WordDocument:
         titles = {"student": "Sujet élève", "correction": "Corrigé professeur", "marking": "Barème"}
         if kind not in titles:
             raise ValueError("R4_EXPORT_KIND")

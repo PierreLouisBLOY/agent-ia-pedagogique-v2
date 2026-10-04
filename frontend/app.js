@@ -72,10 +72,13 @@ searchForm.addEventListener("submit", async (event) => {
       const row = document.createElement("li");
       appendSearchText(row, "h3", item.read15?.canonical_title || "Passage · " + item.object_kind);
       appendSearchText(row, "p", item.excerpt + (item.excerpt_truncated ? "…" : ""));
-      appendSearchText(row, "p", "Objet : " + item.object_ref + " · Passage : " + item.passage_ref +
+      const trace = document.createElement("details"); trace.className = "secondary";
+      appendSearchText(trace, "summary", "Provenance et version");
+      appendSearchText(trace, "p", "Objet : " + item.object_ref + " · Passage : " + item.passage_ref +
         " · Version : " + item.version_or_checksum, "provenance");
-      appendSearchText(row, "p", "LEXICAL · Admission F2A · Passage courant · Contenu non fiable. " +
+      appendSearchText(trace, "p", "LEXICAL · Admission F2A · Passage courant · Contenu non fiable. " +
         "Le rang ne constitue pas un score de qualité.", "provenance");
+      row.append(trace);
       const selectButton = document.createElement("button");
       selectButton.type = "button";
       selectButton.textContent = "Utiliser ce passage pour ma production";
@@ -86,6 +89,8 @@ searchForm.addEventListener("submit", async (event) => {
         p0Element("search-query").closest("details").open = true;
         p0Invalidate();
         p0Element("status").textContent = "Passage sélectionné. Confirmez le contexte et préparez votre production.";
+        uxShow("prepare"); document.getElementById("preparation-parameters").open = true;
+        document.getElementById("drawer-sources").textContent = item.excerpt;
         p0Element("heading").scrollIntoView({behavior: "smooth"});
       });
       if (["NOTION", "PEDAGOGICAL_CONTENT", "METHOD", "FRAMEWORK_ELEMENT", "OFFICIAL_OCCURRENCE"].includes(item.object_kind))
@@ -576,7 +581,7 @@ async function r4Refresh() {
   for (const version of data.versions) {
     const option = document.createElement("option");
     option.value = version.production_ref + "/" + version.version_ref;
-    option.textContent = version.version_ref + " · " + version.origin;
+    option.textContent = "Version " + (r4Versions.options.length + 1) + (version.origin === "IMPORTED_DOCUMENTARY" ? " · document conservé" : " · préparation locale");
     option.selected = option.value === selected;
     r4Versions.append(option);
   }
@@ -598,14 +603,15 @@ async function r4Open() {
   appendSearchText(details, "h3", "Nouvelles actions R4 distinctes");
   appendSearchText(details, "pre", JSON.stringify(r4Record.new_actions, null, 2));
   document.getElementById("r4-preview-content").replaceChildren();
-  r4Status.textContent = "Version rouverte. Aucune revalidation automatique ; A16 reste visible.";
+  r4Status.textContent = "Version rouverte. Consultez les réserves dans Sources & contexte avant diffusion.";
+  uxSavedCard(r4Record);
   r4Controls();
 }
 async function r4Run(action, writes = false) {
   if (r4Busy || (writes && r4Uncertain)) return;
   r4Busy = true;
   r4Controls();
-  try { await action(); if (p0Element("status").dataset.state === "loading") p0Element("status").dataset.state = "ready"; }
+  try { await action(); if (["loading", "generating", "validating", "saving"].includes(p0Element("status").dataset.state)) p0Element("status").dataset.state = "ready"; }
   catch (error) {
     if (writes) r4Uncertain = true;
     r4Status.textContent = "Opération refusée ou incertaine : " + error.message + ". Aucun rejeu automatique.";
@@ -676,7 +682,7 @@ document.getElementById("r4-download").addEventListener("click", () => r4Run(asy
   const url = URL.createObjectURL(data);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = kind + "-" + r4Record.record.view.version_ref.slice(4) + ".docx";
+  anchor.download = kind + "-" + (r4Record.record.view.title || "preparation").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9-]/g, "-").replace(/-+/g, "-").slice(0, 80) + ".docx";
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }));
@@ -724,19 +730,19 @@ async function p0Fetch(path, body = null) {
   return envelope.data;
   });
 }
-async function p0Run(action, mutation = false) {
+async function p0Run(action, mutation = false, state = "loading") {
   if (p0.busy || (mutation && p0.uncertain)) return;
   p0.busy = true; p0Controls();
-  p0Element("status").dataset.state = "loading";
+  p0Element("status").dataset.state = state;
   p0Element("status").textContent = "Action en cours…";
-  try { await action(); if (p0Element("status").dataset.state === "loading") p0Element("status").dataset.state = "ready"; }
+  try { await action(); if (["loading", "generating", "validating", "saving"].includes(p0Element("status").dataset.state)) p0Element("status").dataset.state = "ready"; }
   catch (error) {
     if (mutation && !error.confirmedRefusal) p0.uncertain = true;
     p0Element("status").dataset.state = "error";
     p0Element("status").textContent = "Action non confirmée : " + error.message +
       (p0.uncertain ? ". Aucun renvoi automatique ; vérifiez la version avant de reprendre." :
         error.confirmedRefusal ? ". Refus confirmé ; corrigez la demande avant une nouvelle action explicite." : ". Réessayez la consultation explicitement.");
-  } finally { p0.busy = false; p0Controls(); }
+  } finally { p0.busy = false; p0Controls(); uxMessage("assistant", p0Element("status").textContent); }
 }
 const p0Command = () => crypto.randomUUID().replaceAll("-", "");
 function p0Context() {
@@ -782,6 +788,7 @@ p0Element("form").addEventListener("submit", event => {
     appendSearchText(sourceDetails, "pre", JSON.stringify({context: p0.prepared.context,
       references: p0.prepared.references}, null, 2));
     p0Element("preparation").append(sourceDetails);
+    uxPreparation(p0.prepared);
     p0Element("status").textContent = "Préparation prête. Autorisation de génération requise ; aucun appel fournisseur effectué.";
   }, true);
 });
@@ -795,14 +802,15 @@ function p0Render(view) {
   p0.view = view; p0.teacher = null;
   const region = p0Element("review"); region.replaceChildren();
   p0Element("teacher-content").replaceChildren();
-  appendSearchText(region, "p", "CANDIDATE à relire — " + view.version_ref);
+  appendSearchText(region, "p", "Préparation à relire avant usage pédagogique.");
+  uxProductionCard(view);
   p0Field(region, "p0-edit-title", "Titre", view.title, false);
   view.sections.forEach((s, i) => {
     p0Field(region, "p0-edit-heading-" + i, "Titre de section " + (i + 1), s.heading, false);
     p0Field(region, "p0-edit-section-" + i, "Texte de section " + (i + 1), s.text);
   });
   view.questions.forEach((q, i) => {
-    p0Field(region, "p0-edit-question-" + i, q.question_id, q.prompt);
+    p0Field(region, "p0-edit-question-" + i, "Question " + (i + 1), q.prompt);
     if (q.options.length) p0Field(region, "p0-edit-options-" + i, "Options — une par ligne", q.options.join("\n"));
   });
 }
@@ -814,11 +822,12 @@ p0Element("generate").addEventListener("click", () => p0Run(async () => {
   const result = await p0Fetch("/api/v2/p0/generate", {command_id: p0Command(),
     preparation_ref: p0.prepared.preparation_ref, preparation_sha256: p0.prepared.preparation_sha256});
   if (result.state === "CANDIDATE") {
+    uxQuality(result.agentic?.quality);
     p0Render(result.view); p0.prepared = null;
     p0Element("status").textContent = "Candidate reçue. Relisez et modifiez la version exacte ; aucune promotion effectuée.";
   } else { p0Element("status").dataset.state = "unavailable";
     p0Element("status").textContent = "Génération indisponible : autorisation requise. Aucun transport fournisseur n’est lié à cette composition hors ligne."; }
-}, true));
+}, true, "generating"));
 p0Element("teacher").addEventListener("click", () => p0Run(async () => {
   p0.teacher = await p0Fetch("/api/v2/p0/versions/" + p0.view.production_ref + "/" + p0.view.version_ref + "/teacher");
   const region = p0Element("teacher-content"); region.replaceChildren();
@@ -850,14 +859,15 @@ p0Element("revise").addEventListener("click", () => p0Run(async () => {
 }, true));
 p0Element("validate").addEventListener("click", () => p0Run(async () => {
   const report = await p0Fetch("/api/v2/p0/validate", {command_id: p0Command(), ...p0Identity()});
+  uxQuality(report.quality);
   p0Element("status").textContent = "Vérification structurelle : " + report.status + ". Aucune validation pédagogique ni promotion.";
-}, true));
+}, true, "validating"));
 p0Element("save").addEventListener("click", () => p0Run(async () => {
   const refs = {production_ref: p0.view.production_ref, version_ref: p0.view.version_ref};
   await r4Fetch("/api/v2/conversation/saved", refs);
   await r4Refresh(); r4Versions.value = refs.production_ref + "/" + refs.version_ref;
   await r4Open(); p0Element("status").textContent = "Version sauvegardée et rouverte. Exports disponibles dans l’espace de conservation.";
-}, true));
+}, true, "saving"));
 async function p0Connect() {
   const metadata = await p0Fetch("/api/v2/p0");
   p0.nonce = metadata.transport_nonce; p0.references = metadata.references;
@@ -866,10 +876,134 @@ async function p0Connect() {
   p0Element("reference").append(empty);
   p0.references.forEach((ref, i) => {
     const option = document.createElement("option"); option.value = String(i);
-    option.textContent = ref.title + " · " + ref.lifecycle_status + " · " + ref.validation_status;
+    option.textContent = ref.title;
     p0Element("reference").append(option);
   });
   p0Element("status").textContent = "Contexte prêt à renseigner. Aucune génération autorisée.";
 }
 p0Element("connect").addEventListener("click", () => p0Run(p0Connect));
 p0Run(p0Connect);
+
+// Conversational shell: proposals are deterministic and explicitly confirmed.
+// Business versions are saved through Application, never in browser storage.
+const uxRequests = [];
+const uxNames = {COURSE: "Cours", EXERCISE: "Exercice", OPEN_QUESTIONS: "Questions ouvertes", QCM: "QCM", QUIZ: "Quiz", ASSESSMENT: "Évaluation",
+  FIRST_STMG: "Première STMG", FINAL_STMG: "Terminale STMG", BTS_CG_YEAR_1: "BTS CG première année", BTS_CG_YEAR_2: "BTS CG deuxième année"};
+function uxShow(name) {
+  document.querySelectorAll("[data-panel]").forEach(panel => { panel.hidden = panel.dataset.panel !== name; });
+  document.querySelectorAll("[data-view]").forEach(button => { button.setAttribute("aria-current", button.dataset.view === name ? "page" : "false"); });
+  document.getElementById("workspace-title").textContent = {prepare: "Nouvelle préparation", conversations: "Conversations", productions: "Productions", library: "Bibliothèque", settings: "Réglages"}[name];
+}
+function uxMessage(role, text) {
+  const messages = document.getElementById("preparation-messages");
+  if (messages.lastElementChild?.textContent === text) return;
+  appendSearchText(messages, "li", text, "message-" + role);
+  while (messages.children.length > 64) messages.firstElementChild.remove();
+}
+function proposePreparation(text) {
+  const normalized = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const families = [["COURSE", /\bcours\b/], ["EXERCISE", /\bexercice[s]?\b/], ["OPEN_QUESTIONS", /\bquestions? ouvertes?\b/],
+    ["QCM", /\bqcm\b/], ["QUIZ", /\bquiz\b/], ["ASSESSMENT", /\b(evaluation|controle|epreuve)\b/]];
+  const levels = [["FIRST_STMG", /\b(premiere|1re|1ere) stmg\b/], ["FINAL_STMG", /\b(terminale|tle) stmg\b/],
+    ["BTS_CG_YEAR_1", /\bbts cg (?:1|premiere annee|annee 1)\b/], ["BTS_CG_YEAR_2", /\bbts cg (?:2|deuxieme annee|seconde annee|annee 2)\b/]];
+  const foundFamilies = families.filter(([, pattern]) => pattern.test(normalized)).map(([name]) => name);
+  const foundLevels = levels.filter(([, pattern]) => pattern.test(normalized)).map(([name]) => name);
+  const topic = text.match(/\bsur\s+(.+?)(?:[.!?]|,\s*(?:durée|noté|pour)|$)/i)?.[1]?.trim() || "";
+  const minutes = normalized.match(/\b(\d{1,3})\s*(?:minutes?|min)\b/);
+  const hours = normalized.match(/\b(\d)\s*(?:heures?|h)\b/);
+  const points = normalized.match(/(?:note\s*)?sur\s+(\d{1,3})\b/);
+  return {family: foundFamilies.length === 1 ? foundFamilies[0] : "", level: foundLevels.length === 1 ? foundLevels[0] : "", topic,
+    difficulty: /\b(approfondi|avance|difficile)\b/.test(normalized) ? "ADVANCED" : /\b(initiation|debutant)\b/.test(normalized) ? "INTRODUCTORY" : "STANDARD",
+    duration: minutes ? Number(minutes[1]) : hours ? Number(hours[1]) * 60 : null, points: points ? Number(points[1]) : null,
+    objective: text.length <= 500 ? text : "",
+    ambiguities: [...(foundFamilies.length === 1 ? [] : ["type de production"]), ...(foundLevels.length === 1 ? [] : ["niveau exact"]),
+      ...(topic ? [] : ["notions"]), ...(text.length <= 500 ? [] : ["objectif synthétique (500 caractères maximum)"])]};
+}
+function uxContext(context) {
+  const region = document.getElementById("drawer-context"); region.replaceChildren();
+  appendSearchText(region, "p", (uxNames[context.question_mode || context.resource_type] || "Type à préciser") + " · " + (uxNames[context.level] || "Niveau à préciser"));
+  appendSearchText(region, "p", context.discipline || "Discipline à préciser");
+  appendSearchText(region, "p", (context.topics || []).join(" · "));
+  if (context.duration_minutes) appendSearchText(region, "p", context.duration_minutes + " minutes · /" + context.total_points);
+}
+function uxQuality(quality) {
+  if (!quality) return;
+  const labels = {SOURCES_OK: "Identité des sources contrôlée", SOURCES_INSUFFICISANTES: "Sources insuffisantes", CALCULS_VERIFIES: "Calculs vérifiés", ECHEC: "Preuve indépendante des calculs manquante", NON_APPLICABLE: "Calculs non requis par les notions déclarées", CONSIGNE_COUVERTE: "Couverture examinée", PARTIELLE: "Couverture à examiner", REVUE_OK: "Revue technique sans réserve", RESERVE: "Revue pédagogique en attente ou avec réserves", HUMAN_REVIEW_REQUIRED: "Relecture enseignante nécessaire"};
+  const region = document.getElementById("drawer-quality"); region.replaceChildren();
+  for (const key of ["sources", "calculations", "instruction", "review", "human_review"]) appendSearchText(region, "p", labels[quality[key]] || "Non vérifié");
+}
+function uxPreparation(prepared) {
+  uxContext(prepared.context); uxQuality(prepared.agentic?.quality);
+  const region = document.getElementById("drawer-sources"); region.replaceChildren();
+  const passages = prepared.agentic?.evidence_pack?.passages || [];
+  for (const passage of passages) appendSearchText(region, "p", passage.text);
+  if (!passages.length) appendSearchText(region, "p", prepared.references.length + " référence(s) sélectionnée(s).");
+  document.getElementById("drawer-identities").textContent = JSON.stringify({preparation_ref: prepared.preparation_ref,
+    preparation_sha256: prepared.preparation_sha256, references: prepared.references, plan: prepared.agentic?.plan}, null, 2);
+}
+function uxProductionCard(view) {
+  const context = view.pedagogical_context;
+  document.getElementById("production-card").hidden = false;
+  document.getElementById("production-card-title").textContent = view.title;
+  document.getElementById("production-card-context").textContent = (uxNames[context.question_mode || context.resource_type] || "Préparation") + " · " + uxNames[context.level] +
+    (context.duration_minutes ? " · " + context.duration_minutes + " minutes · /" + context.total_points : "");
+  const preview = document.getElementById("production-card-preview"); preview.replaceChildren();
+  classroomPreview(preview, [...view.sections.flatMap(section => [{style: "Heading1", text: section.heading}, {style: "Normal", text: section.text}]),
+    ...view.questions.flatMap((question, i) => [{style: "Heading2", text: "Question " + (i + 1)}, {style: "Normal", text: question.prompt},
+      ...question.options.map(option => ({style: "Normal", text: option}))])]);
+  uxContext(context);
+  document.getElementById("drawer-identities").textContent = JSON.stringify({production_ref: view.production_ref, version_ref: view.version_ref, bundle_sha256: view.bundle_sha256, references: view.references}, null, 2);
+  document.getElementById("production-edit-panel").open = false;
+}
+function uxSavedCard(saved) {
+  const view = saved.record.view;
+  uxContext(view.context || view.pedagogical_context || {});
+  document.getElementById("drawer-identities").textContent = JSON.stringify({production_ref: view.production_ref, version_ref: view.version_ref,
+    record_sha256: saved.record_sha256, provenance: saved.record.provenance, reviews: saved.record.reviews, validations: saved.record.validations}, null, 2);
+  document.getElementById("drawer-sources").textContent = "Provenance de la version conservée : consultable dans Traçabilité exacte. Aucune autorité officielle restaurée.";
+  document.getElementById("drawer-quality").textContent = "Relecture nécessaire. Les rapports conservés couvrent uniquement leur version exacte.";
+}
+document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => uxShow(button.dataset.view)));
+document.getElementById("new-preparation").addEventListener("click", () => {
+  uxShow("prepare"); document.getElementById("preparation-prompt").value = ""; document.getElementById("preparation-prompt").focus();
+});
+document.getElementById("sources-toggle").addEventListener("click", () => {
+  const drawer = document.getElementById("sources-drawer"); drawer.hidden = !drawer.hidden;
+  document.body.classList.toggle("drawer-closed", drawer.hidden);
+  document.getElementById("sources-toggle").setAttribute("aria-expanded", String(!drawer.hidden));
+});
+document.querySelectorAll("[data-family]").forEach(button => button.addEventListener("click", () => {
+  document.getElementById("preparation-prompt").value = "Prépare " + uxNames[button.dataset.family].toLocaleLowerCase("fr") + " ";
+  document.getElementById("preparation-prompt").focus();
+}));
+document.getElementById("preparation-composer").addEventListener("submit", event => {
+  event.preventDefault();
+  if (p0.busy || p0.uncertain) { uxMessage("assistant", "Terminez ou vérifiez l’action en attente avant une nouvelle préparation."); return; }
+  const text = document.getElementById("preparation-prompt").value.trim(); if (!text) return;
+  const proposed = proposePreparation(text);
+  uxMessage("user", text); uxRequests.push(text); if (uxRequests.length > 32) uxRequests.shift();
+  for (const id of ["recent-preparations", "session-conversations"]) {
+    const region = document.getElementById(id); region.replaceChildren();
+    [...uxRequests].reverse().forEach(request => { const item = document.createElement("li"), button = document.createElement("button");
+      button.type = "button"; button.textContent = request; button.addEventListener("click", () => { uxShow("prepare"); document.getElementById("preparation-prompt").value = request; }); item.append(button); region.append(item); });
+  }
+  // Replace the proposed context, but retain the explicitly selected source.
+  p0Element("family").value = proposed.family; p0Element("level").value = proposed.level;
+  p0Element("difficulty").value = proposed.difficulty; p0Element("topics").value = proposed.topic;
+  p0Element("objectives").value = proposed.objective;
+  p0Element("discipline").value = proposed.level.includes("STMG") ? "Management" : proposed.level.includes("BTS") ? "Comptabilité et gestion" : "";
+  p0Element("duration").value = proposed.duration || ""; p0Element("points").value = proposed.points || "";
+  p0Element("family").dispatchEvent(new Event("change")); p0Invalidate();
+  document.getElementById("preparation-parameters").open = true; uxContext(p0Context());
+  uxMessage("assistant", proposed.ambiguities.length ? "À préciser pour préparer : " + proposed.ambiguities.join(", ") + ". Complétez le contexte puis sélectionnez une source." :
+    "Le contexte proposé est prêt à confirmer. Relisez les paramètres, puis sélectionnez une référence ou un passage de la Bibliothèque.");
+  if (proposed.duration && proposed.family !== "ASSESSMENT") uxMessage("assistant", "La durée est actuellement enregistrable pour les évaluations uniquement. Votre demande reste visible ; aucune durée ne sera ajoutée au contrat de cette production.");
+  document.getElementById("preparation-prompt").value = "";
+});
+document.getElementById("card-open").addEventListener("click", () => {
+  document.getElementById("production-card-preview").hidden = false;
+  document.getElementById("production-card-preview").scrollIntoView({behavior: "smooth"});
+});
+document.getElementById("card-modify").addEventListener("click", () => { document.getElementById("production-edit-panel").open = true; document.getElementById("p0-edit-title").focus(); });
+document.getElementById("card-check").addEventListener("click", () => p0Element("validate").click());
+if (window.matchMedia("(max-width:1180px)").matches) document.getElementById("sources-toggle").click();

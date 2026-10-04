@@ -37,6 +37,14 @@ ADDITIONS = (
     "tests/unit/test_p0_content_projection.py",
     "tests/unit/test_p0_selected_source_boundary.py",
     "docs/development/SUPER_MACRO_POST_62AF2BB.md",
+    "backend/adapters/outbound/export/diffusion_word.py",
+    "backend/adapters/outbound/review/p0_review.py",
+    "backend/modules/quality_evaluation/ports/outbound/p0_review.py",
+    "backend/modules/work_orchestration/application/services/p0_agentic.py",
+    "docs/development/MEGA_LOT_POST_20D6B49.md",
+    "tests/unit/test_diffusion_word_profile.py",
+    "tests/unit/test_p0_agentic_routing.py",
+    "tools/tests/p0_conversation_shell.test.cjs",
 )
 
 

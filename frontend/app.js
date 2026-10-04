@@ -620,12 +620,55 @@ document.getElementById("r4-save").addEventListener("click", () => r4Run(async (
   r4Versions.value = r3State.production_ref + "/" + r3State.version_ref;
   await r4Open();
 }, true));
+function classroomPreview(target, blocks) {
+  const inline = (parent, text) => {
+    const pattern = /\*\*([^*]+)\*\*|(?<!\w)\*([^*\n]*\S)\*(?!\w)|`([^`]+)`/g;
+    let cursor = 0;
+    for (const match of text.matchAll(pattern)) {
+      parent.append(document.createTextNode(text.slice(cursor, match.index)));
+      const run = document.createElement(match[1] ? "strong" : match[2] ? "em" : "span");
+      run.textContent = match[1] || match[2] || match[3]; parent.append(run);
+      cursor = match.index + match[0].length;
+    }
+    parent.append(document.createTextNode(text.slice(cursor)));
+  };
+  const canonical = value => value.replace(/^#+\s*/, "").trim().toLocaleLowerCase("fr");
+  for (let index = 0; index < blocks.length; index++) {
+    const block = blocks[index], next = blocks[index + 1]?.text || "";
+    if (block.style === "Note" && /^Version exacte : ver:[0-9a-f]{32}$/.test(block.text)) continue;
+    if (/^Heading/.test(block.style) && next.split("\n").some(line =>
+      /^#+\s/.test(line) && (canonical(line) === canonical(block.text) || canonical(line).startsWith(canonical(block.text) + " —")))) continue;
+    if (/^Q\d{2}$/.test(block.text) && next.startsWith("**" + Number(block.text.slice(1)) + ".")) continue;
+    const lines = block.text.split("\n");
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+      let line = lines[lineIndex]; if (!line.trim()) continue;
+      if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+        const table = document.createElement("table"); let rowIndex = 0;
+        while (lineIndex < lines.length && lines[lineIndex].trim().startsWith("|")) {
+          const cells = lines[lineIndex].trim().slice(1, -1).split("|").map(cell => cell.trim());
+          if (!cells.every(cell => /^:?-+:?$/.test(cell))) {
+            const row = document.createElement("tr");
+            for (const text of cells) { const cell = document.createElement(rowIndex === 0 ? "th" : "td"); inline(cell, text); row.append(cell); }
+            table.append(row); rowIndex++;
+          }
+          lineIndex++;
+        }
+        lineIndex--; target.append(table); continue;
+      }
+      const heading = line.match(/^(#{1,3})\s+(.+)$/);
+      const tag = heading ? "h4" : /^Heading/.test(block.style) ? "h4" : "p";
+      line = heading ? heading[2] : line.replace(/^Q(\d{2})(?=\s|$)/, (_, n) => "Question " + Number(n));
+      const paragraph = document.createElement(tag); inline(paragraph, line); target.append(paragraph);
+    }
+  }
+}
+
 document.getElementById("r4-preview").addEventListener("click", () => r4Run(async () => {
   const data = await r4Fetch(r4Base() + "/preview/" + document.getElementById("r4-kind").value);
   const target = document.getElementById("r4-preview-content");
   target.replaceChildren();
   appendSearchText(target, "h3", data.title);
-  for (const block of data.blocks) appendSearchText(target, block.style === "Heading1" ? "h4" : "p", block.text);
+  classroomPreview(target, data.blocks);
 }));
 document.getElementById("r4-download").addEventListener("click", () => r4Run(async () => {
   const kind = document.getElementById("r4-kind").value;

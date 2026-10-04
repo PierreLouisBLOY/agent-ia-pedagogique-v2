@@ -91,3 +91,6 @@ textarea { width:100%; resize:vertical; }
 #p0-status[data-state="unavailable"], #p0-status[data-state="error"] { border-color:#a74930; background:#fff6f0; }
 #p0-review label, #p0-teacher-content label { margin-top:1rem; }
 #p0-review input, #p0-teacher-content input { width:100%; }
+#r4-preview-content table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.95rem; }
+#r4-preview-content th, #r4-preview-content td { border:1px solid #d9dce1; padding:.65rem; overflow-wrap:anywhere; }
+#r4-preview-content th { background:#f2f3f5; text-align:left; }

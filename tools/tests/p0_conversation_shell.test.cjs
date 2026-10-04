@@ -25,3 +25,38 @@ const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
 assert.equal(ids.length, new Set(ids).size);
 for (const key of ["preparation-composer", "production-card", "sources-drawer", "session-conversations"]) assert(ids.includes(key));
 console.log("CONVERSATION_SHELL: 6 families, 4 levels, ambiguity, duration, length, safe DOM, closed storage, unique IDs PASS");
+
+// Execute the actual teacher projection: no answer enters the student preview
+// and readonly consultation does not enable or mutate the editing companion.
+async function checkTeacherCards() {
+  const regions = {"production-card-preview": {children:["STUDENT SUBJECT"]},
+    "production-card-teacher-preview": {children:[],replaceChildren(){this.children=[];}}};
+  const status={}; let requests=0;
+  const ctx={p0:{view:{production_ref:"prod:fixture",version_ref:"ver:fixture"},teacher:null},
+    document:{getElementById:id=>regions[id]},p0Element:()=>status,
+    p0Run:async action=>action(),
+    p0Fetch:async path=>{requests++;assert.equal(path,"/api/v2/p0/versions/prod:fixture/ver:fixture/teacher");
+      return {corrections:[{question_id:"Q1",expected_answer:"TEACHER ANSWER",rationale:"TEACHER METHOD"}],
+        marking:[{question_id:"Q1",points:"20.00",criteria:["TEACHER CRITERION"]}]};},
+    appendSearchText:(region,tag,text)=>region.children.push({tag,text})};
+  vm.createContext(ctx);
+  vm.runInContext(source.slice(source.indexOf("async function uxTeacherCard("),source.indexOf("function uxSavedCard(")),ctx);
+  await ctx.uxTeacherCard("correction");
+  assert.equal(regions["production-card-preview"].children.join(),"STUDENT SUBJECT");
+  assert(regions["production-card-teacher-preview"].children.some(n=>n.text==="TEACHER ANSWER"));
+  assert(!regions["production-card-teacher-preview"].children.some(n=>n.text==="TEACHER CRITERION"));
+  await ctx.uxTeacherCard("marking");
+  assert(regions["production-card-teacher-preview"].children.some(n=>n.text==="TEACHER CRITERION"));
+  assert(!regions["production-card-teacher-preview"].children.some(n=>n.text==="TEACHER ANSWER"));
+  assert.equal(ctx.p0.teacher,null); assert.equal(requests,2);
+  const controls={};ctx.document.getElementById=id=>controls[id]||= {};
+  ctx.p0Element=id=>controls[id]||= {};
+  vm.runInContext(source.slice(source.indexOf("function p0Controls("),source.indexOf("async function p0Fetch(")),ctx);
+  ctx.p0.nonce="fixture";ctx.p0.view={questions:[],pedagogical_context:{resource_type:"COURSE"}};
+  ctx.p0Controls(); assert(controls["card-correction"].disabled&&controls["card-marking"].disabled);
+  ctx.p0.view={questions:[{}],pedagogical_context:{resource_type:"ASSESSMENT"}};
+  ctx.p0Controls(); assert(!controls["card-correction"].disabled&&!controls["card-marking"].disabled);
+  ctx.p0.uncertain=true;ctx.p0Controls(); assert(controls["card-export"].disabled);
+  console.log("CARD_ACTIONS: separate teacher projections, immutable student/edit memory, unavailable family and uncertain-write controls PASS");
+}
+checkTeacherCards().catch(error=>{console.error(error);process.exitCode=1;});

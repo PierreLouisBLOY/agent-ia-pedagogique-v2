@@ -710,6 +710,10 @@ function p0Controls() {
   p0Element("generate").disabled = p0.busy || p0.uncertain || !p0.prepared || p0.liveBinding === "NONE";
   for (const id of ["teacher", "revise", "validate", "save"])
     p0Element(id).disabled = p0.busy || p0.uncertain || !p0.view;
+  for (const id of ["open", "modify", "check", "correction", "marking", "export"])
+    document.getElementById("card-" + id).disabled = p0.busy || p0.uncertain || !p0.view ||
+      (id === "correction" && !p0.view.questions.length) ||
+      (id === "marking" && p0.view.pedagogical_context.resource_type !== "ASSESSMENT");
 }
 async function p0Fetch(path, body = null) {
   const options = {method: body ? "POST" : "GET", credentials: "omit", cache: "no-store",
@@ -862,12 +866,13 @@ p0Element("validate").addEventListener("click", () => p0Run(async () => {
   uxQuality(report.quality);
   p0Element("status").textContent = "Vérification structurelle : " + report.status + ". Aucune validation pédagogique ni promotion.";
 }, true, "validating"));
-p0Element("save").addEventListener("click", () => p0Run(async () => {
+async function p0SaveVersion() {
   const refs = {production_ref: p0.view.production_ref, version_ref: p0.view.version_ref};
   await r4Fetch("/api/v2/conversation/saved", refs);
   await r4Refresh(); r4Versions.value = refs.production_ref + "/" + refs.version_ref;
   await r4Open(); p0Element("status").textContent = "Version sauvegardée et rouverte. Exports disponibles dans l’espace de conservation.";
-}, true, "saving"));
+}
+p0Element("save").addEventListener("click", () => p0Run(p0SaveVersion, true, "saving"));
 async function p0Connect() {
   const metadata = await p0Fetch("/api/v2/p0");
   p0.nonce = metadata.transport_nonce; p0.references = metadata.references;
@@ -950,12 +955,31 @@ function uxProductionCard(view) {
   document.getElementById("production-card-context").textContent = (uxNames[context.question_mode || context.resource_type] || "Préparation") + " · " + uxNames[context.level] +
     (context.duration_minutes ? " · " + context.duration_minutes + " minutes · /" + context.total_points : "");
   const preview = document.getElementById("production-card-preview"); preview.replaceChildren();
+  const teacherPreview = document.getElementById("production-card-teacher-preview");
+  teacherPreview.replaceChildren(); teacherPreview.hidden = true;
   classroomPreview(preview, [...view.sections.flatMap(section => [{style: "Heading1", text: section.heading}, {style: "Normal", text: section.text}]),
     ...view.questions.flatMap((question, i) => [{style: "Heading2", text: "Question " + (i + 1)}, {style: "Normal", text: question.prompt},
       ...question.options.map(option => ({style: "Normal", text: option}))])]);
   uxContext(context);
   document.getElementById("drawer-identities").textContent = JSON.stringify({production_ref: view.production_ref, version_ref: view.version_ref, bundle_sha256: view.bundle_sha256, references: view.references}, null, 2);
   document.getElementById("production-edit-panel").open = false;
+}
+async function uxTeacherCard(kind) {
+  await p0Run(async () => {
+    const teacher = await p0Fetch("/api/v2/p0/versions/" + p0.view.production_ref + "/" + p0.view.version_ref + "/teacher");
+    const region = document.getElementById("production-card-teacher-preview");
+    region.replaceChildren(); region.hidden = false;
+    appendSearchText(region, "h3", kind === "correction" ? "Correction — document professeur séparé" : "Barème — document professeur séparé");
+    if (kind === "correction") teacher.corrections.forEach((c, i) => {
+      appendSearchText(region, "h4", "Question " + (i + 1));
+      appendSearchText(region, "p", c.expected_answer); appendSearchText(region, "p", c.rationale);
+    });
+    else teacher.marking.forEach((m, i) => {
+      appendSearchText(region, "h4", "Question " + (i + 1) + " — " + m.points + " points");
+      m.criteria.forEach(criterion => appendSearchText(region, "p", criterion));
+    });
+    p0Element("status").textContent = "Document professeur consulté séparément. Le sujet élève est inchangé.";
+  });
 }
 function uxSavedCard(saved) {
   const view = saved.record.view;
@@ -1003,9 +1027,15 @@ document.getElementById("preparation-composer").addEventListener("submit", event
   document.getElementById("preparation-prompt").value = "";
 });
 document.getElementById("card-open").addEventListener("click", () => {
+  document.getElementById("production-card-teacher-preview").hidden = true;
   document.getElementById("production-card-preview").hidden = false;
   document.getElementById("production-card-preview").scrollIntoView({behavior: "smooth"});
 });
 document.getElementById("card-modify").addEventListener("click", () => { document.getElementById("production-edit-panel").open = true; document.getElementById("p0-edit-title").focus(); });
 document.getElementById("card-check").addEventListener("click", () => p0Element("validate").click());
+document.getElementById("card-correction").addEventListener("click", () => uxTeacherCard("correction"));
+document.getElementById("card-marking").addEventListener("click", () => uxTeacherCard("marking"));
+document.getElementById("card-export").addEventListener("click", () => p0Run(async () => {
+  await p0SaveVersion(); uxShow("productions");
+}, true, "saving"));
 if (window.matchMedia("(max-width:1180px)").matches) document.getElementById("sources-toggle").click();

@@ -30,6 +30,13 @@ ADDITIONS = (
     "tests/support/p0_generation_double.py",
     "tools/tests/p0_ui_request.test.cjs",
     "docs/development/P0_UI_CREATION_CONTINUATION.md",
+    "backend/adapters/outbound/export/classroom_word.py",
+    "backend/adapters/outbound/generation/openai/p0_content.py",
+    "frontend/styles.css",
+    "tests/unit/test_classroom_word_profile.py",
+    "tests/unit/test_p0_content_projection.py",
+    "tests/unit/test_p0_selected_source_boundary.py",
+    "docs/development/SUPER_MACRO_POST_62AF2BB.md",
 )
 
 

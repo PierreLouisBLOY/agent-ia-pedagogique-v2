@@ -38,7 +38,7 @@ def test_table_cells_units_and_surrounding_text_survive_native_table_projection(
 @pytest.mark.parametrize("kind", ["student", "correction", "marking"])
 def test_non_table_documents_remain_byte_identical(kind: str) -> None:
     doc = WordDocument(kind, "Document", (WordBlock("Normal", "FICTIF / À VALIDER\nTexte inchangé"),))
-    assert R6ReadableWordWriter().write(doc) == OOXMLWordWriter().write(doc)
+    assert R6ReadableWordWriter(profile="readable-v1").write(doc) == OOXMLWordWriter().write(doc)
 
 
 @pytest.mark.parametrize("kind", ["student", "correction", "marking"])

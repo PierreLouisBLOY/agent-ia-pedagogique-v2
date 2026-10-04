@@ -76,6 +76,20 @@ searchForm.addEventListener("submit", async (event) => {
         " · Version : " + item.version_or_checksum, "provenance");
       appendSearchText(row, "p", "LEXICAL · Admission F2A · Passage courant · Contenu non fiable. " +
         "Le rang ne constitue pas un score de qualité.", "provenance");
+      const selectButton = document.createElement("button");
+      selectButton.type = "button";
+      selectButton.textContent = "Utiliser ce passage pour ma production";
+      selectButton.addEventListener("click", () => {
+        p0Element("search-query").value = searchInput.value;
+        p0Element("notion-id").value = "";
+        p0Element("search-passage").value = item.passage_ref;
+        p0Element("search-query").closest("details").open = true;
+        p0Invalidate();
+        p0Element("status").textContent = "Passage sélectionné. Confirmez le contexte et préparez votre production.";
+        p0Element("heading").scrollIntoView({behavior: "smooth"});
+      });
+      if (["NOTION", "PEDAGOGICAL_CONTENT", "METHOD", "FRAMEWORK_ELEMENT", "OFFICIAL_OCCURRENCE"].includes(item.object_kind))
+        row.append(selectButton);
       if (item.open_status === "OPENABLE" && item.object_kind === "RESOURCE" &&
           item.read15?.resource_ref === item.object_ref) {
         const openButton = document.createElement("button");
@@ -591,7 +605,7 @@ async function r4Run(action, writes = false) {
   if (r4Busy || (writes && r4Uncertain)) return;
   r4Busy = true;
   r4Controls();
-  try { await action(); }
+  try { await action(); if (p0Element("status").dataset.state === "loading") p0Element("status").dataset.state = "ready"; }
   catch (error) {
     if (writes) r4Uncertain = true;
     r4Status.textContent = "Opération refusée ou incertaine : " + error.message + ". Aucun rejeu automatique.";
@@ -670,9 +684,12 @@ async function p0Fetch(path, body = null) {
 async function p0Run(action, mutation = false) {
   if (p0.busy || (mutation && p0.uncertain)) return;
   p0.busy = true; p0Controls();
-  try { await action(); }
+  p0Element("status").dataset.state = "loading";
+  p0Element("status").textContent = "Action en cours…";
+  try { await action(); if (p0Element("status").dataset.state === "loading") p0Element("status").dataset.state = "ready"; }
   catch (error) {
     if (mutation && !error.confirmedRefusal) p0.uncertain = true;
+    p0Element("status").dataset.state = "error";
     p0Element("status").textContent = "Action non confirmée : " + error.message +
       (p0.uncertain ? ". Aucun renvoi automatique ; vérifiez la version avant de reprendre." :
         error.confirmedRefusal ? ". Refus confirmé ; corrigez la demande avant une nouvelle action explicite." : ". Réessayez la consultation explicitement.");
@@ -705,18 +722,23 @@ p0Element("form").addEventListener("submit", event => {
   event.preventDefault();
   p0Run(async () => {
     const query = p0Element("search-query").value.trim();
+    const notion = p0Element("notion-id").value.trim();
     const passage = p0Element("search-passage").value.trim();
     const selected = p0.references[Number(p0Element("reference").value)];
-    if (Boolean(query) !== Boolean(passage))
+    if (Boolean(query || notion) !== Boolean(passage) || (query && notion))
       throw Object.assign(new Error("P0_REFERENCE_INCOMPLETE"), {confirmedRefusal: true});
-    if ((!query || !passage) && (!selected || p0Element("reference").value === ""))
+    if ((!(query || notion) || !passage) && (!selected || p0Element("reference").value === ""))
       throw Object.assign(new Error("P0_REFERENCE_REQUIRED"), {confirmedRefusal: true});
-    const reference = query && passage ? {query, passage_ref: passage} :
+    const reference = notion && passage ? {notion_id: notion, passage_ref: passage} : query && passage ? {query, passage_ref: passage} :
       {resource_ref: selected.resource_ref, resource_version_ref: selected.resource_version_ref};
     p0.prepared = await p0Fetch("/api/v2/p0/prepare", {command_id: p0Command(), context: p0Context(), reference});
     p0Element("preparation").replaceChildren();
-    appendSearchText(p0Element("preparation"), "pre", JSON.stringify({context: p0.prepared.context,
+    appendSearchText(p0Element("preparation"), "p", "Contexte et référence confirmés. Relisez ce choix avant de générer.");
+    const sourceDetails = document.createElement("details"); sourceDetails.className = "secondary";
+    appendSearchText(sourceDetails, "summary", "Contexte exact, sources et provenance");
+    appendSearchText(sourceDetails, "pre", JSON.stringify({context: p0.prepared.context,
       references: p0.prepared.references}, null, 2));
+    p0Element("preparation").append(sourceDetails);
     p0Element("status").textContent = "Préparation prête. Autorisation de génération requise ; aucun appel fournisseur effectué.";
   }, true);
 });
@@ -751,7 +773,8 @@ p0Element("generate").addEventListener("click", () => p0Run(async () => {
   if (result.state === "CANDIDATE") {
     p0Render(result.view); p0.prepared = null;
     p0Element("status").textContent = "Candidate reçue. Relisez et modifiez la version exacte ; aucune promotion effectuée.";
-  } else p0Element("status").textContent = "Autorisation requise. Aucun transport fournisseur n’est lié à cette composition hors ligne.";
+  } else { p0Element("status").dataset.state = "unavailable";
+    p0Element("status").textContent = "Génération indisponible : autorisation requise. Aucun transport fournisseur n’est lié à cette composition hors ligne."; }
 }, true));
 p0Element("teacher").addEventListener("click", () => p0Run(async () => {
   p0.teacher = await p0Fetch("/api/v2/p0/versions/" + p0.view.production_ref + "/" + p0.view.version_ref + "/teacher");

@@ -55,7 +55,8 @@ def test_reassembly_preserves_parent_annexes_teacher_fields_and_exact_lineage(tm
             text = "\n".join(ElementTree.fromstring(archive.read("word/document.xml")).itertext())
         if kind == "student":
             assert text.count("Justifiez votre réponse.") == 1
-            assert text.index("Durée donnée") < text.index("Q01")
+            assert text.index("Durée donnée") < text.index("Question 1")
+            assert "Q01" not in text and child.version_ref not in text
             assert "Réponse justifiée." not in text
         else:
             # Same teacher fields, only the exact version note legitimately changes.

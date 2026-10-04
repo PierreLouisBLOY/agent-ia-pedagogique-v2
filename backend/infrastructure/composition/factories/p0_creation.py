@@ -23,9 +23,40 @@ def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
     )
 
     def reference(selection: Mapping[str, object]) -> Mapping[str, object]:
+        if set(selection) == {"notion_id", "passage_ref"}:
+            from backend.infrastructure.composition.factories.r6_all_notions import (
+                exact_notion_evidence,
+            )
+
+            with exact_notion_evidence(target) as inbound:
+                inspected = inbound.inspect(str(selection["notion_id"]))
+            matches = [p for p in items(inspected["items"], 256)
+                       if p["passage_ref"] == selection["passage_ref"]]
+            if len(matches) != 1:
+                raise ValueError("P0_REFERENCE_NOT_FOUND")
+            passage = matches[0]
+            if passage["object_kind"] not in {"NOTION", "PEDAGOGICAL_CONTENT", "METHOD"}:
+                raise ValueError("P0_TEACHER_SOURCE_FORBIDDEN")
+            if passage["excerpt_truncated"] or not passage["excerpt"]:
+                raise ValueError("P0_REFERENCE_INCOMPLETE")
+            excerpt = str(passage["excerpt"])
+            from backend.modules.pedagogical_design.contracts.dto.p0_production import (
+                P0_PROVENANCE_LABEL,
+            )
+
+            return {"reference": {
+                "evidence_id": "evidence:" + hashlib.sha256(str(passage["passage_ref"]).encode()).hexdigest()[:32],
+                "source_ref": passage["object_ref"], "locator": passage["passage_ref"],
+                "checksum_or_version": passage["version_or_checksum"],
+                "excerpt_sha256": hashlib.sha256(excerpt.encode()).hexdigest(),
+                "provenance_label": P0_PROVENANCE_LABEL,
+            }, "excerpt": excerpt}
         if set(selection) == {"query", "passage_ref"}:
             loaded = load_p0_reference(target, query=str(selection["query"]),
                 passage_ref=str(selection["passage_ref"]), correlation_id="p0.reference")
+            if loaded["object_kind"] not in {"NOTION", "PEDAGOGICAL_CONTENT", "METHOD",
+                                               "FRAMEWORK_ELEMENT", "OFFICIAL_OCCURRENCE"}:
+                raise ValueError("P0_TEACHER_SOURCE_FORBIDDEN")
             return {"reference": loaded["reference"], "excerpt": loaded["excerpt"]}
         selected = object_data(selection, {"resource_ref", "resource_version_ref"})
         loaded = load_p0_exact_reference(target, resource_ref=str(selected["resource_ref"]),

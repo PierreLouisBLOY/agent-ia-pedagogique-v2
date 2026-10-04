@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Projet V2 — Consultation locale</title>
+  <title>Projet V2 — Atelier pédagogique</title>
   <link rel="stylesheet" href="/assets/styles.css">
   <script src="/assets/app.js" defer></script>
 </head>
@@ -13,10 +13,12 @@
     <span class="local-indicator">Exécution locale</span>
   </header>
   <main>
+    <nav class="work-nav" aria-label="Parcours de travail"><a href="#p0-heading">Créer et relire</a><a href="#r4-heading">Mes documents</a><a href="#search-heading">Sources</a></nav>
     <section class="workspace" aria-labelledby="p0-heading">
-      <h2 id="p0-heading">Créer et relire une production</h2>
+      <p class="eyebrow">Votre espace de travail</p><h1 id="p0-heading">Créer et relire.</h1>
       <p>Préparez le contexte et choisissez une référence locale. La génération exige une autorisation distincte. Les candidates restent à relire avant tout usage pédagogique.</p>
       <form id="p0-form">
+        <div class="context-grid">
         <label for="p0-family">Production</label>
         <select id="p0-family" required><option value="">Choisir</option><option value="COURSE">Cours</option><option value="EXERCISE">Exercice</option><option value="OPEN_QUESTIONS">Questions ouvertes</option><option value="QCM">QCM</option><option value="QUIZ">Quiz</option><option value="ASSESSMENT">Évaluation</option></select>
         <label for="p0-level">Niveau</label>
@@ -25,28 +27,55 @@
         <label for="p0-topics">Notions — une par ligne</label><textarea id="p0-topics" required rows="2" maxlength="4000"></textarea>
         <label for="p0-objectives">Objectifs — un par ligne</label><textarea id="p0-objectives" required rows="2" maxlength="4000"></textarea>
         <label for="p0-difficulty">Difficulté</label><select id="p0-difficulty" required><option value="">Choisir</option><option value="INTRODUCTORY">Initiation</option><option value="STANDARD">Standard</option><option value="ADVANCED">Approfondissement</option></select>
-        <div id="p0-assessment" hidden><label for="p0-duration">Durée en minutes</label><input id="p0-duration" type="number" min="1" max="480"><label for="p0-points">Note sur</label><input id="p0-points" type="number" min="1" max="200"></div>
+        </div>
+        <div id="p0-assessment" class="context-grid" hidden><label for="p0-duration">Durée en minutes</label><input id="p0-duration" type="number" min="1" max="480"><label for="p0-points">Note sur</label><input id="p0-points" type="number" min="1" max="200"></div>
         <label for="p0-reference">Référence locale exacte</label><select id="p0-reference"><option value="">Choisir une référence</option></select>
         <p>Ces ancrages R6 sont locaux, en revue et sans autorité officielle attestée. Pour un autre passage, utilisez les identifiants obtenus par la recherche ci-dessous.</p>
+        <details class="secondary"><summary>Choisir un autre passage de la bibliothèque</summary>
         <label for="p0-search-query">Recherche du passage sélectionné — facultatif</label><input id="p0-search-query" maxlength="500">
+        <label for="p0-notion-id">Notion canonique exacte — facultatif, à la place de la recherche</label><input id="p0-notion-id" maxlength="256">
         <label for="p0-search-passage">Identifiant du passage sélectionné — facultatif</label><input id="p0-search-passage" maxlength="500">
+        <p>La recherche ci-dessous permet de sélectionner le passage ; ses références restent consultables.</p></details>
         <button id="p0-prepare" type="submit" disabled>Confirmer et préparer</button>
       </form>
       <p id="p0-status" role="status" aria-live="polite">Connexion en cours.</p>
-      <button id="p0-connect" type="button">Vérifier la connexion au service</button>
+      <details class="secondary"><summary>Connexion et limites</summary><p>Sans autorisation fournisseur distincte, la génération est indisponible. Une vérification de structure ne constitue pas une validation pédagogique.</p><button id="p0-connect" type="button">Vérifier la connexion au service</button></details>
       <div id="p0-preparation"></div>
       <button id="p0-generate" type="button" disabled>Demander la génération autorisée</button>
       <div id="p0-review"></div>
       <button id="p0-teacher" type="button" disabled>Consulter séparément le corrigé et le barème</button>
       <div id="p0-teacher-content"></div>
+      <div class="conversation-actions">
       <button id="p0-revise" type="button" disabled>Conserver mes modifications dans une nouvelle version</button>
       <button id="p0-validate" type="button" disabled>Vérifier la structure et la traçabilité</button>
       <button id="p0-save" type="button" disabled>Sauvegarder et rouvrir cette version</button>
+      </div>
       <p>La sauvegarde permet les exports élève et professeur dans l’espace de conservation ci-dessous. La vérification structurelle ne vaut ni validation pédagogique ni promotion.</p>
     </section>
-    <section class="intro" aria-labelledby="page-title">
+    <section class="workspace" aria-labelledby="r4-heading">
+      <p class="eyebrow">Mes documents</p>
+      <h2 id="r4-heading">Sauvegarder, rouvrir, exporter</h2>
+      <p>Sauvegarder n’est pas promouvoir. Les imports historiques sont documentaires et non modifiables.</p>
+      <details class="secondary"><summary>Sauvegarde du parcours conversationnel antérieur</summary><button id="r4-save" type="button">Sauvegarder la version R3 consultée</button></details>
+      <button id="r4-refresh" type="button">Retrouver les versions sauvegardées</button>
+      <label for="r4-version">Version sauvegardée exacte</label>
+      <select id="r4-version"></select>
+      <button id="r4-open" type="button">Rouvrir</button>
+      <p id="r4-status" role="status" aria-live="polite">R4 non connecté.</p>
+      <details class="secondary"><summary>Provenance, version et réserves</summary><div id="r4-details"></div></details>
+      <label for="r4-kind">Document Word</label>
+      <select id="r4-kind"><option value="student">Sujet élève</option><option value="correction">Corrigé professeur</option><option value="marking">Barème</option></select>
+      <button id="r4-preview" type="button" disabled>Prévisualiser</button>
+      <button id="r4-download" type="button" disabled>Télécharger le DOCX éditable</button>
+      <div id="r4-preview-content"></div>
+      <details class="secondary"><summary>Validation et promotion distinctes</summary><h3>Actions distinctes sur une version locale</h3>
+      <button id="r4-validate" type="button" disabled>Nouvelle validation CAP-A01</button>
+      <button id="r4-promote" type="button" disabled>Demander la promotion explicite</button>
+      <p>Les réserves restent consultables. Aucun import historique du pilote ne peut être promu ici.</p></details>
+    </section>
+<details class="secondary legacy-workspace"><summary>Conversation avancée et contrôles du pilote antérieur</summary>    <section class="intro" aria-labelledby="page-title">
       <p class="eyebrow">Bibliothèque · READ-15</p>
-      <h1 id="page-title">Retrouver une ressource.</h1>
+      <h2 id="page-title">Parcours conversationnel antérieur</h2>
       <p class="lede">Recherchez des passages indexés ou consultez une référence exacte.
         La conversation R2 prépare une candidate distincte, sans modifier la bibliothèque.</p>
       <p class="scope-note">Consultation en lecture seule de la bibliothèque configurée et authentifiée au démarrage.
@@ -103,27 +132,7 @@
       <p id="r3-identities" class="scope-note"></p>
       <div id="r3-content"></div>
     </section>
-    <section class="workspace" aria-labelledby="r4-heading">
-      <p class="eyebrow">R4 · Conservation locale et Word</p>
-      <h2 id="r4-heading">Sauvegarder, rouvrir, exporter</h2>
-      <p>Sauvegarder n’est pas promouvoir. Les imports historiques sont documentaires et non modifiables.</p>
-      <button id="r4-save" type="button">Sauvegarder la version R3 consultée</button>
-      <button id="r4-refresh" type="button">Retrouver les versions sauvegardées</button>
-      <label for="r4-version">Version sauvegardée exacte</label>
-      <select id="r4-version"></select>
-      <button id="r4-open" type="button">Rouvrir</button>
-      <p id="r4-status" role="status" aria-live="polite">R4 non connecté.</p>
-      <div id="r4-details"></div>
-      <label for="r4-kind">Document Word</label>
-      <select id="r4-kind"><option value="student">Sujet élève</option><option value="correction">Corrigé professeur</option><option value="marking">Barème</option></select>
-      <button id="r4-preview" type="button" disabled>Prévisualiser</button>
-      <button id="r4-download" type="button" disabled>Télécharger le DOCX éditable</button>
-      <div id="r4-preview-content"></div>
-      <h3>Actions distinctes sur une version locale</h3>
-      <button id="r4-validate" type="button" disabled>Nouvelle validation CAP-A01</button>
-      <button id="r4-promote" type="button" disabled>Demander la promotion explicite</button>
-      <p>A16 et les réserves restent visibles. Aucun import historique du pilote ne peut être promu ici.</p>
-    </section>
+</details>
     <section class="workspace search-workspace" aria-labelledby="search-heading">
       <h2 id="search-heading">Rechercher des passages</h2>
       <p id="search-help">Recherche lexicale dans les passages indexés ; certains résultats
@@ -167,6 +176,6 @@
       <p id="request-correlation" class="correlation" hidden></p>
     </section>
   </main>
-  <footer>Projet V2 <span>Bibliothèque en lecture seule · Candidates R2 volatiles, non validées</span></footer>
+  <footer>Projet V2 <span>Références locales · Documents à relire avant usage pédagogique</span></footer>
 </body>
 </html>

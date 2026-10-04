@@ -10,6 +10,10 @@ from io import BytesIO
 from xml.etree.ElementTree import Element, SubElement, fromstring, tostring
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
+from backend.adapters.outbound.export.classroom_word import (
+    apply_page_profile,
+    presentation_document,
+)
 from backend.adapters.outbound.export.lot1_word import Lot1OOXMLWordWriter, _table
 from backend.modules.materialization_export.contracts.dto.lot1_word_table import (
     Lot1WordDocument,
@@ -62,10 +66,17 @@ def readable_document(document: WordDocument) -> tuple[WordDocument, tuple[Lot1W
 
 
 class R6ReadableWordWriter(Lot1OOXMLWordWriter):
+    def __init__(self, *, profile: str = "classroom-v2") -> None:
+        if profile not in {"classroom-v2", "readable-v1"}:
+            raise ValueError("R6_WORD_PROFILE_REJECTED")
+        self.classroom = profile == "classroom-v2"
+
     def write(self, document: WordDocument) -> bytes:
+        if self.classroom:
+            document = presentation_document(document)
         projected, tables = readable_document(document)
         raw = super().write(projected)
-        if projected is document:
+        if projected is document and not self.classroom:
             return raw
         with ZipFile(BytesIO(raw)) as archive:
             parts = {name: archive.read(name) for name in archive.namelist()}
@@ -82,6 +93,22 @@ class R6ReadableWordWriter(Lot1OOXMLWordWriter):
                 props = Element(namespace + "trPr")
                 row.insert(0, props)
             SubElement(props, namespace + "cantSplit")
+        if self.classroom:
+            styles = fromstring(parts["word/styles.xml"])
+            footer = apply_page_profile(root, styles)
+            parts["word/styles.xml"] = tostring(styles, encoding="utf-8", xml_declaration=True)
+            parts["word/footer1.xml"] = tostring(footer, encoding="utf-8", xml_declaration=True)
+            relationships = fromstring(parts["word/_rels/document.xml.rels"])
+            SubElement(relationships, "{http://schemas.openxmlformats.org/package/2006/relationships}Relationship", {
+                "Id": "rIdClassroomFooter", "Type": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer",
+                "Target": "footer1.xml",
+            })
+            parts["word/_rels/document.xml.rels"] = tostring(relationships, encoding="utf-8", xml_declaration=True)
+            types = fromstring(parts["[Content_Types].xml"])
+            SubElement(types, "{http://schemas.openxmlformats.org/package/2006/content-types}Override", {
+                "PartName": "/word/footer1.xml", "ContentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml",
+            })
+            parts["[Content_Types].xml"] = tostring(types, encoding="utf-8", xml_declaration=True)
         parts["word/document.xml"] = tostring(root, encoding="utf-8", xml_declaration=True)
         output = BytesIO()
         with ZipFile(output, "w") as archive:

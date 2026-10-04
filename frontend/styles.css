@@ -73,3 +73,21 @@ footer { padding: 1.5rem clamp(1.25rem, 6vw, 6rem); border-top: 1px solid var(--
 .r3-workspace select { max-width: 100%; padding: .6rem; }
 .r3-workspace pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .r3-workspace h3 { margin-top: 1.5rem; }
+
+/* One primary workspace; secondary boundaries remain visible on demand. */
+.work-nav { display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:2rem; }
+.work-nav a { color:var(--accent); text-decoration:underline; text-underline-offset:.25rem; }
+main { margin-top:2rem; }
+.workspace { margin-bottom:1.5rem; }
+textarea, select { font:inherit; color:var(--ink); border:1px solid #9aafaa; border-radius:.45rem; background:#fcfdfb; padding:.7rem; max-width:100%; }
+textarea { width:100%; resize:vertical; }
+.secondary { border:1px solid var(--line); padding:.8rem 1rem; border-radius:.4rem; margin:1rem 0; }
+.secondary summary { cursor:pointer; font-weight:600; }
+.secondary pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:.8rem; }
+.secondary[open] > summary { margin-bottom:1rem; }
+.legacy-workspace .workspace { border:0; padding:1rem 0; }
+#p0-status { border-left:3px solid var(--accent); padding:.8rem 1rem; background:#f2f6f3; }
+#p0-status[data-state="loading"] { border-color:#8c6a24; }
+#p0-status[data-state="unavailable"], #p0-status[data-state="error"] { border-color:#a74930; background:#fff6f0; }
+#p0-review label, #p0-teacher-content label { margin-top:1rem; }
+#p0-review input, #p0-teacher-content input { width:100%; }

@@ -117,7 +117,16 @@ def test_exact_matrix_cell_application_lifecycle(
             kind=projection, correlation="p0.matrix.word")
         assert isinstance(preview, dict) and isinstance(payload, bytes)
         content = _text(payload)
-        assert all(str(block["text"]) in content for block in preview["blocks"])
+        for block in preview["blocks"]:
+            text = str(block["text"])
+            if block["style"] == "Note" and text.startswith("Version exacte : ver:"):
+                assert text not in content
+                assert parent.version_ref not in content
+            elif block["style"] == "Heading2" and text.startswith("Q") and text[1:3].isdigit():
+                assert "Question " + str(int(text[1:3])) + text[3:] in content
+                assert text not in content
+            else:
+                assert text in content
     if kind == "COURSE":
         with pytest.raises(ValueError, match="R4_EXPORT_KIND"):
             reopened_app.execute("word", parent.production_ref, parent.version_ref,

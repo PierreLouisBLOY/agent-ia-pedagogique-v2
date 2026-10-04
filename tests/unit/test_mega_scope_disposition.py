@@ -79,3 +79,19 @@ def test_m01_review_refusal_is_not_replayed_or_attached_to_recovered_copy(compan
 def test_original_security_refusal_remains_in_force(message):
     with pytest.raises(ReviewSecurityError):
         reject_activatable_review_metadata({"code": "NO_AUTHORITATIVE_ORACLE", "message": message})
+
+
+def test_canonical_review_success_keeps_exact_report_identity_and_saves(companion):
+    actions, saved_bodies = [], []
+    def call(endpoint, operation, body):
+        actions.append(operation)
+        if operation == "generate":
+            return {"view": {"production_ref": "prod:DECLARED_UNIT", "version_ref": "ver:DECLARED_UNIT", "bundle_sha256": "0" * 64}}
+        return {"state": "REVIEWED", "review_sha256": "1" * 64}
+    companion.BASE.p0_call = call
+    control = SimpleNamespace(receipts=[], publish=lambda name, raw: None)
+    saved = SimpleNamespace(execute=lambda *args, **kwargs: saved_bodies.append(kwargs["body"]) or {"state": "DECLARED_UNIT_SAVED"})
+    result = companion.one_case(control, SimpleNamespace(), SimpleNamespace(), None, saved, "M02", {"preparation_ref": "prep:DECLARED_UNIT", "preparation_sha256": "0" * 64})
+    assert result["review"] == "REVIEWED" and result["review_sha256"] == "1" * 64
+    assert actions == ["generate", "review"]
+    assert saved_bodies == [{"production_ref": "prod:DECLARED_UNIT", "version_ref": "ver:DECLARED_UNIT"}]

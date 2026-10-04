@@ -74,10 +74,23 @@ class ExportSavedCommand:
             ))
             blocks.append(WordBlock("Note", "Version exacte : " + record.version_ref))
         if kind == "student":
+            before: dict[str, dict[str, object]] = {}
+            question_ids = [str(q["question_id"]) for q in items(bundle.data["questions"], 60)]
             for section in items(bundle.data["sections"], 16):
+                section_id = str(section["section_id"])
+                if section_id.startswith("S_BEFORE_"):
+                    question_id = section_id.removeprefix("S_BEFORE_")
+                    if question_id not in question_ids or question_id in before:
+                        raise ValueError("P0_ASSEMBLY_QUESTION_LINK")
+                    before[question_id] = section
+                    continue
                 blocks.extend((WordBlock("Heading1", str(section["heading"])),
                                WordBlock("Normal", str(section["text"]))))
             for question in items(bundle.data["questions"], 60):
+                introduction = before.get(str(question["question_id"]))
+                if introduction is not None:
+                    blocks.extend((WordBlock("Heading1", str(introduction["heading"])),
+                                   WordBlock("Normal", str(introduction["text"]))))
                 blocks.append(WordBlock("Heading2", str(question["question_id"])))
                 blocks.append(WordBlock("Normal", str(question["prompt"])))
                 for option in cast(tuple[str, ...], question["options"]):

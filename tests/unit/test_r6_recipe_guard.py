@@ -13,6 +13,9 @@ ADDITIONS = (
     "backend/infrastructure/composition/factories/local_browser.py",
     "backend/infrastructure/composition/factories/saved_p0_documentary.py",
     "tests/integration/test_r6_p0_matrix_application.py",
+    "backend/modules/pedagogical_design/application/commands/reassemble_p0_candidate.py",
+    "backend/modules/materialization_export/application/commands/export_saved.py",
+    "tests/unit/test_r6_p0_reassembly.py",
 )
 
 

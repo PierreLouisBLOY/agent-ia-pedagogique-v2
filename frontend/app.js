@@ -241,14 +241,23 @@ function updateConversation(view) {
     "Précisez puis confirmez le contexte.";
 }
 
+async function localBoundedRequest(path, options, consume) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    return await consume(await fetch(path, {...options, signal: controller.signal}));
+  } finally { clearTimeout(timeout); }
+}
+
 async function conversationFetch(path, options = {}) {
-  const response = await fetch(path, {
+  return localBoundedRequest(path, {
     method: "GET", credentials: "omit", cache: "no-store", redirect: "error", ...options,
     headers: { "X-Local-Intent": "conversation-v1", ...options.headers }
+  }, async response => {
+    const value = await response.json();
+    if (value?.meta?.contract_id !== "CONVERSATION-HTTP-LOCAL-1.0") throw new Error("INVALID_PUBLIC_RESPONSE");
+    return { response, value };
   });
-  const value = await response.json();
-  if (value?.meta?.contract_id !== "CONVERSATION-HTTP-LOCAL-1.0") throw new Error("INVALID_PUBLIC_RESPONSE");
-  return { response, value };
 }
 
 async function refreshConversation() {
@@ -533,7 +542,7 @@ async function r4Fetch(path, body = null, binary = false) {
     options.headers["X-R2-Nonce"] = r4Nonce;
     options.body = JSON.stringify(body);
   }
-  const response = await fetch(path, options);
+  return localBoundedRequest(path, options, async response => {
   if (binary && response.ok) {
     if (response.headers.get("Content-Type") !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
       throw new Error("R4_INVALID_DOCUMENT");
@@ -543,6 +552,7 @@ async function r4Fetch(path, body = null, binary = false) {
   if (!response.ok || envelope?.meta?.contract_id !== "SAVE-REOPEN-WORD-HTTP-LOCAL-1.0")
     throw new Error(envelope?.error?.code || "R4_REFUSED");
   return envelope.data;
+  });
 }
 async function r4Refresh() {
   const data = await r4Fetch("/api/v2/conversation/saved");
@@ -627,3 +637,173 @@ document.getElementById("r4-promote").addEventListener("click", () => r4Run(asyn
   await r4Open();
 }, true));
 r4Run(r4Refresh);
+
+// P0 companion: all families use the same Application lifecycle and exact versions.
+const p0 = {nonce: null, references: [], prepared: null, view: null, teacher: null,
+  busy: false, uncertain: false};
+const p0Element = id => document.getElementById("p0-" + id);
+function p0Controls() {
+  p0Element("prepare").disabled = p0.busy || p0.uncertain || !p0.nonce;
+  p0Element("generate").disabled = p0.busy || p0.uncertain || !p0.prepared;
+  for (const id of ["teacher", "revise", "validate", "save"])
+    p0Element(id).disabled = p0.busy || p0.uncertain || !p0.view;
+}
+async function p0Fetch(path, body = null) {
+  const options = {method: body ? "POST" : "GET", credentials: "omit", cache: "no-store",
+    redirect: "error", headers: {"X-Local-Intent": "conversation-v1"}};
+  if (body) {
+    options.headers["Content-Type"] = "application/json; charset=utf-8";
+    options.headers["X-R2-Nonce"] = p0.nonce;
+    options.body = JSON.stringify(body);
+  }
+  return localBoundedRequest(path, options, async response => {
+  const envelope = await response.json();
+  if (!response.ok || envelope?.meta?.contract_id !== "R6-P0-HTTP-LOCAL-1.0") {
+    const error = new Error(envelope?.error?.code || "P0_REFUSED");
+    error.confirmedRefusal = envelope?.meta?.contract_id === "R6-P0-HTTP-LOCAL-1.0" &&
+      envelope?.error?.code !== "P0_OUTCOME_UNKNOWN";
+    throw error;
+  }
+  return envelope.data;
+  });
+}
+async function p0Run(action, mutation = false) {
+  if (p0.busy || (mutation && p0.uncertain)) return;
+  p0.busy = true; p0Controls();
+  try { await action(); }
+  catch (error) {
+    if (mutation && !error.confirmedRefusal) p0.uncertain = true;
+    p0Element("status").textContent = "Action non confirmée : " + error.message +
+      (p0.uncertain ? ". Aucun renvoi automatique ; vérifiez la version avant de reprendre." :
+        error.confirmedRefusal ? ". Refus confirmé ; corrigez la demande avant une nouvelle action explicite." : ". Réessayez la consultation explicitement.");
+  } finally { p0.busy = false; p0Controls(); }
+}
+const p0Command = () => crypto.randomUUID().replaceAll("-", "");
+function p0Context() {
+  const family = p0Element("family").value;
+  return {contract_id: "R6-P0-CONTEXT-1.0",
+    resource_type: ["OPEN_QUESTIONS", "QCM", "QUIZ"].includes(family) ? "QUESTION_SET" : family,
+    question_mode: ["OPEN_QUESTIONS", "QCM", "QUIZ"].includes(family) ? family : null,
+    level: p0Element("level").value, discipline: p0Element("discipline").value.trim(),
+    topics: p0Element("topics").value.split("\n").map(t => t.trim()).filter(Boolean),
+    objectives: p0Element("objectives").value.split("\n").map(t => t.trim()).filter(Boolean),
+    difficulty: p0Element("difficulty").value, language: "fr",
+    duration_minutes: family === "ASSESSMENT" ? Number(p0Element("duration").value) : null,
+    total_points: family === "ASSESSMENT" ? Number(p0Element("points").value) : null};
+}
+p0Element("family").addEventListener("change", () => {
+  const assessment = p0Element("family").value === "ASSESSMENT";
+  p0Element("assessment").hidden = !assessment;
+  for (const id of ["duration", "points"]) p0Element(id).required = assessment;
+});
+function p0Invalidate() {
+  p0.prepared = null; p0Controls();
+}
+p0Element("form").addEventListener("input", p0Invalidate);
+p0Element("form").addEventListener("change", p0Invalidate);
+p0Element("form").addEventListener("submit", event => {
+  event.preventDefault();
+  p0Run(async () => {
+    const query = p0Element("search-query").value.trim();
+    const passage = p0Element("search-passage").value.trim();
+    const selected = p0.references[Number(p0Element("reference").value)];
+    if (Boolean(query) !== Boolean(passage))
+      throw Object.assign(new Error("P0_REFERENCE_INCOMPLETE"), {confirmedRefusal: true});
+    if ((!query || !passage) && (!selected || p0Element("reference").value === ""))
+      throw Object.assign(new Error("P0_REFERENCE_REQUIRED"), {confirmedRefusal: true});
+    const reference = query && passage ? {query, passage_ref: passage} :
+      {resource_ref: selected.resource_ref, resource_version_ref: selected.resource_version_ref};
+    p0.prepared = await p0Fetch("/api/v2/p0/prepare", {command_id: p0Command(), context: p0Context(), reference});
+    p0Element("preparation").replaceChildren();
+    appendSearchText(p0Element("preparation"), "pre", JSON.stringify({context: p0.prepared.context,
+      references: p0.prepared.references}, null, 2));
+    p0Element("status").textContent = "Préparation prête. Autorisation de génération requise ; aucun appel fournisseur effectué.";
+  }, true);
+});
+function p0Field(parent, id, label, value, multiline = true) {
+  const text = document.createElement("label"); text.htmlFor = id; text.textContent = label;
+  const input = document.createElement(multiline ? "textarea" : "input");
+  input.id = id; input.value = value; if (multiline) input.rows = 3;
+  parent.append(text, input); return input;
+}
+function p0Render(view) {
+  p0.view = view; p0.teacher = null;
+  const region = p0Element("review"); region.replaceChildren();
+  p0Element("teacher-content").replaceChildren();
+  appendSearchText(region, "p", "CANDIDATE à relire — " + view.version_ref);
+  p0Field(region, "p0-edit-title", "Titre", view.title, false);
+  view.sections.forEach((s, i) => {
+    p0Field(region, "p0-edit-heading-" + i, "Titre de section " + (i + 1), s.heading, false);
+    p0Field(region, "p0-edit-section-" + i, "Texte de section " + (i + 1), s.text);
+  });
+  view.questions.forEach((q, i) => {
+    p0Field(region, "p0-edit-question-" + i, q.question_id, q.prompt);
+    if (q.options.length) p0Field(region, "p0-edit-options-" + i, "Options — une par ligne", q.options.join("\n"));
+  });
+}
+function p0Identity() {
+  return {production_ref: p0.view.production_ref, version_ref: p0.view.version_ref,
+    bundle_sha256: p0.view.bundle_sha256};
+}
+p0Element("generate").addEventListener("click", () => p0Run(async () => {
+  const result = await p0Fetch("/api/v2/p0/generate", {command_id: p0Command(),
+    preparation_ref: p0.prepared.preparation_ref, preparation_sha256: p0.prepared.preparation_sha256});
+  if (result.state === "CANDIDATE") {
+    p0Render(result.view); p0.prepared = null;
+    p0Element("status").textContent = "Candidate reçue. Relisez et modifiez la version exacte ; aucune promotion effectuée.";
+  } else p0Element("status").textContent = "Autorisation requise. Aucun transport fournisseur n’est lié à cette composition hors ligne.";
+}, true));
+p0Element("teacher").addEventListener("click", () => p0Run(async () => {
+  p0.teacher = await p0Fetch("/api/v2/p0/versions/" + p0.view.production_ref + "/" + p0.view.version_ref + "/teacher");
+  const region = p0Element("teacher-content"); region.replaceChildren();
+  appendSearchText(region, "h3", "Compagnons professeur — consultation séparée");
+  p0.teacher.corrections.forEach((c, i) => {
+    p0Field(region, "p0-edit-answer-" + i, "Réponse " + c.question_id, c.expected_answer);
+    p0Field(region, "p0-edit-rationale-" + i, "Explication " + c.question_id, c.rationale);
+  });
+  p0.teacher.marking.forEach((m, i) => {
+    p0Field(region, "p0-edit-points-" + i, "Points " + m.question_id, m.points, false);
+    p0Field(region, "p0-edit-criteria-" + i, "Critères — un par ligne", m.criteria.join("\n"));
+  });
+}));
+p0Element("revise").addEventListener("click", () => p0Run(async () => {
+  const edits = {title: document.getElementById("p0-edit-title").value,
+    sections: p0.view.sections.map((s, i) => ({...s, heading: document.getElementById("p0-edit-heading-" + i).value,
+      text: document.getElementById("p0-edit-section-" + i).value})),
+    questions: p0.view.questions.map((q, i) => ({...q, prompt: document.getElementById("p0-edit-question-" + i).value,
+      options: q.options.length ? document.getElementById("p0-edit-options-" + i).value.split("\n") : []}))};
+  if (p0.teacher) {
+    edits.corrections = p0.teacher.corrections.map((c, i) => ({...c,
+      expected_answer: document.getElementById("p0-edit-answer-" + i).value,
+      rationale: document.getElementById("p0-edit-rationale-" + i).value}));
+    edits.marking = p0.teacher.marking.map((m, i) => ({...m, points: document.getElementById("p0-edit-points-" + i).value,
+      criteria: document.getElementById("p0-edit-criteria-" + i).value.split("\n")}));
+  }
+  const result = await p0Fetch("/api/v2/p0/revise", {command_id: p0Command(), ...p0Identity(), edits});
+  p0Render(result.view); p0Element("status").textContent = "Nouvelle version conservée ; la version parente est inchangée.";
+}, true));
+p0Element("validate").addEventListener("click", () => p0Run(async () => {
+  const report = await p0Fetch("/api/v2/p0/validate", {command_id: p0Command(), ...p0Identity()});
+  p0Element("status").textContent = "Vérification structurelle : " + report.status + ". Aucune validation pédagogique ni promotion.";
+}, true));
+p0Element("save").addEventListener("click", () => p0Run(async () => {
+  const refs = {production_ref: p0.view.production_ref, version_ref: p0.view.version_ref};
+  await r4Fetch("/api/v2/conversation/saved", refs);
+  await r4Refresh(); r4Versions.value = refs.production_ref + "/" + refs.version_ref;
+  await r4Open(); p0Element("status").textContent = "Version sauvegardée et rouverte. Exports disponibles dans l’espace de conservation.";
+}, true));
+async function p0Connect() {
+  const metadata = await p0Fetch("/api/v2/p0");
+  p0.nonce = metadata.transport_nonce; p0.references = metadata.references;
+  p0Element("reference").replaceChildren();
+  const empty = document.createElement("option"); empty.value = ""; empty.textContent = "Choisir une référence";
+  p0Element("reference").append(empty);
+  p0.references.forEach((ref, i) => {
+    const option = document.createElement("option"); option.value = String(i);
+    option.textContent = ref.title + " · " + ref.lifecycle_status + " · " + ref.validation_status;
+    p0Element("reference").append(option);
+  });
+  p0Element("status").textContent = "Contexte prêt à renseigner. Aucune génération autorisée.";
+}
+p0Element("connect").addEventListener("click", () => p0Run(p0Connect));
+p0Run(p0Connect);

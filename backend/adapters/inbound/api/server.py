@@ -17,6 +17,7 @@ from backend.adapters.inbound.api.local_browser import (
     HttpObservabilityPort,
     LocalBrowserHttpSecurityContract,
 )
+from backend.adapters.inbound.api.p0_creation import P0CreationEndpoint, is_p0_target
 from backend.adapters.inbound.api.production import ProductionEndpoint
 from backend.adapters.inbound.api.r3_review_modify import R3Endpoint
 from backend.adapters.inbound.api.r3_review_modify import error as r3_error
@@ -68,6 +69,7 @@ class LocalRead15Service:
         harvest: Callable[[], None] | None = None,
         r3_endpoint: R3Endpoint | None = None,
         saved_endpoint: SavedProductionEndpoint | None = None,
+        p0_endpoint: P0CreationEndpoint | None = None,
     ) -> None:
         if configuration.cors_enabled:
             raise ValueError("CORS must remain disabled for READ15-HTTP-LOCAL-1.0")
@@ -79,6 +81,7 @@ class LocalRead15Service:
         self.conversation_endpoint = conversation_endpoint
         self.r3_endpoint = r3_endpoint
         self.saved_endpoint = saved_endpoint
+        self.p0_endpoint = p0_endpoint
         self.production_endpoint = production_endpoint
         self.harvest = harvest
         self.observability = observability
@@ -89,6 +92,13 @@ class LocalRead15Service:
         self, method: str, target: str, headers: Mapping[str, str], correlation_id: str,
         raw_body: bytes = b"",
     ) -> tuple[int, str, bytes, str]:
+        if is_p0_target(target):
+            if self.p0_endpoint is None:
+                return self.r2_error("R2_NOT_ENABLED", correlation_id)
+            code = self.security.authorize_command(method=method, headers=headers, nonce=self.p0_endpoint.nonce)
+            if code:
+                return self.r2_error(code, correlation_id)
+            return self.p0_endpoint.respond(method, target, raw_body, correlation_id)
         if is_conversation_target(target):
             return self._conversation(method, target, headers, correlation_id, raw_body)
         decision = self.security.authorize_request(
@@ -196,7 +206,9 @@ class LocalRead15Server(HTTPServer):
     """No background threads are created by the server itself."""
 
     allow_reuse_address = False
-    request_queue_size = 1
+    # Browser asset/metadata bursts and idle speculative sockets need a bounded queue.
+    # Processing stays single-request; framing/deadline/security budgets are unchanged.
+    request_queue_size = 16
 
     def __init__(self, service: LocalRead15Service) -> None:
         self.service = service
@@ -366,7 +378,7 @@ class _LocalHandler(BaseHTTPRequestHandler):
             raise _InputRejected()
         # Preserve HEAD even for an error while reading its subsequent headers.
         self.command = verb.decode("ascii")
-        self._r2_request = is_conversation_target(target.decode("ascii"))
+        self._r2_request = is_conversation_target(target.decode("ascii")) or is_p0_target(target.decode("ascii"))
         headers: dict[str, str] = {}
         total = 0
         while True:

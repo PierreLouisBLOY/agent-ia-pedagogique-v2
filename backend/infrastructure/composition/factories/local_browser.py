@@ -41,6 +41,7 @@ from backend.infrastructure.composition.factories.conversation import (
     ConversationComposition,
     build_conversation,
 )
+from backend.infrastructure.composition.factories.p0_creation import build_p0_creation
 from backend.infrastructure.composition.factories.r3_review_modify import R3Composition, build_r3
 from backend.infrastructure.config.schemas.http import LocalBrowserHttpConfiguration
 from backend.infrastructure.filesystem import (
@@ -53,6 +54,7 @@ from backend.modules.materialization_export.application.commands.export_saved im
     ExportSavedCommand,
 )
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import as_plain
+from backend.modules.pedagogical_design.ports.outbound.p0_generation import P0GenerationPort
 from backend.modules.resource_library.application.dto.input.search_local import SearchLocalRequest
 from backend.modules.resource_library.application.queries import GetResourceQuery
 from backend.modules.resource_library.application.queries.search_local import SearchLocalQuery
@@ -206,6 +208,8 @@ def build_local_read15(
     *, enable_conversation: bool = False, generation_jobs: GenerationJobPort | None = None,
     enable_review_modify: bool = False, r3_jobs: R3JobPort | None = None,
     saved_root: Path | None = None, create_saved: bool = False,
+    p0_generation: P0GenerationPort | None = None,
+    observability_root: Path | None = None,
 ) -> LocalRead15Composition:
     """Receive an explicit existing target; never read ambient environment settings."""
     if generation_jobs is not None and not enable_conversation:
@@ -225,12 +229,15 @@ def build_local_read15(
         )
         for name in sorted(ASSET_NAMES)
     }
-    observability = build_local_observability_session(target.data_root)
+    observability = build_local_observability_session(observability_root or target.data_root)
     conversation = build_conversation(jobs=generation_jobs) if enable_conversation else None
     r3 = build_r3(conversation, r3_jobs) if enable_review_modify and conversation else None
+    p0, p0_endpoint = build_p0_creation(target, token_urlsafe(32), p0_generation)
     saved = None
     if saved_root is not None:
         def source(production_ref: str, version_ref: str) -> SavedProduction:
+            if version_ref in p0.records:
+                return p0.saved_source(production_ref, version_ref)
             if conversation is None:
                 raise ValueError("R4_SOURCE_NOT_AVAILABLE")
             view = conversation.store.read_version(conversation_id=str(conversation.service.snapshot()["conversation_id"]),
@@ -257,6 +264,7 @@ def build_local_read15(
             harvest=harvest if conversation else None,
             r3_endpoint=r3.endpoint if r3 else None,
             saved_endpoint=SavedProductionEndpoint(saved.execute, nonce=token_urlsafe(32)) if saved else None,
+            p0_endpoint=p0_endpoint,
         )
         server = LocalRead15Server(service)
     except Exception:

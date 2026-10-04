@@ -12,9 +12,10 @@ from backend.modules.materialization_export.contracts.dto.word_document import (
 )
 
 
-def test_table_cells_units_and_surrounding_text_survive_native_table_projection() -> None:
+@pytest.mark.parametrize("kind", ["student", "correction", "marking"])
+def test_table_cells_units_and_surrounding_text_survive_native_table_projection(kind: str) -> None:
     text = "Données fictives en k€\n| Poste | Brut | Net |\n| --- | ---: | ---: |\n| Actif | 570 | 443 |\n| Total | 570 | 443 |\nArrondir à une décimale."
-    document = WordDocument("student", "Sujet fictif", (WordBlock("Normal", text),))
+    document = WordDocument(kind, "Document fictif", (WordBlock("Normal", text),))
     before = document.as_dict()
     payload = R6ReadableWordWriter().write(document)
     assert document.as_dict() == before
@@ -40,7 +41,8 @@ def test_non_table_documents_remain_byte_identical(kind: str) -> None:
     assert R6ReadableWordWriter().write(doc) == OOXMLWordWriter().write(doc)
 
 
-def test_ragged_table_is_refused_without_discarding_cells() -> None:
-    doc = WordDocument("student", "Sujet", (WordBlock("Normal", "| Poste | Valeur |\n| --- | --- |\n| A | 12 | donnée supplémentaire |"),))
+@pytest.mark.parametrize("kind", ["student", "correction", "marking"])
+def test_ragged_table_is_refused_without_discarding_cells(kind: str) -> None:
+    doc = WordDocument(kind, "Document", (WordBlock("Normal", "| Poste | Valeur |\n| --- | --- |\n| A | 12 | donnée supplémentaire |"),))
     with pytest.raises(ValueError, match="LOT1_WORD_TABLE_REJECTED"):
         R6ReadableWordWriter().write(doc)

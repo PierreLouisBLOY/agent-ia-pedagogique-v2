@@ -10,7 +10,7 @@ from io import BytesIO
 from xml.etree.ElementTree import Element, SubElement, fromstring, tostring
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
-from backend.adapters.outbound.export.lot1_word import Lot1OOXMLWordWriter
+from backend.adapters.outbound.export.lot1_word import Lot1OOXMLWordWriter, _table
 from backend.modules.materialization_export.contracts.dto.lot1_word_table import (
     Lot1WordDocument,
     Lot1WordTable,
@@ -28,9 +28,9 @@ def _cells(line: str) -> tuple[str, ...] | None:
     return tuple(cell.strip() for cell in value[1:-1].split("|"))
 
 
-def readable_student(document: WordDocument) -> WordDocument:
-    if document.kind != "student" or isinstance(document, Lot1WordDocument):
-        return document
+def readable_document(document: WordDocument) -> tuple[WordDocument, tuple[Lot1WordTable, ...]]:
+    if isinstance(document, Lot1WordDocument):
+        return document, ()
     blocks: list[WordBlock] = []
     tables: list[Lot1WordTable] = []
     for block in document.blocks:
@@ -57,13 +57,13 @@ def readable_student(document: WordDocument) -> WordDocument:
         if plain:
             blocks.append(WordBlock(block.style, "\n".join(plain)))
     if not tables:
-        return document
-    return Lot1WordDocument(document.kind, document.title, tuple(blocks), tuple(tables))
+        return document, ()
+    return WordDocument(document.kind, document.title, tuple(blocks)), tuple(tables)
 
 
 class R6ReadableWordWriter(Lot1OOXMLWordWriter):
     def write(self, document: WordDocument) -> bytes:
-        projected = readable_student(document)
+        projected, tables = readable_document(document)
         raw = super().write(projected)
         if projected is document:
             return raw
@@ -71,6 +71,11 @@ class R6ReadableWordWriter(Lot1OOXMLWordWriter):
             parts = {name: archive.read(name) for name in archive.namelist()}
         root = fromstring(parts["word/document.xml"])
         namespace = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+        body = root.find(namespace + "body")
+        if body is None:
+            raise ValueError("R6_WORD_BODY_REJECTED")
+        for value in sorted(tables, key=lambda t: t.after_block_index, reverse=True):
+            body.insert(value.after_block_index + 2, _table(value))
         for row in root.findall(".//" + namespace + "tbl/" + namespace + "tr"):
             props = row.find(namespace + "trPr")
             if props is None:

@@ -15,9 +15,10 @@ from backend.adapters.inbound.api.saved_production import SavedProductionEndpoin
 from backend.adapters.inbound.api.search import SearchEndpoint, SearchValidationRejected
 from backend.adapters.inbound.api.server import LocalRead15Server, LocalRead15Service
 from backend.adapters.inbound.application.local_search import LocalSearchUseCaseInbound
+from backend.adapters.inbound.application.lot2_saved_production import Lot2SavedProductionInbound
 from backend.adapters.inbound.application.resource_library import ResourceLibraryUseCaseInbound
 from backend.adapters.inbound.application.saved_production import SavedProductionInbound
-from backend.adapters.outbound.export.word import OOXMLWordWriter
+from backend.adapters.outbound.export.r6_readable_word import R6ReadableWordWriter
 from backend.adapters.outbound.persistence.saved_production import LocalSavedProductionStore
 from backend.adapters.outbound.persistence.sqlite import connect_sqlite
 from backend.adapters.outbound.resource_library.sqlite import SQLiteResourceStoreAdapter
@@ -274,8 +275,8 @@ def build_local_read15(
 def build_saved_application(root: Path, *, create: bool = False,
         source: Callable[[str, str], SavedProduction] | None = None) -> SavedProductionInbound:
     store = LocalSavedProductionStore(root, create=create)
-    return SavedProductionInbound(SavedProductionService(store), ReadProductionQuery(store),
-                                  ExportSavedCommand(OOXMLWordWriter()), source=source)
+    return Lot2SavedProductionInbound(SavedProductionService(store), ReadProductionQuery(store),
+                                  ExportSavedCommand(R6ReadableWordWriter()), source=source)
 
 
 def build_local_saved(configuration: LocalBrowserHttpConfiguration, root: Path, *,

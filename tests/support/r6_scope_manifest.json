@@ -266,7 +266,7 @@
     "backend/modules/knowledge_reference/ports/outbound/institutional_catalog.py": "73968dd68687b7fa289988ce9f08c3adaa2cd69cb7e279a687b535dbb72c3b5d",
     "backend/modules/pedagogical_context/contracts/dto/stmg_institutional.py": "f0381f12f62d887b6a403ed9a7036ead50221fe7506f70485c74a5c800b7f203",
     "backend/modules/pedagogical_design/contracts/dto/course_policy.py": "dec4b8f1d152f5aeeb8806fcd5bff6347ebccd8765fb5072d865a12423818d2e",
-    "docs/development/ADR_STMG_INSTITUTIONAL_ALIGNMENT_2026-10-05.md": "ebde3c3e6e8dc3f07c133cc945d836493c8b6531b46eb7cd25ecd7f58ef5be2e",
+    "docs/development/ADR_STMG_INSTITUTIONAL_ALIGNMENT_2026-10-05.md": "bd35a9c3eb8fde2a77882e834863e2001778b0c290d3f0e16fbf73ac0c157970",
     "docs/development/STMG_INSTITUTIONAL_ALIGNMENT.md": "63f0f667e5c8e4d5d5bf84db41e0d58ba1c3b3d4a18970ac6d06161d104f7c11",
     "tests/unit/test_stmg_active_guard.py": "dbd1e442e02bd404c7eac111f9ed10da46dfb245528cb69e4e685eec95fe74bd",
     "tests/unit/test_stmg_institutional_alignment.py": "329cfb3887450b8b8f0d7a0f1c7ccd59eb9b09ff2ddf09177d6ffcfc7b5180a0",

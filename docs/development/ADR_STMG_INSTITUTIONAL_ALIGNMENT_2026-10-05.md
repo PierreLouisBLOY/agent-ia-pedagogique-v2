@@ -60,3 +60,19 @@ wrong programme/version/track, implicit propagation, missing provenance, headers
 request/review binding, current consumer guards and historical replay.
 Normal composition must refuse an unresolved STMG context before dispatch.
 Remaining source gaps and pedagogical acceptance are explicit external decisions.
+
+## Addendum reviewed before the question-selector correction
+
+The owner reported an empty programme-question selector. Authenticated Application
+inspection confirms eight SGN questions with no numeric prefix, official code or
+parent-theme link. Filtering on an inferred theme silently hid all eight.
+Display every exact programme/version question independently of its numbering.
+An unresolved theme is represented by null in a draft selection, never by an
+invented official identifier. Resolution accepts only the exact selected question
+and records THEME_RELATIONSHIP_UNRESOLVED as CONTENT_GAP; generation/review remain
+blocked before authorisation. Numbered-theme mismatch checks remain effective.
+Context, source drawer and exports explicitly label the unresolved theme.
+Review: this correction preserves Application ownership, source identity,
+admission gates, original seed and saved contexts, without provider work or a
+second ontology. Add positive selector tests and theme-substitution/dispatch
+mutations, then verify the real browser selection and Application preparation.

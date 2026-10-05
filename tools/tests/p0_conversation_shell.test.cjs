@@ -54,6 +54,14 @@ async function checkTeacherCards() {
   vm.runInContext(source.slice(source.indexOf("function p0Controls("),source.indexOf("async function p0Fetch(")),ctx);
   ctx.p0.nonce="fixture";ctx.p0.view={questions:[],pedagogical_context:{resource_type:"COURSE"}};
   ctx.p0Controls(); assert(controls["card-correction"].disabled&&controls["card-marking"].disabled);
+  ctx.p0.view.course_chapter={contract_id:"COURSE-CHAPTER-1.0"};
+  ctx.p0Controls(); assert(!controls["card-correction"].disabled&&controls["card-marking"].disabled);
+  ctx.document.getElementById=id=>regions[id] || (controls[id]||= {});
+  ctx.p0Fetch=async()=>({corrections:[],marking:[],course_chapter:{teacher_answers:[{id:"Q1",expected_answer:"COURSE TEACHER ANSWER",rationale:"COURSE METHOD",vigilance:"COURSE CHECK",remediation:"COURSE SUPPORT"}]}});
+  await ctx.uxTeacherCard("correction");
+  assert(regions["production-card-teacher-preview"].children.some(n=>n.text==="COURSE TEACHER ANSWER"));
+  assert.equal(regions["production-card-preview"].children.join(),"STUDENT SUBJECT");
+  assert.equal(ctx.p0.teacher,null);
   ctx.p0.view={questions:[{}],pedagogical_context:{resource_type:"ASSESSMENT"}};
   ctx.p0Controls(); assert(!controls["card-correction"].disabled&&!controls["card-marking"].disabled);
   ctx.p0.uncertain=true;ctx.p0Controls(); assert(controls["card-export"].disabled);

@@ -22,7 +22,7 @@ class CreateP0Candidate:
     ) -> P0Production:
         candidate = P0Production(data)
         context = object_data(candidate.data["context"])
-        if context.get("institutional") is not None and context["resource_type"] == "COURSE":
+        if context.get("institutional") is not None and context["resource_type"] == "COURSE" and "course_chapter" not in candidate.data:
             from backend.modules.pedagogical_design.contracts.dto.course_policy import (
                 validate_course_structure,
             )

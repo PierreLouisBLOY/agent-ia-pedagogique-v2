@@ -23,13 +23,23 @@ from backend.modules.work_orchestration.contracts.dto.saved_production import (
 
 class ReframeCourseCommand:
     def execute(self, parent: SavedProduction, context: P0Context, *, title: str, sections: object,
-                evidence: Mapping[str, str]) -> SavedProduction:
+                evidence: Mapping[str, str], course_chapter: Mapping[str, object] | None = None) -> SavedProduction:
         original = parent.p0_bundle
         if (original is None or original.context.resource_type != "COURSE" or context.resource_type != "COURSE" or
                 context.institutional is None or context.data["institutional_resolution"] is None or
                 parent.data["origin"] != "LOCAL_APPLICATION"):
             raise ValueError("P0_LOCAL_COURSE_REFRAME_REQUIRED")
         data = original.mutable_copy()
+        if course_chapter is not None:
+            from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
+                COURSE_PRODUCTION_CONTRACT,
+                CourseChapter,
+            )
+
+            chapter = CourseChapter(course_chapter)
+            chapter.bind_context(context)
+            data.update({"contract_id": COURSE_PRODUCTION_CONTRACT, "course_chapter": as_plain(chapter.data)})
+            sections = chapter.sections()
         data.update({"version_ref": "ver:" + token_hex(16), "title": title, "sections": sections,
                      "context": context.as_dict(), "context_sha256": context.sha256})
         data["lineage"] = {**object_data(data["lineage"]), "parent_version_ref": original.version_ref,
@@ -45,5 +55,6 @@ class ReframeCourseCommand:
             "provenance": {"LOCAL_EDIT_PARENT_BUNDLE_SHA256": original.sha256, "LOCAL_EDIT_PARENT_RECORD_SHA256": parent.sha256,
                 "INSTITUTIONAL_RESOLUTION_SHA256": fingerprint(context.data["institutional_resolution"]),
                 "LOCAL_EDIT_OPERATION_SHA256": fingerprint({"mode": "EXPLICIT_LOCAL_CONTEXT_SUCCESSOR", "parent": parent.sha256,
-                    "context": context.sha256, "title": title, "sections": sections})},
+                    "context": context.sha256, "title": title, "sections": sections,
+                    "course_chapter": as_plain(course_chapter)})},
             "reservations": ["Recette enseignante en attente ; aucune review héritée."]})

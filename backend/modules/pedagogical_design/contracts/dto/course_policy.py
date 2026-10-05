@@ -7,6 +7,15 @@ COURSE_POLICY: dict[str, object] = {
     "examples": "INVENTED_DATA_MARKED_FICTIVES", "teacher_acceptance": "REQUIRED",
 }
 
+# The successor is selected explicitly; existing bundles and dispatches retain 1.0.
+COURSE_BENCHMARK_POLICY: dict[str, object] = {
+    "contract_id": "COURSE-CHAPTER-1.0",
+    "flow": ["DOCUMENT", "OBSERVATION", "ANALYSIS", "CONCEPTUALIZATION", "REINVESTMENT", "KNOWLEDGE_CHECK", "TRANSFER"],
+    "student_and_teacher": "SEPARATE_PROJECTIONS",
+    "template_activation": "EXPLICIT_CHAPTER_ONLY_PENDING_M01_OWNER_ACCEPTANCE",
+    "structural_validation_is_pedagogical_acceptance": False,
+}
+
 
 def validate_course_structure(sections: object) -> None:
     from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import items

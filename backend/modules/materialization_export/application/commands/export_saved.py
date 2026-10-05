@@ -18,6 +18,8 @@ class ExportSavedCommand:
 
     def preview(self, record: SavedProduction, kind: str, *, promoted: bool = False) -> WordDocument:
         document = self._preview(record, kind, promoted=promoted)
+        if document.course_chapter is not None:
+            return document
         if (self.presentation and kind != "student" and record.p0_bundle is not None
                 and "fictif" in str(record.p0_bundle.data["title"]).casefold()):
             document = WordDocument(document.kind, document.title, (WordBlock("Note", "Cas fictif"), *document.blocks))
@@ -71,6 +73,23 @@ class ExportSavedCommand:
         bundle = record.p0_bundle
         if bundle is None:
             raise ValueError("R6_P0_BUNDLE_REQUIRED")
+        if "course_chapter" in bundle.data:
+            if kind == "marking":
+                return WordDocument(kind, "Barème", (WordBlock("Normal", "Aucun barème chiffré pour ce cours."),))
+            from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
+                CourseChapter,
+            )
+
+            chapter = CourseChapter(object_data(bundle.data["course_chapter"]))
+            chapter.bind_context(bundle.context)
+            preview = tuple(block for section in chapter.sections() for block in (
+                WordBlock("Heading1", str(section["heading"])), WordBlock("Normal", str(section["text"]))))
+            if kind == "correction":
+                preview += tuple(block for answer in items(chapter.data["teacher_answers"], 60) for block in (
+                    WordBlock("Heading2", str(answer["id"])),
+                    WordBlock("Normal", str(answer["expected_answer"]) + "\n" + str(answer["rationale"]))))
+            return WordDocument(kind, str(chapter.data["title"]), preview,
+                                course_chapter=chapter.projection(teacher=kind == "correction"))
         titles = {"student": "Document élève", "correction": "Corrigé professeur",
                   "marking": "Barème"}
         blocks: list[WordBlock] = []

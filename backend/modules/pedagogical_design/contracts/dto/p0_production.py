@@ -177,8 +177,14 @@ class P0Production:
     data: Mapping[str, object]
 
     def __post_init__(self) -> None:
-        data = object_data(self.data, _FIELDS)
-        if data["contract_id"] != P0_PRODUCTION_CONTRACT:
+        from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
+            COURSE_PRODUCTION_CONTRACT,
+            CourseChapter,
+        )
+
+        is_chapter = self.data.get("contract_id") == COURSE_PRODUCTION_CONTRACT
+        data = object_data(self.data, _FIELDS | {"course_chapter"} if is_chapter else _FIELDS)
+        if data["contract_id"] not in {P0_PRODUCTION_CONTRACT, COURSE_PRODUCTION_CONTRACT}:
             raise ValueError("P0_PRODUCTION_CONTRACT")
         identifier(data["production_ref"], "prod")
         identifier(data["version_ref"], "ver")
@@ -192,6 +198,11 @@ class P0Production:
         marking = _validated_marking(data["marking"])
         _validated_references(data["references"])
         self._validate_content(context, questions, corrections, marking)
+        if is_chapter:
+            chapter = CourseChapter(object_data(data["course_chapter"]))
+            chapter.bind_context(context)
+            if as_plain(data["sections"]) != chapter.sections() or data["title"] != chapter.data["title"]:
+                raise ValueError("COURSE_STUDENT_PROJECTION_BINDING")
         lineage = object_data(data["lineage"], _LINEAGE_FIELDS)
         identifier(lineage["source_run_id"], "run")
         identifier(lineage["source_step_id"], "step")
@@ -266,7 +277,7 @@ class P0Production:
         return object_data(as_plain(self.data))
 
     def student_projection(self) -> dict[str, object]:
-        return {
+        result = {
             "contract_id": "R6-P0-STUDENT-PROJECTION-1.0",
             "production_ref": self.production_ref,
             "version_ref": self.version_ref,
@@ -276,12 +287,26 @@ class P0Production:
             "questions": as_plain(self.data["questions"]),
             "references": as_plain(self.data["references"]),
         }
+        if "course_chapter" in self.data:
+            from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
+                CourseChapter,
+            )
+
+            result["course_chapter"] = CourseChapter(object_data(self.data["course_chapter"])).projection()
+        return result
 
     def teacher_projection(self) -> dict[str, object]:
-        return {
+        result = {
             **self.student_projection(),
             "contract_id": "R6-P0-TEACHER-PROJECTION-1.0",
             "corrections": as_plain(self.data["corrections"]),
             "marking": as_plain(self.data["marking"]),
             "limitations": as_plain(self.data["limitations"]),
         }
+        if "course_chapter" in self.data:
+            from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
+                CourseChapter,
+            )
+
+            result["course_chapter"] = CourseChapter(object_data(self.data["course_chapter"])).projection(teacher=True)
+        return result

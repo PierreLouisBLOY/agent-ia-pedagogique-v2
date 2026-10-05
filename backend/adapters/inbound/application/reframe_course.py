@@ -13,10 +13,12 @@ class ReframeCourseInbound:
         self.resolve = resolve
 
     def execute(self, parent: SavedProduction, context: Mapping[str, object], *, title: str, sections: object,
-                reference_selection: Mapping[str, object], evidence: Mapping[str, str]) -> SavedProduction:
+                reference_selection: Mapping[str, object], evidence: Mapping[str, str],
+                course_chapter: Mapping[str, object] | None = None) -> SavedProduction:
         requested = P0Context(context)
         if requested.institutional is None:
             raise ValueError("P0_INSTITUTIONAL_CONTEXT_REQUIRED")
         confirmed = requested.as_dict()
         confirmed["institutional_resolution"] = dict(self.resolve(requested.institutional, reference_selection))
-        return ReframeCourseCommand().execute(parent, P0Context(confirmed), title=title, sections=sections, evidence=evidence)
+        return ReframeCourseCommand().execute(parent, P0Context(confirmed), title=title, sections=sections,
+                                             evidence=evidence, course_chapter=course_chapter)

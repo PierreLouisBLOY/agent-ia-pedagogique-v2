@@ -42,10 +42,22 @@ class ValidateP0Command:
             report["dispatch_permitted"] = resolution["status"] == "RESOLVED_ADMITTED"
             report["pedagogical_acceptance"] = "NOT_PERFORMED"
             if bundle.context.resource_type == "COURSE":
-                from backend.modules.pedagogical_design.contracts.dto.course_policy import (
-                    validate_course_structure,
-                )
+                if "course_chapter" in bundle.data:
+                    from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
+                        CourseChapter,
+                    )
 
-                validate_course_structure(bundle.data["sections"])
-                report["course_policy"] = "COURSE-EXPLAINED-1.0"
+                    chapter = CourseChapter(object_data(bundle.data["course_chapter"]))
+                    chapter.bind_context(bundle.context)
+                    report["course_policy"] = "COURSE-CHAPTER-1.0"
+                    report["course_checks"] = chapter.checks()
+                    report["visual_review"] = "REQUIRED_NOT_ATTESTED"
+                else:
+                    from backend.modules.pedagogical_design.contracts.dto.course_policy import (
+                        validate_course_structure,
+                    )
+
+                    validate_course_structure(bundle.data["sections"])
+                    report["course_policy"] = "COURSE-EXPLAINED-1.0"
+                    report["course_benchmark"] = "INCOMPLETE_FOR_BENCHMARK"
         return report

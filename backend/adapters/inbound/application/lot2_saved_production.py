@@ -62,7 +62,8 @@ class Lot2SavedProductionInbound(SavedProductionInbound):
             return self.service.open(production_ref, version_ref)
         if operation in {"preview", "word"}:
             if (
-                (record.p0_bundle.context.resource_type == "COURSE" and kind != "student")
+                (record.p0_bundle.context.resource_type == "COURSE" and kind != "student"
+                 and not (kind == "correction" and "course_chapter" in record.p0_bundle.data))
                 or (record.p0_bundle.context.resource_type != "ASSESSMENT" and kind == "marking")
             ):
                 raise ValueError("R4_EXPORT_KIND")

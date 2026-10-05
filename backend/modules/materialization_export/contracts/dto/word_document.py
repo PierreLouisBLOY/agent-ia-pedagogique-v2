@@ -1,5 +1,6 @@
 """Provider- and format-engine-neutral, allowlisted document content."""
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True, slots=True)
@@ -13,6 +14,7 @@ class WordDocument:
     kind: str
     title: str
     blocks: tuple[WordBlock, ...]
+    course_chapter: Mapping[str, object] | None = field(default=None, kw_only=True)
 
     def __post_init__(self) -> None:
         if self.kind not in {"student", "correction", "marking"} or not self.title:
@@ -21,5 +23,8 @@ class WordDocument:
             raise ValueError("R4_EXPORT_STYLE")
 
     def as_dict(self) -> dict[str, object]:
-        return {"kind": self.kind, "title": self.title,
+        data: dict[str, object] = {"kind": self.kind, "title": self.title,
                 "blocks": [{"style": b.style, "text": b.text} for b in self.blocks]}
+        if self.course_chapter is not None:
+            data["course_chapter"] = dict(self.course_chapter)
+        return data

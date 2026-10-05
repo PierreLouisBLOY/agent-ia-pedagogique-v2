@@ -79,6 +79,10 @@ class R6ReadableWordWriter(Lot1OOXMLWordWriter):
         self.diffusion_v6 = profile == "diffusion-v6"
 
     def write(self, document: WordDocument) -> bytes:
+        if document.course_chapter is not None:
+            from backend.adapters.outbound.export.course_word import CourseOOXMLWordWriter
+
+            return CourseOOXMLWordWriter().write(document)
         if self.diffusion_v6:
             document = diffusion_v6_document(document)
         if self.diffusion:

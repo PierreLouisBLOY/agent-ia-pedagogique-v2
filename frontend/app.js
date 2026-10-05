@@ -713,7 +713,7 @@ function p0Controls() {
     p0Element(id).disabled = p0.busy || p0.uncertain || !p0.view;
   for (const id of ["open", "modify", "check", "correction", "marking", "export"])
     document.getElementById("card-" + id).disabled = p0.busy || p0.uncertain || !p0.view ||
-      (id === "correction" && !p0.view.questions.length) ||
+      (id === "correction" && !p0.view.questions.length && !p0.view.course_chapter) ||
       (id === "marking" && p0.view.pedagogical_context.resource_type !== "ASSESSMENT");
 }
 async function p0Fetch(path, body = null) {
@@ -1057,7 +1057,13 @@ async function uxTeacherCard(kind) {
     const region = document.getElementById("production-card-teacher-preview");
     region.replaceChildren(); region.hidden = false;
     appendSearchText(region, "h3", kind === "correction" ? "Correction — document professeur séparé" : "Barème — document professeur séparé");
-    if (kind === "correction") teacher.corrections.forEach((c, i) => {
+    if (kind === "correction" && teacher.course_chapter) teacher.course_chapter.teacher_answers.forEach((c, i) => {
+      appendSearchText(region, "h4", "Question " + (i + 1));
+      appendSearchText(region, "p", c.expected_answer); appendSearchText(region, "p", c.rationale);
+      appendSearchText(region, "p", "Point de vigilance : " + c.vigilance);
+      appendSearchText(region, "p", "Remédiation : " + c.remediation);
+    });
+    else if (kind === "correction") teacher.corrections.forEach((c, i) => {
       appendSearchText(region, "h4", "Question " + (i + 1));
       appendSearchText(region, "p", c.expected_answer); appendSearchText(region, "p", c.rationale);
     });

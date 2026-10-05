@@ -152,7 +152,7 @@ class P0CreationService:
         output = self.generation.generate(request=request)
         evidence = {str(k): str(v) for k, v in object_data(request["evidence"]).items()}
         candidate = CreateP0Candidate().execute(output, evidence=evidence)
-        if context.institutional is not None and context.resource_type == "COURSE":
+        if context.institutional is not None and context.resource_type == "COURSE" and "course_chapter" not in candidate.data:
             from backend.modules.pedagogical_design.contracts.dto.course_policy import (
                 validate_course_structure,
             )
@@ -188,9 +188,12 @@ class P0CreationService:
     def read(self, production: str, version: str, *, teacher: bool = False) -> dict[str, object]:
         candidate = self._version({"production_ref": production, "version_ref": version})
         if teacher:
-            return {"version_ref": version, "bundle_sha256": candidate.sha256,
+            result: dict[str, object] = {"version_ref": version, "bundle_sha256": candidate.sha256,
                     "corrections": as_plain(candidate.data["corrections"]),
                     "marking": as_plain(candidate.data["marking"])}
+            if "course_chapter" in candidate.data:
+                result["course_chapter"] = candidate.teacher_projection()["course_chapter"]
+            return result
         return object_data(as_plain(P0ProductionReadView.from_bundle(candidate).data))
 
     def _revise(self, data: dict[str, object]) -> dict[str, object]:

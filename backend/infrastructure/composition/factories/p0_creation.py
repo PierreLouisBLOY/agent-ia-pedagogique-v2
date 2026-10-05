@@ -74,11 +74,18 @@ def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
         descriptor["excerpt_sha256"] = hashlib.sha256(excerpt.encode()).hexdigest()
         return {"reference": descriptor, "excerpt": excerpt}
 
-    service = P0CreationService(reference, generation=generation, review=review)
+    from backend.infrastructure.composition.factories.institutional_catalog import stmg_alignment
+
+    def resolve_institutional(selection: Mapping[str, object], selected_reference: Mapping[str, object]) -> Mapping[str, object]:
+        return stmg_alignment(target, selection=dict(selection), reference=dict(selected_reference))
+
+    service = P0CreationService(reference, generation=generation, review=review,
+        institutional_resolver=resolve_institutional, exact_stmg_required=True)
     metadata: list[dict[str, object]] = [{"resource_ref": binding.resource_ref, "resource_version_ref": binding.resource_version_ref,
                  "title": binding.canonical_title, "scenarios": list(binding.scenarios),
                  "authority": "NONE", "lifecycle_status": binding.lifecycle_status,
                  "validation_status": binding.validation_status} for binding in R6_EXACT_SOURCE_BINDINGS]
     endpoint = P0CreationEndpoint(service.execute, service.read, metadata, nonce=nonce,
-        generation_bound=generation is not None, review_bound=review is not None)
+        generation_bound=generation is not None, review_bound=review is not None,
+        institutional_catalog=lambda: stmg_alignment(target))
     return service, endpoint

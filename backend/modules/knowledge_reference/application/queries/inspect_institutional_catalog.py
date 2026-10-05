@@ -1,0 +1,26 @@
+from __future__ import annotations
+
+from collections.abc import Mapping
+
+from backend.modules.knowledge_reference.ports.outbound.institutional_catalog import (
+    InstitutionalSchemaPort,
+    InstitutionalTableSchema,
+)
+
+
+class InspectInstitutionalCatalog:
+    def __init__(self, catalog: InstitutionalSchemaPort) -> None:
+        self.catalog = catalog
+
+    def execute(self) -> tuple[InstitutionalTableSchema, ...]:
+        result = self.catalog.inspect_institutional_schema()
+        if len(result) > 100 or any(len(row.columns) > 100 or row.rows < 0 for row in result):
+            raise ValueError("INSTITUTIONAL_CATALOG_BOUNDS")
+        return result
+
+    def read(self) -> Mapping[str, object]:
+        data = self.catalog.read_institutional_catalog()
+        if len(data) > 16 or any(not isinstance(rows, (list, tuple)) or len(rows) > 10000
+                                for rows in data.values()):
+            raise ValueError("INSTITUTIONAL_CATALOG_BOUNDS")
+        return data

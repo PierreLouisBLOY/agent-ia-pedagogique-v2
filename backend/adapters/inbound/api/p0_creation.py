@@ -10,9 +10,11 @@ P0_HTTP_CONTRACT = "R6-P0-HTTP-LOCAL-1.0"
 
 class P0CreationEndpoint:
     def __init__(self, execute: Callable[..., dict[str, object]], read: Callable[..., dict[str, object]], metadata: list[dict[str, object]],
-                 *, nonce: str, generation_bound: bool = False, review_bound: bool = False) -> None:
+                 *, nonce: str, generation_bound: bool = False, review_bound: bool = False,
+                 institutional_catalog: Callable[[], dict[str, object]] | None = None) -> None:
         self.execute, self.read, self.metadata, self.nonce = execute, read, metadata, nonce
         self.generation_bound, self.review_bound = generation_bound, review_bound
+        self.institutional_catalog = institutional_catalog
 
     def respond(self, method: str, target: str, raw: bytes, correlation: str) -> tuple[int, str, bytes, str]:
         status, template = 200, "/{unmatched}"
@@ -23,6 +25,8 @@ class P0CreationEndpoint:
                 result = {"transport_nonce": self.nonce, "state": "READY", "references": self.metadata,
                           "live_binding": "EXPLICIT_PORT" if self.generation_bound else "NONE",
                           "review_binding": "EXPLICIT_PORT" if self.review_bound else "NONE", "authority": "NONE"}
+                if self.institutional_catalog is not None:
+                    result["institutional_catalog"] = self.institutional_catalog()
             elif method == "POST":
                 def pairs(entries: list[tuple[str, object]]) -> dict[str, object]:
                     if len(dict(entries)) != len(entries):

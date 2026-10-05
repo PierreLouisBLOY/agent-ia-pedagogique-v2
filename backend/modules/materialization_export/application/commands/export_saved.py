@@ -74,6 +74,20 @@ class ExportSavedCommand:
         titles = {"student": "Document élève", "correction": "Corrigé professeur",
                   "marking": "Barème"}
         blocks: list[WordBlock] = []
+        from backend.modules.pedagogical_context.contracts.dto.stmg_institutional import (
+            institutional_header,
+        )
+
+        context = object_data(bundle.data["context"])
+        header = institutional_header(context)
+        if header is not None:
+            blocks.append(WordBlock("Normal", header))
+            resolution = context.get("institutional_resolution")
+            if resolution is not None:
+                exact = object_data(resolution)
+                question = object_data(exact["question"])
+                blocks.append(WordBlock("Normal", "Thème " + str(exact["theme_ref"]).removeprefix("theme:") + " · " + str(question["official_label"])))
+            blocks.append(WordBlock("Note", "CANDIDATE — à valider par l’enseignant."))
         if kind != "student":
             blocks.append(WordBlock(
                 "Note",
@@ -121,7 +135,8 @@ class ExportSavedCommand:
                 ))
                 for criterion in cast(tuple[str, ...], entry["criteria"]):
                     blocks.append(WordBlock("Normal", criterion))
-        return WordDocument(kind, titles[kind], tuple(blocks))
+        title = str(bundle.data["title"]) if header is not None and kind == "student" else titles[kind]
+        return WordDocument(kind, title, tuple(blocks))
 
     def execute(self, record: SavedProduction, kind: str, *, promoted: bool = False) -> bytes:
         return self.writer.write(self.preview(record, kind, promoted=promoted))

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import object_data
+from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
+    fingerprint,
+    object_data,
+)
 from backend.modules.pedagogical_design.contracts.dto.p0_production import P0Production
 
 
@@ -18,7 +21,7 @@ class ValidateP0Command:
             raise ValueError("P0_REVISION_LINEAGE")
         if parent is None and lineage["parent_version_ref"] is not None:
             raise ValueError("P0_PARENT_REQUIRED")
-        return {
+        report: dict[str, object] = {
             "contract_id": "R6-P0-VALIDATION-1.0",
             "production_ref": bundle.production_ref,
             "version_ref": bundle.version_ref,
@@ -32,3 +35,17 @@ class ValidateP0Command:
             ),
             "promotion": "NOT_PERFORMED",
         }
+        if bundle.context.institutional is not None:
+            resolution = object_data(bundle.context.data["institutional_resolution"])
+            report["institutional_status"] = resolution["status"]
+            report["institutional_resolution_sha256"] = fingerprint(resolution)
+            report["dispatch_permitted"] = resolution["status"] == "RESOLVED_ADMITTED"
+            report["pedagogical_acceptance"] = "NOT_PERFORMED"
+            if bundle.context.resource_type == "COURSE":
+                from backend.modules.pedagogical_design.contracts.dto.course_policy import (
+                    validate_course_structure,
+                )
+
+                validate_course_structure(bundle.data["sections"])
+                report["course_policy"] = "COURSE-EXPLAINED-1.0"
+        return report

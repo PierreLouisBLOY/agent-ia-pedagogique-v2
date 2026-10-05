@@ -77,10 +77,23 @@ def build_p0_content_request(request: Mapping[str, object]) -> OpenAIResponsesRe
             raise ValueError("P0_EVIDENCE_HASH")
     payload = {"contract_id": "R6-P0-CONTENT-INPUT-1.0", "context": context.as_dict(),
                "references": as_plain(references), "evidence": evidence}
+    instructions = INSTRUCTIONS
+    if context.institutional is not None:
+        context.require_institutional_dispatch()
+        instructions += (" Appliquez uniquement le programme, la version, la composante, la question et les capacités confirmés. "
+                         "Ne transférez aucune capacité d'un autre enseignement ; la progression locale n'est pas la structure du programme.")
+        if context.resource_type == "COURSE":
+            from backend.modules.pedagogical_design.contracts.dto.course_policy import COURSE_POLICY
+
+            payload["course_policy"] = COURSE_POLICY
+            instructions += (" Cours expliqué : sections S_OBJECTIVES, S_EXPLAINED_NOTIONS, S_METHOD, S_GUIDED_APPLICATION, S_SYNTHESIS. "
+                             "Expliquez les notions et leurs relations, montrez une méthode et son application guidée avec un exemple et un contre-exemple FICTIFS, "
+                             "puis une synthèse. Adaptez la profondeur au contexte ; aucune limite de pages ni fiche abrégée implicite. "
+                             "Les applications du cours peuvent être expliquées ; questions/corrections/marking restent vides.")
     text = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
     if len(text.encode()) > 12288:
         raise ValueError("P0_PROVIDER_INPUT_SIZE")
-    return OpenAIResponsesRequest(MODEL, INSTRUCTIONS, text, content_schema(), MAX_OUTPUT_TOKENS,
+    return OpenAIResponsesRequest(MODEL, instructions, text, content_schema(), MAX_OUTPUT_TOKENS,
                                   "p0_pedagogical_content", reasoning_effort=OpenAIReasoningEffort.LOW,
                                   service_tier="default")
 

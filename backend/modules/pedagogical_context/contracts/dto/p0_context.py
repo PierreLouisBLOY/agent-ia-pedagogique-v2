@@ -14,6 +14,7 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
 from backend.shared_kernel._safe_data import freeze_safe_mapping
 
 P0_CONTEXT_CONTRACT = "R6-P0-CONTEXT-1.0"
+P0_INSTITUTIONAL_CONTEXT_CONTRACT = "P0-CONTEXT-2.0"
 P0_RESOURCE_TYPES = frozenset({"COURSE", "EXERCISE", "QUESTION_SET", "ASSESSMENT"})
 P0_QUESTION_MODES = frozenset({"OPEN_QUESTIONS", "QCM", "QUIZ"})
 P0_LEVELS = frozenset({"FIRST_STMG", "FINAL_STMG", "BTS_CG_YEAR_1", "BTS_CG_YEAR_2"})
@@ -54,8 +55,9 @@ class P0Context:
     data: Mapping[str, object]
 
     def __post_init__(self) -> None:
-        data = object_data(self.data, _FIELDS)
-        if data["contract_id"] != P0_CONTEXT_CONTRACT:
+        institutional = self.data.get("contract_id") == P0_INSTITUTIONAL_CONTEXT_CONTRACT
+        data = object_data(self.data, _FIELDS | {"institutional", "institutional_resolution", "local_progression"} if institutional else _FIELDS)
+        if data["contract_id"] not in {P0_CONTEXT_CONTRACT, P0_INSTITUTIONAL_CONTEXT_CONTRACT}:
             raise ValueError("P0_CONTEXT_CONTRACT")
         if data["resource_type"] not in P0_RESOURCE_TYPES:
             raise ValueError("P0_RESOURCE_TYPE")
@@ -67,7 +69,25 @@ class P0Context:
             raise ValueError("P0_QUESTION_MODE")
         if data["level"] not in P0_LEVELS:
             raise ValueError("P0_LEVEL")
-        _bounded_text(data["discipline"], 100)
+        _bounded_text(data["discipline"], 200 if institutional else 100)
+        if institutional:
+            from backend.modules.pedagogical_context.contracts.dto.stmg_institutional import (
+                validate_selection,
+            )
+
+            selection = validate_selection(data["institutional"], level=str(data["level"]), discipline=str(data["discipline"]))
+            resolution = data["institutional_resolution"]
+            if resolution is not None:
+                resolved = object_data(resolution)
+                if resolved.get("contract_id") != "STMG-RESOLUTION-1.0" or resolved.get("selection_sha256") != fingerprint(selection):
+                    raise ValueError("P0_INSTITUTIONAL_RESOLUTION_BINDING")
+                if resolved.get("status") not in {"RESOLVED_ADMITTED", "CONTENT_GAP"}:
+                    raise ValueError("P0_INSTITUTIONAL_RESOLUTION_BINDING")
+            progression = data["local_progression"]
+            if progression is not None:
+                for value in object_data(progression, {"chapter", "sequence", "week"}).values():
+                    if value is not None:
+                        _bounded_text(value, 200)
         _text_items(data["topics"])
         _text_items(data["objectives"])
         if data["difficulty"] not in P0_DIFFICULTIES:
@@ -101,3 +121,17 @@ class P0Context:
 
     def as_dict(self) -> dict[str, object]:
         return object_data(as_plain(self.data))
+
+    @property
+    def institutional(self) -> dict[str, object] | None:
+        value = self.as_dict().get("institutional")
+        return object_data(value) if value is not None else None
+
+    def require_institutional_dispatch(self) -> None:
+        if self.institutional is None:
+            if str(self.data["level"]).endswith("STMG"):
+                raise ValueError("P0_INSTITUTIONAL_CONTEXT_REQUIRED")
+            return
+        resolution = self.data.get("institutional_resolution")
+        if resolution is None or object_data(resolution).get("status") != "RESOLVED_ADMITTED":
+            raise ValueError("P0_INSTITUTIONAL_CONTENT_GAP")

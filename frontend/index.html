@@ -33,6 +33,17 @@
         <label for="p0-level">Niveau</label>
         <select id="p0-level" required><option value="">Choisir</option><option value="FIRST_STMG">Première STMG</option><option value="FINAL_STMG">Terminale STMG</option><option value="BTS_CG_YEAR_1">BTS CG première année</option><option value="BTS_CG_YEAR_2">BTS CG deuxième année</option></select>
         <label for="p0-discipline">Discipline</label><input id="p0-discipline" required maxlength="100">
+        <fieldset id="p0-institutional" hidden><legend>Programme STMG</legend>
+          <label for="p0-frame">Enseignement et version du programme</label><select id="p0-frame"><option value="">Choisir l’enseignement exact</option></select>
+          <label for="p0-program-question">Question du programme</label><select id="p0-program-question"><option value="">Choisir la question</option></select>
+          <label for="p0-capacities">Capacités rattachées à cette question</label><select id="p0-capacities" multiple></select>
+          <label for="p0-program-notions">Notions canoniques sélectionnées</label><select id="p0-program-notions" multiple></select>
+          <label for="p0-depth">Profondeur attendue</label><select id="p0-depth"><option value="">Choisir</option><option value="DISCOVERY">Découverte</option><option value="APPLICATION">Application</option><option value="ANALYSIS">Analyse</option></select>
+          <p id="p0-program-status">Les rattachements et leur provenance seront vérifiés avant toute génération.</p>
+          <label for="p0-local-chapter">Chapitre local — facultatif</label><input id="p0-local-chapter" maxlength="200">
+          <label for="p0-local-sequence">Séquence locale — facultatif</label><input id="p0-local-sequence" maxlength="200">
+          <label for="p0-local-week">Semaine locale — facultatif</label><input id="p0-local-week" maxlength="200">
+        </fieldset>
         <label for="p0-topics">Notions — une par ligne</label><textarea id="p0-topics" required rows="2" maxlength="4000"></textarea>
         <label for="p0-objectives">Objectifs — un par ligne</label><textarea id="p0-objectives" required rows="2" maxlength="4000"></textarea>
         <label for="p0-difficulty">Difficulté</label><select id="p0-difficulty" required><option value="">Choisir</option><option value="INTRODUCTORY">Initiation</option><option value="STANDARD">Standard</option><option value="ADVANCED">Approfondissement</option></select>

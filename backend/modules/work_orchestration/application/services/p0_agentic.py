@@ -34,7 +34,7 @@ def effort_plan(context: P0Context) -> dict[str, object]:
         effort = "SIMPLE"
     else:
         effort = "STANDARD"
-    return {"contract_id": PLAN_CONTRACT, "intent": "PREPARE_PEDAGOGICAL_PRODUCTION",
+    plan: dict[str, object] = {"contract_id": PLAN_CONTRACT, "intent": "PREPARE_PEDAGOGICAL_PRODUCTION",
         "context_sha256": context.sha256, "level": data["level"],
         "family": data["question_mode"] or data["resource_type"], "duration_minutes": data["duration_minutes"],
         "difficulty": data["difficulty"], "total_points": data["total_points"], "topics": topics,
@@ -48,6 +48,15 @@ def effort_plan(context: P0Context) -> dict[str, object]:
         "budget": {"generation_max": 1, "review_max": 1, "targeted_correction_max": 1,
                    "retry": 0, "fallback": "NONE", "authority": "OWNER_GATE_REQUIRED"},
         "ambiguities": [], "implementation": "DETERMINISTIC_APPLICATION_PLAN", "authority": "NONE"}
+    if context.institutional is not None:
+        plan["institutional"] = data["institutional"]
+        plan["institutional_resolution"] = data["institutional_resolution"]
+        if data["resource_type"] == "COURSE":
+            from backend.modules.pedagogical_design.contracts.dto.course_policy import COURSE_POLICY
+
+            plan["course_policy"] = COURSE_POLICY
+        plan["institutional_validation"] = "EXACT_PROGRAMME_ALIGNMENT"
+    return plan
 
 
 def evidence_pack(context: P0Context, references: object, evidence: Mapping[str, object]) -> dict[str, object]:
@@ -62,12 +71,20 @@ def evidence_pack(context: P0Context, references: object, evidence: Mapping[str,
         if hashlib.sha256(text.encode()).hexdigest() != reference["excerpt_sha256"]:
             raise ValueError("P0_EVIDENCE_PACK_HASH")
         passages.append({**object_data(as_plain(reference)), "text": text})
-    pack = {"contract_id": PACK_CONTRACT, "context_sha256": context.sha256, "level": context.as_dict()["level"],
+    pack: dict[str, object] = {"contract_id": PACK_CONTRACT, "context_sha256": context.sha256, "level": context.as_dict()["level"],
         "notion_refs": [], "passages": passages, "scope": "SELECTED_PASSAGES_ONLY",
         "date": None, "date_status": "NOT_AVAILABLE_IN_REFERENCE_CONTRACT", "authority": "NONE",
         "limits": ["No official authority inferred", "Selection does not establish full topic coverage"],
         "content_gaps": ["SEMANTIC_COVERAGE_NOT_YET_REVIEWED"], "source_status": "SOURCES_OK",
         "source_status_scope": "IDENTITY_AND_HASH_INTEGRITY_ONLY"}
+    if context.institutional is not None:
+        resolution = object_data(context.data["institutional_resolution"])
+        pack["institutional_selection"] = context.institutional
+        pack["institutional_resolution"] = resolution
+        pack["notion_refs"] = context.institutional["notion_refs"]
+        pack["content_gaps"] = resolution["gaps"]
+        pack["source_status"] = "SOURCES_INSUFFISANTES" if resolution["gaps"] else "SOURCES_OK"
+        pack["source_status_scope"] = "EXACT_PROGRAMME_AND_SELECTED_REFERENCE"
     if len(encoded(pack)) > 32 * 1024:
         raise ValueError("P0_EVIDENCE_PACK_SIZE")
     return object_data(as_plain(freeze_safe_mapping(pack)))
@@ -75,7 +92,9 @@ def evidence_pack(context: P0Context, references: object, evidence: Mapping[str,
 
 def quality_status(plan: Mapping[str, object], *, review: Mapping[str, object] | None = None) -> dict[str, object]:
     # Structural success is neither an arithmetic proof nor semantic coverage.
-    return {"sources": "SOURCES_OK", "source_scope": "SELECTED_REFERENCE_HASHES",
+    resolution = plan.get("institutional_resolution")
+    gap = resolution is not None and object_data(resolution)["status"] != "RESOLVED_ADMITTED"
+    return {"sources": "SOURCES_INSUFFISANTES" if gap else "SOURCES_OK", "source_scope": "SELECTED_REFERENCE_HASHES",
         "calculations": "ECHEC" if plan["quantitative_review_required"] else "NON_APPLICABLE",
         "calculation_reason": "INDEPENDENT_ORACLE_NOT_EXECUTED" if plan["quantitative_review_required"] else "NO_QUANTITATIVE_TOPIC_DECLARED",
         "instruction": "CONSIGNE_COUVERTE" if review and review.get("instruction_coverage") == "FULL" else "PARTIELLE",

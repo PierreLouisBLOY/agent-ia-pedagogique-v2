@@ -21,6 +21,13 @@ class CreateP0Candidate:
         required_facts: tuple[str, ...] = (),
     ) -> P0Production:
         candidate = P0Production(data)
+        context = object_data(candidate.data["context"])
+        if context.get("institutional") is not None and context["resource_type"] == "COURSE":
+            from backend.modules.pedagogical_design.contracts.dto.course_policy import (
+                validate_course_structure,
+            )
+
+            validate_course_structure(candidate.data["sections"])
         limitations = candidate.data["limitations"]
         if not isinstance(limitations, tuple) or not any(
             "CANDIDATE" in str(item) for item in limitations

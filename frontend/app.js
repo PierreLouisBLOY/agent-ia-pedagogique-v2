@@ -707,7 +707,8 @@ const p0 = {nonce: null, references: [], prepared: null, view: null, teacher: nu
 const p0Element = id => document.getElementById("p0-" + id);
 function p0Controls() {
   p0Element("prepare").disabled = p0.busy || p0.uncertain || !p0.nonce;
-  p0Element("generate").disabled = p0.busy || p0.uncertain || !p0.prepared || p0.liveBinding === "NONE";
+  p0Element("generate").disabled = p0.busy || p0.uncertain || !p0.prepared || p0.liveBinding === "NONE" ||
+    p0.prepared?.context?.institutional_resolution?.status === "CONTENT_GAP";
   for (const id of ["teacher", "revise", "validate", "save"])
     p0Element(id).disabled = p0.busy || p0.uncertain || !p0.view;
   for (const id of ["open", "modify", "check", "correction", "marking", "export"])
@@ -751,7 +752,7 @@ async function p0Run(action, mutation = false, state = "loading") {
 const p0Command = () => crypto.randomUUID().replaceAll("-", "");
 function p0Context() {
   const family = p0Element("family").value;
-  return {contract_id: "R6-P0-CONTEXT-1.0",
+  const context = {contract_id: "R6-P0-CONTEXT-1.0",
     resource_type: ["OPEN_QUESTIONS", "QCM", "QUIZ"].includes(family) ? "QUESTION_SET" : family,
     question_mode: ["OPEN_QUESTIONS", "QCM", "QUIZ"].includes(family) ? family : null,
     level: p0Element("level").value, discipline: p0Element("discipline").value.trim(),
@@ -760,7 +761,71 @@ function p0Context() {
     difficulty: p0Element("difficulty").value, language: "fr",
     duration_minutes: family === "ASSESSMENT" ? Number(p0Element("duration").value) : null,
     total_points: family === "ASSESSMENT" ? Number(p0Element("points").value) : null};
+  if (context.level.endsWith("STMG")) {
+    const frame = p0InstitutionalFrame();
+    const question = frame?.questions.find(q => q.question_ref === p0Element("program-question").value);
+    if (!frame || !question?.theme_ref || !p0Element("depth").value)
+      throw Object.assign(new Error("P0_INSTITUTIONAL_CONTEXT_REQUIRED"), {confirmedRefusal: true});
+    context.contract_id = "P0-CONTEXT-2.0";
+    context.discipline = frame.label;
+    context.institutional = {contract_id: "STMG-INSTITUTIONAL-CONTEXT-1.0", frame: frame.frame,
+      education_level: frame.education_level, series: "STMG", teaching_subject: frame.teaching_subject,
+      program_ref: frame.program_ref, program_version: frame.program_version,
+      program_component: frame.program_component, specific_track: frame.specific_track,
+      theme_ref: question.theme_ref, question_ref: question.question_ref,
+      capacity_refs: [...p0Element("capacities").selectedOptions].map(o => o.value),
+      notion_refs: [...p0Element("program-notions").selectedOptions].map(o => o.value), depth: p0Element("depth").value};
+    context.institutional_resolution = null;
+    context.local_progression = {chapter: p0Element("local-chapter").value.trim() || null,
+      sequence: p0Element("local-sequence").value.trim() || null, week: p0Element("local-week").value.trim() || null};
+  }
+  return context;
 }
+function p0InstitutionalFrame() {
+  return (p0.institutionalCatalog?.frames || []).find(f => f.program_version === p0Element("frame").value && f.level === p0Element("level").value);
+}
+function p0InstitutionalOptions() {
+  const stmg = p0Element("level").value.endsWith("STMG");
+  p0Element("institutional").hidden = !stmg;
+  p0Element("discipline").readOnly = stmg;
+  for (const id of ["frame", "program-question", "program-notions", "depth"]) p0Element(id).required = stmg;
+  const select = p0Element("frame"); select.replaceChildren();
+  const empty = document.createElement("option"); empty.value = ""; empty.textContent = "Choisir l’enseignement exact"; select.append(empty);
+  for (const frame of p0.institutionalCatalog?.frames || []) {
+    if (frame.level !== p0Element("level").value) continue;
+    const option = document.createElement("option"); option.value = frame.program_version;
+    option.textContent = frame.label + " · " + frame.version_label; select.append(option);
+  }
+  p0InstitutionalQuestionOptions();
+  const notions = p0Element("program-notions"); notions.replaceChildren();
+  for (const notion of p0.institutionalCatalog?.notions || []) {
+    const option = document.createElement("option"); option.value = notion.notion_ref; option.textContent = notion.label; notions.append(option);
+  }
+}
+function p0InstitutionalQuestionOptions() {
+  const frame = p0InstitutionalFrame();
+  if (p0Element("level").value.endsWith("STMG")) p0Element("discipline").value = frame?.label || "";
+  const select = p0Element("program-question"); select.replaceChildren();
+  const empty = document.createElement("option"); empty.value = ""; empty.textContent = "Choisir la question"; select.append(empty);
+  for (const question of frame?.questions || []) {
+    if (!question.theme_ref) continue;
+    const option = document.createElement("option"); option.value = question.question_ref; option.textContent = question.label; select.append(option);
+  }
+  p0InstitutionalCapacityOptions();
+  p0Element("program-status").textContent = frame?.authority === "UNATTESTED" ?
+    "Snapshot local : provenance officielle à compléter. Aucune génération tant que les rattachements ne sont pas admis." :
+    "Les capacités et rattachements seront contrôlés dans ce programme exact.";
+}
+function p0InstitutionalCapacityOptions() {
+  const select = p0Element("capacities"); select.replaceChildren();
+  for (const capacity of p0InstitutionalFrame()?.capacities || []) {
+    if (capacity.question_ref !== p0Element("program-question").value) continue;
+    const option = document.createElement("option"); option.value = capacity.capacity_ref; option.textContent = capacity.label; select.append(option);
+  }
+}
+p0Element("level").addEventListener("change", p0InstitutionalOptions);
+p0Element("frame").addEventListener("change", p0InstitutionalQuestionOptions);
+p0Element("program-question").addEventListener("change", p0InstitutionalCapacityOptions);
 p0Element("family").addEventListener("change", () => {
   const assessment = p0Element("family").value === "ASSESSMENT";
   p0Element("assessment").hidden = !assessment;
@@ -793,7 +858,9 @@ p0Element("form").addEventListener("submit", event => {
       references: p0.prepared.references}, null, 2));
     p0Element("preparation").append(sourceDetails);
     uxPreparation(p0.prepared);
-    p0Element("status").textContent = "Préparation prête. Autorisation de génération requise ; aucun appel fournisseur effectué.";
+    p0Element("status").textContent = p0.prepared.context.institutional_resolution?.status === "CONTENT_GAP" ?
+      "Préparation enregistrée avec lacunes institutionnelles. Génération bloquée ; consultez Sources & contexte." :
+      "Préparation prête. Autorisation de génération requise ; aucun appel fournisseur effectué.";
   }, true);
 });
 function p0Field(parent, id, label, value, multiline = true) {
@@ -876,6 +943,8 @@ p0Element("save").addEventListener("click", () => p0Run(p0SaveVersion, true, "sa
 async function p0Connect() {
   const metadata = await p0Fetch("/api/v2/p0");
   p0.nonce = metadata.transport_nonce; p0.references = metadata.references;
+  p0.institutionalCatalog = metadata.institutional_catalog;
+  p0InstitutionalOptions();
   p0.liveBinding = metadata.live_binding;
   p0Element("generate").textContent = metadata.live_binding === "NONE" ? "Génération indisponible dans cette composition" : "Demander la génération autorisée";
   p0Element("reference").replaceChildren();
@@ -930,6 +999,16 @@ function uxContext(context) {
   const region = document.getElementById("drawer-context"); region.replaceChildren();
   appendSearchText(region, "p", (uxNames[context.question_mode || context.resource_type] || "Type à préciser") + " · " + (uxNames[context.level] || "Niveau à préciser"));
   appendSearchText(region, "p", context.discipline || "Discipline à préciser");
+  if (context.institutional) {
+    const selected = context.institutional, resolved = context.institutional_resolution;
+    appendSearchText(region, "p", "Programme : " + (resolved?.version_label || "version sélectionnée à vérifier"));
+    appendSearchText(region, "p", "Thème " + selected.theme_ref.replace("theme:", "") + " · " + (resolved?.question?.official_label || "question sélectionnée à vérifier"));
+    appendSearchText(region, "p", "Capacités : " + ((resolved?.capacities || []).map(c => c.label).join(" · ") || "rattachements à compléter"));
+    appendSearchText(region, "p", "Notions : " + ((resolved?.notions || []).map(n => n.label).join(" · ") || "sélection à vérifier") + " · " +
+      ({DISCOVERY:"Découverte", APPLICATION:"Application", ANALYSIS:"Analyse"}[selected.depth] || "profondeur à préciser"));
+    if (resolved?.gaps?.length) appendSearchText(region, "p", "Lacunes institutionnelles : provenance, capacités ou liens encore non admis. Génération bloquée.");
+    if (context.local_progression) appendSearchText(region, "p", "Progression locale : " + Object.values(context.local_progression).filter(Boolean).join(" · "));
+  }
   appendSearchText(region, "p", (context.topics || []).join(" · "));
   if (context.duration_minutes) appendSearchText(region, "p", context.duration_minutes + " minutes · /" + context.total_points);
 }
@@ -1017,10 +1096,13 @@ document.getElementById("preparation-composer").addEventListener("submit", event
   p0Element("family").value = proposed.family; p0Element("level").value = proposed.level;
   p0Element("difficulty").value = proposed.difficulty; p0Element("topics").value = proposed.topic;
   p0Element("objectives").value = proposed.objective;
-  p0Element("discipline").value = proposed.level.includes("STMG") ? "Management" : proposed.level.includes("BTS") ? "Comptabilité et gestion" : "";
+  p0Element("discipline").value = proposed.level.includes("BTS") ? "Comptabilité et gestion" : "";
+  p0InstitutionalOptions();
   p0Element("duration").value = proposed.duration || ""; p0Element("points").value = proposed.points || "";
   p0Element("family").dispatchEvent(new Event("change")); p0Invalidate();
-  document.getElementById("preparation-parameters").open = true; uxContext(p0Context());
+  document.getElementById("preparation-parameters").open = true;
+  if (proposed.level.includes("STMG")) uxMessage("assistant", "Choisissez l’enseignement exact et sa question : Management et SGN sont distincts ; en terminale, précisez le commun ou l’enseignement spécifique.");
+  else uxContext(p0Context());
   uxMessage("assistant", proposed.ambiguities.length ? "À préciser pour préparer : " + proposed.ambiguities.join(", ") + ". Complétez le contexte puis sélectionnez une source." :
     "Le contexte proposé est prêt à confirmer. Relisez les paramètres, puis sélectionnez une référence ou un passage de la Bibliothèque.");
   if (proposed.duration && proposed.family !== "ASSESSMENT") uxMessage("assistant", "La durée est actuellement enregistrable pour les évaluations uniquement. Votre demande reste visible ; aucune durée ne sera ajoutée au contrat de cette production.");

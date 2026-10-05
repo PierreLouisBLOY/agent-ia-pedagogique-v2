@@ -53,8 +53,13 @@ class P0ReviewAdapter:
         meta = ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, "p0-review", "p0-review", None,
             CorrelationId("p0-review"), now, ActorRef(ActorKind.AGENT, "AG-04"), InvocationStatus.PLANNED)
         evidence = object_data(request["evidence_pack"])
+        # AG-04 receives the same immutable programme/version/selection as AG-03.
+        # It cannot infer an enrichment or an admission from a shared notion label.
+        constraints: dict[str, object] = {"scope": "P0_REQUEST_EVIDENCE_PRODUCTION", "no_promotion": True}
+        if evidence.get("institutional_resolution") is not None:
+            constraints["institutional_alignment"] = evidence["institutional_resolution"]
         canonical = ReviewRequest(meta, target, tuple(ReviewDimension),
-            {"scope": "P0_REQUEST_EVIDENCE_PRODUCTION", "no_promotion": True},
+            constraints,
             tuple(str(r["evidence_id"]) for r in items(evidence["passages"], 8)),
             {}, {}, {"separate_from_generation": True, "external_oracle_excluded": True})
         agent = ReviewerAgent(ReviewCoordinator(self.port))

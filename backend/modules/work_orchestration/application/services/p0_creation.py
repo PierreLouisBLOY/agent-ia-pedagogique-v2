@@ -36,10 +36,14 @@ from backend.shared_kernel._safe_data import freeze_safe_mapping
 
 class P0CreationService:
     def __init__(self, reference: Callable[[Mapping[str, object]], Mapping[str, object]],
-                 *, generation: P0GenerationPort | None = None, review: P0ReviewPort | None = None) -> None:
+                 *, generation: P0GenerationPort | None = None, review: P0ReviewPort | None = None,
+                 institutional_resolver: Callable[[Mapping[str, object], Mapping[str, object]], Mapping[str, object]] | None = None,
+                 exact_stmg_required: bool = False) -> None:
         self.reference = reference
         self.generation = generation
         self.review = review
+        self.institutional_resolver = institutional_resolver
+        self.exact_stmg_required = exact_stmg_required
         self.prepared: dict[str, Mapping[str, object]] = {}
         self.records: dict[str, P0Production] = {}
         self.evidence: dict[str, dict[str, str]] = {}
@@ -91,7 +95,17 @@ class P0CreationService:
         if len(self.prepared) >= 64:
             raise ValueError("P0_SESSION_FULL")
         context = P0Context(object_data(data["context"]))
-        loaded = self.reference(object_data(data["reference"]))
+        selection = object_data(data["reference"])
+        if context.institutional is not None:
+            if self.institutional_resolver is None:
+                raise ValueError("P0_INSTITUTIONAL_RESOLVER_REQUIRED")
+            resolved = object_data(self.institutional_resolver(context.institutional, selection))
+            confirmed = context.as_dict()
+            confirmed["institutional_resolution"] = resolved
+            context = P0Context(confirmed)
+        elif self.exact_stmg_required and str(context.data["level"]).endswith("STMG"):
+            raise ValueError("P0_INSTITUTIONAL_CONTEXT_REQUIRED")
+        loaded = self.reference(selection)
         reference = object_data(loaded["reference"])
         excerpt = loaded["excerpt"]
         if not isinstance(excerpt, str) or not excerpt:
@@ -120,6 +134,9 @@ class P0CreationService:
         request = self.prepared.get(str(data["preparation_ref"]))
         if request is None or fingerprint(request) != data["preparation_sha256"]:
             raise ValueError("P0_PREPARATION_CHANGED")
+        context = P0Context(object_data(request["context"]))
+        if context.institutional is not None or self.exact_stmg_required:
+            context.require_institutional_dispatch()
         if self.generation is None or not self.generation.authorize(request=request):
             return {"state": "AUTHORIZATION_REQUIRED", "provider_attempts": 0}
         # Remove the preparation before the single permitted dispatch, including failure.
@@ -127,6 +144,12 @@ class P0CreationService:
         output = self.generation.generate(request=request)
         evidence = {str(k): str(v) for k, v in object_data(request["evidence"]).items()}
         candidate = CreateP0Candidate().execute(output, evidence=evidence)
+        if context.institutional is not None and context.resource_type == "COURSE":
+            from backend.modules.pedagogical_design.contracts.dto.course_policy import (
+                validate_course_structure,
+            )
+
+            validate_course_structure(candidate.data["sections"])
         for key in ("production_ref", "version_ref", "context", "context_sha256", "references", "lineage"):
             if as_plain(candidate.data[key]) != as_plain(request[key]):
                 raise ValueError("P0_OUTPUT_BINDING")
@@ -188,6 +211,9 @@ class P0CreationService:
 
     def _review(self, data: dict[str, object]) -> dict[str, object]:
         candidate = self._version(data)
+        context = P0Context(object_data(candidate.data["context"]))
+        if context.institutional is not None or self.exact_stmg_required:
+            context.require_institutional_dispatch()
         root = self._root(candidate)
         if root.version_ref in self.review_consumed:
             raise ValueError("P0_REVIEW_ALREADY_CONSUMED")

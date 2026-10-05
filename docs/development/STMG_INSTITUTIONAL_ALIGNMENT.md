@@ -57,7 +57,17 @@ commun/spécifique, GF/autres spécialités, mauvaise version/thème/provenance,
 propagation implicite, profondeur, source notionnelle exacte, structure de cours,
 headers des exports et maintien des contextes historiques. Les pins du delta
 actif sont ajoutés dans un successeur du manifeste ; le prédécesseur reste dans
-Git. Les cinq échecs historiques privés restent identifiés dans la livraison.
+Git. La qualification globale de 01f2e94 comprend 6 731 PASS, 415 FAIL,
+35 ERROR et 28 SKIP, conservés dans les résultats bruts hors Git. Elle n'est pas
+annoncée verte. Les anciens inventaires, les pièces privées manquantes et les
+préconditions runtime sont distingués dans le rapport, sans attribuer tous les
+échecs à des causes externes. Les replays sur cb0d6df sont identifiés séparément.
+
+Les dix assertions de sélection de sources conservent leur couverture sur un
+contexte BTS valide ; elles utilisaient précédemment un contexte STMG historique
+que la composition normale refuse désormais. Deux tests supplémentaires vérifient
+ce refus en première et terminale avant la lecture des preuves. Les contextes
+historiques sauvegardés et les harnais explicitement déclarés restent lisibles.
 
 ## Références publiques vérifiées
 

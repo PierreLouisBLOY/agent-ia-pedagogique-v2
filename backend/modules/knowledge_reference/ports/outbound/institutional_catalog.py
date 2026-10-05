@@ -10,6 +10,7 @@ class InstitutionalTableSchema:
     table: str
     columns: tuple[str, ...]
     rows: int
+    definition: str | None = None
 
 
 class InstitutionalSchemaPort(Protocol):

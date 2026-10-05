@@ -14,13 +14,14 @@ class InspectInstitutionalCatalog:
 
     def execute(self) -> tuple[InstitutionalTableSchema, ...]:
         result = self.catalog.inspect_institutional_schema()
-        if len(result) > 100 or any(len(row.columns) > 100 or row.rows < 0 for row in result):
+        if len(result) > 100 or any(len(row.columns) > 100 or row.rows < 0 or
+                                 (row.definition is not None and len(row.definition) > 16000) for row in result):
             raise ValueError("INSTITUTIONAL_CATALOG_BOUNDS")
         return result
 
     def read(self) -> Mapping[str, object]:
         data = self.catalog.read_institutional_catalog()
-        if len(data) > 16 or any(not isinstance(rows, (list, tuple)) or len(rows) > 10000
+        if len(data) > 20 or any(not isinstance(rows, (list, tuple)) or len(rows) > 10000
                                 for rows in data.values()):
             raise ValueError("INSTITUTIONAL_CATALOG_BOUNDS")
         return data

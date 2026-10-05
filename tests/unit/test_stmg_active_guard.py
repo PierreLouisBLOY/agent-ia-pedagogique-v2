@@ -54,9 +54,12 @@ def test_stmg_active_owner_and_mutation(tmp_path, path):
 def test_successor_keeps_historical_manifest_and_reviewed_entry():
     manifest = json.loads((ROOT / guard.MANIFEST).read_text("utf-8"))
     successor = manifest["successors"][-1]
-    assert successor["entry"] == "790230f7a9762e61ef22800b9fcbeb8f59e221af"
-    assert successor["purpose"] == "COURSE_BENCHMARK_PDF3"
-    assert successor["predecessor_manifest_sha256"] == "79bf1a35640f0e1cacb244f139423d2ee46099f21009351434ad8363bf1e700d"
+    assert successor["entry"] == "7a54666567f3d11940cb6cb556439d986d487494"
+    assert successor["purpose"] == "INSTITUTIONAL_AUTHORITY_628_FOUNDATION"
+    assert successor["predecessor_manifest_sha256"] == "05eaba891801f3821021ab689d4d83bf40ed22aa361295a853ef719c15287e90"
+    course = next(row for row in manifest["successors"] if row["purpose"] == "COURSE_BENCHMARK_PDF3")
+    assert course["entry"] == "790230f7a9762e61ef22800b9fcbeb8f59e221af"
+    assert course["predecessor_manifest_sha256"] == "79bf1a35640f0e1cacb244f139423d2ee46099f21009351434ad8363bf1e700d"
     historical = next(row for row in manifest["successors"] if row["purpose"] == "STMG_INSTITUTIONAL_ALIGNMENT")
     assert historical["entry"] == "cb0d6df2ebb4070ef0c89108e4005bf118e3e1f1"
     assert historical["predecessor_manifest_sha256"] == "f9f406104c24e415f6b9f862e1458571d1020283dac70c32fa8ac23201dce9dd"

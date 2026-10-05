@@ -11,7 +11,8 @@ class InstitutionalCatalogInbound:
 
     def inspect(self) -> dict[str, object]:
         return {"contract_id": "INSTITUTIONAL-CATALOG-INSPECTION-1.0",
-                "tables": [{"table": row.table, "columns": list(row.columns), "rows": row.rows}
+                "tables": [{"table": row.table, "columns": list(row.columns), "rows": row.rows,
+                            "definition": row.definition}
                            for row in self.query.execute()],
                 "authority": "SCHEMA_ONLY_NO_OFFICIAL_MEMBERSHIP_INFERRED"}
 

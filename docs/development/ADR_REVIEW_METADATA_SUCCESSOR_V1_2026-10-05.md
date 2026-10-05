@@ -52,6 +52,11 @@ Tests, Ruff, mypy, compileall and diff/secret review precede delivery. Scope
 inventory gains exact owners and hashes under this ADR without relaxing guard
 logic or the historical CP645 baseline.
 
+The closed review-package inventory adds only review_metadata_successor.py.
+All existing members and boundary prohibitions remain required; the inventory
+test becomes an exact pinned successor owner with a mutation rejection proof.
+The five historical documentary assertions remain unchanged.
+
 ## Owner decisions remaining
 
 Teacher recipe and pedagogical acceptance, source sufficiency and final release

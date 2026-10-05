@@ -85,6 +85,7 @@
     "frontend/index.html",
     "frontend/styles.css",
     "tests/architecture/test_r6_u1_exact_source_boundary.py",
+    "tests/architecture/test_review_boundary_fitness.py",
     "tests/integration/test_local_browser_navigation_burst.py",
     "tests/integration/test_p0_creation_http.py",
     "tests/integration/test_r6_exact_notion_evidence_real.py",
@@ -228,15 +229,16 @@
     "backend/adapters/outbound/review/openai/adapter.py": "2324ca1d3ba2ece5b8a9b5a8466bc4e3c115ec4f02535a985c80e9ea20510e6f",
     "tests/unit/test_mega_closure_review.py": "fcd38616efb5d3e532288582eff681f9056057aa525199d1b1d50db790a5a19d",
     "docs/development/MEGA_LOT_LOCAL_CLOSURE_REVIEW.md": "396e3c73d116efe87375c166374c1f932713eec5cfb3cc07861b6f2481942a87",
-    "tests/unit/test_mega_closure_guard.py": "a4a75f8d330819ebbb3c0eb4a0c7bcc1ded6bf357c84a1ee6a8afd9200539698",
-    "docs/development/ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.md": "81a763f2cca2ace23c49556642dcaa3b726fea68ee718a3bd9a5a5e22db25040",
+    "tests/unit/test_mega_closure_guard.py": "b27a8cd554dda48540cb75c4e58400fe39657494b5b4e6b60756100da5e631b1",
+    "docs/development/ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.md": "3f2e6ac310414684caa4a6b92f1fb25144d157b54011cfd8b51ca47b8fb93778",
     "backend/agent_runtime/agents/review/review_metadata_successor.py": "f3be764025bb356c4ea2049e2df5a07d2c0df46cd3dc112ea87eb17c33c895c8",
     "backend/agent_runtime/agents/review/review_security_model.py": "b349e28d86056cfe8aeec52b84befc53e30e14dac484707f243cd9ea85b6e9d3",
     "backend/agent_runtime/agents/review/review_security.py": "392deb33d6a2a986e0da105449ded3408757f19ae6fcf49f4140dfb9f30bf8d7",
     "backend/agent_runtime/agents/review/review_agent_model.py": "2273009cb6f360707b40adbdfd40e61ad8c8aa9b6e2457920567651800870f45",
     "backend/adapters/outbound/export/diffusion_word_v6.py": "704b944d23888a6abcf38ae491e9020076a90bddb7737d9d2821cec1070926b8",
     "tests/unit/test_review_metadata_successor.py": "da2bd9e1652cb159a9ccb5ee62a68f67dbfecd0219b0f981eeec132a8fe3affb",
-    "tests/unit/test_diffusion_word_v6.py": "555ade42d9ab476423416dcef4133661f7ff058ee7a34c5b9195a31bd044e393"
+    "tests/unit/test_diffusion_word_v6.py": "555ade42d9ab476423416dcef4133661f7ff058ee7a34c5b9195a31bd044e393",
+    "tests/architecture/test_review_boundary_fitness.py": "2c3362036538054b86800ff9dcdb2f2ca02dfb2fc86b47c950ce50fc33de1c6c"
   },
   "active_delta_paths": [
     "backend/adapters/inbound/application/exact_notion_evidence.py",

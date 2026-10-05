@@ -16,6 +16,7 @@ OWNERS = (
     "backend/infrastructure/composition/factories/local_browser.py",
     "tests/unit/test_review_metadata_successor.py",
     "tests/unit/test_diffusion_word_v6.py",
+    "tests/architecture/test_review_boundary_fitness.py",
     "docs/development/ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.md",
     "backend/adapters/outbound/review/p0_review.py",
     "backend/adapters/outbound/review/openai/adapter.py",

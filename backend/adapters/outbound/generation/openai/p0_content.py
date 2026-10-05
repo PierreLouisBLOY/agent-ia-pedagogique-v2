@@ -84,9 +84,22 @@ def build_p0_content_request(request: Mapping[str, object]) -> OpenAIResponsesRe
                          "Ne transférez aucune capacité d'un autre enseignement ; la progression locale n'est pas la structure du programme.")
         from backend.modules.pedagogical_design.contracts.dto.program_authority import (
             authority_layers,
+            bounded_institutional_evidence,
         )
 
-        payload["authority_layers"] = authority_layers(context.data["institutional_resolution"], [], context.data.get("local_progression"))
+        resolution = context.data["institutional_resolution"]
+        layers = authority_layers(resolution, [], context.data.get("local_progression"))
+        projected = bounded_institutional_evidence(resolution)
+        # The content schema has no local context/identities to echo. Bind the
+        # original complete context after parsing, never this provider view.
+        view = context.as_dict()
+        view.pop("institutional_resolution")
+        view["contract_id"] = "P0-PROVIDER-CONTEXT-VIEW-1.0"
+        view["institutional_resolution_sha256"] = projected["full_resolution_sha256"]
+        payload["context"] = view
+        if layers["institutional_evidence"]:
+            layers["institutional_evidence"] = [projected]
+        payload["authority_layers"] = layers
         instructions += (" Seule institutional_evidence établit une prescription officielle. Une inférence IMPLICIT ne vaut pas citation. "
                          "Les sources de contenu et les constructions locales ne créent aucun rattachement ; les années BTS restent une progression locale.")
         if context.resource_type == "COURSE":

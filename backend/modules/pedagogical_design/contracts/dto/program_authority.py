@@ -9,6 +9,7 @@ from backend.modules.knowledge_reference.contracts.dto.admitted_institutional_so
 )
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     as_plain,
+    fingerprint,
     items,
     object_data,
 )
@@ -69,3 +70,45 @@ def authority_layers(resolution: object, passages: list[dict[str, object]], loca
         "content_authority_status": "B_C_NOT_ATTESTED_BY_LEGACY_REFERENCE_CONTRACT",
         "review_axes": alignment_axes(data),
     }))
+
+
+def bounded_institutional_evidence(resolution: object) -> dict[str, object]:
+    """Content-only view; the full immutable proof stays in Application."""
+    data = object_data(resolution)
+    def selected(row: object, keys: tuple[str, ...]) -> dict[str, object]:
+        value = object_data(row)
+        return {key: as_plain(value[key]) for key in keys if key in value}
+
+    element_keys = ("id", "element_type", "official_code", "official_label", "official_text",
+        "document_reference_id", "page", "page_end", "locator", "label", "capacity_ref")
+    def element_view(row: object, *, theme: bool = False) -> dict[str, object]:
+        value = selected(row, element_keys)
+        # The selected question/competency carries the actual prescription.
+        # Whole-theme background is committed by hash, not duplicated here.
+        if theme or value.get("official_text") == value.get("official_label"):
+            value.pop("official_text", None)
+        return value
+
+    links = []
+    for row in items(data["attachments"], 128):
+        value = selected(row, ("id", "notion_ref", "element_ref", "disposition",
+            "notion_id", "framework_element_id", "attachment_type"))
+        value["full_attachment_sha256"] = fingerprint(row)
+        if row.get("disposition") == "VERIFIED_IMPLICIT":
+            value["justification"] = row["justification"]
+        links.append(value)
+    return {
+        "contract_id": "BOUNDED-INSTITUTIONAL-EVIDENCE-1.0", "full_resolution_sha256": fingerprint(data),
+        "status": data["status"], "program_ref": data["program_ref"], "program_version": data["program_version"],
+        "version_label": data["version_label"], "qualification_sha256": data.get("qualification_sha256"),
+        "owner_admission_sha256": data.get("owner_admission_sha256"),
+        "document": selected(data.get("document_provenance", {}), ("id", "candidate_id", "title", "url", "sha256", "publication_date", "provenance")),
+        "elements": [element_view(data[key], theme=key == "theme") for key in ("theme", "question", "process", "activity") if data.get(key) is not None],
+        "capacities_or_competencies": [element_view(row) for key in ("capacities", "competencies") for row in items(data.get(key, []), 16)],
+        "limits": [element_view(row) for row in items(data.get("limits", []), 32)],
+        "notions": [selected(row, ("notion_ref", "label")) for row in items(data["notions"], 16)],
+        "attachments": links,
+        "depth_authority": data.get("depth_authority"), "official_depth": data.get("official_depth"),
+        "year_authority": data.get("year_authority"), "gaps": as_plain(data["gaps"]),
+        "review_axes": alignment_axes(data), "teacher_acceptance": "NOT_PERFORMED",
+    }

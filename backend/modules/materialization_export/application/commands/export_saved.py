@@ -86,7 +86,8 @@ class ExportSavedCommand:
             if resolution is not None:
                 exact = object_data(resolution)
                 question = object_data(exact["question"])
-                blocks.append(WordBlock("Normal", "Thème " + str(exact["theme_ref"]).removeprefix("theme:") + " · " + str(question["official_label"])))
+                theme = "Thème " + str(exact["theme_ref"]).removeprefix("theme:") if exact["theme_ref"] else "Thème non renseigné"
+                blocks.append(WordBlock("Normal", theme + " · " + str(question["official_label"])))
             blocks.append(WordBlock("Note", "CANDIDATE — à valider par l’enseignant."))
         if kind != "student":
             blocks.append(WordBlock(

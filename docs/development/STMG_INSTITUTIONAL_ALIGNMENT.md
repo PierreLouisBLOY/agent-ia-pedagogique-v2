@@ -69,6 +69,14 @@ que la composition normale refuse désormais. Deux tests supplémentaires vérif
 ce refus en première et terminale avant la lecture des preuves. Les contextes
 historiques sauvegardés et les harnais explicitement déclarés restent lisibles.
 
+Une correction ultérieure du sélecteur conserve toutes les questions du catalogue,
+y compris celles sans numéro de thème dans leur libellé. Huit questions SGN étaient
+masquées par ce filtre. Leur identifiant exact reste sélectionnable ; un thème
+absent reste null et produit THEME_RELATIONSHIP_UNRESOLVED / CONTENT_GAP. La
+préparation locale peut exposer cette lacune, mais génération et review restent
+refusées avant autorisation. L'interface et les exports affichent « Thème non
+renseigné », sans fabriquer un numéro ni modifier les données originales.
+
 ## Références publiques vérifiées
 
 Le découpage des enseignements est confirmé par la page ministérielle

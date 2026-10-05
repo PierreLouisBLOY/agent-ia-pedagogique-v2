@@ -339,3 +339,86 @@ def test_sqlite_reference_projection_is_query_only_exact_and_bounded():
     with pytest.raises(ValueError, match="P0_REFERENCE_CONTEXT_BOUND"):
         adapter.read_reference_contexts("content:overflow")
     connection.close()
+
+
+def unnumbered_question_catalog():
+    catalog = Catalog()
+    question = next(row for row in catalog.data["official_framework_element"] if row["id"] == "question:SGN_PREMIERE")
+    question["official_label"] = "Comment organiser les activités ?"
+    return catalog
+
+
+def test_unnumbered_question_is_selectable_but_missing_theme_blocks_authorisation():
+    catalog = unnumbered_question_catalog()
+    query = ReadSTMGAlignment(catalog)
+    frame = next(frame for frame in query.snapshot()["frames"] if frame["frame"] == "SGN_PREMIERE")
+    assert frame["questions"][0] == {"question_ref": "question:SGN_PREMIERE", "label": "Comment organiser les activités ?", "theme_ref": None}
+    data = context("SGN_PREMIERE")
+    data["institutional"]["theme_ref"] = None
+    double = ExplainedCourseDouble()
+    authorisations = []
+    double.authorize = lambda **kwargs: authorisations.append(kwargs) or True
+    service = app(catalog, double)
+    prepared = prepare(service, data)
+    resolved = prepared["context"]["institutional_resolution"]
+    assert resolved["question"]["id"] == "question:SGN_PREMIERE"
+    assert resolved["theme_ref"] is None
+    assert resolved["status"] == "CONTENT_GAP"
+    assert resolved["gaps"] == ["THEME_RELATIONSHIP_UNRESOLVED"]
+    assert prepared["agentic"]["evidence_pack"]["institutional_resolution"] == resolved
+    with pytest.raises(ValueError, match="P0_INSTITUTIONAL_CONTENT_GAP"):
+        service.execute("generate", {"command_id": token_hex(16), "preparation_ref": prepared["preparation_ref"], "preparation_sha256": prepared["preparation_sha256"]})
+    assert authorisations == double.requests == []
+
+
+@pytest.mark.parametrize("unnumbered,theme", [(True, "theme:1"), (False, None)])
+def test_missing_theme_cannot_be_replaced_or_used_for_a_numbered_question(unnumbered, theme):
+    catalog = unnumbered_question_catalog() if unnumbered else Catalog()
+    data = context("SGN_PREMIERE")
+    data["institutional"]["theme_ref"] = theme
+    with pytest.raises(ValueError, match="P0_INSTITUTIONAL_QUESTION_THEME"):
+        prepare(app(catalog), data)
+
+
+def test_unnumbered_question_does_not_bypass_programme_identity():
+    catalog = unnumbered_question_catalog()
+    data = context()
+    data["institutional"].update(theme_ref=None, question_ref="question:SGN_PREMIERE")
+    with pytest.raises(ValueError, match="P0_INSTITUTIONAL_QUESTION_THEME"):
+        prepare(app(catalog), data)
+
+
+@pytest.mark.parametrize("theme", ["", False, 1])
+def test_unresolved_theme_is_null_not_an_empty_or_invalid_identifier(theme):
+    data = context("SGN_PREMIERE")
+    data["institutional"]["theme_ref"] = theme
+    with pytest.raises(ValueError, match="P0_INSTITUTIONAL_ID"):
+        P0Context(data)
+
+
+def test_unnumbered_successor_export_and_review_keep_the_missing_theme_visible():
+    catalog = Catalog()
+    service = app(catalog, ExplainedCourseDouble())
+    prepared = prepare(service, context())
+    view = service.execute("generate", {"command_id": token_hex(16), "preparation_ref": prepared["preparation_ref"], "preparation_sha256": prepared["preparation_sha256"]})["view"]
+    parent = service.saved_source(view["production_ref"], view["version_ref"])
+    catalog = unnumbered_question_catalog()
+    requested = context("SGN_PREMIERE")
+    requested["institutional"]["theme_ref"] = None
+    child = ReframeCourseInbound(ReadSTMGAlignment(catalog).resolve).execute(parent, requested,
+        title="Cours synthétique sans thème renseigné", sections=parent.p0_bundle.mutable_copy()["sections"],
+        reference_selection={"notion_id": "notion:shared"}, evidence=service.evidence[parent.version_ref])
+    blocks = ExportSavedCommand(None).preview(child, "student").blocks
+    assert any(block.text == "Thème non renseigné · Comment organiser les activités ?" for block in blocks)
+    assert not any("Thème None" in block.text for block in blocks)
+    calls = []
+    class ReviewCapture:
+        def authorize(self, *, request):
+            calls.append(request)
+            return True
+    service.review = ReviewCapture()
+    service.records[child.version_ref] = child.p0_bundle
+    with pytest.raises(ValueError, match="P0_INSTITUTIONAL_CONTENT_GAP"):
+        service.execute("review", {"command_id": token_hex(16), "production_ref": child.production_ref,
+                                  "version_ref": child.version_ref, "bundle_sha256": child.p0_bundle.sha256})
+    assert calls == []

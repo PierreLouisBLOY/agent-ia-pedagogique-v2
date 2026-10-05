@@ -96,6 +96,8 @@ class ReadSTMGAlignment:
         if reference_selection.get("notion_id") not in notion_ids:
             raise ValueError("P0_INSTITUTIONAL_EXACT_NOTION_SOURCE_REQUIRED")
         gaps = []
+        if selection["theme_ref"] is None:
+            gaps.append("THEME_RELATIONSHIP_UNRESOLVED")
         documents = {str(d["id"]): d for d in _rows(data, "document")}
         sources = {str(s["id"]): s for s in _rows(data, "source")}
         locators = {str(r["id"]): r for r in _rows(data, "document_reference")}

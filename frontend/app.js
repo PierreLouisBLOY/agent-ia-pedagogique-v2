@@ -764,7 +764,7 @@ function p0Context() {
   if (context.level.endsWith("STMG")) {
     const frame = p0InstitutionalFrame();
     const question = frame?.questions.find(q => q.question_ref === p0Element("program-question").value);
-    if (!frame || !question?.theme_ref || !p0Element("depth").value)
+    if (!frame || !question || !p0Element("depth").value)
       throw Object.assign(new Error("P0_INSTITUTIONAL_CONTEXT_REQUIRED"), {confirmedRefusal: true});
     context.contract_id = "P0-CONTEXT-2.0";
     context.discipline = frame.label;
@@ -772,7 +772,7 @@ function p0Context() {
       education_level: frame.education_level, series: "STMG", teaching_subject: frame.teaching_subject,
       program_ref: frame.program_ref, program_version: frame.program_version,
       program_component: frame.program_component, specific_track: frame.specific_track,
-      theme_ref: question.theme_ref, question_ref: question.question_ref,
+      theme_ref: question.theme_ref ?? null, question_ref: question.question_ref,
       capacity_refs: [...p0Element("capacities").selectedOptions].map(o => o.value),
       notion_refs: [...p0Element("program-notions").selectedOptions].map(o => o.value), depth: p0Element("depth").value};
     context.institutional_resolution = null;
@@ -808,20 +808,23 @@ function p0InstitutionalQuestionOptions() {
   const select = p0Element("program-question"); select.replaceChildren();
   const empty = document.createElement("option"); empty.value = ""; empty.textContent = "Choisir la question"; select.append(empty);
   for (const question of frame?.questions || []) {
-    if (!question.theme_ref) continue;
-    const option = document.createElement("option"); option.value = question.question_ref; option.textContent = question.label; select.append(option);
+    const option = document.createElement("option"); option.value = question.question_ref;
+    option.textContent = question.label + (question.theme_ref ? "" : " · thème à renseigner"); select.append(option);
   }
   p0InstitutionalCapacityOptions();
-  p0Element("program-status").textContent = frame?.authority === "UNATTESTED" ?
-    "Snapshot local : provenance officielle à compléter. Aucune génération tant que les rattachements ne sont pas admis." :
-    "Les capacités et rattachements seront contrôlés dans ce programme exact.";
 }
 function p0InstitutionalCapacityOptions() {
+  const frame = p0InstitutionalFrame();
+  const question = frame?.questions.find(q => q.question_ref === p0Element("program-question").value);
   const select = p0Element("capacities"); select.replaceChildren();
-  for (const capacity of p0InstitutionalFrame()?.capacities || []) {
+  for (const capacity of frame?.capacities || []) {
     if (capacity.question_ref !== p0Element("program-question").value) continue;
     const option = document.createElement("option"); option.value = capacity.capacity_ref; option.textContent = capacity.label; select.append(option);
   }
+  p0Element("program-status").textContent = (frame?.authority === "UNATTESTED" ?
+    "Snapshot local : provenance officielle à compléter. Aucune génération tant que les rattachements ne sont pas admis." :
+    "Les capacités et rattachements seront contrôlés dans ce programme exact.") +
+    (question && !question.theme_ref ? " Thème non renseigné dans la source : la question est sélectionnable, mais la génération reste bloquée." : "");
 }
 p0Element("level").addEventListener("change", p0InstitutionalOptions);
 p0Element("frame").addEventListener("change", p0InstitutionalQuestionOptions);
@@ -1007,7 +1010,7 @@ function uxContext(context) {
     if (selected.program_component === "COMMON") appendSearchText(region, "p", "Partie : Enseignement commun");
     if (selected.program_component === "SPECIFIC") appendSearchText(region, "p", "Enseignement spécifique : " + context.discipline.split(" — ").slice(1).join(" — "));
     appendSearchText(region, "p", "Programme : " + context.discipline + " — " + level + " · " + (resolved?.version_label || "version sélectionnée à vérifier"));
-    appendSearchText(region, "p", "Thème " + selected.theme_ref.replace("theme:", "") + " · " + (resolved?.question?.official_label || "question sélectionnée à vérifier"));
+    appendSearchText(region, "p", (selected.theme_ref ? "Thème " + selected.theme_ref.replace("theme:", "") : "Thème non renseigné") + " · " + (resolved?.question?.official_label || "question sélectionnée à vérifier"));
     appendSearchText(region, "p", "Capacités : " + ((resolved?.capacities || []).map(c => c.label).join(" · ") || "rattachements à compléter"));
     appendSearchText(region, "p", "Notions : " + ((resolved?.notions || []).map(n => n.label).join(" · ") || "sélection à vérifier") + " · " +
       ({DISCOVERY:"Découverte", APPLICATION:"Application", ANALYSIS:"Analyse"}[selected.depth] || "profondeur à préciser"));

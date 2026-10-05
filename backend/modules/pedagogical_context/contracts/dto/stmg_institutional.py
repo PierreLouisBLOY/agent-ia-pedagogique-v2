@@ -20,9 +20,11 @@ def validate_selection(value: object, *, level: str, discipline: str) -> dict[st
         raise ValueError("P0_INSTITUTIONAL_FRAME")
     if discipline != frame[6]:
         raise ValueError("P0_INSTITUTIONAL_SUBJECT")
-    for key in ("program_ref", "program_version", "theme_ref", "question_ref"):
+    for key in ("program_ref", "program_version", "question_ref"):
         if not isinstance(data[key], str) or not 1 <= len(str(data[key])) <= 200:
             raise ValueError("P0_INSTITUTIONAL_ID")
+    if data["theme_ref"] is not None and (not isinstance(data["theme_ref"], str) or not 1 <= len(str(data["theme_ref"])) <= 200):
+        raise ValueError("P0_INSTITUTIONAL_ID")
     for key in ("capacity_refs", "notion_refs"):
         values = data[key]
         if not isinstance(values, (list, tuple)) or len(values) > 16 or (key == "notion_refs" and not values):

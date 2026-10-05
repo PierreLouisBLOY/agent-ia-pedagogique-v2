@@ -12,7 +12,7 @@ const frames = [
   questions:[{question_ref:'question:'+frame,label:'1.1 Question '+frame,theme_ref:'theme:1'}],
   capacities:[{capacity_ref:'capacity:'+frame,label:'Capacité '+frame,question_ref:'question:'+frame}]}));
 const nodes = {};
-function node(id) {return nodes[id] ||= {value:'',children:[],selectedOptions:[],addEventListener(){},replaceChildren(){this.children=[];this.value='';},append(x){this.children.push(x);}};}
+function node(id) {return nodes[id] ||= {value:'',children:[],selectedOptions:[],listeners:{},addEventListener(type,callback){(this.listeners[type] ||= []).push(callback);},dispatch(type){for(const callback of this.listeners[type] || []) callback();},replaceChildren(){this.children=[];this.value='';this.selectedOptions=[];},append(x){this.children.push(x);}};}
 const sandbox={p0:{institutionalCatalog:{frames,notions:[{notion_ref:'notion:shared',label:'Notion partagée'}]},view:null,busy:false,uncertain:false,nonce:'unit',liveBinding:'EXPLICIT_PORT'},
   p0Element:node,document:{createElement:()=>node('new-'+Math.random()),getElementById:node}};
 vm.createContext(sandbox);
@@ -33,6 +33,20 @@ for(const frame of frames){
   assert.equal(context.institutional.teaching_subject,frame.teaching_subject);assert.equal(context.institutional.specific_track,frame.specific_track);
   assert.equal(context.institutional_resolution,null);assert.equal(context.discipline,frame.label);
 }
+const sgn = frames.find(frame=>frame.frame==='SGN_PREMIERE');
+sgn.questions.push({question_ref:'question:SGN:unnumbered',label:'Comment organiser les activités ?',theme_ref:null});
+node('level').value='FIRST_STMG';node('level').dispatch('change');
+node('frame').value=sgn.program_version;node('frame').dispatch('change');
+assert.equal(node('program-question').children.length,sgn.questions.length+1);
+assert(node('program-question').children.some(option=>option.value==='question:SGN:unnumbered' && option.textContent.includes('thème à renseigner')));
+node('program-question').value='question:SGN:unnumbered';node('program-question').dispatch('change');
+assert.equal(node('capacities').children.length,0,'No unrelated capacity inherited');
+assert(node('program-status').textContent.includes('Thème non renseigné'));
+node('program-notions').selectedOptions=[{value:'notion:shared'}];node('depth').value='APPLICATION';
+const unnumberedContext = sandbox.p0Context();
+assert.equal(unnumberedContext.institutional.question_ref,'question:SGN:unnumbered');
+assert.equal(unnumberedContext.institutional.theme_ref,null,'No invented official theme');
+assert.equal(unnumberedContext.institutional.program_version,sgn.program_version);
 node('level').value='BTS_CG_YEAR_2';node('discipline').value='Comptabilité et gestion';sandbox.p0InstitutionalOptions();
 assert.equal(sandbox.p0Context().contract_id,'R6-P0-CONTEXT-1.0');assert.equal(node('discipline').value,'Comptabilité et gestion');
 vm.runInContext(source.slice(source.indexOf('function p0Controls()'),source.indexOf('async function p0Fetch(')),sandbox);
@@ -55,4 +69,8 @@ for (const frame of frames) {
   if(specific) assert(labels.includes('Enseignement spécifique : '+frame.specific_track));
   assert(labels.includes('Progression locale : Chapitre local'));
 }
+labels.length=0;
+sandbox.uxContext({...unnumberedContext,institutional_resolution:{version_label:'UNIT-V1',question:{official_label:'Comment organiser les activités ?'},gaps:['THEME_RELATIONSHIP_UNRESOLVED']}});
+assert(labels.includes('Thème non renseigné · Comment organiser les activités ?'));
 console.log('STMG_UI: seven frames, no Management default, exact programme/capacity selection, BTS compatibility, gap dispatch blocked PASS');
+console.log('STMG_QUESTIONS: change events show unnumbered SGN questions, preserve exact identity and expose unresolved theme PASS');

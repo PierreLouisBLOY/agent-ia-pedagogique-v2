@@ -11,6 +11,10 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     items,
     object_data,
 )
+from backend.modules.pedagogical_design.contracts.dto.program_authority import (
+    alignment_axes,
+    authority_layers,
+)
 from backend.shared_kernel._safe_data import freeze_safe_mapping
 
 PLAN_CONTRACT = "P0-AGENTIC-PLAN-1.0"
@@ -56,6 +60,7 @@ def effort_plan(context: P0Context) -> dict[str, object]:
 
             plan["course_policy"] = COURSE_POLICY
         plan["institutional_validation"] = "EXACT_PROGRAMME_ALIGNMENT"
+        plan["review_axes"] = alignment_axes(data["institutional_resolution"])
     return plan
 
 
@@ -87,6 +92,11 @@ def evidence_pack(context: P0Context, references: object, evidence: Mapping[str,
         pack["source_status_scope"] = "EXACT_PROGRAMME_AND_SELECTED_REFERENCE"
     if len(encoded(pack)) > 32 * 1024:
         raise ValueError("P0_EVIDENCE_PACK_SIZE")
+    if context.institutional is not None:
+        pack.update(authority_layers(context.data["institutional_resolution"], passages,
+            context.data.get("local_progression")))
+        if len(encoded(pack)) > 32 * 1024:
+            raise ValueError("P0_EVIDENCE_PACK_SIZE")
     return object_data(as_plain(freeze_safe_mapping(pack)))
 
 

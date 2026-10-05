@@ -818,7 +818,7 @@ function p0InstitutionalCapacityOptions() {
   const question = frame?.questions.find(q => q.question_ref === p0Element("program-question").value);
   const select = p0Element("capacities"); select.replaceChildren();
   for (const capacity of frame?.capacities || []) {
-    if (capacity.question_ref !== p0Element("program-question").value) continue;
+    if (![p0Element("program-question").value, question?.theme_ref].includes(capacity.question_ref)) continue;
     const option = document.createElement("option"); option.value = capacity.capacity_ref; option.textContent = capacity.label; select.append(option);
   }
   p0Element("program-status").textContent = (frame?.authority === "UNATTESTED" ?
@@ -1010,12 +1010,17 @@ function uxContext(context) {
     if (selected.program_component === "COMMON") appendSearchText(region, "p", "Partie : Enseignement commun");
     if (selected.program_component === "SPECIFIC") appendSearchText(region, "p", "Enseignement spécifique : " + context.discipline.split(" — ").slice(1).join(" — "));
     appendSearchText(region, "p", "Programme : " + context.discipline + " — " + level + " · " + (resolved?.version_label || "version sélectionnée à vérifier"));
-    appendSearchText(region, "p", (selected.theme_ref ? "Thème " + selected.theme_ref.replace("theme:", "") : "Thème non renseigné") + " · " + (resolved?.question?.official_label || "question sélectionnée à vérifier"));
+    appendSearchText(region, "h4", "Cadre institutionnel");
+    appendSearchText(region, "p", (resolved?.theme?.official_label || (/^theme:\d+$/.test(selected.theme_ref || "") ? "Thème " + selected.theme_ref.replace("theme:", "") : "Thème à vérifier")) + " · " + (resolved?.question?.official_label || "question sélectionnée à vérifier"));
     appendSearchText(region, "p", "Capacités : " + ((resolved?.capacities || []).map(c => c.label).join(" · ") || "rattachements à compléter"));
     appendSearchText(region, "p", "Notions : " + ((resolved?.notions || []).map(n => n.label).join(" · ") || "sélection à vérifier") + " · " +
       ({DISCOVERY:"Découverte", APPLICATION:"Application", ANALYSIS:"Analyse"}[selected.depth] || "profondeur à préciser"));
     if (resolved?.gaps?.length) appendSearchText(region, "p", "Lacunes institutionnelles : provenance, capacités ou liens encore non admis. Génération bloquée.");
-    if (context.local_progression) appendSearchText(region, "p", "Progression locale : " + Object.values(context.local_progression).filter(Boolean).join(" · "));
+    appendSearchText(region, "p", "Profondeur proposée pour l’activité, distincte d’une exigence officielle.");
+    if (context.local_progression) {
+      appendSearchText(region, "h4", "Construction pédagogique");
+      appendSearchText(region, "p", "Progression locale : " + Object.values(context.local_progression).filter(Boolean).join(" · "));
+    }
   }
   appendSearchText(region, "p", (context.topics || []).join(" · "));
   if (context.duration_minutes) appendSearchText(region, "p", context.duration_minutes + " minutes · /" + context.total_points);
@@ -1030,6 +1035,9 @@ function uxPreparation(prepared) {
   uxContext(prepared.context); uxQuality(prepared.agentic?.quality);
   const region = document.getElementById("drawer-sources"); region.replaceChildren();
   const passages = prepared.agentic?.evidence_pack?.passages || [];
+  appendSearchText(region, "h4", "Sources disciplinaires et pédagogiques");
+  const pack = prepared.agentic?.evidence_pack;
+  if (pack?.content_authority_status) appendSearchText(region, "p", "Passages sélectionnés : leur catégorie d’autorité disciplinaire ou pédagogique reste à vérifier.");
   for (const passage of passages) appendSearchText(region, "p", passage.text);
   if (!passages.length) appendSearchText(region, "p", prepared.references.length + " référence(s) sélectionnée(s).");
   document.getElementById("drawer-identities").textContent = JSON.stringify({preparation_ref: prepared.preparation_ref,

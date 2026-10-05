@@ -25,3 +25,12 @@ class InspectInstitutionalCatalog:
                                 for rows in data.values()):
             raise ValueError("INSTITUTIONAL_CATALOG_BOUNDS")
         return data
+
+    def resolve_scope(self, *, version_ref: str, element_ref: str, notion_refs: tuple[str, ...],
+                      local_year: str | None = None) -> dict[str, object]:
+        from backend.modules.knowledge_reference.application.queries.qualified_institutional_corpus import (
+            QualifiedInstitutionalCorpus,
+        )
+
+        return QualifiedInstitutionalCorpus(self.read()).resolve_scope(version_ref=version_ref,
+            element_ref=element_ref, notion_refs=notion_refs, local_year=local_year)

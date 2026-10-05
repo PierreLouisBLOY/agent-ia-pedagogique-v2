@@ -136,6 +136,7 @@ class InstitutionalQualification:
                     "official_text",
                     "document_ref",
                     "page",
+                "page_end",
                     "locator",
                     "position",
                 },
@@ -171,6 +172,9 @@ class InstitutionalQualification:
                 or not isinstance(pages, int)
                 or not 1 <= page <= pages
             ):
+                raise ValueError("INSTITUTIONAL_LOCATOR")
+            end = row["page_end"]
+            if type(end) is not int or not page <= end <= pages:
                 raise ValueError("INSTITUTIONAL_LOCATOR")
             position = row["position"]
             if type(position) is not int or not 0 <= position <= 10000:
@@ -214,6 +218,8 @@ class InstitutionalQualification:
                 raise ValueError("INSTITUTIONAL_PEDAGOGICAL_DEPTH")
             if row["official_depth"] is not None:
                 nonempty(row["official_depth"], 2000)
+                if str(row["official_depth"]) not in str(by_element[str(row["element_ref"])]["official_text"]):
+                    raise ValueError("INSTITUTIONAL_DEPTH_NOT_IN_SOURCE")
             if row["importance"] is not None:
                 nonempty(row["importance"], 200)
         for row in notions:

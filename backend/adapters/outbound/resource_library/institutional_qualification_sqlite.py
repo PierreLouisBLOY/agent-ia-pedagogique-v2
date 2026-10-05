@@ -95,7 +95,7 @@ class SQLiteInstitutionalQualificationAdapter:
                             locator_ref,
                             row["document_ref"],
                             row["page"],
-                            row["page"],
+                            row["page_end"],
                             row["official_code"],
                             row["locator"],
                             row["official_text"],

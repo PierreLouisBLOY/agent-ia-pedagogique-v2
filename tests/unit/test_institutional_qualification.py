@@ -58,6 +58,7 @@ def sample():
                 "official_text": "Prescription de test",
                 "document_ref": "doc:test",
                 "page": 4,
+                "page_end": 4,
                 "locator": "page 4, notion de test",
                 "position": 1,
             }

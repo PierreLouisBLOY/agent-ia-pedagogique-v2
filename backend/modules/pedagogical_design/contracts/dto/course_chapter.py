@@ -85,7 +85,7 @@ class CourseChapter:
         for row in capacities:
             for value in row.values():
                 nonempty(value, 2000)
-            if row["authority_status"] not in {"PUBLIC_SOURCE_VERIFIED_NOT_RUNTIME_ADMITTED", "LOCAL_PROPOSED"}:
+            if row["authority_status"] not in {"ADMITTED_A_EXACT_SCOPE", "PUBLIC_SOURCE_VERIFIED_NOT_RUNTIME_ADMITTED", "LOCAL_PROPOSED"}:
                 raise ValueError("COURSE_CAPABILITY_AUTHORITY")
         _strings(data["notions"])
         story = object_data(data["context"], {"title", "text"})
@@ -164,6 +164,16 @@ class CourseChapter:
             if header[key] != context.institutional[key]:
                 raise ValueError("COURSE_PROGRAM_BINDING")
         resolution = object_data(context.data["institutional_resolution"])
+        for capability in items(self.data["capabilities"]):
+            if capability["authority_status"] == "ADMITTED_A_EXACT_SCOPE":
+                from backend.modules.pedagogical_design.contracts.dto.program_authority import (
+                    alignment_axes,
+                )
+
+                if alignment_axes(resolution)["institutional_alignment"] == "UNVERIFIED" or not any(
+                    c["capacity_ref"] == capability["source_ref"] and c["label"] == capability["label"]
+                    for c in items(resolution["capacities"], 16)):
+                    raise ValueError("COURSE_CAPABILITY_AUTHORITY_BINDING")
         if header["question_label"] != object_data(resolution["question"])["official_label"]:
             raise ValueError("COURSE_PROGRAM_BINDING")
         if header["subject_label"] != context.data["discipline"] or set(_strings(self.data["notions"])) != set(_strings(context.data["topics"])):

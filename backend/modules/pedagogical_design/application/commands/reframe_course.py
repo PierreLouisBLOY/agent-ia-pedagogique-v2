@@ -23,13 +23,16 @@ from backend.modules.work_orchestration.contracts.dto.saved_production import (
 
 class ReframeCourseCommand:
     def execute(self, parent: SavedProduction, context: P0Context, *, title: str, sections: object,
-                evidence: Mapping[str, str], course_chapter: Mapping[str, object] | None = None) -> SavedProduction:
+                evidence: Mapping[str, str], course_chapter: Mapping[str, object] | None = None,
+                reference_override: Mapping[str, object] | None = None) -> SavedProduction:
         original = parent.p0_bundle
         if (original is None or original.context.resource_type != "COURSE" or context.resource_type != "COURSE" or
                 context.institutional is None or context.data["institutional_resolution"] is None or
                 parent.data["origin"] != "LOCAL_APPLICATION"):
             raise ValueError("P0_LOCAL_COURSE_REFRAME_REQUIRED")
         data = original.mutable_copy()
+        if reference_override is not None:
+            data["references"] = [dict(reference_override)]
         if course_chapter is not None:
             from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
                 COURSE_PRODUCTION_CONTRACT,
@@ -54,6 +57,7 @@ class ReframeCourseCommand:
             "bundle": child.mutable_copy(), "reviews": [], "validations": [validation], "origin": "LOCAL_APPLICATION",
             "provenance": {"LOCAL_EDIT_PARENT_BUNDLE_SHA256": original.sha256, "LOCAL_EDIT_PARENT_RECORD_SHA256": parent.sha256,
                 "INSTITUTIONAL_RESOLUTION_SHA256": fingerprint(context.data["institutional_resolution"]),
+                "LOCAL_REFERENCE_SUCCESSOR_SHA256": fingerprint(reference_override),
                 "LOCAL_EDIT_OPERATION_SHA256": fingerprint({"mode": "EXPLICIT_LOCAL_CONTEXT_SUCCESSOR", "parent": parent.sha256,
                     "context": context.sha256, "title": title, "sections": sections,
                     "course_chapter": as_plain(course_chapter)})},

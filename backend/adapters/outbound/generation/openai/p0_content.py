@@ -82,6 +82,13 @@ def build_p0_content_request(request: Mapping[str, object]) -> OpenAIResponsesRe
         context.require_institutional_dispatch()
         instructions += (" Appliquez uniquement le programme, la version, la composante, la question et les capacités confirmés. "
                          "Ne transférez aucune capacité d'un autre enseignement ; la progression locale n'est pas la structure du programme.")
+        from backend.modules.pedagogical_design.contracts.dto.program_authority import (
+            authority_layers,
+        )
+
+        payload["authority_layers"] = authority_layers(context.data["institutional_resolution"], [], context.data.get("local_progression"))
+        instructions += (" Seule institutional_evidence établit une prescription officielle. Une inférence IMPLICIT ne vaut pas citation. "
+                         "Les sources de contenu et les constructions locales ne créent aucun rattachement ; les années BTS restent une progression locale.")
         if context.resource_type == "COURSE":
             from backend.modules.pedagogical_design.contracts.dto.course_policy import COURSE_POLICY
 

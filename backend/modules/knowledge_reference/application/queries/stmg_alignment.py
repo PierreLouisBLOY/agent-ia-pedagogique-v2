@@ -4,6 +4,9 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 
+from backend.modules.knowledge_reference.application.queries.qualified_institutional_corpus import (
+    QualifiedInstitutionalCorpus,
+)
 from backend.modules.knowledge_reference.contracts.dto.stmg_frames import STMG_FRAMES
 from backend.modules.knowledge_reference.ports.outbound.institutional_catalog import (
     InstitutionalSchemaPort,
@@ -26,6 +29,14 @@ def _theme(question: Mapping[str, object]) -> str | None:
     return "theme:" + match[1] if match else None
 
 
+def _native_theme(question: Mapping[str, object], elements: Mapping[str, dict[str, object]],
+                  corpus: QualifiedInstitutionalCorpus) -> str | None:
+    if corpus.version(question["framework_version_id"]) is None:
+        return _theme(question)
+    parent = elements.get(str(question["parent_element_id"]))
+    return str(parent["id"]) if parent is not None and parent["element_type"] == "THEME" else None
+
+
 class ReadSTMGAlignment:
     def __init__(self, catalog: InstitutionalSchemaPort) -> None:
         self.catalog = catalog
@@ -38,7 +49,10 @@ class ReadSTMGAlignment:
         frameworks = _rows(data, "official_framework")
         versions = _rows(data, "official_framework_version")
         elements = _rows(data, "official_framework_element")
+        corpus = QualifiedInstitutionalCorpus(data)
+        by_element = {str(e["id"]): e for e in elements}
         frames = []
+        historical_frames = []
         for key, spec in STMG_FRAMES.items():
             for framework in frameworks:
                 if framework["code"] != spec[5]:
@@ -46,18 +60,24 @@ class ReadSTMGAlignment:
                 for version in versions:
                     if version["framework_id"] != framework["id"]:
                         continue
-                    questions = [{"question_ref": e["id"], "label": e["official_label"], "theme_ref": _theme(e)}
+                    questions = [{"question_ref": e["id"], "label": e["official_label"], "theme_ref": _native_theme(e, by_element, corpus)}
                                  for e in elements if e["framework_version_id"] == version["id"] and e["element_type"] == "QUESTION"]
                     capacities = [{"capacity_ref": e["id"], "label": e["official_label"], "question_ref": e["parent_element_id"]}
                                   for e in elements if e["framework_version_id"] == version["id"] and e["element_type"] == "CAPACITY"]
-                    frames.append({"frame": key, "level": spec[0], "education_level": spec[1], "series": "STMG",
+                    qualified = corpus.version(version["id"])
+                    admitted_doc = corpus.document(version["id"]) if qualified else None
+                    frame = {"frame": key, "level": spec[0], "education_level": spec[1], "series": "STMG",
                         "teaching_subject": spec[2], "program_component": spec[3], "specific_track": spec[4],
                         "program_ref": framework["id"], "program_version": version["id"], "code": spec[5], "label": spec[6],
                         "version_label": version["version_label"], "lifecycle_status": version["lifecycle_status"],
-                        "issuing_source_id": framework["issuing_source_id"], "official_document_id": version["official_document_id"],
+                        "issuing_source_id": admitted_doc["source_ref"] if admitted_doc else framework["issuing_source_id"], "official_document_id": version["official_document_id"],
                         "questions": questions, "capacities": capacities,
-                        "authority": "UNATTESTED" if not version["official_document_id"] or not framework["issuing_source_id"] else "PROVENANCE_REQUIRES_RESOLUTION"})
-        return {"contract_id": "STMG-CATALOG-1.0", "frames": frames,
+                        "authority": "OWNER_ADMITTED_VERSIONED_PROOF" if qualified else "UNATTESTED" if not version["official_document_id"] or not framework["issuing_source_id"] else "PROVENANCE_REQUIRES_RESOLUTION"}
+                    if qualified is None and any(v["framework_id"] == framework["id"] and corpus.version(v["id"]) is not None for v in versions):
+                        historical_frames.append(frame)
+                    else:
+                        frames.append(frame)
+        return {"contract_id": "STMG-CATALOG-1.0", "frames": frames, "historical_frames": historical_frames,
                 "notions": [{"notion_ref": n["id"], "label": n["canonical_label"]}
                             for n in _rows(data, "notion") if n["identity_status"] == "CANONICAL"],
                 "automatic_interprogramme_enrichment": False}
@@ -65,6 +85,7 @@ class ReadSTMGAlignment:
     def resolve(self, selection: Mapping[str, object], reference_selection: Mapping[str, object]) -> dict[str, object]:
         data = self.catalog.read_institutional_catalog()
         snapshot = self._snapshot(data)
+        corpus = QualifiedInstitutionalCorpus(data)
         frames = _rows(snapshot, "frames")
         matches = [f for f in frames if f["frame"] == selection["frame"] and f["program_ref"] == selection["program_ref"]
                    and f["program_version"] == selection["program_version"]]
@@ -77,7 +98,7 @@ class ReadSTMGAlignment:
         elements = {str(e["id"]): e for e in _rows(data, "official_framework_element")}
         question = elements.get(str(selection["question_ref"]))
         if (question is None or question["framework_version_id"] != selection["program_version"] or
-                question["element_type"] != "QUESTION" or _theme(question) != selection["theme_ref"]):
+                question["element_type"] != "QUESTION" or _native_theme(question, elements, corpus) != selection["theme_ref"]):
             raise ValueError("P0_INSTITUTIONAL_QUESTION_THEME")
         capacity_ids = selection["capacity_refs"]
         notion_ids = selection["notion_refs"]
@@ -86,7 +107,8 @@ class ReadSTMGAlignment:
         for ref in capacity_ids:
             capacity = elements.get(str(ref))
             if (capacity is None or capacity["framework_version_id"] != selection["program_version"] or
-                    capacity["element_type"] != "CAPACITY" or capacity["parent_element_id"] != question["id"]):
+                    capacity["element_type"] != "CAPACITY" or capacity["parent_element_id"] not in
+                    ({question["id"], selection["theme_ref"]} if corpus.version(selection["program_version"]) else {question["id"]})):
                 raise ValueError("P0_INSTITUTIONAL_CAPACITY_SCOPE")
             capacities.append({"capacity_ref": ref, "label": capacity["official_label"],
                                "document_reference_id": capacity["document_reference_id"]})
@@ -96,6 +118,7 @@ class ReadSTMGAlignment:
         if reference_selection.get("notion_id") not in notion_ids:
             raise ValueError("P0_INSTITUTIONAL_EXACT_NOTION_SOURCE_REQUIRED")
         gaps = []
+        qualified_version = corpus.version(selection["program_version"])
         if selection["theme_ref"] is None:
             gaps.append("THEME_RELATIONSHIP_UNRESOLVED")
         documents = {str(d["id"]): d for d in _rows(data, "document")}
@@ -103,7 +126,7 @@ class ReadSTMGAlignment:
         locators = {str(r["id"]): r for r in _rows(data, "document_reference")}
         document = documents.get(str(frame["official_document_id"]))
         source = sources.get(str(frame["issuing_source_id"]))
-        if (source is None or source.get("status") not in {"VERIFIED", "ADMITTED"} or document is None or
+        if qualified_version is None and (source is None or source.get("status") not in {"VERIFIED", "ADMITTED"} or document is None or
                 document.get("document_status") not in {"VERIFIED", "ADMITTED"} or
                 re.fullmatch(r"[a-f0-9]{64}", str(document.get("sha256"))) is None):
             gaps.append("PROGRAMME_PROVENANCE_NOT_ADMITTED")
@@ -119,7 +142,12 @@ class ReadSTMGAlignment:
         attachments = _rows(data, "institutional_attachment")
         for notion in notion_ids:
             admitted = []
+            if qualified_version is not None:
+                scoped_elements = {str(question["id"])} | {ref for ref, e in elements.items() if e["parent_element_id"] == question["id"]}
+                admitted = corpus.attachments(selection["program_version"], notion, scoped_elements)
             for attachment in attachments:
+                if qualified_version is not None:
+                    break
                 element = elements.get(str(attachment["framework_element_id"]))
                 if attachment["notion_id"] != notion or element is None or element["framework_version_id"] != selection["program_version"]:
                     continue
@@ -143,6 +171,13 @@ class ReadSTMGAlignment:
             "notions": [{"notion_ref": ref, "label": notions[str(ref)]["canonical_label"]} for ref in notion_ids],
             "depth": selection["depth"], "gaps": gaps, "status": "CONTENT_GAP" if gaps else "RESOLVED_ADMITTED",
             "implicit_propagation": False, "teacher_acceptance": "NOT_PERFORMED"}
+        if qualified_version is not None:
+            result.update({"qualification_sha256": corpus.proofs[str(selection["program_version"])].sha256,
+                "owner_admission_sha256": corpus.proofs[str(selection["program_version"])].data["owner_decision_sha256"],
+                "document_provenance": corpus.document(selection["program_version"]),
+                "theme": elements.get(str(selection["theme_ref"])),
+                "depth_authority": "LOCAL_PEDAGOGICAL_PROPOSAL", "official_depth": None,
+                "capacity_scope": "SELECTED_THEME_OR_QUESTION_NO_NARROWER_CLAIM"})
         source_scope = self._reference_scope(selection, reference_selection, question, elements)
         result["reference_scope"] = source_scope
         if source_scope["status"] == "CONTENT_GAP":

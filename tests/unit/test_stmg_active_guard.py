@@ -54,9 +54,12 @@ def test_stmg_active_owner_and_mutation(tmp_path, path):
 def test_successor_keeps_historical_manifest_and_reviewed_entry():
     manifest = json.loads((ROOT / guard.MANIFEST).read_text("utf-8"))
     successor = manifest["successors"][-1]
-    assert successor["entry"] == "7a54666567f3d11940cb6cb556439d986d487494"
-    assert successor["purpose"] == "INSTITUTIONAL_AUTHORITY_628_FOUNDATION"
-    assert successor["predecessor_manifest_sha256"] == "05eaba891801f3821021ab689d4d83bf40ed22aa361295a853ef719c15287e90"
+    assert successor["entry"] == "796350745174744257593b0caa1cc12818f96237"
+    assert successor["purpose"] == "INSTITUTIONAL_AUTHORITY_628_ACTIVE_APPLICATION"
+    assert successor["predecessor_manifest_sha256"] == "6103f38e84ed05bbebde056644d34f7771b25984d5c4c42e7d8436bf1b567e27"
+    foundation = next(row for row in manifest["successors"] if row["purpose"] == "INSTITUTIONAL_AUTHORITY_628_FOUNDATION")
+    assert foundation["entry"] == "7a54666567f3d11940cb6cb556439d986d487494"
+    assert foundation["predecessor_manifest_sha256"] == "05eaba891801f3821021ab689d4d83bf40ed22aa361295a853ef719c15287e90"
     course = next(row for row in manifest["successors"] if row["purpose"] == "COURSE_BENCHMARK_PDF3")
     assert course["entry"] == "790230f7a9762e61ef22800b9fcbeb8f59e221af"
     assert course["predecessor_manifest_sha256"] == "79bf1a35640f0e1cacb244f139423d2ee46099f21009351434ad8363bf1e700d"

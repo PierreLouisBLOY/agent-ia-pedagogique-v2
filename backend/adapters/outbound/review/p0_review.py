@@ -58,6 +58,8 @@ class P0ReviewAdapter:
         constraints: dict[str, object] = {"scope": "P0_REQUEST_EVIDENCE_PRODUCTION", "no_promotion": True}
         if evidence.get("institutional_resolution") is not None:
             constraints["institutional_alignment"] = evidence["institutional_resolution"]
+        if evidence.get("review_axes") is not None:
+            constraints["separate_review_axes"] = evidence["review_axes"]
         canonical = ReviewRequest(meta, target, tuple(ReviewDimension),
             constraints,
             tuple(str(r["evidence_id"]) for r in items(evidence["passages"], 8)),

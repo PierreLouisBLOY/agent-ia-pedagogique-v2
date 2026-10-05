@@ -48,7 +48,24 @@ assert.equal(unnumberedContext.institutional.question_ref,'question:SGN:unnumber
 assert.equal(unnumberedContext.institutional.theme_ref,null,'No invented official theme');
 assert.equal(unnumberedContext.institutional.program_version,sgn.program_version);
 node('level').value='BTS_CG_YEAR_2';node('discipline').value='Comptabilité et gestion';sandbox.p0InstitutionalOptions();
-assert.equal(sandbox.p0Context().contract_id,'R6-P0-CONTEXT-1.0');assert.equal(node('discipline').value,'Comptabilité et gestion');
+assert.throws(()=>sandbox.p0Context(),/P0_INSTITUTIONAL_CONTEXT_REQUIRED/);
+assert.equal(node('discipline').value,'Comptabilité et gestion');
+const bts={program_ref:'bts:frame',program_version:'bts:version',label:'BTS CG — référentiel',version_label:'UNIT',elements:[
+  {id:'p:1',element_type:'PROCESS',parent_ref:null,official_label:'Processus 1'},
+  {id:'a:1',element_type:'ACTIVITY',parent_ref:'p:1',official_code:'1.3',official_label:'Activité 1'},
+  {id:'a:1.2',element_type:'ACTIVITY',parent_ref:'a:1',official_code:'1.3.2',official_label:'Sous-activité'},
+  {id:'c:1',element_type:'COMPETENCY',parent_ref:'a:1.2',official_label:'Lettrer'},
+  {id:'c:other',element_type:'COMPETENCY',parent_ref:'p:1',official_label:'Autre compétence'},
+]};
+sandbox.p0.institutionalCatalog.bts_frameworks=[bts];sandbox.p0InstitutionalOptions();
+node('frame').value=bts.program_version;sandbox.p0InstitutionalQuestionOptions();
+node('program-question').value='a:1.2';sandbox.p0InstitutionalCapacityOptions();
+assert.deepEqual(node('capacities').children.map(n=>n.value),['c:1']);
+node('capacities').selectedOptions=[{value:'c:1'}];node('program-notions').selectedOptions=[{value:'notion:shared'}];node('depth').value='APPLICATION';
+const btsContext=sandbox.p0Context();assert.equal(btsContext.contract_id,'P0-CONTEXT-2.0');
+assert.equal(btsContext.institutional.process_ref,'p:1');assert.equal(btsContext.institutional.activity_ref,'a:1.2');
+assert.equal(btsContext.institutional.local_year,'BTS_CG_YEAR_2');assert(!('theme_ref' in btsContext.institutional));
+assert(node('program-status').textContent.includes('progression locale'));
 vm.runInContext(source.slice(source.indexOf('function p0Controls()'),source.indexOf('async function p0Fetch(')),sandbox);
 sandbox.p0.prepared={context:{institutional_resolution:{status:'CONTENT_GAP'}}};sandbox.p0Controls();assert.equal(node('generate').disabled,true);
 assert(!source.includes('proposed.level.includes("STMG") ? "Management"'));
@@ -74,3 +91,15 @@ sandbox.uxContext({...unnumberedContext,institutional_resolution:{version_label:
 assert(labels.includes('Thème non renseigné · Comment organiser les activités ?'));
 console.log('STMG_UI: seven frames, no Management default, exact programme/capacity selection, BTS compatibility, gap dispatch blocked PASS');
 console.log('STMG_QUESTIONS: change events show unnumbered SGN questions, preserve exact identity and expose unresolved theme PASS');
+labels.length=0;
+sandbox.uxContext({...btsContext,institutional_resolution:{version_label:'UNIT',process:{official_label:'Processus 1'},activity:{official_label:'Activité 1'},competencies:[{official_label:'Lettrer'}],notions:[],gaps:[]}});
+assert(labels.includes('Processus 1 · Activité 1'));assert(labels.includes('Compétences : Lettrer'));
+assert(labels.some(t=>t.includes('progression locale')));assert(!labels.some(t=>t.startsWith('Thème')));
+const savedStart=source.indexOf('function uxSavedCard(');
+vm.runInContext(source.slice(savedStart,source.indexOf('document.querySelectorAll("[data-view]")',savedStart)),sandbox);
+labels.length=0;
+sandbox.uxSavedCard({record_sha256:'hidden',record:{view:{context:{...btsContext,institutional_resolution:{document_provenance:{title:'Référentiel admis'}}},references:[{}]},provenance:[],reviews:[],validations:[]}});
+assert(labels.includes('Cadre institutionnel'));assert(labels.includes('Sources de contenu'));assert(labels.includes('Construction pédagogique'));
+assert(labels.includes('Source institutionnelle distincte : Référentiel admis'));
+assert(!labels.some(t=>t.includes('hidden') || t.includes('bts:version')));
+console.log('BTS_UI: native activity/competency selection, year local, unresolved dispatch refused, saved three authority groups PASS');

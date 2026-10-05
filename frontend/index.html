@@ -33,10 +33,10 @@
         <label for="p0-level">Niveau</label>
         <select id="p0-level" required><option value="">Choisir</option><option value="FIRST_STMG">Première STMG</option><option value="FINAL_STMG">Terminale STMG</option><option value="BTS_CG_YEAR_1">BTS CG première année</option><option value="BTS_CG_YEAR_2">BTS CG deuxième année</option></select>
         <label for="p0-discipline">Discipline</label><input id="p0-discipline" required maxlength="100">
-        <fieldset id="p0-institutional" hidden><legend>Programme STMG</legend>
+        <fieldset id="p0-institutional" hidden><legend>Cadre institutionnel</legend>
           <label for="p0-frame">Enseignement et version du programme</label><select id="p0-frame"><option value="">Choisir l’enseignement exact</option></select>
-          <label for="p0-program-question">Question du programme</label><select id="p0-program-question"><option value="">Choisir la question</option></select>
-          <label for="p0-capacities">Capacités rattachées à cette question</label><select id="p0-capacities" multiple></select>
+          <label for="p0-program-question" id="p0-element-label">Question du programme</label><select id="p0-program-question"><option value="">Choisir la question</option></select>
+          <label for="p0-capacities" id="p0-capacities-label">Capacités rattachées à cette question</label><select id="p0-capacities" multiple></select>
           <label for="p0-program-notions">Notions canoniques sélectionnées</label><select id="p0-program-notions" multiple></select>
           <label for="p0-depth">Profondeur attendue</label><select id="p0-depth"><option value="">Choisir</option><option value="DISCOVERY">Découverte</option><option value="APPLICATION">Application</option><option value="ANALYSIS">Analyse</option></select>
           <p id="p0-program-status">Les rattachements et leur provenance seront vérifiés avant toute génération.</p>

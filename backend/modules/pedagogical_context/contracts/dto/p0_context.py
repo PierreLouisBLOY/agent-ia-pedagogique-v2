@@ -71,15 +71,20 @@ class P0Context:
             raise ValueError("P0_LEVEL")
         _bounded_text(data["discipline"], 200 if institutional else 100)
         if institutional:
+            from backend.modules.pedagogical_context.contracts.dto.bts_institutional import (
+                validate_bts_selection,
+            )
             from backend.modules.pedagogical_context.contracts.dto.stmg_institutional import (
                 validate_selection,
             )
 
-            selection = validate_selection(data["institutional"], level=str(data["level"]), discipline=str(data["discipline"]))
+            bts = str(data["level"]).startswith("BTS_")
+            selection = (validate_bts_selection if bts else validate_selection)(
+                data["institutional"], level=str(data["level"]), discipline=str(data["discipline"]))
             resolution = data["institutional_resolution"]
             if resolution is not None:
                 resolved = object_data(resolution)
-                if resolved.get("contract_id") != "STMG-RESOLUTION-1.0" or resolved.get("selection_sha256") != fingerprint(selection):
+                if resolved.get("contract_id") != ("BTS-RESOLUTION-1.0" if bts else "STMG-RESOLUTION-1.0") or resolved.get("selection_sha256") != fingerprint(selection):
                     raise ValueError("P0_INSTITUTIONAL_RESOLUTION_BINDING")
                 if resolved.get("status") not in {"RESOLVED_ADMITTED", "CONTENT_GAP"}:
                     raise ValueError("P0_INSTITUTIONAL_RESOLUTION_BINDING")
@@ -129,9 +134,7 @@ class P0Context:
 
     def require_institutional_dispatch(self) -> None:
         if self.institutional is None:
-            if str(self.data["level"]).endswith("STMG"):
-                raise ValueError("P0_INSTITUTIONAL_CONTEXT_REQUIRED")
-            return
+            raise ValueError("P0_INSTITUTIONAL_CONTEXT_REQUIRED")
         resolution = self.data.get("institutional_resolution")
         if resolution is None or object_data(resolution).get("status") != "RESOLVED_ADMITTED":
             raise ValueError("P0_INSTITUTIONAL_CONTENT_GAP")

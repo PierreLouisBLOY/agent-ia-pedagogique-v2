@@ -41,5 +41,7 @@ def institutional_header(context: Mapping[str, object]) -> str | None:
     if selection is None:
         return None
     data = object_data(selection)
+    if data.get("contract_id") == "BTS-INSTITUTIONAL-CONTEXT-1.0":
+        return "BTS CG — Comptabilité et gestion · " + ("première année" if data["local_year"] == "BTS_CG_YEAR_1" else "deuxième année") + " (progression locale)"
     frame = STMG_FRAMES[str(data["frame"])]
     return ("Première STMG" if frame[0] == "FIRST_STMG" else "Terminale STMG") + " — " + frame[6]

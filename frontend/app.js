@@ -778,21 +778,48 @@ function p0Context() {
     context.institutional_resolution = null;
     context.local_progression = {chapter: p0Element("local-chapter").value.trim() || null,
       sequence: p0Element("local-sequence").value.trim() || null, week: p0Element("local-week").value.trim() || null};
+  } else if (context.level.startsWith("BTS_")) {
+    const frame = p0InstitutionalFrame();
+    const activity = frame?.elements.find(e => e.id === p0Element("program-question").value);
+    let process = activity;
+    for (let i = 0; process && process.element_type !== "PROCESS" && i < frame.elements.length; i++)
+      process = frame.elements.find(e => e.id === process.parent_ref);
+    if (!activity || !process || process.element_type !== "PROCESS" || !p0Element("depth").value)
+      throw Object.assign(new Error("P0_INSTITUTIONAL_CONTEXT_REQUIRED"), {confirmedRefusal: true});
+    context.contract_id = "P0-CONTEXT-2.0";
+    context.discipline = "Comptabilité et gestion";
+    context.institutional = {contract_id: "BTS-INSTITUTIONAL-CONTEXT-1.0",
+      program_ref: frame.program_ref, program_version: frame.program_version, process_ref: process.id,
+      activity_ref: activity.id, competency_refs: [...p0Element("capacities").selectedOptions].map(o => o.value),
+      notion_refs: [...p0Element("program-notions").selectedOptions].map(o => o.value),
+      depth: p0Element("depth").value, local_year: context.level};
+    context.institutional_resolution = null;
+    context.local_progression = {chapter: p0Element("local-chapter").value.trim() || null,
+      sequence: p0Element("local-sequence").value.trim() || null, week: p0Element("local-week").value.trim() || null};
   }
   return context;
 }
 function p0InstitutionalFrame() {
+  if (p0Element("level").value.startsWith("BTS_"))
+    return (p0.institutionalCatalog?.bts_frameworks || []).find(f => f.program_version === p0Element("frame").value);
   return (p0.institutionalCatalog?.frames || []).find(f => f.program_version === p0Element("frame").value && f.level === p0Element("level").value);
 }
 function p0InstitutionalOptions() {
   const stmg = p0Element("level").value.endsWith("STMG");
-  p0Element("institutional").hidden = !stmg;
-  p0Element("discipline").readOnly = stmg;
-  for (const id of ["frame", "program-question", "program-notions", "depth"]) p0Element(id).required = stmg;
+  const bts = p0Element("level").value.startsWith("BTS_");
+  p0Element("institutional").hidden = !(stmg || bts);
+  p0Element("discipline").readOnly = stmg || bts;
+  for (const id of ["frame", "program-question", "program-notions", "depth"]) p0Element(id).required = stmg || bts;
+  p0Element("element-label").textContent = bts ? "Processus et activité du référentiel" : "Question du programme";
+  p0Element("capacities-label").textContent = bts ? "Compétences de cette activité" : "Capacités rattachées à cette question";
   const select = p0Element("frame"); select.replaceChildren();
   const empty = document.createElement("option"); empty.value = ""; empty.textContent = "Choisir l’enseignement exact"; select.append(empty);
   for (const frame of p0.institutionalCatalog?.frames || []) {
     if (frame.level !== p0Element("level").value) continue;
+    const option = document.createElement("option"); option.value = frame.program_version;
+    option.textContent = frame.label + " · " + frame.version_label; select.append(option);
+  }
+  if (bts) for (const frame of p0.institutionalCatalog?.bts_frameworks || []) {
     const option = document.createElement("option"); option.value = frame.program_version;
     option.textContent = frame.label + " · " + frame.version_label; select.append(option);
   }
@@ -805,26 +832,46 @@ function p0InstitutionalOptions() {
 function p0InstitutionalQuestionOptions() {
   const frame = p0InstitutionalFrame();
   if (p0Element("level").value.endsWith("STMG")) p0Element("discipline").value = frame?.label || "";
+  const bts = p0Element("level").value.startsWith("BTS_");
+  if (bts) p0Element("discipline").value = "Comptabilité et gestion";
   const select = p0Element("program-question"); select.replaceChildren();
-  const empty = document.createElement("option"); empty.value = ""; empty.textContent = "Choisir la question"; select.append(empty);
+  const empty = document.createElement("option"); empty.value = ""; empty.textContent = bts ? "Choisir l’activité" : "Choisir la question"; select.append(empty);
   for (const question of frame?.questions || []) {
     const option = document.createElement("option"); option.value = question.question_ref;
     option.textContent = question.label + (question.theme_ref ? "" : " · thème à renseigner"); select.append(option);
+  }
+  if (bts) for (const activity of frame?.elements || []) {
+    if (!["ACTIVITY", "SUB_ACTIVITY"].includes(activity.element_type)) continue;
+    const option = document.createElement("option"); option.value = activity.id;
+    option.textContent = activity.official_code + " · " + activity.official_label; select.append(option);
   }
   p0InstitutionalCapacityOptions();
 }
 function p0InstitutionalCapacityOptions() {
   const frame = p0InstitutionalFrame();
-  const question = frame?.questions.find(q => q.question_ref === p0Element("program-question").value);
+  const question = frame?.questions?.find(q => q.question_ref === p0Element("program-question").value);
   const select = p0Element("capacities"); select.replaceChildren();
   for (const capacity of frame?.capacities || []) {
     if (![p0Element("program-question").value, question?.theme_ref].includes(capacity.question_ref)) continue;
     const option = document.createElement("option"); option.value = capacity.capacity_ref; option.textContent = capacity.label; select.append(option);
   }
+  if (p0Element("level").value.startsWith("BTS_")) {
+    const scope = new Set([p0Element("program-question").value]);
+    for (let i = 0; i < (frame?.elements.length || 0); i++) {
+      let changed = false;
+      for (const e of frame.elements) if (scope.has(e.parent_ref) && !scope.has(e.id)) {scope.add(e.id); changed = true;}
+      if (!changed) break;
+    }
+    for (const competency of frame?.elements || []) if (scope.has(competency.id) && competency.element_type === "COMPETENCY") {
+      const option = document.createElement("option"); option.value = competency.id; option.textContent = competency.official_label; select.append(option);
+    }
+  }
   p0Element("program-status").textContent = (frame?.authority === "UNATTESTED" ?
     "Snapshot local : provenance officielle à compléter. Aucune génération tant que les rattachements ne sont pas admis." :
     "Les capacités et rattachements seront contrôlés dans ce programme exact.") +
     (question && !question.theme_ref ? " Thème non renseigné dans la source : la question est sélectionnable, mais la génération reste bloquée." : "");
+  if (p0Element("level").value.startsWith("BTS_")) p0Element("program-status").textContent =
+    "Le processus, l’activité et les compétences seront vérifiés dans le référentiel exact. L’année BTS est une progression locale ; elle n’est pas prescrite par ce référentiel.";
 }
 p0Element("level").addEventListener("change", p0InstitutionalOptions);
 p0Element("frame").addEventListener("change", p0InstitutionalQuestionOptions);
@@ -1004,21 +1051,28 @@ function uxContext(context) {
   appendSearchText(region, "p", context.discipline || "Discipline à préciser");
   if (context.institutional) {
     const selected = context.institutional, resolved = context.institutional_resolution;
-    const level = selected.education_level === "PREMIERE" ? "Première STMG" : "Terminale STMG";
+    const bts = selected.contract_id === "BTS-INSTITUTIONAL-CONTEXT-1.0";
+    const level = bts ? (selected.local_year === "BTS_CG_YEAR_1" ? "BTS CG première année (progression locale)" : "BTS CG deuxième année (progression locale)") : selected.education_level === "PREMIERE" ? "Première STMG" : "Terminale STMG";
     appendSearchText(region, "p", "Niveau : " + level);
     appendSearchText(region, "p", "Enseignement : " + context.discipline.split(" — ")[0]);
     if (selected.program_component === "COMMON") appendSearchText(region, "p", "Partie : Enseignement commun");
     if (selected.program_component === "SPECIFIC") appendSearchText(region, "p", "Enseignement spécifique : " + context.discipline.split(" — ").slice(1).join(" — "));
-    appendSearchText(region, "p", "Programme : " + context.discipline + " — " + level + " · " + (resolved?.version_label || "version sélectionnée à vérifier"));
+    appendSearchText(region, "p", (bts ? "Référentiel : " : "Programme : ") + context.discipline + " — " + level + " · " + (resolved?.version_label || "version sélectionnée à vérifier"));
     appendSearchText(region, "h4", "Cadre institutionnel");
-    appendSearchText(region, "p", (resolved?.theme?.official_label || (/^theme:\d+$/.test(selected.theme_ref || "") ? "Thème " + selected.theme_ref.replace("theme:", "") : "Thème à vérifier")) + " · " + (resolved?.question?.official_label || "question sélectionnée à vérifier"));
-    appendSearchText(region, "p", "Capacités : " + ((resolved?.capacities || []).map(c => c.label).join(" · ") || "rattachements à compléter"));
+    if (bts) {
+      appendSearchText(region, "p", (resolved?.process?.official_label || "Processus à vérifier") + " · " + (resolved?.activity?.official_label || "Activité à vérifier"));
+      appendSearchText(region, "p", "Compétences : " + ((resolved?.competencies || []).map(c => c.official_label).join(" · ") || "rattachements à compléter"));
+      appendSearchText(region, "p", "Répartition annuelle locale, sans prescription officielle de BTS CG1 ou CG2.");
+    } else {
+      appendSearchText(region, "p", (resolved?.theme?.official_label || (/^theme:\d+$/.test(selected.theme_ref || "") ? "Thème " + selected.theme_ref.replace("theme:", "") : "Thème non renseigné")) + " · " + (resolved?.question?.official_label || "question sélectionnée à vérifier"));
+      appendSearchText(region, "p", "Capacités : " + ((resolved?.capacities || []).map(c => c.label).join(" · ") || "rattachements à compléter"));
+    }
     appendSearchText(region, "p", "Notions : " + ((resolved?.notions || []).map(n => n.label).join(" · ") || "sélection à vérifier") + " · " +
       ({DISCOVERY:"Découverte", APPLICATION:"Application", ANALYSIS:"Analyse"}[selected.depth] || "profondeur à préciser"));
     if (resolved?.gaps?.length) appendSearchText(region, "p", "Lacunes institutionnelles : provenance, capacités ou liens encore non admis. Génération bloquée.");
     appendSearchText(region, "p", "Profondeur proposée pour l’activité, distincte d’une exigence officielle.");
+    appendSearchText(region, "h4", "Construction pédagogique");
     if (context.local_progression) {
-      appendSearchText(region, "h4", "Construction pédagogique");
       appendSearchText(region, "p", "Progression locale : " + Object.values(context.local_progression).filter(Boolean).join(" · "));
     }
   }
@@ -1035,7 +1089,7 @@ function uxPreparation(prepared) {
   uxContext(prepared.context); uxQuality(prepared.agentic?.quality);
   const region = document.getElementById("drawer-sources"); region.replaceChildren();
   const passages = prepared.agentic?.evidence_pack?.passages || [];
-  appendSearchText(region, "h4", "Sources disciplinaires et pédagogiques");
+  appendSearchText(region, "h4", "Sources de contenu");
   const pack = prepared.agentic?.evidence_pack;
   if (pack?.content_authority_status) appendSearchText(region, "p", "Passages sélectionnés : leur catégorie d’autorité disciplinaire ou pédagogique reste à vérifier.");
   for (const passage of passages) appendSearchText(region, "p", passage.text);
@@ -1087,7 +1141,15 @@ function uxSavedCard(saved) {
   uxContext(view.context || view.pedagogical_context || {});
   document.getElementById("drawer-identities").textContent = JSON.stringify({production_ref: view.production_ref, version_ref: view.version_ref,
     record_sha256: saved.record_sha256, provenance: saved.record.provenance, reviews: saved.record.reviews, validations: saved.record.validations}, null, 2);
-  document.getElementById("drawer-sources").textContent = "Provenance de la version conservée : consultable dans Traçabilité exacte. Aucune autorité officielle restaurée.";
+  const region = document.getElementById("drawer-sources"); region.replaceChildren();
+  appendSearchText(region, "h4", "Sources de contenu");
+  appendSearchText(region, "p", (view.references || []).length + " référence(s) conservée(s). Leur identité ne vaut pas admission disciplinaire ou pédagogique.");
+  const context = view.context || view.pedagogical_context || {};
+  const resolved = context.institutional_resolution;
+  if (resolved?.document_provenance) {
+    appendSearchText(region, "p", "Source institutionnelle distincte : " + resolved.document_provenance.title);
+    appendSearchText(region, "p", "Admission du propriétaire sur la version exacte conservée ; la recette enseignante reste à réaliser.");
+  } else appendSearchText(region, "p", "Aucune autorité institutionnelle attestée dans cette version historique.");
   document.getElementById("drawer-quality").textContent = "Relecture nécessaire. Les rapports conservés couvrent uniquement leur version exacte.";
 }
 document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => uxShow(button.dataset.view)));

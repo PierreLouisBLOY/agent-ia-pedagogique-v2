@@ -38,12 +38,13 @@ class P0CreationService:
     def __init__(self, reference: Callable[[Mapping[str, object]], Mapping[str, object]],
                  *, generation: P0GenerationPort | None = None, review: P0ReviewPort | None = None,
                  institutional_resolver: Callable[[Mapping[str, object], Mapping[str, object]], Mapping[str, object]] | None = None,
-                 exact_stmg_required: bool = False) -> None:
+                 exact_stmg_required: bool = False, exact_institutional_required: bool = False) -> None:
         self.reference = reference
         self.generation = generation
         self.review = review
         self.institutional_resolver = institutional_resolver
         self.exact_stmg_required = exact_stmg_required
+        self.exact_institutional_required = exact_institutional_required
         self.prepared: dict[str, Mapping[str, object]] = {}
         self.records: dict[str, P0Production] = {}
         self.evidence: dict[str, dict[str, str]] = {}
@@ -106,7 +107,7 @@ class P0CreationService:
             confirmed = context.as_dict()
             confirmed["institutional_resolution"] = resolved
             context = P0Context(confirmed)
-        elif self.exact_stmg_required and str(context.data["level"]).endswith("STMG"):
+        elif self.exact_institutional_required or (self.exact_stmg_required and str(context.data["level"]).endswith("STMG")):
             raise ValueError("P0_INSTITUTIONAL_CONTEXT_REQUIRED")
         loaded = self.reference(selection)
         reference = object_data(loaded["reference"])
@@ -143,7 +144,7 @@ class P0CreationService:
         if request is None or fingerprint(request) != data["preparation_sha256"]:
             raise ValueError("P0_PREPARATION_CHANGED")
         context = P0Context(object_data(request["context"]))
-        if context.institutional is not None or self.exact_stmg_required:
+        if context.institutional is not None or self.exact_institutional_required or (self.exact_stmg_required and str(context.data["level"]).endswith("STMG")):
             context.require_institutional_dispatch()
         if self.generation is None or not self.generation.authorize(request=request):
             return {"state": "AUTHORIZATION_REQUIRED", "provider_attempts": 0}
@@ -223,7 +224,7 @@ class P0CreationService:
     def _review(self, data: dict[str, object]) -> dict[str, object]:
         candidate = self._version(data)
         context = P0Context(object_data(candidate.data["context"]))
-        if context.institutional is not None or self.exact_stmg_required:
+        if context.institutional is not None or self.exact_institutional_required or (self.exact_stmg_required and str(context.data["level"]).endswith("STMG")):
             context.require_institutional_dispatch()
         root = self._root(candidate)
         if root.version_ref in self.review_consumed:

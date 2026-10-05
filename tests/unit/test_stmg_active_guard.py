@@ -31,6 +31,11 @@ OWNER_PATHS = (
     "backend/adapters/inbound/application/reframe_course.py",
     "backend/modules/validation_control/application/commands/validate_p0.py",
     "frontend/app.js", "frontend/index.html",
+    "backend/modules/knowledge_reference/application/queries/bts_alignment.py",
+    "backend/modules/pedagogical_context/contracts/dto/bts_institutional.py",
+    "backend/adapters/inbound/application/bts_alignment.py",
+    "tests/unit/test_bts_institutional_preparation.py",
+    "docs/development/ADR_BTS_INSTITUTIONAL_PREPARATION_2026-10-06.md",
 )
 
 
@@ -54,9 +59,13 @@ def test_stmg_active_owner_and_mutation(tmp_path, path):
 def test_successor_keeps_historical_manifest_and_reviewed_entry():
     manifest = json.loads((ROOT / guard.MANIFEST).read_text("utf-8"))
     successor = manifest["successors"][-1]
-    assert successor["entry"] == "796350745174744257593b0caa1cc12818f96237"
-    assert successor["purpose"] == "INSTITUTIONAL_AUTHORITY_628_ACTIVE_APPLICATION"
-    assert successor["predecessor_manifest_sha256"] == "6103f38e84ed05bbebde056644d34f7771b25984d5c4c42e7d8436bf1b567e27"
+    assert successor["entry"] == "245011f1621c3a56faac36838b54508e99b5cc8b"
+    assert successor["purpose"] == "INSTITUTIONAL_BTS_PREPARATION_AND_SAVED_AUTHORITY"
+    assert successor["predecessor_manifest_sha256"] == "f1c1d1e18fa6053e4281db179ea0508da23848d1cf05fe8228f706f4814974c8"
+    previous = next(row for row in manifest["successors"] if row["purpose"] == "INSTITUTIONAL_AUTHORITY_628_ACTIVE_APPLICATION")
+    assert previous["entry"] == "796350745174744257593b0caa1cc12818f96237"
+    assert previous["predecessor_manifest_sha256"] == "6103f38e84ed05bbebde056644d34f7771b25984d5c4c42e7d8436bf1b567e27"
+    assert set(previous["changed_owners"]) <= set(successor["changed_owners"])
     foundation = next(row for row in manifest["successors"] if row["purpose"] == "INSTITUTIONAL_AUTHORITY_628_FOUNDATION")
     assert foundation["entry"] == "7a54666567f3d11940cb6cb556439d986d487494"
     assert foundation["predecessor_manifest_sha256"] == "05eaba891801f3821021ab689d4d83bf40ed22aa361295a853ef719c15287e90"

@@ -104,9 +104,14 @@ class ExportSavedCommand:
             resolution = context.get("institutional_resolution")
             if resolution is not None:
                 exact = object_data(resolution)
-                question = object_data(exact["question"])
-                theme = "Thème " + str(exact["theme_ref"]).removeprefix("theme:") if exact["theme_ref"] else "Thème non renseigné"
-                blocks.append(WordBlock("Normal", theme + " · " + str(question["official_label"])))
+                if exact.get("contract_id") == "BTS-RESOLUTION-1.0":
+                    process, activity = object_data(exact["process"]), object_data(exact["activity"])
+                    blocks.append(WordBlock("Normal", str(process["official_label"]) + " · " + str(activity["official_label"])))
+                else:
+                    question = object_data(exact["question"])
+                    theme_data = exact.get("theme")
+                    theme = str(object_data(theme_data)["official_label"]) if theme_data is not None else "Thème " + str(exact["theme_ref"]).removeprefix("theme:") if exact["theme_ref"] else "Thème non renseigné"
+                    blocks.append(WordBlock("Normal", theme + " · " + str(question["official_label"])))
             blocks.append(WordBlock("Note", "CANDIDATE — à valider par l’enseignant."))
         if kind != "student":
             blocks.append(WordBlock(

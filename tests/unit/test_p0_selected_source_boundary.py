@@ -25,16 +25,16 @@ def test_exact_selection_reuses_inbound_and_rejects_oracle_or_incomplete_source(
         yield Inbound()
     monkeypatch.setattr(r6_all_notions, "exact_notion_evidence", boundary)
     app, _ = p0_creation.build_p0_creation(object(), "nonce")
-    # Source admissibility is independent of the exact STMG programme gate.
+    # Exercise source admissibility independently of the preceding programme gate.
     command = {"command_id": "a" * 32, "context": context("BTS_CG_YEAR_2", "COURSE", None),
                "reference": {"notion_id": "notion:exact", "passage_ref": "passage:exact"}}
     if expected:
         with pytest.raises(ValueError, match=expected):
-            app.execute("prepare", command)
+            app.reference(command["reference"])
     else:
-        result = app.execute("prepare", command)
-        assert result["references"][0]["excerpt_sha256"] == hashlib.sha256(b"Source admise mais non officielle.").hexdigest()
-        assert result["provider_attempts"] == 0
+        result = app.reference(command["reference"])
+        assert result["reference"]["excerpt_sha256"] == hashlib.sha256(b"Source admise mais non officielle.").hexdigest()
+        assert app.prepared == app.plans == app.packs == {}
     assert calls == ["notion:exact"]
 
 
@@ -43,14 +43,13 @@ def test_lexical_teacher_source_never_becomes_generation_evidence(monkeypatch, k
     monkeypatch.setattr(r6_p0, "load_p0_reference", lambda *a, **k: {"object_kind": kind, "reference": {}, "excerpt": "Oracle interdit"})
     app, _ = p0_creation.build_p0_creation(object(), "nonce")
     with pytest.raises(ValueError, match="P0_TEACHER_SOURCE_FORBIDDEN"):
-        app.execute("prepare", {"command_id": "a" * 32, "context": context("BTS_CG_YEAR_2", "COURSE", None),
-                                "reference": {"query": "q", "passage_ref": "p"}})
+        app.reference({"query": "q", "passage_ref": "p"})
 
 
-@pytest.mark.parametrize("level", ["FIRST_STMG", "FINAL_STMG"])
+@pytest.mark.parametrize("level", ["FIRST_STMG", "FINAL_STMG", "BTS_CG_YEAR_1", "BTS_CG_YEAR_2"])
 def test_normal_factory_requires_exact_stmg_context_before_source_read(monkeypatch, level):
     def forbidden(*args, **kwargs):
-        raise AssertionError("Incomplete STMG context must not read evidence")
+        raise AssertionError("Incomplete institutional context must not read evidence")
     monkeypatch.setattr(r6_all_notions, "exact_notion_evidence", forbidden)
     app, _ = p0_creation.build_p0_creation(object(), "nonce")
     with pytest.raises(ValueError, match="P0_INSTITUTIONAL_CONTEXT_REQUIRED"):

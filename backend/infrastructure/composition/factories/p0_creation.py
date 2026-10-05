@@ -76,7 +76,10 @@ def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
         descriptor["excerpt_sha256"] = hashlib.sha256(excerpt.encode()).hexdigest()
         return {"reference": descriptor, "excerpt": excerpt}
 
-    from backend.infrastructure.composition.factories.institutional_catalog import stmg_alignment
+    from backend.infrastructure.composition.factories.institutional_catalog import (
+        bts_alignment,
+        stmg_alignment,
+    )
 
     def resolve_institutional(selection: Mapping[str, object], selected_reference: Mapping[str, object]) -> Mapping[str, object]:
         if set(selected_reference) != {"notion_id", "passage_ref"}:
@@ -85,15 +88,16 @@ def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
         # Identity is provided by the authenticated Application reader, never the UI.
         attested = {**selected_reference, **{key: passage[key] for key in (
             "object_ref", "object_kind", "passage_ref", "version_or_checksum")}}
-        return stmg_alignment(target, selection=dict(selection), reference=attested)
+        resolver = bts_alignment if selection.get("contract_id") == "BTS-INSTITUTIONAL-CONTEXT-1.0" else stmg_alignment
+        return resolver(target, selection=dict(selection), reference=attested)
 
     service = P0CreationService(reference, generation=generation, review=review,
-        institutional_resolver=resolve_institutional, exact_stmg_required=True)
+        institutional_resolver=resolve_institutional, exact_institutional_required=True)
     metadata: list[dict[str, object]] = [{"resource_ref": binding.resource_ref, "resource_version_ref": binding.resource_version_ref,
                  "title": binding.canonical_title, "scenarios": list(binding.scenarios),
                  "authority": "NONE", "lifecycle_status": binding.lifecycle_status,
                  "validation_status": binding.validation_status} for binding in R6_EXACT_SOURCE_BINDINGS]
     endpoint = P0CreationEndpoint(service.execute, service.read, metadata, nonce=nonce,
         generation_bound=generation is not None, review_bound=review is not None,
-        institutional_catalog=lambda: stmg_alignment(target))
+        institutional_catalog=lambda: {**stmg_alignment(target), **bts_alignment(target)})
     return service, endpoint

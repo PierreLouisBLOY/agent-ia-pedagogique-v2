@@ -23,19 +23,21 @@ def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
         load_p0_reference,
     )
 
+    def exact_passage(selection: Mapping[str, object]) -> dict[str, object]:
+        from backend.infrastructure.composition.factories.r6_all_notions import (
+            exact_notion_evidence,
+        )
+
+        with exact_notion_evidence(target) as inbound:
+            inspected = inbound.inspect(str(selection["notion_id"]))
+        matches = [p for p in items(inspected["items"], 256) if p["passage_ref"] == selection["passage_ref"]]
+        if len(matches) != 1:
+            raise ValueError("P0_REFERENCE_NOT_FOUND")
+        return matches[0]
+
     def reference(selection: Mapping[str, object]) -> Mapping[str, object]:
         if set(selection) == {"notion_id", "passage_ref"}:
-            from backend.infrastructure.composition.factories.r6_all_notions import (
-                exact_notion_evidence,
-            )
-
-            with exact_notion_evidence(target) as inbound:
-                inspected = inbound.inspect(str(selection["notion_id"]))
-            matches = [p for p in items(inspected["items"], 256)
-                       if p["passage_ref"] == selection["passage_ref"]]
-            if len(matches) != 1:
-                raise ValueError("P0_REFERENCE_NOT_FOUND")
-            passage = matches[0]
+            passage = exact_passage(selection)
             if passage["object_kind"] not in {"NOTION", "PEDAGOGICAL_CONTENT", "METHOD"}:
                 raise ValueError("P0_TEACHER_SOURCE_FORBIDDEN")
             if passage["excerpt_truncated"] or not passage["excerpt"]:
@@ -77,7 +79,13 @@ def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
     from backend.infrastructure.composition.factories.institutional_catalog import stmg_alignment
 
     def resolve_institutional(selection: Mapping[str, object], selected_reference: Mapping[str, object]) -> Mapping[str, object]:
-        return stmg_alignment(target, selection=dict(selection), reference=dict(selected_reference))
+        if set(selected_reference) != {"notion_id", "passage_ref"}:
+            raise ValueError("P0_INSTITUTIONAL_EXACT_NOTION_SOURCE_REQUIRED")
+        passage = exact_passage(selected_reference)
+        # Identity is provided by the authenticated Application reader, never the UI.
+        attested = {**selected_reference, **{key: passage[key] for key in (
+            "object_ref", "object_kind", "passage_ref", "version_or_checksum")}}
+        return stmg_alignment(target, selection=dict(selection), reference=attested)
 
     service = P0CreationService(reference, generation=generation, review=review,
         institutional_resolver=resolve_institutional, exact_stmg_required=True)

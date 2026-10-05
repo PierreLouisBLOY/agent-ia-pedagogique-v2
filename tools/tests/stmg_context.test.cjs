@@ -38,4 +38,21 @@ assert.equal(sandbox.p0Context().contract_id,'R6-P0-CONTEXT-1.0');assert.equal(n
 vm.runInContext(source.slice(source.indexOf('function p0Controls()'),source.indexOf('async function p0Fetch(')),sandbox);
 sandbox.p0.prepared={context:{institutional_resolution:{status:'CONTENT_GAP'}}};sandbox.p0Controls();assert.equal(node('generate').disabled,true);
 assert(!source.includes('proposed.level.includes("STMG") ? "Management"'));
+const labels = [];
+sandbox.uxNames = {};
+sandbox.appendSearchText = (_, tag, text) => labels.push(text);
+vm.runInContext(source.slice(source.indexOf('function uxContext('),source.indexOf('function uxQuality(')),sandbox);
+for (const frame of frames) {
+  labels.length=0;
+  const specific=frame.program_component==='SPECIFIC';
+  sandbox.uxContext({resource_type:'COURSE',level:frame.level,discipline:specific?'MSDGN — '+frame.specific_track:frame.label,
+    institutional:{...frame,theme_ref:'theme:1',depth:'APPLICATION'},local_progression:{chapter:'Chapitre local'},
+    institutional_resolution:{version_label:'UNIT-V1',question:{official_label:'1.1 Question'},capacities:[],notions:[],gaps:['UNIT_GAP']}});
+  assert(labels.some(text=>text.startsWith('Niveau : ')));
+  assert(labels.some(text=>text.startsWith('Enseignement : ')));
+  assert(labels.some(text=>text.startsWith('Programme : ') && text.includes('UNIT-V1')));
+  if(frame.program_component==='COMMON') assert(labels.includes('Partie : Enseignement commun'));
+  if(specific) assert(labels.includes('Enseignement spécifique : '+frame.specific_track));
+  assert(labels.includes('Progression locale : Chapitre local'));
+}
 console.log('STMG_UI: seven frames, no Management default, exact programme/capacity selection, BTS compatibility, gap dispatch blocked PASS');

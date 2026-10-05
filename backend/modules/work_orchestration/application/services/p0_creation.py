@@ -100,6 +100,9 @@ class P0CreationService:
             if self.institutional_resolver is None:
                 raise ValueError("P0_INSTITUTIONAL_RESOLVER_REQUIRED")
             resolved = object_data(self.institutional_resolver(context.institutional, selection))
+            if object_data(resolved.get("reference_scope", {})).get("status") == "CONTENT_GAP":
+                # Do not hand unscoped contextual content to planning/retrieval agents.
+                raise ValueError("P0_INSTITUTIONAL_SOURCE_CONTEXT_GAP")
             confirmed = context.as_dict()
             confirmed["institutional_resolution"] = resolved
             context = P0Context(confirmed)
@@ -107,6 +110,11 @@ class P0CreationService:
             raise ValueError("P0_INSTITUTIONAL_CONTEXT_REQUIRED")
         loaded = self.reference(selection)
         reference = object_data(loaded["reference"])
+        if context.data.get("institutional_resolution") is not None:
+            scope = object_data(object_data(context.data["institutional_resolution"]).get("reference_scope", {}))
+            if scope and any(scope.get(key) != reference.get(target) for key, target in (
+                    ("object_ref", "source_ref"), ("passage_ref", "locator"), ("version_or_checksum", "checksum_or_version"))):
+                raise ValueError("P0_INSTITUTIONAL_REFERENCE_CHANGED")
         excerpt = loaded["excerpt"]
         if not isinstance(excerpt, str) or not excerpt:
             raise ValueError("P0_EVIDENCE_INSUFFICIENT")

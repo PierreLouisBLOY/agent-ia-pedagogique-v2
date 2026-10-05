@@ -141,7 +141,32 @@ class ReadSTMGAlignment:
             "notions": [{"notion_ref": ref, "label": notions[str(ref)]["canonical_label"]} for ref in notion_ids],
             "depth": selection["depth"], "gaps": gaps, "status": "CONTENT_GAP" if gaps else "RESOLVED_ADMITTED",
             "implicit_propagation": False, "teacher_acceptance": "NOT_PERFORMED"}
+        source_scope = self._reference_scope(selection, reference_selection, question, elements)
+        result["reference_scope"] = source_scope
+        if source_scope["status"] == "CONTENT_GAP":
+            gaps.append("SELECTED_PASSAGE_CONTEXT_NOT_ADMITTED")
+            result["status"] = "CONTENT_GAP"
         return result
+
+    def _reference_scope(self, selection: Mapping[str, object], reference: Mapping[str, object],
+                         question: Mapping[str, object], elements: Mapping[str, dict[str, object]]) -> dict[str, object]:
+        identity = {key: reference.get(key) for key in ("object_ref", "object_kind", "passage_ref", "version_or_checksum")}
+        verified = all(isinstance(identity[key], str) and identity[key] for key in identity)
+        # A canonical notion label can establish identity; it does not supply
+        # contextual examples, methods, capacities or an admission by propagation.
+        if verified and identity["object_kind"] == "NOTION" and identity["object_ref"] == reference.get("notion_id"):
+            return {**identity, "status": "CANONICAL_NOTION_ONLY", "relationships": [], "context_enrichment": False}
+        relationships = []
+        if verified and identity["object_kind"] in {"PEDAGOGICAL_CONTENT", "METHOD"}:
+            for link in self.catalog.read_reference_contexts(str(identity["object_ref"])):
+                element = elements.get(str(link.get("element_ref")))
+                if (link.get("status") == "ADMITTED" and link.get("program_version") == selection["program_version"] and
+                        link.get("depth") == selection["depth"] and element is not None and
+                        element["framework_version_id"] == selection["program_version"] and
+                        (element["id"] == question["id"] or element["parent_element_id"] == question["id"])):
+                    relationships.append(dict(link))
+        return {**identity, "status": "EXACT_CONTEXT_ADMITTED" if relationships else "CONTENT_GAP",
+                "relationships": relationships, "context_enrichment": False}
 
     def matrix(self) -> dict[str, object]:
         data = self.catalog.read_institutional_catalog()

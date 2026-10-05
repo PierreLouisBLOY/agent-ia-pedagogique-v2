@@ -1001,7 +1001,12 @@ function uxContext(context) {
   appendSearchText(region, "p", context.discipline || "Discipline à préciser");
   if (context.institutional) {
     const selected = context.institutional, resolved = context.institutional_resolution;
-    appendSearchText(region, "p", "Programme : " + (resolved?.version_label || "version sélectionnée à vérifier"));
+    const level = selected.education_level === "PREMIERE" ? "Première STMG" : "Terminale STMG";
+    appendSearchText(region, "p", "Niveau : " + level);
+    appendSearchText(region, "p", "Enseignement : " + context.discipline.split(" — ")[0]);
+    if (selected.program_component === "COMMON") appendSearchText(region, "p", "Partie : Enseignement commun");
+    if (selected.program_component === "SPECIFIC") appendSearchText(region, "p", "Enseignement spécifique : " + context.discipline.split(" — ").slice(1).join(" — "));
+    appendSearchText(region, "p", "Programme : " + context.discipline + " — " + level + " · " + (resolved?.version_label || "version sélectionnée à vérifier"));
     appendSearchText(region, "p", "Thème " + selected.theme_ref.replace("theme:", "") + " · " + (resolved?.question?.official_label || "question sélectionnée à vérifier"));
     appendSearchText(region, "p", "Capacités : " + ((resolved?.capacities || []).map(c => c.label).join(" · ") || "rattachements à compléter"));
     appendSearchText(region, "p", "Notions : " + ((resolved?.notions || []).map(n => n.label).join(" · ") || "sélection à vérifier") + " · " +

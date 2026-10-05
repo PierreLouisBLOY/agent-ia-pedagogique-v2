@@ -2,12 +2,16 @@
 import copy
 import hashlib
 import json
+import sqlite3
 from secrets import token_hex
 
 import pytest
 
 from backend.adapters.inbound.application.reframe_course import ReframeCourseInbound
 from backend.adapters.outbound.generation.openai.p0_content import build_p0_content_request
+from backend.adapters.outbound.resource_library.institutional_sqlite import (
+    SQLiteInstitutionalCatalogAdapter,
+)
 from backend.modules.knowledge_reference.application.queries.stmg_alignment import ReadSTMGAlignment
 from backend.modules.knowledge_reference.contracts.dto.stmg_frames import STMG_FRAMES
 from backend.modules.materialization_export.application.commands.export_saved import (
@@ -47,6 +51,9 @@ class Catalog:
     def read_institutional_catalog(self):
         return copy.deepcopy(self.data)
 
+    def read_reference_contexts(self, object_ref):
+        return tuple(copy.deepcopy(link) for link in self.data.get("reference_contexts", []) if link["object_ref"] == object_ref)
+
 
 def context(frame="MANAGEMENT_PREMIERE"):
     spec = STMG_FRAMES[frame]
@@ -66,7 +73,9 @@ def app(catalog, double=None):
     return P0CreationService(lambda _: {"excerpt": excerpt, "reference": {
         "evidence_id": "evidence:" + "1" * 32, "source_ref": "notion:shared", "locator": "unit:passage",
         "checksum_or_version": "UNIT-V1", "excerpt_sha256": hashlib.sha256(excerpt.encode()).hexdigest(), "provenance_label": P0_PROVENANCE_LABEL}},
-        generation=double, institutional_resolver=query.resolve, exact_stmg_required=True)
+        generation=double, institutional_resolver=lambda selection, reference: query.resolve(selection, {
+            **reference, "object_ref": "notion:shared", "object_kind": "NOTION", "version_or_checksum": "UNIT-V1"}),
+        exact_stmg_required=True)
 
 
 def prepare(service, data):
@@ -237,3 +246,96 @@ def test_local_context_successor_preserves_parent_and_does_not_inherit_review():
     assert child.data["validations"][0]["institutional_status"] == "CONTENT_GAP"
     assert child.data["validations"][0]["dispatch_permitted"] is False
     assert len(service.generation.requests) == 1  # Only the declared synthetic parent generation.
+
+
+def scoped_reference():
+    return {"notion_id": "notion:shared", "object_ref": "content:synthetic", "object_kind": "PEDAGOGICAL_CONTENT",
+            "passage_ref": "unit:passage", "version_or_checksum": "UNIT-V1"}
+
+
+def admitted_content_catalog():
+    catalog = Catalog()
+    catalog.data["reference_contexts"] = [{"object_ref": "content:synthetic", "context_ref": "context:synthetic",
+        "role": "MAIN", "status": "ADMITTED", "program_version": "version:MANAGEMENT_PREMIERE",
+        "element_ref": "question:MANAGEMENT_PREMIERE", "depth": "APPLICATION"}]
+    return catalog
+
+
+def test_contextual_passage_requires_an_exact_admitted_relation():
+    result = ReadSTMGAlignment(admitted_content_catalog()).resolve(context()["institutional"], scoped_reference())
+    assert result["status"] == "RESOLVED_ADMITTED"
+    assert result["reference_scope"]["status"] == "EXACT_CONTEXT_ADMITTED"
+    assert result["reference_scope"]["relationships"][0]["program_version"] == "version:MANAGEMENT_PREMIERE"
+
+
+@pytest.mark.parametrize("mutation", ["programme", "question", "depth", "proposed", "object", "missing", "unverified", "method"])
+def test_common_notion_never_admits_another_programme_passage(mutation):
+    catalog = admitted_content_catalog()
+    link = catalog.data["reference_contexts"][0]
+    reference = scoped_reference()
+    if mutation == "programme":
+        link["program_version"] = "version:SGN_PREMIERE"
+    if mutation == "question":
+        link["element_ref"] = "question:SGN_PREMIERE"
+    if mutation == "depth":
+        link["depth"] = "ANALYSIS"
+    if mutation == "proposed":
+        link["status"] = "PROPOSED"
+    if mutation == "object":
+        reference["object_ref"] = "content:another"
+    if mutation == "missing":
+        catalog.data["reference_contexts"] = []
+    if mutation == "unverified":
+        reference.pop("version_or_checksum")
+    if mutation == "method":
+        reference["object_kind"] = "METHOD"
+        link["program_version"] = "version:SGN_PREMIERE"
+    result = ReadSTMGAlignment(catalog).resolve(context()["institutional"], reference)
+    assert result["status"] == "CONTENT_GAP"
+    assert result["reference_scope"]["status"] == "CONTENT_GAP"
+    assert "SELECTED_PASSAGE_CONTEXT_NOT_ADMITTED" in result["gaps"]
+
+
+def test_passage_substitution_after_resolution_is_rejected_before_dispatch():
+    service = app(Catalog(), ExplainedCourseDouble())
+    original = service.reference
+    service.reference = lambda selection: {**original(selection), "reference": {
+        **original(selection)["reference"], "source_ref": "content:swapped"}}
+    with pytest.raises(ValueError, match="P0_INSTITUTIONAL_REFERENCE_CHANGED"):
+        prepare(service, context())
+    assert service.generation.requests == []
+
+
+def test_unscoped_contextual_content_does_not_enter_agent_evidence_pack():
+    service = app(Catalog(), ExplainedCourseDouble())
+    service.institutional_resolver = lambda selection, reference: ReadSTMGAlignment(Catalog()).resolve(selection, scoped_reference())
+    def forbidden_reference(_):
+        raise AssertionError("Unscoped content must not enter AG-02")
+    service.reference = forbidden_reference
+    with pytest.raises(ValueError, match="P0_INSTITUTIONAL_SOURCE_CONTEXT_GAP"):
+        prepare(service, context())
+    assert service.prepared == service.packs == service.plans == {}
+    assert service.generation.requests == []
+
+
+def test_sqlite_reference_projection_is_query_only_exact_and_bounded():
+    # Declared in-memory fixture; no business database or Application seed access.
+    connection = sqlite3.connect(":memory:")
+    connection.executescript("""
+        CREATE TABLE pedagogical_context(id TEXT, framework_version_id TEXT, framework_element_id TEXT, difficulty_level TEXT);
+        CREATE TABLE resource_context(resource_id TEXT, context_id TEXT, role TEXT, status TEXT);
+        INSERT INTO pedagogical_context VALUES ('context:unit', 'version:unit', 'question:unit', 'APPLICATION');
+        INSERT INTO resource_context VALUES ('content:unit', 'context:unit', 'MAIN', 'ADMITTED');
+    """)
+    with pytest.raises(ValueError, match="INSTITUTIONAL_READ_ONLY_REQUIRED"):
+        SQLiteInstitutionalCatalogAdapter(connection)
+    connection.execute("PRAGMA query_only=ON")
+    adapter = SQLiteInstitutionalCatalogAdapter(connection)
+    assert adapter.read_reference_contexts("content:unit")[0]["program_version"] == "version:unit"
+    assert adapter.read_reference_contexts("content:unit' OR 1=1 --") == ()
+    connection.execute("PRAGMA query_only=OFF")
+    connection.executemany("INSERT INTO resource_context VALUES (?, 'context:unit', 'MAIN', 'ADMITTED')", [("content:overflow",)] * 257)
+    connection.execute("PRAGMA query_only=ON")
+    with pytest.raises(ValueError, match="P0_REFERENCE_CONTEXT_BOUND"):
+        adapter.read_reference_contexts("content:overflow")
+    connection.close()

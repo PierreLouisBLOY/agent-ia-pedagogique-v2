@@ -19,6 +19,7 @@ from backend.adapters.inbound.application.lot2_saved_production import Lot2Saved
 from backend.adapters.inbound.application.resource_library import ResourceLibraryUseCaseInbound
 from backend.adapters.inbound.application.saved_production import SavedProductionInbound
 from backend.adapters.outbound.export.diffusion_word import diffusion_document
+from backend.adapters.outbound.export.diffusion_word_v6 import diffusion_v6_document
 from backend.adapters.outbound.export.r6_readable_word import R6ReadableWordWriter
 from backend.adapters.outbound.persistence.saved_production import LocalSavedProductionStore
 from backend.adapters.outbound.persistence.sqlite import connect_sqlite
@@ -282,17 +283,20 @@ def build_local_read15(
 
 
 def build_saved_application(root: Path, *, create: bool = False,
-        source: Callable[[str, str], SavedProduction] | None = None) -> SavedProductionInbound:
+        source: Callable[[str, str], SavedProduction] | None = None,
+        word_profile: str = "diffusion-v5") -> SavedProductionInbound:
     store = LocalSavedProductionStore(root, create=create)
     return Lot2SavedProductionInbound(SavedProductionService(store), ReadProductionQuery(store),
-                                  ExportSavedCommand(R6ReadableWordWriter(profile="diffusion-v5"), presentation=diffusion_document), source=source)
+                                  ExportSavedCommand(R6ReadableWordWriter(profile=word_profile),
+                                      presentation=diffusion_v6_document if word_profile == "diffusion-v6" else diffusion_document), source=source)
 
 
 def build_local_saved(configuration: LocalBrowserHttpConfiguration, root: Path, *,
                       create: bool = False,
-                      source: Callable[[str, str], SavedProduction] | None = None) -> LocalRead15Composition:
+                      source: Callable[[str, str], SavedProduction] | None = None,
+                      word_profile: str = "diffusion-v5") -> LocalRead15Composition:
     """Existing local app in R4-only mode: no library target, SQLite or generation job."""
-    saved = build_saved_application(root, create=create, source=source)
+    saved = build_saved_application(root, create=create, source=source, word_profile=word_profile)
     assets_root = _ROOT / "frontend"
     assets = {name: read_file_nofollow(assets_root / name, allowed_root=assets_root,
                                       maximum_bytes=128 * 1024) for name in sorted(ASSET_NAMES)}

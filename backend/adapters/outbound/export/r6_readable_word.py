@@ -15,6 +15,10 @@ from backend.adapters.outbound.export.classroom_word import (
     presentation_document,
 )
 from backend.adapters.outbound.export.diffusion_word import diffusion_document
+from backend.adapters.outbound.export.diffusion_word_v6 import (
+    compact_course_pagination,
+    diffusion_v6_document,
+)
 from backend.adapters.outbound.export.lot1_word import Lot1OOXMLWordWriter, _table
 from backend.modules.materialization_export.contracts.dto.lot1_word_table import (
     Lot1WordDocument,
@@ -68,14 +72,18 @@ def readable_document(document: WordDocument) -> tuple[WordDocument, tuple[Lot1W
 
 class R6ReadableWordWriter(Lot1OOXMLWordWriter):
     def __init__(self, *, profile: str = "classroom-v2") -> None:
-        if profile not in {"classroom-v2", "readable-v1", "diffusion-v5"}:
+        if profile not in {"classroom-v2", "readable-v1", "diffusion-v5", "diffusion-v6"}:
             raise ValueError("R6_WORD_PROFILE_REJECTED")
         self.classroom = profile != "readable-v1"
         self.diffusion = profile == "diffusion-v5"
+        self.diffusion_v6 = profile == "diffusion-v6"
 
     def write(self, document: WordDocument) -> bytes:
+        if self.diffusion_v6:
+            document = diffusion_v6_document(document)
         if self.diffusion:
             document = diffusion_document(document)
+        pagination_document = document
         if self.classroom:
             document = presentation_document(document)
         projected, tables = readable_document(document)
@@ -100,6 +108,8 @@ class R6ReadableWordWriter(Lot1OOXMLWordWriter):
         if self.classroom:
             styles = fromstring(parts["word/styles.xml"])
             footer = apply_page_profile(root, styles)
+            if self.diffusion_v6:
+                compact_course_pagination(pagination_document, styles)
             parts["word/styles.xml"] = tostring(styles, encoding="utf-8", xml_declaration=True)
             parts["word/footer1.xml"] = tostring(footer, encoding="utf-8", xml_declaration=True)
             relationships = fromstring(parts["word/_rels/document.xml.rels"])

@@ -101,6 +101,11 @@ class ReviewSecurityError(ValueError):
         super().__init__(self.safe_reason)
 
 
+class ReviewMetadataPolicyVersion(StrEnum):
+    HISTORICAL = "HISTORICAL"
+    NEGATIVE_AUTHORITY_DIAGNOSTICS_V1 = "NEGATIVE_AUTHORITY_DIAGNOSTICS_V1"
+
+
 @dataclass(frozen=True, slots=True)
 class ReviewSecurityPolicy:
     require_locator_validation: bool = True
@@ -112,8 +117,11 @@ class ReviewSecurityPolicy:
     allow_urls_as_data: bool = True
     block_on_evidence_security_warning: bool = False
     allow_whole_target_locator: bool = False
+    metadata_policy_version: ReviewMetadataPolicyVersion = ReviewMetadataPolicyVersion.HISTORICAL
 
     def __post_init__(self) -> None:
+        if type(self.metadata_policy_version) is not ReviewMetadataPolicyVersion:
+            raise TypeError("metadata policy version must be a closed review enum")
         if any(
             type(value) is not bool
             for value in (

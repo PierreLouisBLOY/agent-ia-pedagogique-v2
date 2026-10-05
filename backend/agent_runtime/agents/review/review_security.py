@@ -410,6 +410,7 @@ def _validated_policy(policy: ReviewSecurityPolicy) -> None:
                 policy.block_on_evidence_security_warning
             ),
             allow_whole_target_locator=policy.allow_whole_target_locator,
+            metadata_policy_version=policy.metadata_policy_version,
         )
     except (TypeError, ValueError):
         _raise_security(ReviewSecuritySignalCode.ASSESSMENT_LINEAGE_MISMATCH)

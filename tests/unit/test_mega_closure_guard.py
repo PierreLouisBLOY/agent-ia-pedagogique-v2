@@ -7,6 +7,16 @@ from tests.support import r6_scope_guard as guard
 
 ROOT = Path(__file__).resolve().parents[2]
 OWNERS = (
+    "backend/agent_runtime/agents/review/review_metadata_successor.py",
+    "backend/agent_runtime/agents/review/review_security_model.py",
+    "backend/agent_runtime/agents/review/review_security.py",
+    "backend/agent_runtime/agents/review/review_agent_model.py",
+    "backend/adapters/outbound/export/diffusion_word_v6.py",
+    "backend/adapters/outbound/export/r6_readable_word.py",
+    "backend/infrastructure/composition/factories/local_browser.py",
+    "tests/unit/test_review_metadata_successor.py",
+    "tests/unit/test_diffusion_word_v6.py",
+    "docs/development/ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.md",
     "backend/adapters/outbound/review/p0_review.py",
     "backend/adapters/outbound/review/openai/adapter.py",
     "tests/unit/test_mega_closure_review.py",

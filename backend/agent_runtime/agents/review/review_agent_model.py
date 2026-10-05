@@ -11,6 +11,10 @@ from backend.agent_runtime.agents.review.review_coordination_model import (
     ReviewCoordinationError,
     _validate_prepared_review_call,
 )
+from backend.agent_runtime.agents.review.review_metadata_successor import (
+    ReviewDiagnosticSurface,
+    reject_review_diagnostics,
+)
 from backend.agent_runtime.agents.review.review_model import (
     ReviewOperation,
     ReviewPortResult,
@@ -195,9 +199,11 @@ def _validate_materialization_request(
     _revalidate_technical_result_shape(technical)
     reject_activatable_review_metadata(technical.structured_payload)
     reject_review_authority(technical.technical_findings)
-    reject_activatable_review_metadata(technical.limitations)
+    reject_review_diagnostics(technical.limitations, version=request.security_policy.metadata_policy_version,
+                             surface=ReviewDiagnosticSurface.LIMITATIONS)
     reject_activatable_review_metadata(technical.warnings)
-    reject_activatable_review_metadata(technical.uncertainties)
+    reject_review_diagnostics(technical.uncertainties, version=request.security_policy.metadata_policy_version,
+                             surface=ReviewDiagnosticSurface.UNCERTAINTIES)
     reject_activatable_review_metadata(technical.execution_metadata)
 
     if type(prepared.capability_id) is not CapabilityId:

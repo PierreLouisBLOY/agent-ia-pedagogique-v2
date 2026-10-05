@@ -218,7 +218,7 @@
     "tests/unit/test_p0_selected_source_boundary.py": "bd57319d208f2a7fdd960fdc5624c5aecf75bb6dc5e8a9e3e5125f5e752ed81c",
     "docs/development/SUPER_MACRO_POST_62AF2BB.md": "5ea4c34b3855599be7050057a23891f944424c0a141c5fa1b44212e502ead75f",
     "backend/adapters/outbound/export/diffusion_word.py": "c85607c2ddaccdad1dd6b8c785ada6df6e0c10abf2ce710b181936124fc52d5a",
-    "backend/adapters/outbound/review/p0_review.py": "3296930a95b28be1292582fb02c7eac11e11722fe661610cacce2ef4b5016cfd",
+    "backend/adapters/outbound/review/p0_review.py": "4ba47ac0d0625df44575215b86b728ba62186897d0a92b806d9331d93ae41e06",
     "backend/modules/quality_evaluation/ports/outbound/p0_review.py": "bbb4db8044b7ac632ab765ac11989880770e27d03d05c0bc69da1eb1a2c74062",
     "backend/modules/work_orchestration/application/services/p0_agentic.py": "6af21ace2215b33a5170d6c8c2a0a0a1a7a49552f4da214aab1b0b7c3cc31e24",
     "docs/development/MEGA_LOT_POST_20D6B49.md": "32f2541c066e07413f8e618175f7936eebd09a39d9c0f49c2c18000cb8742cf8",
@@ -235,7 +235,7 @@
     "backend/agent_runtime/agents/review/review_security.py": "392deb33d6a2a986e0da105449ded3408757f19ae6fcf49f4140dfb9f30bf8d7",
     "backend/agent_runtime/agents/review/review_agent_model.py": "2273009cb6f360707b40adbdfd40e61ad8c8aa9b6e2457920567651800870f45",
     "backend/adapters/outbound/export/diffusion_word_v6.py": "704b944d23888a6abcf38ae491e9020076a90bddb7737d9d2821cec1070926b8",
-    "tests/unit/test_review_metadata_successor.py": "c36c242b374a202cc299e9202c3d0bfb8509307534c8cf2b5c4a9c057fd80790",
+    "tests/unit/test_review_metadata_successor.py": "da2bd9e1652cb159a9ccb5ee62a68f67dbfecd0219b0f981eeec132a8fe3affb",
     "tests/unit/test_diffusion_word_v6.py": "555ade42d9ab476423416dcef4133661f7ff058ee7a34c5b9195a31bd044e393"
   },
   "active_delta_paths": [

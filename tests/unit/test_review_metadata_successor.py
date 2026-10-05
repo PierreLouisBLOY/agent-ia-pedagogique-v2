@@ -97,6 +97,8 @@ def test_p0_materialization_preserves_exact_diagnostics_and_version_without_prom
     assert len(critic.requests) == 1
     if surface == "limitations":
         assert diagnostic in report["limitations"]
+    else:
+        assert report["uncertainties"] == [diagnostic]
 
 
 @pytest.mark.parametrize("surface", ["warnings", "execution_metadata", "structured_payload"])

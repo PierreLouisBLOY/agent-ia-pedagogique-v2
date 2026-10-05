@@ -72,7 +72,7 @@ class P0ReviewAdapter:
             prepared, result, output_meta, "p0-review",
             security_policy=ReviewSecurityPolicy(allow_whole_target_locator=True,
                 metadata_policy_version=self.metadata_policy_version)))
-        return {"contract_id": "P0-REVIEW-1.0", "status": report.meta.status.value,
+        output = {"contract_id": "P0-REVIEW-1.0", "status": report.meta.status.value,
             "production_ref": production["production_ref"], "version_ref": production["version_ref"],
             "bundle_sha256": request["bundle_sha256"], "overall_assessment": report.overall_assessment.value,
             "correction_required": report.correction_required,
@@ -84,3 +84,6 @@ class P0ReviewAdapter:
                 for f in report.findings],
             "limitations": as_plain(report.limitations), "evidence_refs_used": [str(r) for r in report.evidence_refs_used],
             "created_at": now.value.isoformat(), "promotion": "NOT_PERFORMED"}
+        if self.metadata_policy_version is ReviewMetadataPolicyVersion.NEGATIVE_AUTHORITY_DIAGNOSTICS_V1:
+            output["uncertainties"] = as_plain(result.uncertainties)
+        return output

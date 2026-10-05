@@ -22,6 +22,32 @@ FRENCH = ("Aucune source officielle ou référentiel pédagogique attesté n’e
           "non sur une conformité à un programme officiel.")
 
 
+def test_successor_uncertainty_remains_an_application_quality_reserve():
+    from backend.modules.work_orchestration.application.services.p0_agentic import quality_status
+    critic = WholeTargetCritic({"kind": "whole_target"})
+    original = critic.review
+    diagnostic = {"code": "NO_AUTHORITATIVE_ORACLE", "message": FRENCH}
+
+    def review(*, request):
+        result = original(request=request)
+        return replace(result, structured_payload={**result.structured_payload,
+            "overall_assessment": "acceptable", "correction_required": False},
+            uncertainties=(diagnostic,))
+
+    critic.review = review
+    request = review_request()
+    report = P0ReviewAdapter(critic, authorize=lambda request: False,
+        metadata_policy_version=V1).review(request=request)
+    assert report["status"] == "completed" and report["overall_assessment"] == "acceptable"
+    assert report["uncertainties"] == [diagnostic] and not report["limitations"]
+    quality = quality_status(request["plan"], review=report)
+    assert quality["review"] == "RESERVE"
+    assert quality["human_review"] == "HUMAN_REVIEW_REQUIRED"
+    assert report["promotion"] == "NOT_PERFORMED" and len(critic.requests) == 1
+    clear = {**report, "uncertainties": []}
+    assert quality_status(request["plan"], review=clear)["review"] == "REVUE_OK"
+
+
 @pytest.mark.parametrize("surface", list(ReviewDiagnosticSurface))
 @pytest.mark.parametrize("diagnostic", [
     {"code": "NO_AUTHORITATIVE_ORACLE"},

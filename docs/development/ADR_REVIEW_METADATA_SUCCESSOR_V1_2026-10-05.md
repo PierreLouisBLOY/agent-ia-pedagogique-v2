@@ -57,6 +57,12 @@ All existing members and boundary prohibitions remain required; the inventory
 test becomes an exact pinned successor owner with a mutation rejection proof.
 The five historical documentary assertions remain unchanged.
 
+The Application quality projection retains RESERVE whenever the explicit
+successor report carries uncertainties, even if a declared port reports
+completed/acceptable. Removing an uncertainty is never part of the projection.
+This ordinary consumer correction adds no authority or architectural boundary;
+the complete report, human review requirement and no-promotion result remain.
+
 ## Owner decisions remaining
 
 Teacher recipe and pedagogical acceptance, source sufficiency and final release

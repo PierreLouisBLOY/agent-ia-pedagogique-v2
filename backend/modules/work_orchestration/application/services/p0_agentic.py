@@ -80,4 +80,5 @@ def quality_status(plan: Mapping[str, object], *, review: Mapping[str, object] |
         "calculation_reason": "INDEPENDENT_ORACLE_NOT_EXECUTED" if plan["quantitative_review_required"] else "NO_QUANTITATIVE_TOPIC_DECLARED",
         "instruction": "CONSIGNE_COUVERTE" if review and review.get("instruction_coverage") == "FULL" else "PARTIELLE",
         "review": "REVUE_OK" if review and review.get("status") == "completed" and review.get("overall_assessment") == "acceptable"
-            and not review.get("limitations") else "RESERVE", "human_review": "HUMAN_REVIEW_REQUIRED"}
+            and not review.get("limitations") and not review.get("uncertainties")
+            else "RESERVE", "human_review": "HUMAN_REVIEW_REQUIRED"}

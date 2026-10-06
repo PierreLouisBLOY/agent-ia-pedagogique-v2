@@ -200,6 +200,7 @@ class P0Production:
         self._validate_content(context, questions, corrections, marking)
         if is_chapter:
             chapter = CourseChapter(object_data(data["course_chapter"]))
+            chapter.bind_production(str(data["production_ref"]))
             chapter.bind_context(context)
             if as_plain(data["sections"]) != chapter.sections() or data["title"] != chapter.data["title"]:
                 raise ValueError("COURSE_STUDENT_PROJECTION_BINDING")

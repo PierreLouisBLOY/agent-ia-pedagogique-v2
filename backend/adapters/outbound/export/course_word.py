@@ -4,6 +4,7 @@ from typing import cast
 from xml.etree.ElementTree import Element, SubElement, tostring
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
+from backend.adapters.outbound.export.course_media_word import draw_image
 from backend.modules.materialization_export.contracts.dto.word_document import WordDocument
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import items, object_data
 
@@ -130,8 +131,24 @@ class CourseOOXMLWordWriter:
         teacher = document.kind == "correction"
         if document.kind not in {"student", "correction"} or ("teacher_answers" in chapter) != teacher:
             raise ValueError("COURSE_WORD_PROJECTION")
+        projected_media = items(chapter.get("media_assets", []), 8)
+        expected_media = tuple(p.asset.projection(p.brief) for p in document.course_media)
+        if projected_media != expected_media or any(not p.brief.data["teacher_visibility" if teacher else "student_visibility"] for p in document.course_media):
+            raise ValueError("COURSE_WORD_MEDIA_PROVENANCE_BINDING")
         root = Element(_w("document"))
         body = SubElement(root, _w("body"))
+        emitted: set[str] = set()
+        def media_at(section_ref: str, position: str) -> None:
+            for number, pair in enumerate(document.course_media, 1):
+                brief = pair.brief.data
+                if (brief["section_ref"] == section_ref and brief["preferred_position"] == position
+                        and str(brief["visual_id"]) not in emitted):
+                    draw_image(body, pair, number)
+                    _p(body, str(brief["caption"]), "DocumentText")
+                    provenance = object_data(pair.asset.data["provenance"])
+                    if provenance["licence"] in {"CC-BY-4.0", "CC-BY-SA-4.0"}:
+                        _p(body, "Source : "+str(provenance["source_ref"])+" — "+str(provenance["licence"]), "Footer")
+                    emitted.add(str(brief["visual_id"]))
         header = object_data(chapter["program_header"])
         _p(body, "CHAPITRE " + str(chapter["chapter_number"]), "Chapter")
         _p(body, str(chapter["title"]), "Title")
@@ -151,10 +168,12 @@ class CourseOOXMLWordWriter:
         questions = {str(q["id"]): q for q in items(chapter["questions"], 60)}
         concepts = {str(c["id"]): c for c in items(chapter["concepts"])}
         answers = {str(a["id"]): a for a in items(chapter["teacher_answers"], 60)} if teacher else {}
-        for part in items(chapter["parts"]):
-            _p(body, str(part["title"]), "Heading1", before=True)
+        flowing_teacher = teacher and bool(document.course_media)
+        for part_index, part in enumerate(items(chapter["parts"])):
+            _p(body, str(part["title"]), "Heading1", before=part_index == 0 or not flowing_teacher)
             for ref in cast(tuple[str, ...], part["document_ids"]):
                 _document(body, docs[ref], doc_numbers[ref])
+                media_at(ref, "AFTER_DOCUMENT")
             for role in ("observation", "analysis"):
                 for ref in cast(tuple[str, ...], part[role]):
                     _question(body, questions[ref], answers.get(ref))
@@ -162,17 +181,19 @@ class CourseOOXMLWordWriter:
                 c = concepts[ref]
                 _p(body, "Notion — " + str(c["notion"]), "ConceptTitle")
                 _p(body, str(c["definition"]) + "\n" + str(c["explanation"]) + "\nExemple — " + str(c["example"]), "ConceptText")
+                media_at(ref, "AFTER_CONCEPT")
             for ref in cast(tuple[str, ...], part["reinvestment"]):
                 _question(body, questions[ref], answers.get(ref))
-        _p(body, "Tester ses connaissances", "Heading1", before=True)
+        _p(body, "Tester ses connaissances", "Heading1", before=not flowing_teacher)
         for ref in cast(tuple[str, ...], chapter["knowledge_check"]):
             _question(body, questions[ref], answers.get(ref))
         _p(body, "À retenir", "Heading2")
         _p(body, str(chapter["synthesis"]), "ConceptText")
         transfer = object_data(chapter["transfer"])
-        _p(body, str(transfer["title"]), "Heading1", before=True)
+        _p(body, str(transfer["title"]), "Heading1", before=not flowing_teacher)
         for ref in cast(tuple[str, ...], transfer["document_ids"]):
             _document(body, docs[ref], doc_numbers[ref])
+            media_at(ref, "AFTER_DOCUMENT")
         for ref in cast(tuple[str, ...], transfer["question_ids"]):
             _question(body, questions[ref], answers.get(ref))
         section = SubElement(body, _w("sectPr"))
@@ -191,8 +212,14 @@ class CourseOOXMLWordWriter:
         doc_rels = Element("Relationships", {"xmlns": PKG})
         for number, kind, name in ((1, "styles", "styles.xml"), (2, "header", "header1.xml"), (3, "footer", "footer1.xml")):
             SubElement(doc_rels, "Relationship", {"Id": "rId" + str(number), "Type": R + "/" + kind, "Target": name})
+        if len(emitted) != len(document.course_media):
+            raise ValueError("COURSE_WORD_MEDIA_NOT_PLACED")
+        for number, _ in enumerate(document.course_media, 1):
+            SubElement(doc_rels, "Relationship", {"Id": "rIdMedia"+str(number), "Type": R+"/image", "Target": "media/figure_"+str(number)+".png"})
         types = Element("Types", {"xmlns": "http://schemas.openxmlformats.org/package/2006/content-types"})
         SubElement(types, "Default", {"Extension": "rels", "ContentType": "application/vnd.openxmlformats-package.relationships+xml"})
+        if document.course_media:
+            SubElement(types, "Default", {"Extension": "png", "ContentType": "image/png"})
         for name, kind in (("document.xml", "document.main"), ("styles.xml", "styles"), ("header1.xml", "header"), ("footer1.xml", "footer")):
             SubElement(types, "Override", {"PartName": "/word/" + name, "ContentType": "application/vnd.openxmlformats-officedocument.wordprocessingml." + kind + "+xml"})
         parts = {"[Content_Types].xml": types, "_rels/.rels": rels, "word/document.xml": root,
@@ -204,4 +231,8 @@ class CourseOOXMLWordWriter:
                 info = ZipInfo(name, (2000, 1, 1, 0, 0, 0))
                 info.compress_type = ZIP_DEFLATED
                 archive.writestr(info, tostring(node, encoding="utf-8", xml_declaration=True))
+            for number, pair in enumerate(document.course_media, 1):
+                info = ZipInfo("word/media/figure_"+str(number)+".png", (2000, 1, 1, 0, 0, 0))
+                info.compress_type = ZIP_DEFLATED
+                archive.writestr(info, pair.asset.raw)
         return result.getvalue()

@@ -49,7 +49,7 @@ class ValidateP0Command:
 
                     chapter = CourseChapter(object_data(bundle.data["course_chapter"]))
                     chapter.bind_context(bundle.context)
-                    report["course_policy"] = "COURSE-CHAPTER-1.0"
+                    report["course_policy"] = chapter.data["contract_id"]
                     report["course_checks"] = chapter.checks()
                     report["visual_review"] = "REQUIRED_NOT_ATTESTED"
                 else:

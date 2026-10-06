@@ -89,7 +89,8 @@ class ExportSavedCommand:
                     WordBlock("Heading2", str(answer["id"])),
                     WordBlock("Normal", str(answer["expected_answer"]) + "\n" + str(answer["rationale"]))))
             return WordDocument(kind, str(chapter.data["title"]), preview,
-                                course_chapter=chapter.projection(teacher=kind == "correction"))
+                                course_chapter=chapter.projection(teacher=kind == "correction"),
+                                course_media=chapter.media(teacher=kind == "correction"))
         titles = {"student": "Document élève", "correction": "Corrigé professeur",
                   "marking": "Barème"}
         blocks: list[WordBlock] = []

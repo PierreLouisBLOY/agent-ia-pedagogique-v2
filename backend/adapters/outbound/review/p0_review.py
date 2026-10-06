@@ -60,6 +60,24 @@ class P0ReviewAdapter:
             constraints["institutional_alignment"] = evidence["institutional_resolution"]
         if evidence.get("review_axes") is not None:
             constraints["separate_review_axes"] = evidence["review_axes"]
+        reviewed = {k: production[k] for k in ("title", "context", "sections", "questions", "corrections", "marking")}
+        if production.get("course_chapter") is not None:
+            from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
+                CourseChapter,
+            )
+
+            chapter = CourseChapter(object_data(production["course_chapter"]))
+            chapter.bind_production(str(production["production_ref"]))
+            content = chapter.projection(teacher=True)
+            content.pop("media_assets", None)
+            reviewed["course_chapter"] = content
+            visuals = chapter.media_review_context()
+            if visuals:
+                constraints["visual_review_requirements"] = {
+                    "axes": ["exactitude", "niveau", "utilite", "coherence", "absence_surinterpretation"],
+                    "scope": "EVERY_VISUAL_EXPLICIT_FINDING_IF_UNVERIFIED",
+                    "pixel_inspection": "SEPARATE_REQUIRED", "pedagogical_acceptance": "NOT_PERFORMED"}
+                reviewed["visuals"] = visuals
         canonical = ReviewRequest(meta, target, tuple(ReviewDimension),
             constraints,
             tuple(str(r["evidence_id"]) for r in items(evidence["passages"], 8)),
@@ -67,8 +85,7 @@ class P0ReviewAdapter:
         agent = ReviewerAgent(ReviewCoordinator(self.port))
         prepared, result = agent.semantic_review(request=ReviewPreparationRequest(
             CapabilityId("CAP-V01"), canonical,
-            ResolvedReviewTarget(target, structured_payload={k: production[k] for k in (
-                "title", "context", "sections", "questions", "corrections", "marking")}),
+            ResolvedReviewTarget(target, structured_payload=reviewed),
             resolved_inputs={"passages": evidence["passages"], "plan": request["plan"],
                              "structural_validation": request["validation"]},
             output_contract={"contract_id": "P0-REVIEW-1.0", "no_authority": True}))

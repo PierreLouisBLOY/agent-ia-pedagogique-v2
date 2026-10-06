@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import cast
 
+from backend.modules.materialization_export.contracts.dto.media_asset import CourseMedia, MediaAsset
 from backend.modules.pedagogical_context.contracts.dto.p0_context import P0Context
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     as_plain,
@@ -12,9 +13,11 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     nonempty,
     object_data,
 )
+from backend.modules.pedagogical_design.contracts.dto.visual_brief import visual_briefs
 from backend.shared_kernel._safe_data import freeze_safe_mapping
 
 COURSE_CHAPTER_CONTRACT = "COURSE-CHAPTER-1.0"
+COURSE_MEDIA_CONTRACT = "COURSE-CHAPTER-MEDIA-2.0"
 COURSE_PRODUCTION_CONTRACT = "R6-P0-PRODUCTION-COURSE-2.0"
 CHECK_NAMES = (
     "has_program_header", "has_capabilities", "has_notions", "has_context",
@@ -71,8 +74,9 @@ class CourseChapter:
     data: Mapping[str, object]
 
     def __post_init__(self) -> None:
-        data = object_data(self.data, _FIELDS)
-        if data["contract_id"] != COURSE_CHAPTER_CONTRACT:
+        illustrated = self.data.get("contract_id") == COURSE_MEDIA_CONTRACT
+        data = object_data(self.data, _FIELDS | {"visual_briefs", "media_assets"} if illustrated else _FIELDS)
+        if data["contract_id"] not in {COURSE_CHAPTER_CONTRACT, COURSE_MEDIA_CONTRACT}:
             raise ValueError("COURSE_CHAPTER_CONTRACT")
         if type(data["chapter_number"]) is not int or not 1 <= data["chapter_number"] <= 99:
             raise ValueError("COURSE_CHAPTER_NUMBER")
@@ -150,6 +154,17 @@ class CourseChapter:
         for row in answers:
             for value in row.values():
                 nonempty(value, 4000)
+        if illustrated:
+            briefs = visual_briefs(data["visual_briefs"])
+            assets = tuple(MediaAsset(row) for row in items(data["media_assets"], 8))
+            if len(briefs) != len(assets):
+                raise ValueError("COURSE_MEDIA_COVERAGE")
+            used_documents = {str(d) for part in parts for d in _strings(part["document_ids"])} | set(_strings(transfer["document_ids"]))
+            used_concepts = {str(c) for part in parts for c in _strings(part["concept_ids"])}
+            for brief, asset in zip(briefs, assets, strict=True):
+                asset.bind(brief)
+                brief.bind(str(brief.data["production_ref"]), documents=used_documents, concepts=used_concepts,
+                           capabilities={str(c["source_ref"]) for c in capacities}, notions=set(_strings(brief.data["notion_refs"])))
         if len(encoded(data)) > 128 * 1024:
             raise ValueError("COURSE_CHAPTER_SIZE")
         object.__setattr__(self, "data", freeze_safe_mapping(data))
@@ -181,11 +196,35 @@ class CourseChapter:
         level_labels = {"FIRST_STMG": "Première STMG", "FINAL_STMG": "Terminale STMG"}
         if header["level_label"] != level_labels.get(str(context.data["level"])):
             raise ValueError("COURSE_PROGRAM_BINDING")
+        if "visual_briefs" in self.data:
+            for brief in visual_briefs(self.data["visual_briefs"]):
+                if not set(_strings(brief.data["notion_refs"])) <= set(_strings(context.institutional["notion_refs"])):
+                    raise ValueError("VISUAL_NOTION_BINDING")
+
+    def bind_production(self, production_ref: str) -> None:
+        if "visual_briefs" in self.data and any(b.data["production_ref"] != production_ref for b in visual_briefs(self.data["visual_briefs"])):
+            raise ValueError("VISUAL_PRODUCTION_BINDING")
+
+    def media(self, *, teacher: bool = False) -> tuple[CourseMedia, ...]:
+        if "visual_briefs" not in self.data:
+            return ()
+        pairs = tuple(CourseMedia(b, MediaAsset(a)) for b, a in zip(
+            visual_briefs(self.data["visual_briefs"]), items(self.data["media_assets"], 8), strict=True))
+        return tuple(p for p in pairs if p.brief.data["teacher_visibility" if teacher else "student_visibility"])
+
+    def media_review_context(self) -> list[dict[str, object]]:
+        if "visual_briefs" not in self.data:
+            return []
+        return [b.review_context(str(a["png_sha256"])) for b, a in zip(
+            visual_briefs(self.data["visual_briefs"]), items(self.data["media_assets"], 8), strict=True)]
 
     def projection(self, *, teacher: bool = False) -> dict[str, object]:
         data = object_data(as_plain(self.data))
         data["documents"] = [{k: as_plain(v) for k, v in d.items() if k != "provenance"} for d in items(self.data["documents"])]
         data["capabilities"] = [{"id": c["id"], "label": c["label"]} for c in items(self.data["capabilities"])]
+        if "visual_briefs" in data:
+            data.pop("visual_briefs")
+            data["media_assets"] = [p.asset.projection(p.brief) for p in self.media(teacher=teacher)]
         if not teacher:
             data.pop("teacher_answers")
         return data
@@ -195,6 +234,9 @@ class CourseChapter:
         header = object_data(visible["program_header"])
         visible["program_header"] = {k: v for k, v in header.items() if k.endswith("_label")}
         visible.pop("contract_id")
+        if "media_assets" in visible:
+            visible["media_assets"] = [{k: row[k] for k in ("caption", "alt_text")} for row in items(visible["media_assets"], 8)]
+            visible["diagram_text"] = [as_plain(pair.brief.data["diagram"]) for pair in self.media(teacher=teacher)]
         def text(value: object) -> list[str]:
             if isinstance(value, str):
                 return [value]

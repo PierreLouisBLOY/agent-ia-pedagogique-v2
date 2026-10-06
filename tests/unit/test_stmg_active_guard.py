@@ -65,9 +65,13 @@ def test_stmg_active_owner_and_mutation(tmp_path, path):
 def test_successor_keeps_historical_manifest_and_reviewed_entry():
     manifest = json.loads((ROOT / guard.MANIFEST).read_text("utf-8"))
     successor = manifest["successors"][-1]
-    assert successor["entry"] == "e2e6c44edf7f517dc64d8eaabb9628865f73a0ce"
-    assert successor["purpose"] == "INSTITUTIONAL_CURRENT_HTTP_AND_CP645_TEST_PRECONDITIONS"
-    assert successor["predecessor_manifest_sha256"] == "d66cf3459587bbf4b7684ab086187728ac8618dcfaa12f05bb7f99345143fc17"
+    assert successor["entry"] == "db4b52253823ba4f26429b4473ac9ef647208fb2"
+    assert successor["purpose"] == "M01_PROGRAMME_LOCAL_MEDIA"
+    assert successor["predecessor_manifest_sha256"] == "31cb2dd1f9c25cfcd2b547f030077cd181fb07ed97c5300dbb3d6147d62fb8e2"
+    entry = next(row for row in manifest["successors"] if row["purpose"] == "INSTITUTIONAL_CURRENT_HTTP_AND_CP645_TEST_PRECONDITIONS")
+    assert entry["entry"] == "e2e6c44edf7f517dc64d8eaabb9628865f73a0ce"
+    assert entry["predecessor_manifest_sha256"] == "d66cf3459587bbf4b7684ab086187728ac8618dcfaa12f05bb7f99345143fc17"
+    assert set(entry["changed_owners"]) <= set(successor["changed_owners"])
     provider_view = next(row for row in manifest["successors"] if row["purpose"] == "INSTITUTIONAL_BOUNDED_PROVIDER_VIEW")
     assert provider_view["entry"] == "d10e521a245d316c662e4d601be6a8c2a406c32a"
     assert provider_view["predecessor_manifest_sha256"] == "4e3677cda8bbef951fe117a124d025fde2188a702e6b9ade934a0adfae19d003"

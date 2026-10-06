@@ -93,7 +93,7 @@ class P0Context:
                 for value in object_data(progression, {"chapter", "sequence", "week"}).values():
                     if value is not None:
                         _bounded_text(value, 200)
-        _text_items(data["topics"])
+        _text_items(data["topics"], 16 if institutional and data["resource_type"] == "COURSE" else 8)
         _text_items(data["objectives"])
         if data["difficulty"] not in P0_DIFFICULTIES:
             raise ValueError("P0_DIFFICULTY")

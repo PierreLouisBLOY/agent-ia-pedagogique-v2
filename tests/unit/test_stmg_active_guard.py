@@ -38,6 +38,10 @@ OWNER_PATHS = (
     "docs/development/ADR_BTS_INSTITUTIONAL_PREPARATION_2026-10-06.md",
     "tests/unit/test_institutional_provider_projection.py",
     "docs/development/ADR_INSTITUTIONAL_PROVIDER_PROJECTION_2026-10-06.md",
+    "tests/integration/test_p0_creation_http.py",
+    "tests/integration/test_sqlite_runtime_real_gate.py",
+    "tests/support/institutional_http_fixture.py",
+    "docs/development/INSTITUTIONAL_TEST_PRECONDITIONS_2026-10-06.md",
 )
 
 
@@ -61,9 +65,13 @@ def test_stmg_active_owner_and_mutation(tmp_path, path):
 def test_successor_keeps_historical_manifest_and_reviewed_entry():
     manifest = json.loads((ROOT / guard.MANIFEST).read_text("utf-8"))
     successor = manifest["successors"][-1]
-    assert successor["entry"] == "d10e521a245d316c662e4d601be6a8c2a406c32a"
-    assert successor["purpose"] == "INSTITUTIONAL_BOUNDED_PROVIDER_VIEW"
-    assert successor["predecessor_manifest_sha256"] == "4e3677cda8bbef951fe117a124d025fde2188a702e6b9ade934a0adfae19d003"
+    assert successor["entry"] == "e2e6c44edf7f517dc64d8eaabb9628865f73a0ce"
+    assert successor["purpose"] == "INSTITUTIONAL_CURRENT_HTTP_AND_CP645_TEST_PRECONDITIONS"
+    assert successor["predecessor_manifest_sha256"] == "d66cf3459587bbf4b7684ab086187728ac8618dcfaa12f05bb7f99345143fc17"
+    provider_view = next(row for row in manifest["successors"] if row["purpose"] == "INSTITUTIONAL_BOUNDED_PROVIDER_VIEW")
+    assert provider_view["entry"] == "d10e521a245d316c662e4d601be6a8c2a406c32a"
+    assert provider_view["predecessor_manifest_sha256"] == "4e3677cda8bbef951fe117a124d025fde2188a702e6b9ade934a0adfae19d003"
+    assert set(provider_view["changed_owners"]) <= set(successor["changed_owners"])
     bts = next(row for row in manifest["successors"] if row["purpose"] == "INSTITUTIONAL_BTS_PREPARATION_AND_SAVED_AUTHORITY")
     assert bts["entry"] == "245011f1621c3a56faac36838b54508e99b5cc8b"
     assert bts["predecessor_manifest_sha256"] == "f1c1d1e18fa6053e4281db179ea0508da23848d1cf05fe8228f706f4814974c8"

@@ -1,4 +1,10 @@
-"""24 real HTTP/Application lifecycles; the only double is the external dispatch."""
+"""24 composed HTTP lifecycles with explicit synthetic institutional test data.
+
+The outbound dispatch remains the only execution double. Historical R6 anchor
+projections are covered separately by test_r6_p0_matrix_application.
+"""
+import copy
+import http.client
 import json
 import os
 import threading
@@ -8,14 +14,39 @@ from secrets import token_hex
 import pytest
 
 from backend.infrastructure.composition.factories.local_browser import (
-    Read15RuntimeTarget,
     build_local_read15,
     build_local_saved,
 )
 from backend.infrastructure.config.schemas.http import LocalBrowserHttpConfiguration
-from tests.integration.test_r4_local_http import available_port, request
-from tests.integration.test_r6_p0_matrix_application import CELLS, _source_scenario, _text
+from backend.modules.pedagogical_design.contracts.dto.course_policy import COURSE_SECTIONS
+from tests.integration.test_r4_local_http import available_port
+from tests.integration.test_r6_p0_matrix_application import CELLS, _text
+from tests.support.institutional_http_fixture import build_test_target
 from tests.support.p0_generation_double import P0GenerationDouble
+
+
+class ExplainedCourseDouble(P0GenerationDouble):
+    def generate(self, *, request):
+        output = dict(super().generate(request=request))
+        output["sections"] = [{"section_id": "S_" + role, "heading": role,
+            "text": "Explication synthétique déclarée — " + role} for role in COURSE_SECTIONS]
+        return output
+
+
+def request(port, method, path, *, nonce=None, body=None, origin=None):
+    # Full CP645 authentication can exceed the small R4 synthetic client's 5s.
+    # This lifecycle suite is not a latency/SLA test; no retry is performed.
+    headers = {"X-Local-Intent": "conversation-v1"}
+    if method == "POST":
+        headers.update({"Content-Type": "application/json; charset=utf-8", "X-R2-Nonce": nonce or "",
+                        "Origin": origin or f"http://127.0.0.1:{port}"})
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=30)
+    try:
+        connection.request(method, path, json.dumps(body) if body is not None else None, headers)
+        response = connection.getresponse()
+        return response.status, response.getheader("Content-Type"), response.read()
+    finally:
+        connection.close()
 
 
 def context(level, kind, mode):
@@ -26,12 +57,15 @@ def context(level, kind, mode):
         "total_points": 20 if kind == "ASSESSMENT" else None}
 
 
-def start(tmp_path, double):
+@pytest.fixture(scope="module")
+def institutional_fixture(tmp_path_factory):
     configured = os.environ.get("PROJET_V2_CANONICAL_DB")
     assert configured, "P0_REAL_SOURCE_PRECONDITION_REQUIRED"
-    seed = Path(configured)
-    target = Read15RuntimeTarget(seed, seed.parent,
-        "9d64d15e9c246924edeff16e7bbb5fb7a53791fc2ddf217541824771b34053e1")
+    return build_test_target(Path(configured), tmp_path_factory.mktemp("institutional-http"))
+
+
+def start(tmp_path, double, institutional_fixture):
+    target, _, _ = institutional_fixture
     port = available_port()
     app = build_local_read15(LocalBrowserHttpConfiguration(port), target, saved_root=tmp_path / "saved",
                             create_saved=True, p0_generation=double, observability_root=tmp_path)
@@ -49,24 +83,63 @@ def call(port, operation, body=None, nonce=None):
     return envelope["data"]
 
 
-def prepare(port, ctx, scenario="R6-S06"):
+def current_context(ctx, institutional_fixture):
+    _, selections, reference = institutional_fixture
+    ctx = {**ctx, "contract_id": "P0-CONTEXT-2.0", "topics": ["Absence — fixture synthétique"],
+        "discipline": "Comptabilité et gestion" if ctx["level"].startswith("BTS") else
+            ("Management" if ctx["level"] == "FIRST_STMG" else "Management, sciences de gestion et numérique — enseignement commun"),
+        "institutional": copy.deepcopy(selections[ctx["level"]]), "institutional_resolution": None,
+        "local_progression": {"chapter": "SYNTHETIC HTTP TEST", "sequence": None, "week": None}}
+    return ctx, reference
+
+
+def prepare(port, ctx, institutional_fixture):
     meta = call(port, "")
-    binding = next(b for b in meta["references"] if scenario in b["scenarios"])
+    ctx, reference = current_context(ctx, institutional_fixture)
     nonce = meta["transport_nonce"]
-    body = {"command_id": token_hex(16), "context": ctx, "reference": {
-        key: binding[key] for key in ("resource_ref", "resource_version_ref")}}
+    body = {"command_id": token_hex(16), "context": ctx, "reference": reference}
     prepared = call(port, "/prepare", body, nonce)
     assert prepared["state"] == "PREPARATION_READY"
-    assert prepared["provider_attempts"] == 0 and prepared["context"] == ctx
+    assert prepared["provider_attempts"] == 0
+    assert prepared["context"]["institutional_resolution"]["status"] == "RESOLVED_ADMITTED"
+    assert {**prepared["context"], "institutional_resolution": None} == ctx
     return prepared, nonce
 
 
-@pytest.mark.parametrize("index,level,kind,mode", CELLS, ids=[f"matrix_{c[0]:02d}" for c in CELLS])
-def test_http_p0_matrix_create_revise_save_restart_export(tmp_path, index, level, kind, mode):
+@pytest.mark.parametrize("mutation", ("legacy", "version", "scope", "reference", "resolution"))
+def test_http_institutional_substitutions_refused_before_dispatch(tmp_path, institutional_fixture, mutation):
     double = P0GenerationDouble()
-    app, thread, port = start(tmp_path, double)
+    app, thread, port = start(tmp_path, double, institutional_fixture)
     try:
-        prepared, nonce = prepare(port, context(level, kind, mode), _source_scenario(level, kind, mode))
+        metadata = call(port, "")
+        legacy = context("BTS_CG_YEAR_2", "EXERCISE", None)
+        ctx, reference = current_context(legacy, institutional_fixture)
+        if mutation == "legacy":
+            ctx = legacy
+        elif mutation == "version":
+            ctx["institutional"]["program_version"] = "version:substituted"
+        elif mutation == "scope":
+            ctx["institutional"]["activity_ref"] = ctx["institutional"]["process_ref"]
+        elif mutation == "reference":
+            reference = {"resource_ref": metadata["references"][0]["resource_ref"],
+                         "resource_version_ref": metadata["references"][0]["resource_version_ref"]}
+        else:
+            ctx["institutional_resolution"] = {"status": "RESOLVED_ADMITTED"}
+        status, _, raw = request(port, "POST", "/api/v2/p0/prepare", nonce=metadata["transport_nonce"],
+            body={"command_id": token_hex(16), "context": ctx, "reference": reference})
+        assert status == 409 and "error" in json.loads(raw) and "data" not in json.loads(raw)
+        assert double.requests == []
+    finally:
+        app.close()
+        thread.join(5)
+
+
+@pytest.mark.parametrize("index,level,kind,mode", CELLS, ids=[f"matrix_{c[0]:02d}" for c in CELLS])
+def test_http_p0_matrix_create_revise_save_restart_export(tmp_path, institutional_fixture, index, level, kind, mode):
+    double = ExplainedCourseDouble() if kind == "COURSE" else P0GenerationDouble()
+    app, thread, port = start(tmp_path, double, institutional_fixture)
+    try:
+        prepared, nonce = prepare(port, context(level, kind, mode), institutional_fixture)
         payload = {"command_id": token_hex(16), "preparation_ref": prepared["preparation_ref"],
                    "preparation_sha256": prepared["preparation_sha256"]}
         result = call(port, "/generate", payload, nonce)
@@ -83,7 +156,9 @@ def test_http_p0_matrix_create_revise_save_restart_export(tmp_path, index, level
         assert bool(teacher["corrections"]) == (kind != "COURSE")
         child = call(port, "/revise", {"command_id": token_hex(16), "production_ref": view["production_ref"],
             "version_ref": view["version_ref"], "bundle_sha256": view["bundle_sha256"],
-            "edits": {"title": "Titre relu par le harnais", "sections": [dict(view["sections"][0], text="Texte révisé.")]}}, nonce)["view"]
+            "edits": {"title": "Titre relu par le harnais", "sections": [
+                dict(row, text="Texte révisé.") if i == 0 else row
+                for i, row in enumerate(view["sections"])]}}, nonce)["view"]
         assert child["lineage"]["parent_version_ref"] == view["version_ref"]
         assert call(port, parent_path) == view
         validation = call(port, "/validate", {"command_id": token_hex(16), "production_ref": child["production_ref"],
@@ -119,14 +194,14 @@ def test_http_p0_matrix_create_revise_save_restart_export(tmp_path, index, level
 
 
 @pytest.mark.parametrize("mode", ("unbound", "refused", "failed"))
-def test_no_authority_refusal_and_unknown_dispatch_never_retry(tmp_path, mode):
+def test_no_authority_refusal_and_unknown_dispatch_never_retry(tmp_path, institutional_fixture, mode):
     double = None if mode == "unbound" else P0GenerationDouble(allowed=mode != "refused", failure=mode == "failed")
-    app, thread, port = start(tmp_path, double)
+    app, thread, port = start(tmp_path, double, institutional_fixture)
     try:
         metadata = call(port, "")
         assert metadata["live_binding"] == ("NONE" if mode == "unbound" else "EXPLICIT_PORT")
         assert metadata["review_binding"] == "NONE"
-        prepared, nonce = prepare(port, context("BTS_CG_YEAR_2", "ASSESSMENT", None))
+        prepared, nonce = prepare(port, context("BTS_CG_YEAR_2", "ASSESSMENT", None), institutional_fixture)
         body = {"command_id": token_hex(16), "preparation_ref": prepared["preparation_ref"],
                 "preparation_sha256": prepared["preparation_sha256"]}
         status, _, raw = request(port, "POST", "/api/v2/p0/generate", nonce=nonce, body=body)

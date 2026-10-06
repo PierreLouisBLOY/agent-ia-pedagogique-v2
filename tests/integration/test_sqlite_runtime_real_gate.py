@@ -94,6 +94,12 @@ from backend.modules.work_orchestration.domain.value_objects.session_lifecycle i
 SEED_VALUE = os.environ.get(SEED_PATH_ENV)
 pytestmark = pytest.mark.skipif(SEED_VALUE is None, reason=f"{SEED_PATH_ENV} is not configured")
 MIGRATION = Path("database/migrations/001_document_sha256_check.sql")
+# Independently observed through the authenticated Application schema inventory.
+# These expectations belong to these exact CP645 bytes, not the older C0 seed.
+CP645_INVENTORY_SHA256 = "9d64d15e9c246924edeff16e7bbb5fb7a53791fc2ddf217541824771b34053e1"
+CP645_DOCUMENTS = 67
+CP645_ACTIVE_RESOURCES = 9_735
+CP645_SCHEMA_COUNTS = (121, 23, 7, 11)
 NOTION_VALUES = NotionPersistenceValues(
     KnowledgeLanguageCode.FR, NotionIdentityStatus.CANONICAL
 )
@@ -171,6 +177,7 @@ def _authenticated_seed_snapshot(seed_path: Path) -> SQLiteFileSetSnapshot:
     assert snapshot.main.exists
     assert snapshot.main.size_bytes == CANONICAL_SEED_SIZE
     assert snapshot.main.sha256 == CANONICAL_SEED_SHA256
+    assert CANONICAL_SEED_SHA256 == CP645_INVENTORY_SHA256
     return snapshot
 
 
@@ -198,13 +205,8 @@ def test_runtime_provisioning_applies_exact_migration(
     report = provision_runtime(seed_path, runtime, MIGRATION)
 
     assert report.migration_applied is True
-    assert report.documents_before == report.documents_after == 15
-    assert (report.domain_tables, report.explicit_indexes, report.triggers, report.views) == (
-        98,
-        20,
-        7,
-        2,
-    )
+    assert report.documents_before == report.documents_after == CP645_DOCUMENTS
+    assert (report.domain_tables, report.explicit_indexes, report.triggers, report.views) == CP645_SCHEMA_COUNTS
     assert report.runtime_sha256 != CANONICAL_SEED_SHA256
 
 
@@ -250,7 +252,7 @@ def test_existing_resource_rows_preserve_only_observed_availability(
             "SELECT resource_type, identity_status FROM resource ORDER BY id LIMIT 1"
         ).fetchone()
 
-    assert [(str(row[0]), int(row[1])) for row in counts] == [("ACTIVE", 1_399)]
+    assert [(str(row[0]), int(row[1])) for row in counts] == [("ACTIVE", CP645_ACTIVE_RESOURCES)]
     assert sample is not None
     values = decode_resource(sample[0], sample[1])
     assert values.semantic_state == ResourceSemanticState(

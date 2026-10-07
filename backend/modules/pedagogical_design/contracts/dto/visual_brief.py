@@ -18,8 +18,12 @@ FIELDS = {"contract_id", "visual_id", "production_ref", "section_ref", "learning
           "content_description", "must_show", "must_not_show", "caption", "alt_text",
           "student_visibility", "teacher_visibility", "preferred_position", "source_policy",
           "style_policy", "diagram"}
-VISUAL_REVIEW_AXES = ("exactitude", "niveau", "utilite", "coherence", "absence_surinterpretation")
+VISUAL_REVIEW_AXES = ("exactitude", "niveau", "utilite", "coherence", "absence_surinterpretation", "qualite_lecture")
 LAYOUTS = {"FLOWCHART": "FLOW", "ICON_SET": "RESOURCES", "PROCESS_MAP": "CYCLE", "ORG_CHART": "RESPONSIBILITIES"}
+CONTEXTUAL_LAYOUTS = {"SCENARIO_ILLUSTRATION": "LIBRARY_SCENE", "PORTRAIT_STRIP": "CHARACTERS",
+                      "TIMELINE": "TIMELINE", "ACTIVITY_PLAN": "WORKSPACE"}
+NODE_COUNTS = {"FLOW": 4, "RESOURCES": 5, "CYCLE": 4, "RESPONSIBILITIES": 4,
+               "LIBRARY_SCENE": 3, "CHARACTERS": 3, "TIMELINE": 5, "WORKSPACE": 3}
 
 
 def strings(value: object, maximum: int = 16, *, empty: bool = False) -> tuple[str, ...]:
@@ -54,18 +58,22 @@ class VisualBrief:
                 raise ValueError("VISUAL_VISIBILITY")
         if not (d["student_visibility"] or d["teacher_visibility"]):
             raise ValueError("VISUAL_INVISIBLE")
-        if d["preferred_position"] not in {"AFTER_DOCUMENT", "AFTER_CONCEPT"}:
+        if d["preferred_position"] not in {"AFTER_DOCUMENT", "AFTER_CONCEPT", "AFTER_CONTEXT"}:
             raise ValueError("VISUAL_POSITION")
+        if d["preferred_position"] == "AFTER_CONTEXT" and (d["section_ref"] != "CONTEXT"
+                or d["visual_type"] != "SCENARIO_ILLUSTRATION" or d["source_policy"] != "LOCAL_DETERMINISTIC"):
+            raise ValueError("VISUAL_CONTEXT_POSITION")
         if d["source_policy"] not in {"LOCAL_DETERMINISTIC", "USER_SUPPLIED", "LICENSED_EXTERNAL", "GENERATED_ADMITTED"}:
             raise ValueError("VISUAL_SOURCE_POLICY")
-        if d["style_policy"] != "COURSE_LOCAL_DIAGRAM_V1":
+        if d["style_policy"] not in {"COURSE_LOCAL_DIAGRAM_V1", "COURSE_LOCAL_ILLUSTRATION_V2"}:
             raise ValueError("VISUAL_STYLE")
         if d["source_policy"] == "LOCAL_DETERMINISTIC":
             diagram = object_data(d["diagram"], {"layout", "nodes", "edges", "note"})
-            if LAYOUTS.get(str(d["visual_type"])) != diagram["layout"]:
+            layouts = LAYOUTS if d["style_policy"] == "COURSE_LOCAL_DIAGRAM_V1" else {k: v for k, v in LAYOUTS.items() if k != "FLOWCHART"} | CONTEXTUAL_LAYOUTS
+            if layouts.get(str(d["visual_type"])) != diagram["layout"]:
                 raise ValueError("VISUAL_LAYOUT")
             nodes = items(diagram["nodes"], 5)
-            if len(nodes) != (5 if diagram["layout"] == "RESOURCES" else 4):
+            if len(nodes) != NODE_COUNTS[str(diagram["layout"])]:
                 raise ValueError("VISUAL_NODES")
             ids = []
             for row in nodes:
@@ -88,8 +96,15 @@ class VisualBrief:
                 pairs.append((row["source"], row["target"]))
             if len(pairs) != len(set(pairs)):
                 raise ValueError("VISUAL_DUPLICATE")
+            if d["style_policy"] == "COURSE_LOCAL_ILLUSTRATION_V2":
+                if diagram["layout"] in {"LIBRARY_SCENE", "CHARACTERS", "WORKSPACE", "RESOURCES"} and edges:
+                    raise ValueError("VISUAL_CONTEXTUAL_EDGES")
+                if diagram["layout"] == "TIMELINE" and pairs != list(zip(ids[:-1], ids[1:], strict=True)):
+                    raise ValueError("VISUAL_TIMELINE_ORDER")
+                if any(e["label"] for e in edges) or (diagram["layout"] != "RESOURCES" and any(n["icon"] != "NONE" for n in nodes)):
+                    raise ValueError("VISUAL_CONTEXTUAL_UNRENDERED_CONTENT")
             nonempty(diagram["note"], 220)
-        elif d["diagram"] is not None or d["visual_type"] not in {"CONTEXT_PHOTO", "ANNOTATED_DOCUMENT", "DIAGRAM", "INFOGRAPHIC"}:
+        elif d["style_policy"] != "COURSE_LOCAL_DIAGRAM_V1" or d["diagram"] is not None or d["visual_type"] not in {"CONTEXT_PHOTO", "ANNOTATED_DOCUMENT", "DIAGRAM", "INFOGRAPHIC"}:
             raise ValueError("VISUAL_IMPORTED_TYPE")
         object.__setattr__(self, "data", freeze_safe_mapping(d))
 
@@ -99,7 +114,8 @@ class VisualBrief:
 
     def bind(self, production_ref: str, *, documents: set[str], concepts: set[str],
              capabilities: set[str], notions: set[str]) -> None:
-        targets = documents if self.data["preferred_position"] == "AFTER_DOCUMENT" else concepts
+        position = self.data["preferred_position"]
+        targets = documents if position == "AFTER_DOCUMENT" else {"CONTEXT"} if position == "AFTER_CONTEXT" else concepts
         if (self.data["production_ref"] != production_ref or self.data["section_ref"] not in targets
                 or self.data["institutional_capability_ref"] not in capabilities
                 or not set(strings(self.data["notion_refs"])) <= notions):

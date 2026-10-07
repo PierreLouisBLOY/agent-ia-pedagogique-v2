@@ -175,6 +175,8 @@ class WindowsLocalDiagramRenderer:
     def render(self, brief: VisualBrief) -> bytes:
         if brief.data["source_policy"] != "LOCAL_DETERMINISTIC":
             raise ValueError("MEDIA_DRAW_LOCAL_ONLY")
+        if brief.data["style_policy"] != "COURSE_LOCAL_DIAGRAM_V1":
+            raise ValueError("MEDIA_RENDERER_PROFILE")
         diagram = object_data(brief.data["diagram"])
         layout = diagram["layout"]
         if layout == "FLOW":

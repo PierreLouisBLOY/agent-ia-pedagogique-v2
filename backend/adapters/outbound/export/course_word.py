@@ -74,7 +74,7 @@ def _document(parent: Element, row: dict[str, object], number: int) -> None:
         _table(parent, row["table"])
 
 
-def _question(parent: Element, row: dict[str, object], answer: dict[str, object] | None) -> None:
+def _question(parent: Element, row: dict[str, object], answer: dict[str, object] | None, *, keep_responses: bool = False) -> None:
     _p(parent, f"{row['number']}. {row['prompt']}", "Question")
     if answer is not None:
         for label, field in (("Réponse attendue", "expected_answer"), ("Justification", "rationale"),
@@ -85,8 +85,13 @@ def _question(parent: Element, row: dict[str, object], answer: dict[str, object]
     if response["table"] is not None:
         _table(parent, response["table"], response=True)
     else:
-        for _ in range(cast(int, response["lines"])):
-            _p(parent, " ", "Response")
+        lines = cast(int, response["lines"])
+        for i in range(lines):
+            p = _p(parent, " ", "Response")
+            if keep_responses and i < lines-1:
+                pr = p.find(_w("pPr"))
+                if pr is not None:
+                    SubElement(pr, _w("keepNext"))
 
 
 def _styles() -> Element:
@@ -162,6 +167,7 @@ class CourseOOXMLWordWriter:
         story = object_data(chapter["context"])
         _p(body, "Contexte — " + str(story["title"]), "Heading2")
         _p(body, str(story["text"]))
+        media_at("CONTEXT", "AFTER_CONTEXT")
         _p(body, "Votre travail — Lire les documents, relever les faits puis justifier chaque réponse avec les notions du chapitre.")
         docs = {str(d["id"]): d for d in items(chapter["documents"])}
         doc_numbers = {ref: i for i, ref in enumerate(docs, 1)}
@@ -169,6 +175,7 @@ class CourseOOXMLWordWriter:
         concepts = {str(c["id"]): c for c in items(chapter["concepts"])}
         answers = {str(a["id"]): a for a in items(chapter["teacher_answers"], 60)} if teacher else {}
         flowing_teacher = teacher and bool(document.course_media)
+        enriched = any(p.brief.data["style_policy"] == "COURSE_LOCAL_ILLUSTRATION_V2" for p in document.course_media)
         for part_index, part in enumerate(items(chapter["parts"])):
             _p(body, str(part["title"]), "Heading1", before=part_index == 0 or not flowing_teacher)
             for ref in cast(tuple[str, ...], part["document_ids"]):
@@ -176,17 +183,17 @@ class CourseOOXMLWordWriter:
                 media_at(ref, "AFTER_DOCUMENT")
             for role in ("observation", "analysis"):
                 for ref in cast(tuple[str, ...], part[role]):
-                    _question(body, questions[ref], answers.get(ref))
+                    _question(body, questions[ref], answers.get(ref), keep_responses=enriched)
             for ref in cast(tuple[str, ...], part["concept_ids"]):
                 c = concepts[ref]
                 _p(body, "Notion — " + str(c["notion"]), "ConceptTitle")
                 _p(body, str(c["definition"]) + "\n" + str(c["explanation"]) + "\nExemple — " + str(c["example"]), "ConceptText")
                 media_at(ref, "AFTER_CONCEPT")
             for ref in cast(tuple[str, ...], part["reinvestment"]):
-                _question(body, questions[ref], answers.get(ref))
-        _p(body, "Tester ses connaissances", "Heading1", before=not flowing_teacher)
+                _question(body, questions[ref], answers.get(ref), keep_responses=enriched)
+        _p(body, "Tester ses connaissances", "Heading1", before=not flowing_teacher and not enriched)
         for ref in cast(tuple[str, ...], chapter["knowledge_check"]):
-            _question(body, questions[ref], answers.get(ref))
+            _question(body, questions[ref], answers.get(ref), keep_responses=enriched)
         _p(body, "À retenir", "Heading2")
         _p(body, str(chapter["synthesis"]), "ConceptText")
         transfer = object_data(chapter["transfer"])
@@ -195,7 +202,7 @@ class CourseOOXMLWordWriter:
             _document(body, docs[ref], doc_numbers[ref])
             media_at(ref, "AFTER_DOCUMENT")
         for ref in cast(tuple[str, ...], transfer["question_ids"]):
-            _question(body, questions[ref], answers.get(ref))
+            _question(body, questions[ref], answers.get(ref), keep_responses=enriched)
         section = SubElement(body, _w("sectPr"))
         SubElement(section, _w("headerReference"), {_w("type"): "default", "{" + R + "}id": "rId2"})
         SubElement(section, _w("footerReference"), {_w("type"): "default", "{" + R + "}id": "rId3"})

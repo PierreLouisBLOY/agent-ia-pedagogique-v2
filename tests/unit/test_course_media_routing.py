@@ -65,7 +65,9 @@ def test_ag04_receives_each_visual_semantics_and_five_axes_without_pixel_accepta
     request = critic.requests[0]
     assert len(request.target_payload["visuals"]) == 1
     assert request.target_payload["visuals"][0]["asset_sha256"] == asset.data["png_sha256"]
-    assert len(request.target_payload["visuals"][0]["axes"]) == 5
+    # Retain the historical test identity and its five axes; add readability explicitly.
+    assert tuple(request.target_payload["visuals"][0]["axes"][:5]) == ("exactitude", "niveau", "utilite", "coherence", "absence_surinterpretation")
+    assert tuple(request.target_payload["visuals"][0]["axes"][5:]) == ("qualite_lecture",)
     assert request.target_payload["visuals"][0]["pixel_inspection"] == "SEPARATE_REQUIRED"
     payload = json.dumps(as_plain(request.target_payload))
     assert "ORACLE_PROF" in payload  # teacher reference is allowed for review, not solving

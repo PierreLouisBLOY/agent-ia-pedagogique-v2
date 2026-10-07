@@ -5,11 +5,14 @@ import json
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from tests.support.r3_d3_scope_guard import BASELINE, PATHS, assert_scope, digest
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_exact_scope_and_protected_contracts() -> None:
     assert_scope(ROOT)
     inventory = json.loads(

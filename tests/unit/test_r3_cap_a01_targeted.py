@@ -548,6 +548,7 @@ def test_unit_conversion_and_nominal_warning_preserved(scale):
 
 
 @pytest.mark.parametrize("path", PATHS)
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_each_targeted_successor_identity_is_closed(tmp_path, path):
     from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
     from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
@@ -592,6 +593,7 @@ def test_exact_inventory_not_count_only(mutation):
     assert violations(ROOT, changed=paths)
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_frozen_scope_working_index_history_and_self_authentication():
     from tests.support.r3_cap_a01_guard import ORACLE_AST_SHA256
     from tests.support.r3_locator_materialization_guard import PRE as LOCATOR_PRE

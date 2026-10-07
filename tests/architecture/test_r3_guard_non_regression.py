@@ -53,6 +53,7 @@ def test_mutable_manifest_cannot_authorize_same_count_replacement(tmp_path):
 
 
 @pytest.mark.parametrize("path", (R3_PATHS[0], next(iter(PREPARATION)), "backend/hidden.py"))
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_index_is_checked_independently_of_working_tree(monkeypatch, path):
     import subprocess
 

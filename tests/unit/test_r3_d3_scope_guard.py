@@ -18,6 +18,7 @@ def copy_sources(root: Path) -> None:
 
 
 @pytest.mark.parametrize("path", guard.PATHS)
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_every_file_mutation_missing_and_same_count_replacement(tmp_path: Path, path: str) -> None:
     copy_sources(tmp_path)
     assert guard.violations(tmp_path) == []
@@ -34,6 +35,7 @@ def test_every_file_mutation_missing_and_same_count_replacement(tmp_path: Path, 
 
 
 @pytest.mark.parametrize("path", guard.PATHS)
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_index_is_independent_from_valid_worktree(path: str) -> None:
     raw = (ROOT / path).read_bytes()
     assert guard.index_matches(ROOT, path, raw)

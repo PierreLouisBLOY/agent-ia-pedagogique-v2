@@ -82,11 +82,9 @@ def calculation_locators(
     assigned: dict[int, dict[str, object]] = {}
     used: list[tuple[int, int]] = []
     for value, indices in groups.items():
-        occurrences: list[int] = []
-        cursor = 0
-        while (start := expected_answer.find(value, cursor)) >= 0:
-            occurrences.append(start)
-            cursor = start + len(value)
+        # Literal, finite and non-overlapping iteration. This is local indexing,
+        # never a provider retry loop or an alternative span assignment.
+        occurrences = [match.start() for match in re.finditer(re.escape(value), expected_answer)]
         if len(occurrences) < len(indices):
             raise LocatorMaterializationError(ParseCode.CALC_VALUE_OCCURRENCE_INSUFFICIENT)
         for index, start in zip(indices, occurrences[:len(indices)], strict=True):

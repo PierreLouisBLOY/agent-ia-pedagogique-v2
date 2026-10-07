@@ -158,6 +158,7 @@ def test_neutral_contract_stays_canonical_but_provider_has_no_locator_authority(
 
 
 @pytest.mark.parametrize("path", PATHS)
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_every_successor_file_mutation_is_rejected(tmp_path, path):
     from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
     from tests.support.r3_editorial_correction_guard import PATHS as EDITORIAL_PATHS
@@ -197,6 +198,7 @@ def test_exact_inventory_not_count_only(fault):
     assert violations(ROOT, changed=paths)
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_frozen_tables_symbols_canonical_predicates_and_working_index(tmp_path):
     assert_scope(ROOT)
     assert_git_state(ROOT)

@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import hashlib
+import re
+import unicodedata
 from collections.abc import Mapping
 
 from backend.modules.pedagogical_context.contracts.dto.p0_context import P0Context
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     as_plain,
     encoded,
+    fingerprint,
     items,
     object_data,
 )
@@ -15,21 +18,69 @@ from backend.modules.pedagogical_design.contracts.dto.program_authority import (
     alignment_axes,
     authority_layers,
 )
+from backend.modules.validation_control.contracts.dto.deterministic_validation import (
+    AssessmentValidation,
+)
 from backend.shared_kernel._safe_data import freeze_safe_mapping
 
-PLAN_CONTRACT = "P0-AGENTIC-PLAN-1.0"
+PLAN_CONTRACT = "P0-AGENTIC-PLAN-1.1"
 PACK_CONTRACT = "P0-EVIDENCE-PACK-1.0"
 
 
-def effort_plan(context: P0Context) -> dict[str, object]:
+def _normalized(text: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFKD", text.casefold()) if not unicodedata.combining(c))
+
+
+def _quantitative_signal(text: str) -> bool:
+    normalized = _normalized(text)
+    # Operations and measured outputs; keywords are a supplementary conservative signal.
+    operation = re.search(r"\b(?:calcul\w*|determiner|trouver|estimer|deduire|evaluer|quel montant)\b", normalized)
+    measure = re.search(r"\b(?:tva|taxe|van|valeur actu\w*|resultat net|benefice|recette\w*|depense\w*|taux|montant|pourcent\w*|chiffre d.affaires|charges|flux)\b", normalized)
+    expression = re.search(r"\d[\d .,]*\s*[+*/=−-]\s*\d", normalized)
+    units = re.search(r"\d[\d .,]*\s*(?:%|€|euros?\b|usd\b|keur\b)", normalized)
+    keywords = re.search(r"\b(?:calcul\w*|bfr|frng|tresorerie|cout\w*|seuil|amortissement|lettrage|proportion\w*)\b", normalized)
+    return bool((operation and measure) or expression or units or keywords)
+
+
+def _declared_applicability(data: Mapping[str, object]) -> dict[str, str]:
+    objectives = data.get("objectives", ())
+    topics = data.get("topics", ())
+    texts = [str(value) for values in (topics, objectives) if isinstance(values, (list, tuple)) for value in values]
+    if any(_quantitative_signal(text) for text in texts):
+        return {"status": "REQUIRED", "reason": "REQUESTED_QUANTITATIVE_OPERATION_OR_DATA"}
+    qualitative = isinstance(objectives, (list, tuple)) and bool(objectives) and all(
+        re.match(r"^(?:identifier|distinguer|decrire|expliquer|presenter|analyser|justifier|caracteriser)\b", _normalized(str(text)))
+        for text in objectives)
+    if qualitative:
+        return {"status": "NOT_REQUIRED", "reason": "EXPLICIT_QUALITATIVE_OBJECTIVES"}
+    return {"status": "UNDETERMINED", "reason": "APPLICABILITY_NOT_ESTABLISHED"}
+
+
+def _production_requires_control(value: object, *, field: str = "") -> bool:
+    if isinstance(value, Mapping):
+        return any((key in {"calculations", "expression", "computed", "totals", "numeric_data", "calculation_steps"} and bool(item))
+            or _production_requires_control(item, field=str(key))
+            for key, item in value.items()
+            if key not in {"context", "lineage", "references", "marking", "media_assets"} and not str(key).endswith(("_id", "_ref", "_sha256")))
+    if isinstance(value, (tuple, list)):
+        return any(_production_requires_control(item, field=field) for item in value)
+    if isinstance(value, str):
+        numeric_answer = field == "expected_answer" and re.fullmatch(r"\s*[-+]?\d[\d .,]*\s*", value) is not None
+        return numeric_answer or _quantitative_signal(value)
+    return type(value) in {int, float} and field in {
+        "amount", "quantity", "rate", "result", "expected_answer", "unit_price", "subtotal", "total", "balance"}
+
+
+def effort_plan(context: P0Context, *, production: Mapping[str, object] | None = None) -> dict[str, object]:
     data = context.as_dict()
     topics = data["topics"]
     assert isinstance(topics, list)
     objectives = data["objectives"]
     assert isinstance(objectives, list)
-    declared_work = " ".join([*topics, *objectives]).casefold()
-    quantitative = any(word in declared_work for word in (
-        "calcul", "bfr", "frng", "trésorerie", "coût", "seuil", "amortissement", "lettrage", "proportion"))
+    applicability = _declared_applicability(data)
+    if production is not None and _production_requires_control(production):
+        applicability = {"status": "REQUIRED", "reason": "PRODUCTION_QUANTITATIVE_OPERATION_OR_DATA"}
+    quantitative = applicability["status"] == "REQUIRED"
     if data["resource_type"] == "ASSESSMENT" or quantitative:
         effort = "HAUT_RISQUE_PEDAGOGIQUE"
     elif data["difficulty"] == "ADVANCED" or len(topics) > 2:
@@ -43,6 +94,7 @@ def effort_plan(context: P0Context) -> dict[str, object]:
         "family": data["question_mode"] or data["resource_type"], "duration_minutes": data["duration_minutes"],
         "difficulty": data["difficulty"], "total_points": data["total_points"], "topics": topics,
         "objectives": data["objectives"], "effort": effort, "quantitative_review_required": quantitative,
+        "calculation_applicability": applicability,
         "retrieval": {"max_passages": {"SIMPLE": 1, "STANDARD": 3, "COMPLEXE": 6, "HAUT_RISQUE_PEDAGOGIQUE": 8}[effort],
                       "mode": "EXACT_APPLICATION_SELECTION", "automatic_expansion": False},
         "review_required": effort != "SIMPLE", "validations": ["SCHEMA", "DEPENDENCIES", "REFERENCE_HASHES", "LINEAGE"]
@@ -100,13 +152,27 @@ def evidence_pack(context: P0Context, references: object, evidence: Mapping[str,
     return object_data(as_plain(freeze_safe_mapping(pack)))
 
 
-def quality_status(plan: Mapping[str, object], *, review: Mapping[str, object] | None = None) -> dict[str, object]:
+def quality_status(plan: Mapping[str, object], *, review: Mapping[str, object] | None = None,
+                   production: Mapping[str, object] | None = None,
+                   calculation_control: AssessmentValidation | None = None) -> dict[str, object]:
     # Structural success is neither an arithmetic proof nor semantic coverage.
     resolution = plan.get("institutional_resolution")
     gap = resolution is not None and object_data(resolution)["status"] != "RESOLVED_ADMITTED"
+    required = bool(plan["quantitative_review_required"]) or (production is not None and _production_requires_control(production))
+    applicability = plan.get("calculation_applicability", {})
+    justified = isinstance(applicability, Mapping) and applicability.get("status") == "NOT_REQUIRED" and applicability.get("reason") == "EXPLICIT_QUALITATIVE_OBJECTIVES"
+    calculations = "ECHEC" if required else "NON_APPLICABLE" if justified else "A_DETERMINER"
+    reason = "INDEPENDENT_ORACLE_NOT_EXECUTED" if required else "EXPLICIT_QUALITATIVE_OBJECTIVES" if justified else "APPLICABILITY_NOT_ESTABLISHED"
+    if calculation_control is not None:
+        if (type(calculation_control) is not AssessmentValidation or production is None
+                or (production.get("production_ref"), production.get("version_ref"), fingerprint(production))
+                != (calculation_control.production_ref, calculation_control.version_ref, calculation_control.bundle_sha256)):
+            raise ValueError("CALCULATION_CONTROL_BINDING")
+        passed = calculation_control.overall_status == "PASS" and calculation_control.checks[14].status == "PASS"
+        calculations = "CALCULS_VERIFIES" if passed else "ECHEC"
+        reason = "R3_A15_BOUND_ORACLE_EXECUTED" if passed else "INDEPENDENT_ORACLE_REJECTED"
     return {"sources": "SOURCES_INSUFFISANTES" if gap else "SOURCES_OK", "source_scope": "SELECTED_REFERENCE_HASHES",
-        "calculations": "ECHEC" if plan["quantitative_review_required"] else "NON_APPLICABLE",
-        "calculation_reason": "INDEPENDENT_ORACLE_NOT_EXECUTED" if plan["quantitative_review_required"] else "NO_QUANTITATIVE_TOPIC_DECLARED",
+        "calculations": calculations, "calculation_reason": reason,
         "instruction": "CONSIGNE_COUVERTE" if review and review.get("instruction_coverage") == "FULL" else "PARTIELLE",
         "review": "REVUE_OK" if review and review.get("status") == "completed" and review.get("overall_assessment") == "acceptable"
             and not review.get("limitations") and not review.get("uncertainties")

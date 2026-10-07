@@ -31,6 +31,10 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     items,
     object_data,
 )
+from backend.modules.quality_evaluation.contracts.dto.p0_review_report import (
+    DIAGNOSTIC_CONTRACT,
+    HISTORICAL_CONTRACT,
+)
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.time import Instant
 
@@ -48,6 +52,7 @@ class P0ReviewAdapter:
 
     def review(self, *, request: Mapping[str, object]) -> Mapping[str, object]:
         production = object_data(request["production"])
+        contract = DIAGNOSTIC_CONTRACT if self.metadata_policy_version is ReviewMetadataPolicyVersion.NEGATIVE_AUTHORITY_DIAGNOSTICS_V1 else HISTORICAL_CONTRACT
         target = version_target(str(production["production_ref"]), str(production["version_ref"]))
         now = Instant(datetime.now(UTC))
         meta = ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, "p0-review", "p0-review", None,
@@ -88,7 +93,7 @@ class P0ReviewAdapter:
             ResolvedReviewTarget(target, structured_payload=reviewed),
             resolved_inputs={"passages": evidence["passages"], "plan": request["plan"],
                              "structural_validation": request["validation"]},
-            output_contract={"contract_id": "P0-REVIEW-1.0", "no_authority": True}))
+            output_contract={"contract_id": contract, "no_authority": True}))
         status = ReviewStatus.COMPLETED if result.status.value == "SUCCEEDED" else ReviewStatus.INCOMPLETE
         output_meta = ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, meta.run_id, meta.step_id, None,
             meta.correlation_id, now, ActorRef(ActorKind.AGENT, "AG-04"), status)
@@ -96,7 +101,7 @@ class P0ReviewAdapter:
             prepared, result, output_meta, "p0-review",
             security_policy=ReviewSecurityPolicy(allow_whole_target_locator=True,
                 metadata_policy_version=self.metadata_policy_version)))
-        output = {"contract_id": "P0-REVIEW-1.0", "status": report.meta.status.value,
+        output = {"contract_id": contract, "status": report.meta.status.value,
             "production_ref": production["production_ref"], "version_ref": production["version_ref"],
             "bundle_sha256": request["bundle_sha256"], "overall_assessment": report.overall_assessment.value,
             "correction_required": report.correction_required,

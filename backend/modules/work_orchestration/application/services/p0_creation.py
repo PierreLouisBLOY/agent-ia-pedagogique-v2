@@ -17,6 +17,9 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
 )
 from backend.modules.pedagogical_design.contracts.dto.p0_production import P0Production
 from backend.modules.pedagogical_design.ports.outbound.p0_generation import P0GenerationPort
+from backend.modules.quality_evaluation.contracts.dto.p0_review_report import (
+    validate_p0_review_fields,
+)
 from backend.modules.quality_evaluation.ports.outbound.p0_review import P0ReviewPort
 from backend.modules.validation_control.application.commands.validate_p0 import ValidateP0Command
 from backend.modules.work_orchestration.application.services.p0_agentic import (
@@ -164,6 +167,7 @@ class P0CreationService:
                 raise ValueError("P0_OUTPUT_BINDING")
         self.records[candidate.version_ref] = candidate
         self.evidence[candidate.version_ref] = {str(k): str(v) for k, v in object_data(request["evidence"]).items()}
+        self.plans[candidate.version_ref] = effort_plan(context, production=candidate.data)
         self._validate({"production_ref": candidate.production_ref, "version_ref": candidate.version_ref})
         return {"state": "CANDIDATE", "view": as_plain(P0ProductionReadView.from_bundle(candidate).data),
                 "provider_attempts": 1, "retry": 0, "promotion": "NOT_PERFORMED",
@@ -175,7 +179,7 @@ class P0CreationService:
             "evidence_pack_sha256": fingerprint(self.packs[candidate.version_ref]),
             "validation": self.validations.get(candidate.version_ref),
             "review": self.reports.get(candidate.version_ref),
-            "quality": quality_status(plan, review=self.reports.get(candidate.version_ref)),
+            "quality": quality_status(plan, review=self.reports.get(candidate.version_ref), production=candidate.data),
             "persistence": "EXPLICIT_APPLICATION_SAVE_REQUIRED"}
 
     def _version(self, data: Mapping[str, object]) -> P0Production:
@@ -209,17 +213,18 @@ class P0CreationService:
         child = ReviseP0Candidate().execute(parent, output, evidence=self.evidence[parent.version_ref])
         self.records[child.version_ref] = child
         self.evidence[child.version_ref] = dict(self.evidence[parent.version_ref])
-        self.plans[child.version_ref] = effort_plan(P0Context(object_data(child.data["context"])))
+        self.plans[child.version_ref] = effort_plan(P0Context(object_data(child.data["context"])), production=child.data)
         self.packs[child.version_ref] = dict(self.packs[parent.version_ref])
         return {"state": "CANDIDATE", "view": as_plain(P0ProductionReadView.from_bundle(child).data),
-                "provider_attempts": 0, "promotion": "NOT_PERFORMED"}
+                "provider_attempts": 0, "promotion": "NOT_PERFORMED",
+                "quality": quality_status(self.plans[child.version_ref], production=child.data)}
 
     def _validate(self, data: dict[str, object]) -> dict[str, object]:
         candidate = self._version(data)
         parent = self.records.get(str(object_data(candidate.data["lineage"])["parent_version_ref"]))
         report = ValidateP0Command().execute(candidate, parent=parent)
         self.validations[candidate.version_ref] = report
-        return {**report, "quality": quality_status(self.plans[candidate.version_ref], review=self.reports.get(candidate.version_ref))}
+        return {**report, "quality": quality_status(self.plans[candidate.version_ref], review=self.reports.get(candidate.version_ref), production=candidate.data)}
 
     def _review(self, data: dict[str, object]) -> dict[str, object]:
         candidate = self._version(data)
@@ -237,12 +242,10 @@ class P0CreationService:
         if len(encoded(request)) > 128 * 1024:
             raise ValueError("P0_REVIEW_REQUEST_SIZE")
         if self.review is None or not self.review.authorize(request=request):
-            return {"state": "AUTHORIZATION_REQUIRED", "provider_attempts": 0, "quality": quality_status(self.plans[candidate.version_ref])}
+            return {"state": "AUTHORIZATION_REQUIRED", "provider_attempts": 0, "quality": quality_status(self.plans[candidate.version_ref], production=candidate.data)}
         self.review_consumed.add(root.version_ref)
-        report = object_data(as_plain(self.review.review(request=request)), {
-            "contract_id", "status", "production_ref", "version_ref", "bundle_sha256", "overall_assessment",
-            "correction_required", "coverage", "instruction_coverage", "findings", "limitations",
-            "evidence_refs_used", "created_at", "promotion"})
+        report = object_data(as_plain(self.review.review(request=request)))
+        validate_p0_review_fields(report)
         expected = {"production_ref": candidate.production_ref, "version_ref": candidate.version_ref, "bundle_sha256": candidate.sha256}
         used = report["evidence_refs_used"]
         coverage = report["coverage"]
@@ -254,7 +257,7 @@ class P0CreationService:
                 or report["instruction_coverage"] not in {"FULL", "PARTIAL"}
                 or (report["instruction_coverage"] == "FULL" and "REV-INS" not in coverage)):
             raise ValueError("P0_REVIEW_BINDING")
-        if (report.get("contract_id") != "P0-REVIEW-1.0" or any(report.get(k) != v for k, v in expected.items())
+        if (any(report.get(k) != v for k, v in expected.items())
                 or report.get("status") not in {"completed", "incomplete"}
                 or report.get("overall_assessment") not in {"acceptable", "acceptable_with_reservations", "correction_required", "unusable", "incomplete"}
                 or type(report.get("correction_required")) is not bool):
@@ -264,7 +267,7 @@ class P0CreationService:
             raise ValueError("P0_REVIEW_OUTPUT")
         self.reports[candidate.version_ref] = object_data(as_plain(freeze_safe_mapping(report)))
         return {"state": "REVIEWED", "review_sha256": fingerprint(report), "report": report,
-            "provider_attempts": 1, "retry": 0, "quality": quality_status(self.plans[candidate.version_ref], review=report)}
+            "provider_attempts": 1, "retry": 0, "quality": quality_status(self.plans[candidate.version_ref], review=report, production=candidate.data)}
 
     def _correct(self, data: dict[str, object]) -> dict[str, object]:
         parent = self._version(data)
@@ -279,7 +282,7 @@ class P0CreationService:
         view = object_data(child["view"])
         validation = self._validate(view)
         return {**child, "correction_mode": "EXPLICIT_LOCAL_EDITS", "revalidation": validation,
-                "quality": quality_status(self.plans[str(view["version_ref"])])}
+                "quality": quality_status(self.plans[str(view["version_ref"])], production=self.records[str(view["version_ref"])].data)}
 
     def _root(self, candidate: P0Production) -> P0Production:
         while object_data(candidate.data["lineage"])["parent_version_ref"] in self.records:

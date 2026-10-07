@@ -43,6 +43,16 @@ Les repertoires sont des frontieres et des emplacements reserves. Les marqueurs 
 
 Chaque module porte les memes sous-frontieres `domain/`, `contracts/`, `ports/` et `application/` definies par la Phase 6.15. Aucun adaptateur ni element d'infrastructure n'est place sous un module.
 
+## Owner opérationnel admis après la baseline
+
+`local_provisioning` est le mini-module Application opérationnel autorisé dans
+le mandat R5 APPLICATION_PROVISIONING_BOUNDARY_AND_CLOSE. Il possède Application
+et ports inbound/outbound, pour l'opérateur local de confiance. Il ne constitue
+pas un quatorzième domaine pédagogique et ne reçoit ni SQL, ni adaptateur, ni
+provider, ni entrée HTTP ou agent. Les treize domaines et leurs templates restent
+inchangés. L'inventaire opérationnel est fermé à ce seul owner ; voir
+[ADR de stabilisation](ADR_STABILISATION_HISTORICAL_ACTIVE_GUARDS_2026-10-07.md).
+
 ## Regle de dependance
 
 Le metier reste local a son module. Le shared kernel demeure generique. Les adaptateurs consomment les ports et use cases prevus; les outils agents entrent uniquement par `backend/adapters/inbound/agent_tools/`. Les contrats restent independants de HTTP, d'un ORM et des SDK fournisseurs.

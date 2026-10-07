@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import subprocess
 from pathlib import Path
 
 from tests.calibration.pedagogical.call_plan import RAW_OUTPUT_DIRECTORY
@@ -56,10 +57,21 @@ def test_golden_harness_adapters_and_registries_remain_byte_exact() -> None:
         assert_r2_generation_source_lineage,
     )
     from tests.calibration.pedagogical.repair_tranche_v4_2 import _historical_generation_source
+    from tests.support import r6_scope_guard
+
     generation_path = "backend/adapters/outbound/generation/openai/adapter.py"
+    review_path = "backend/adapters/outbound/review/openai/adapter.py"
+    # The frozen calibration owner precedes the admitted review successor.
+    # Authenticate current code independently before inspecting archived bytes.
+    assert r6_scope_guard.exact(ROOT, review_path)
+    archived_review = subprocess.run(
+        ["git", "show", "a560d6ca1989ba3dd13c9d02eeb97ef3fff6238b:" + review_path],
+        cwd=ROOT, check=True, capture_output=True, timeout=5,
+    ).stdout
     actual = {
         relative: hashlib.sha256(_historical_generation_source(relative)
-            if relative == generation_path else (ROOT / relative).read_bytes()).hexdigest()
+            if relative == generation_path else archived_review
+            if relative == review_path else (ROOT / relative).read_bytes()).hexdigest()
         for relative in _FROZEN_OWNER_HASHES
     }
     assert actual == _FROZEN_OWNER_HASHES

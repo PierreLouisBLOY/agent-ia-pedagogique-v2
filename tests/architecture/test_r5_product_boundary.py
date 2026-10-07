@@ -16,6 +16,7 @@ from tests.support import r5_scope_guard as guard
 ROOT = Path(__file__).resolve().parents[2]
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_exact_active_scope_no_private_preparations_staged():
     from tests.support.r3_guard_oracle import PREPARATION
     changed = set()
@@ -47,6 +48,7 @@ def test_closed_versioned_provenance_keeps_synthetic_and_rejects_forgery():
         replace(draft, references=(reference, {**reference, "evidence_id": "e:2", "provenance_label": LOCAL_REFERENCE_LABEL}))
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_new_entry_has_no_network_credentials_provider_or_http_route():
     from tests.support.r5_worker_guard import violations as worker_violations
     assert worker_violations(ROOT) == []

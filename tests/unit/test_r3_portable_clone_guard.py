@@ -136,6 +136,7 @@ def test_production_entry_has_no_reference_map_override() -> None:
 
 
 @pytest.mark.parametrize("path", guard.PATHS)
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_every_successor_dependency_missing_or_modified_is_rejected(tmp_path: Path, path: str) -> None:
     copy_successor(tmp_path)
     assert guard.violations(tmp_path) == []
@@ -191,6 +192,7 @@ def test_every_staged_mutation_rejected_with_valid_worktree(monkeypatch: pytest.
 
 
 @pytest.mark.parametrize("path", tuple(guard.PRE))
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_signatures_and_outside_scope_nodes_remain_protected(path: str) -> None:
     before = guard.baseline_bytes(path)
     from tests.support.r3_d3_scope_guard import assert_scope, baseline_view
@@ -218,6 +220,7 @@ def test_read_only_source_failure_is_never_private_absence_tolerance(monkeypatch
     assert "PROTECTED_DOCUMENT_CHANGED:" + path in active_inventory(ROOT)
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_tracked_inventory_and_exact_successor_are_valid_without_attesting_private_absence() -> None:
     guard.assert_scope(ROOT)
     guard.assert_git_state(ROOT)

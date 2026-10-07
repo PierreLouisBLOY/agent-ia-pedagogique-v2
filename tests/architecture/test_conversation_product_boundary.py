@@ -211,6 +211,7 @@ def corrective_inventory_violations(changed: set[str]) -> set[str]:
     return changed ^ set(CORRECTION_PATHS)
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_correction_exact_delta_and_delivered_65_path_snapshot():
     assert len(CORRECTION_PATHS) == len(set(CORRECTION_PATHS)) == 22
     assert set(git_diff_paths(BASELINE_R2, CORRECTION_BASELINE)) == set(R2_PATHS)
@@ -313,6 +314,7 @@ def assert_historical_manifest(folder: str, baseline: str, count: int) -> None:
             hashlib.sha256(raw.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")).hexdigest()}
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_independent_inventory_source_and_pre_identities():
     from tests.architecture.test_local_browser_product_boundary import (
         EXACT_R2_PREPARATION_PATHS,
@@ -546,6 +548,7 @@ def test_hist020_wrong_baseline_even_with_equivalent_blob_is_rejected(monkeypatc
 
 @pytest.mark.parametrize("stage", ("untracked", "staged", "committed"))
 @pytest.mark.parametrize("mutation", ("none", "extra", "substitution", "omission"))
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_exact_65_path_inventory_at_all_git_states(monkeypatch, stage, mutation):
     from tests.architecture import test_local_browser_product_boundary as guard
     from tests.support.r3_guard_oracle import R3_PATHS

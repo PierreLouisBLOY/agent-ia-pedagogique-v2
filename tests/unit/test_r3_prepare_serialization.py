@@ -188,12 +188,14 @@ def test_serializer_is_only_for_prepare(fault):
         serialize(request, operation=operation)
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_successor_scope_and_working_index_and_history():
     assert_scope(ROOT)
     assert_git_state(ROOT)
 
 
 @pytest.mark.parametrize("path", PATHS)
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_each_successor_source_mutation_is_rejected(tmp_path, path):
     from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
     from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS

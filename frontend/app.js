@@ -1081,7 +1081,7 @@ function uxContext(context) {
 }
 function uxQuality(quality) {
   if (!quality) return;
-  const labels = {SOURCES_OK: "Identité des sources contrôlée", SOURCES_INSUFFICISANTES: "Sources insuffisantes", CALCULS_VERIFIES: "Calculs vérifiés", ECHEC: "Preuve indépendante des calculs manquante", NON_APPLICABLE: "Calculs non requis par les notions déclarées", CONSIGNE_COUVERTE: "Couverture examinée", PARTIELLE: "Couverture à examiner", REVUE_OK: "Revue technique sans réserve", RESERVE: "Revue pédagogique en attente ou avec réserves", HUMAN_REVIEW_REQUIRED: "Relecture enseignante nécessaire"};
+  const labels = {SOURCES_OK: "Identité des sources contrôlée", SOURCES_INSUFFICISANTES: "Sources insuffisantes", CALCULS_VERIFIES: "Calculs vérifiés", ECHEC: "Preuve indépendante des calculs manquante", NON_APPLICABLE: "Aucun calcul requis par le travail qualitatif explicite", A_DETERMINER: "Applicabilité des calculs à déterminer", CONSIGNE_COUVERTE: "Couverture examinée", PARTIELLE: "Couverture à examiner", REVUE_OK: "Revue technique sans réserve", RESERVE: "Revue pédagogique en attente ou avec réserves", HUMAN_REVIEW_REQUIRED: "Relecture enseignante nécessaire"};
   const region = document.getElementById("drawer-quality"); region.replaceChildren();
   for (const key of ["sources", "calculations", "instruction", "review", "human_review"]) appendSearchText(region, "p", labels[quality[key]] || "Non vérifié");
 }

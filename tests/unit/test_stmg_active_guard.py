@@ -45,7 +45,9 @@ OWNER_PATHS = (
 )
 
 
-DECLARED_OWNERS = tuple(json.loads((ROOT / guard.MANIFEST).read_text("utf-8"))["successors"][-1]["changed_owners"])
+DECLARED_OWNERS = tuple(next(row for row in
+    json.loads((ROOT / guard.MANIFEST).read_text("utf-8"))["successors"]
+    if row["purpose"] == "M01_VISUAL_CLOSED_DISPATCH")["changed_owners"])
 
 
 @pytest.mark.parametrize("path", DECLARED_OWNERS)
@@ -64,7 +66,7 @@ def test_stmg_active_owner_and_mutation(tmp_path, path):
 
 def test_successor_keeps_historical_manifest_and_reviewed_entry():
     manifest = json.loads((ROOT / guard.MANIFEST).read_text("utf-8"))
-    successor = manifest["successors"][-1]
+    successor = next(row for row in manifest["successors"] if row["purpose"] == "M01_VISUAL_CLOSED_DISPATCH")
     assert successor["entry"] == "62890e4e31019e8100e2da1c77dd6b366b66db87"
     assert successor["purpose"] == "M01_VISUAL_CLOSED_DISPATCH"
     assert successor["predecessor_manifest_sha256"] == "98c0f4a1e20465f10feecf6209e6b221ef3c42b913a6c204584f80e55920d0d1"

@@ -28,6 +28,7 @@ from tests.support.r3_editorial_correction_guard import (
 ROOT = Path(__file__).resolve().parents[2]
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_exact_scope_history_working_index_and_predicates():
     assert_scope(ROOT)
     assert_git_state(ROOT)
@@ -40,6 +41,7 @@ def test_exact_scope_history_working_index_and_predicates():
 
 
 @pytest.mark.parametrize("path", PATHS)
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_each_source_mutation_missing_or_replaced_is_rejected(tmp_path, path):
     from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
     from tests.support.r3_portable_clone_guard import PATHS as PORTABLE_PATHS
@@ -89,6 +91,7 @@ def test_outside_symbol_addition_cannot_be_hidden(path):
     assert outside_scope(old, path) != outside_scope(old+b"\nUNAPPROVED = True\n", path)
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_m09_pure_contract_and_no_provider_editorial_route():
     path = "backend/modules/validation_control/contracts/dto/editorial_scope.py"
     tree = ast.parse((ROOT/path).read_bytes())

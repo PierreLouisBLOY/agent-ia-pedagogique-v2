@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import importlib
 import subprocess
+import sys
 import tomllib
 from pathlib import Path
+
+import pytest
 
 from tests.support.repository_hygiene import forbidden_source_paths, repository_paths
 
@@ -124,7 +127,13 @@ def test_all_canonical_modules_and_templates_exist() -> None:
         for path in modules_root.iterdir()
         if path.is_dir() and path.name != "__pycache__"
     }
-    assert actual_modules == set(MODULE_NAMES)
+    assert actual_modules == set(MODULE_NAMES) | {"local_provisioning"}
+
+    operational_missing = [relative for relative in ("application", "ports")
+        if not (modules_root / "local_provisioning" / relative).is_dir()]
+    operational_missing += [relative for relative in ("ports/inbound.py", "ports/outbound.py")
+        if not (modules_root / "local_provisioning" / relative).is_file()]
+    assert operational_missing == []
 
     missing = [
         f"{module}/{relative}"
@@ -133,6 +142,28 @@ def test_all_canonical_modules_and_templates_exist() -> None:
         if not (modules_root / module / relative).is_dir()
     ]
     assert missing == []
+
+
+@pytest.mark.parametrize("fault", ["extra", "missing_domain", "missing_operational", "missing_port"])
+def test_module_inventory_is_closed_for_domains_and_admitted_operational_owner(tmp_path, monkeypatch, fault):
+    modules = tmp_path / "modules"
+    for name in MODULE_NAMES:
+        for relative in MODULE_TEMPLATE_DIRS:
+            (modules / name / relative).mkdir(parents=True, exist_ok=True)
+    for relative in ("application", "ports"):
+        (modules / "local_provisioning" / relative).mkdir(parents=True, exist_ok=True)
+    for relative in ("ports/inbound.py", "ports/outbound.py"):
+        (modules / "local_provisioning" / relative).touch()
+    monkeypatch.setattr(sys.modules[__name__], "BACKEND", tmp_path)
+    test_all_canonical_modules_and_templates_exist()
+    if fault == "extra":
+        (modules / "unapproved_operational_owner").mkdir()
+    elif fault == "missing_port":
+        (modules / "local_provisioning" / "ports/inbound.py").unlink()
+    else:
+        (modules / (MODULE_NAMES[0] if fault == "missing_domain" else "local_provisioning")).rename(tmp_path / "removed-owner")
+    with pytest.raises(AssertionError):
+        test_all_canonical_modules_and_templates_exist()
 
 
 def test_forbidden_global_backend_locations_are_absent() -> None:

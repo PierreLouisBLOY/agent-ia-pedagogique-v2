@@ -123,9 +123,16 @@ class WindowsLocalIllustrationRenderer:
             nodes = items(diagram["nodes"], 5)
             if layout in {"CYCLE", "RESPONSIBILITIES"}:
                 _graph(c, diagram, cycle=layout == "CYCLE")
-            else:
-                {"LIBRARY_SCENE": _scene, "CHARACTERS": _portraits, "TIMELINE": _timeline,
-                 "WORKSPACE": _workspace, "RESOURCES": _resources}[layout](c, nodes)
+            elif layout == "LIBRARY_SCENE":
+                _scene(c, nodes)
+            elif layout == "CHARACTERS":
+                _portraits(c, nodes)
+            elif layout == "TIMELINE":
+                _timeline(c, nodes)
+            elif layout == "WORKSPACE":
+                _workspace(c, nodes)
+            elif layout == "RESOURCES":
+                _resources(c, nodes)
             c.text(str(diagram["note"]), (20, height-54, 1180, height-5), size=24)
             return c.png()
         finally:

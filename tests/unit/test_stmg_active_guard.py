@@ -65,9 +65,13 @@ def test_stmg_active_owner_and_mutation(tmp_path, path):
 def test_successor_keeps_historical_manifest_and_reviewed_entry():
     manifest = json.loads((ROOT / guard.MANIFEST).read_text("utf-8"))
     successor = manifest["successors"][-1]
-    assert successor["entry"] == "b6466778e196f7c4164778a2503b0bcdecd63edd"
-    assert successor["purpose"] == "M01_VISUAL_ENRICHMENT"
-    assert successor["predecessor_manifest_sha256"] == "60d9835d600c88c55a4e06e9f0ece8d258e6e4a28d20a52011ad9b71375953cf"
+    assert successor["entry"] == "62890e4e31019e8100e2da1c77dd6b366b66db87"
+    assert successor["purpose"] == "M01_VISUAL_CLOSED_DISPATCH"
+    assert successor["predecessor_manifest_sha256"] == "98c0f4a1e20465f10feecf6209e6b221ef3c42b913a6c204584f80e55920d0d1"
+    enrichment = next(row for row in manifest["successors"] if row["purpose"] == "M01_VISUAL_ENRICHMENT")
+    assert enrichment["entry"] == "b6466778e196f7c4164778a2503b0bcdecd63edd"
+    assert enrichment["predecessor_manifest_sha256"] == "60d9835d600c88c55a4e06e9f0ece8d258e6e4a28d20a52011ad9b71375953cf"
+    assert set(enrichment["changed_owners"]) <= set(successor["changed_owners"])
     media = next(row for row in manifest["successors"] if row["purpose"] == "M01_PROGRAMME_LOCAL_MEDIA")
     assert media["entry"] == "db4b52253823ba4f26429b4473ac9ef647208fb2"
     assert media["predecessor_manifest_sha256"] == "31cb2dd1f9c25cfcd2b547f030077cd181fb07ed97c5300dbb3d6147d62fb8e2"

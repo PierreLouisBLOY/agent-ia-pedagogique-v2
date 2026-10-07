@@ -2,6 +2,7 @@
 import copy
 import json
 from io import BytesIO
+from pathlib import Path
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile
 
@@ -20,6 +21,15 @@ from tests.unit.test_p0_agentic_routing import TechnicalCritic
 
 KINDS = {"SCENARIO_ILLUSTRATION": ("LIBRARY_SCENE", 3), "PORTRAIT_STRIP": ("CHARACTERS", 3),
          "TIMELINE": ("TIMELINE", 5), "ACTIVITY_PLAN": ("WORKSPACE", 3)}
+
+
+@pytest.mark.parametrize("mutation", ["renderers[layout](canvas, nodes)", "import http.server"])
+def test_contextual_dispatch_satisfies_shared_boundary_and_rejects_mutations(mutation):
+    from tests.architecture.test_local_browser_product_boundary import source_boundary_violations
+    relative = "backend/adapters/outbound/export/contextual_media.py"
+    source = (Path(__file__).resolve().parents[2] / relative).read_text("utf-8")
+    assert source_boundary_violations(source, relative) == []
+    assert source_boundary_violations(source + "\n" + mutation + "\n", relative)
 
 
 def contextual_brief(kind, production="prod:unit"):

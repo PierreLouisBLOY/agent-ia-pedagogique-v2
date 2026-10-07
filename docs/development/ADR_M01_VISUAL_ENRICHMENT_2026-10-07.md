@@ -47,3 +47,12 @@ institutionnelles ne sont pas déduites des images. Les quatre fonctions visuell
 initiales restent couvertes. Le successeur de garde conserve les pins et preuves
 historiques et couvre le delta courant. Verdict local : compatible avec le mandat,
 implémentation autorisée hors live ; recette propriétaire toujours en attente.
+
+## Complément après qualification du checkpoint 62890e4
+
+Le scanner partagé classe un appel via indice de dictionnaire comme dynamique
+non résolu. La sélection de dessinateur emploie donc des branches explicites pour
+les seuls layouts fermés du profil. Aucun scanner ni frontière ne change.
+Les tests vérifient le positif et rejettent la réintroduction d'un appel par
+indice ou d'un serveur HTTP. Les pixels et exports existants doivent rester
+identiques avant livraison du correctif.

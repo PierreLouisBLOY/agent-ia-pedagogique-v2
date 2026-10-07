@@ -5,7 +5,7 @@ from secrets import token_hex
 import pytest
 
 from backend.adapters.outbound.review.p0_review import P0ReviewAdapter
-from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import fingerprint
+from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import as_plain, fingerprint
 from backend.modules.work_orchestration.contracts.dto.operation_identity import OperationIdentity
 from tests.support.p0_generation_double import P0GenerationDouble
 from tests.support.r3_fakes import harness, run
@@ -85,8 +85,6 @@ def test_p0_envelope_contract_refuses_unknown_or_incomplete_shapes_before_port(f
     app.review = P0ReviewAdapter(critic, authorize=lambda request: captured.append(request) or True)
     view, _ = candidate(app)
     app.execute("review", {"command_id": token_hex(16), **identity(view)})
-    from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import as_plain
-
     request = as_plain(captured[0])
     if fault == "version":
         request["contract_id"] = "P0-INDEPENDENT-REVIEW-REQUEST-99.0"
@@ -97,3 +95,66 @@ def test_p0_envelope_contract_refuses_unknown_or_incomplete_shapes_before_port(f
     with pytest.raises(ValueError, match="P0_REVIEW_REQUEST_"):
         app.review.review(request=request)
     assert len(critic.requests) == 1
+
+
+@pytest.fixture
+def review_envelope():
+    app = service(P0GenerationDouble())
+    captured = []
+    app.review = P0ReviewAdapter(TechnicalCritic(), authorize=lambda request: captured.append(request) or True)
+    view, _ = candidate(app)
+    app.execute("review", {"command_id": token_hex(16), **identity(view)})
+    return as_plain(captured[0])
+
+
+@pytest.mark.parametrize("shape", ["legacy", "1.0", "1.1"])
+def test_closed_review_shapes_preserve_target_and_only_explicit_business_identity(review_envelope, shape):
+    request = review_envelope
+    if shape != "1.1":
+        request.pop("operation_identity")
+        if shape == "legacy":
+            request.pop("contract_id")
+        else:
+            request["contract_id"] = "P0-INDEPENDENT-REVIEW-REQUEST-1.0"
+    critic = TechnicalCritic()
+    adapter = P0ReviewAdapter(critic, authorize=lambda request: True)
+    reports = [adapter.review(request=request), adapter.review(request=request)]
+    assert len(critic.requests) == 2
+    for report, port in zip(reports, critic.requests, strict=True):
+        assert report["production_ref"] == request["production"]["production_ref"]
+        assert report["version_ref"] == request["production"]["version_ref"]
+        assert report["bundle_sha256"] == request["bundle_sha256"]
+        assert report["promotion"] == "NOT_PERFORMED"
+        assert port.output_contract["no_authority"] is True
+        meta = port.output_contract["operation_identity"]
+        if shape == "1.1":
+            assert meta == request["operation_identity"]
+        else:
+            assert meta["parent_step_id"] is None
+            assert meta["run_id"] == meta["correlation_id"]
+            assert meta["step_id"] == port.source_step_id
+            assert meta["correlation_id"] != review_envelope["production"]["lineage"]["conversation_id"]
+    if shape != "1.1":
+        assert critic.requests[0].source_step_id != critic.requests[1].source_step_id
+
+
+@pytest.mark.parametrize("shape", ["legacy", "1.0", "1.1"])
+@pytest.mark.parametrize("fault", ["missing", "extra", "identity"])
+def test_review_shape_mutations_stop_before_review_port(review_envelope, shape, fault):
+    request = review_envelope
+    if shape != "1.1":
+        request.pop("operation_identity")
+        if shape == "legacy":
+            request.pop("contract_id")
+        else:
+            request["contract_id"] = "P0-INDEPENDENT-REVIEW-REQUEST-1.0"
+    if fault == "missing":
+        request.pop("validation")
+    elif fault == "extra":
+        request["authority"] = "allowed"
+    else:
+        request["operation_identity"] = {"run_id": "op:incomplete"}
+    critic = TechnicalCritic()
+    with pytest.raises(ValueError, match="P0_REVIEW_REQUEST_|OPERATION_IDENTITY_REJECTED"):
+        P0ReviewAdapter(critic, authorize=lambda request: True).review(request=request)
+    assert critic.requests == []

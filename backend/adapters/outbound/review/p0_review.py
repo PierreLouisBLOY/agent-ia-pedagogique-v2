@@ -55,8 +55,13 @@ class P0ReviewAdapter:
 
     def review(self, *, request: Mapping[str, object]) -> Mapping[str, object]:
         fields = {"contract_id", "production", "bundle_sha256", "plan", "evidence_pack", "validation"}
+        # Exact pre-envelope technical calls remain a named closed legacy shape.
+        # They receive operation_meta(None)'s unique technical identity only.
+        legacy = set(request) == fields - {"contract_id"}
         if request.get("contract_id") == "P0-INDEPENDENT-REVIEW-REQUEST-1.1":
             fields.add("operation_identity")
+        elif legacy:
+            fields.remove("contract_id")
         elif request.get("contract_id") != "P0-INDEPENDENT-REVIEW-REQUEST-1.0":
             raise ValueError("P0_REVIEW_REQUEST_CONTRACT")
         if set(request) != fields:

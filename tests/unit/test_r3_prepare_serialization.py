@@ -107,8 +107,9 @@ def test_exact_profile_reservation_is_serialized(bound):
 
 
 def test_no_other_semantic_field_changes_and_no_count_authority():
-    old = serialize(wire(4096), profile(4096))
-    new = serialize()
+    request = wire()
+    old = serialize(replace(request, max_output_tokens=4096), profile(4096))
+    new = serialize(request)
     assert [key for key in old if old[key] != new[key]] == ["max_output_tokens"]
     assert new["reasoning"] == {"effort": "low"}
     assert new["model"] == "gpt-5.6-terra"

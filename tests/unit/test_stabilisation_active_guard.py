@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.architecture.test_conversation_product_boundary import CORRECTION_PATHS, R2_PATHS
 from tests.support import (
     r3_cap_a01_guard,
     r3_d3_scope_guard,
@@ -25,6 +26,8 @@ from tests.support import (
 
 ROOT = Path(__file__).resolve().parents[2]
 HISTORICAL_OWNERS = tuple(sorted(set().union(
+    R2_PATHS,
+    CORRECTION_PATHS,
     r3_guard_oracle.R3_PATHS,
     r3_cap_a01_guard.PATHS,
     r3_d3_scope_guard.PATHS,

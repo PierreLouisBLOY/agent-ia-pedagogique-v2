@@ -324,6 +324,7 @@
     "tests/unit/test_p0_content_projection.py",
     "tests/unit/test_p0_creation_contract.py",
     "tests/unit/test_p0_selected_source_boundary.py",
+    "tests/unit/test_pedagogical_calibration_r3b_r3.py",
     "tests/unit/test_pedagogical_calibration_r4_r3_r3.py",
     "tests/unit/test_qualified_institutional_corpus.py",
     "tests/unit/test_r3_assets.py",
@@ -578,7 +579,7 @@
     "docs/development/ADR_M01_VISUAL_ENRICHMENT_2026-10-07.md": "601943ce23aad289a2f7069cba3e0827c38e118e2ea9cd6154ea435da1a75a83",
     "docs/development/ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.md": "5bb3cd8de8352636d73ace76d4db12cda59670cadc1b7b09f2528ec9f4861954",
     "docs/development/ADR_STABILISATION_HISTORICAL_ACTIVE_GUARDS_2026-10-07.md": "ea1d11e5a72d3c6ee065f3e3a3fe522cd609b1777f08e2279fd4b9a1d5ac69ae",
-    "docs/development/ADR_STABILISATION_R2_CALIBRATION_REPLAY_2026-10-07.md": "71671af76bda95e94ee44d284a1eeee25a1e756d127a1a4f3f554249a4efd966",
+    "docs/development/ADR_STABILISATION_R2_CALIBRATION_REPLAY_2026-10-07.md": "f67ea8a54d9ae08e3edc3f7198018d99d874a9e97bbc7f0003d44b32135cee57",
     "docs/development/ADR_STABILISATION_R2_OPERATION_IDENTITIES_2026-10-07.md": "b9bf474dd84dd4cb4716c7c322365c02fbef3b8981acbb370c3cc31bdd6f8636",
     "docs/development/ADR_STABILISATION_R2_P0_CONTRACTS_2026-10-07.md": "b971abe19dd5d03438e2002c927a255843c782772ea0b58a78f709e785ab2897",
     "docs/development/ADR_STABILISATION_R2_SOURCE_STATUS_2026-10-07.md": "b26bc5bc0b873b256458f05e6ecf6e4156726e884a28772e93278e53b90860dc",
@@ -618,7 +619,7 @@
     "tests/architecture/test_pedagogical_calibration_fitness.py": "e7bb1c450997a270c13a9d19a843063f5a893608c62f057b9f8a54a1ffffa3cf",
     "tests/architecture/test_r3_d3_boundary.py": "aa04665a496c5edeeb5a8bdcecfb4e81db88d08191e4bce7ec535faa2f495980",
     "tests/architecture/test_r3_editorial_correction_boundary.py": "28ef5c7f6c3e61fc4975a889e9dfae5fe9ceaf81b1b61d79e058b7e220cad185",
-    "tests/architecture/test_r3_guard_non_regression.py": "061862c17836fada327993a8ed33c70c40e8f626ec24b1cd6a87aa444745937a",
+    "tests/architecture/test_r3_guard_non_regression.py": "6ac8fc278007cf96eec80e037a65b01a0ee8722cf7dcc28a5078727ab4ec3f0f",
     "tests/architecture/test_r3_product_boundary.py": "3a182ecd4177a2aaf73839b74d0ca87ff6ff50caabcb870ec2efe7f1ae008081",
     "tests/architecture/test_r4_product_boundary.py": "b83e7a6f241ac0e13ab29b1433ddbb5070b1d841a85ee446e7d54f2381fd2a47",
     "tests/architecture/test_r5_product_boundary.py": "f9e341ec30ef0ed44e8f03d3d2a3b36a688f7120c2527111b432d4a5217016e2",
@@ -656,9 +657,9 @@
     "tests/non_functional/test_semantic_retrieval_live_gate.py": "f971647244ea79b0e2f22ccfbfdc452e76868d292bc17ed2f08a2db26f851228",
     "tests/non_functional/test_semantic_retrieval_offline_r1_gate.py": "f85112e84e0d42bd4db84bc8939c83be4f2491b4c007b4d990ccb65cb66dcee5",
     "tests/support/conversation_fakes.py": "596a52914dbdb7de36a1af4e407b3ff0aa18fefd97131b1eb27f608424758eac",
-    "tests/support/historical_calibration_replay.py": "4f79f0cf0b0dda42720760c51a3c2c004b978bad6039d434bbecf612f3112063",
+    "tests/support/historical_calibration_replay.py": "d972755d24b77af390d41b7e9e67f3d0689ddfe54e1cf486770e7210c15422bf",
     "tests/support/historical_git_successor.py": "f6289459b084dcdaa4cd39f35b268f2639cb087455b2398914d1827840bd7681",
-    "tests/support/historical_guard_fixture.py": "22db5d71f74570fe9694cb63623282d1f10a4bb65a9452e10b24b3fcdef2a756",
+    "tests/support/historical_guard_fixture.py": "cf8e5e11331a35d7e08a8f686cc7abbe64a829bef354767a47cf39aef2e6339e",
     "tests/support/institutional_http_fixture.py": "083beff604bf248cd8b412eaa5452b8aa5b5f8446b174d6a00eed482c0f00415",
     "tests/support/p0_generation_double.py": "29976a7a50fa8ddc9ad1e8ac76b2f4977d0e03cb388239d384de07ccbead5083",
     "tests/support/r3_cap_a01_guard.py": "bf9de68f53e3227a05a09bda089972a2f1785f74f16d593fff495fda5a63a752",
@@ -709,6 +710,7 @@
     "tests/unit/test_p0_content_projection.py": "476d358f97590e1f9284f685215aebd08cecb6ed4b34e8fbf743e35b35b3dc39",
     "tests/unit/test_p0_creation_contract.py": "43cd55ebe27bd7a93048dd2e4aef8bf28e3906ba09956a959d4abb64f784076f",
     "tests/unit/test_p0_selected_source_boundary.py": "ed94317ec28650733d37970d53af5751fdaa4661bc2e918d8e8806fe4c6caa0e",
+    "tests/unit/test_pedagogical_calibration_r3b_r3.py": "7ebacfb37d341e73ca7a4dbe44cb3e3bb973b5d8acf66f9b4a740d2056500618",
     "tests/unit/test_pedagogical_calibration_r4_r3_r3.py": "ccb59fb4d3787fb2e42a497f25cfffa5fb66d53e38c5f5b39c8d4ff1aceb50b5",
     "tests/unit/test_qualified_institutional_corpus.py": "88d3fb17189fbea0259f8a13be8b9a6048c08b838cdc19beddf71537254b9362",
     "tests/unit/test_r3_assets.py": "28466cbb35d68b13904d8ab0d9d8a41b7179465b65f5b6fa02aed7bc8929c390",
@@ -733,8 +735,8 @@
     "tests/unit/test_r4_saved_production.py": "7c1d6511cde8e055dca9e15683d17efc8df7925a352d7b2d1a6d253c53b4a919",
     "tests/unit/test_r4_scope_guard.py": "16c89e411423ed065cc946a4ef9f6ca4ac67d3048d82031442a5b4ba7e66ea99",
     "tests/unit/test_r4_word.py": "3b18777320a0fb78658cd1b4d4ed0b57c21d3a1a672fa5c79ca24845bc10c37b",
-    "tests/unit/test_r5_scope_guard.py": "ab631dc88672193187a4cd676cc3050ddedb9562bc431df4dd7d848967f59ca8",
-    "tests/unit/test_r5_worker_guard.py": "4d3202c92ceead28c39160e02393f3850af11b366c7c18f8c71d8be3e5cc3c03",
+    "tests/unit/test_r5_scope_guard.py": "1594986da4edb3978acdc7b66a427f8d7a2d031471198d21f1acc3e3de8b93ff",
+    "tests/unit/test_r5_worker_guard.py": "09e74874aedd80982d825d0a5332db214f5fce8faea1c00ca0152b10dba2a663",
     "tests/unit/test_r6_canonical_notion_catalog.py": "c89c6eaa4c80ea1e5f3a40aa3c27ead4cd8477bb55ce6a3b21d2622deb8b2762",
     "tests/unit/test_r6_exact_notion_evidence.py": "7a5d473fe0eb3d7e0c15df82a3c4ec3fdbb231ef58c3ec6ad2a5ef11c83a1c72",
     "tests/unit/test_r6_p0_contract.py": "bba1a6cafcf493cb755f5e2020772596ca22e6315ddb27c16fc97ff8981d6b82",
@@ -968,6 +970,7 @@
     "tests/unit/test_p0_content_projection.py",
     "tests/unit/test_p0_creation_contract.py",
     "tests/unit/test_p0_selected_source_boundary.py",
+    "tests/unit/test_pedagogical_calibration_r3b_r3.py",
     "tests/unit/test_pedagogical_calibration_r4_r3_r3.py",
     "tests/unit/test_qualified_institutional_corpus.py",
     "tests/unit/test_r3_cap_a01_targeted.py",
@@ -978,6 +981,8 @@
     "tests/unit/test_r3_prepare_contract_alignment.py",
     "tests/unit/test_r3_prepare_serialization.py",
     "tests/unit/test_r4_scope_guard.py",
+    "tests/unit/test_r5_scope_guard.py",
+    "tests/unit/test_r5_worker_guard.py",
     "tests/unit/test_r6_canonical_notion_catalog.py",
     "tests/unit/test_r6_exact_notion_evidence.py",
     "tests/unit/test_r6_p0_contract.py",
@@ -1965,6 +1970,24 @@
         "docs/development/ADR_STABILISATION_R2_CALIBRATION_REPLAY_2026-10-07.md",
         "tests/support/historical_calibration_replay.py",
         "tests/unit/test_pedagogical_calibration_r4_r3_r3.py"
+      ]
+    },
+    {
+      "purpose": "STABILISATION_REMAINING_ARCHIVAL_CHECKS_CLOSED_BENCHES",
+      "entry": "6bf9bc16e5d94c686ea46b551c1c4db28940ef52",
+      "prior_manifest_sha256": "5a50ee33f5bd15bb24e7009249e80abe9d52c4d2b081edd5aa08290c9fe2819f",
+      "adrs": [
+        "docs/development/ADR_STABILISATION_R2_CALIBRATION_REPLAY_2026-10-07.md"
+      ],
+      "scope": "Exact historical guard/checksum sources, real Git index mutations, explicit render benchmark successor; active delta independently protected",
+      "changed_owners": [
+        "docs/development/ADR_STABILISATION_R2_CALIBRATION_REPLAY_2026-10-07.md",
+        "tests/architecture/test_r3_guard_non_regression.py",
+        "tests/support/historical_calibration_replay.py",
+        "tests/support/historical_guard_fixture.py",
+        "tests/unit/test_pedagogical_calibration_r3b_r3.py",
+        "tests/unit/test_r5_scope_guard.py",
+        "tests/unit/test_r5_worker_guard.py"
       ]
     }
   ]

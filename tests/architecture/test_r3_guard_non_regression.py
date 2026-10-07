@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.mark.parametrize("path", tuple(GUARDS))
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_each_guard_rejects_unapproved_function_mutation(tmp_path, path):
     target = tmp_path / path
     target.parent.mkdir(parents=True)
@@ -54,18 +55,17 @@ def test_mutable_manifest_cannot_authorize_same_count_replacement(tmp_path):
 
 @pytest.mark.parametrize("path", (R3_PATHS[0], next(iter(PREPARATION)), "backend/hidden.py"))
 @pytest.mark.usefixtures("historical_guard_sources")
-def test_index_is_checked_independently_of_working_tree(monkeypatch, path):
-    import subprocess
+def test_index_is_checked_independently_of_working_tree(tmp_path, path):
+    from tests.support.historical_git_successor import assert_historical_git_state
+    from tests.support.historical_guard_fixture import materialize_historical_guard_sources
+    from tests.unit.test_stabilisation_active_guard import git
 
-    from tests.support import r3_guard_oracle as oracle
-    def git(args, **kwargs):
-        result = {path} if "--cached" in args else set(R3_PATHS)
-        return subprocess.CompletedProcess(args, 0, stdout="\n".join(sorted(result)))
-    monkeypatch.setattr(oracle.subprocess, "run", git)
-    errors = active_inventory(ROOT)
-    if path in PREPARATION:
-        assert "PROTECTED_DOCUMENT_INDEXED:" + path in errors
-    elif path not in R3_PATHS:
-        assert path in errors
-    else:
-        assert errors == []
+    root = materialize_historical_guard_sources(tmp_path / "real-index")
+    assert_historical_git_state(root)
+    present = root / path
+    before = present.read_bytes() if present.exists() else None
+    oid = git(root, "hash-object", "-w", "--stdin", input_bytes=b"# unapproved index only\n").decode().strip()
+    git(root, "update-index", "--add", "--cacheinfo", "100644", oid, path)
+    assert (present.read_bytes() if present.exists() else None) == before
+    with pytest.raises((AssertionError, OSError)):
+        assert_historical_git_state(root)

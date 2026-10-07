@@ -8,17 +8,21 @@ from pathlib import Path
 from tests.support.r3_guard_oracle import PREPARATION
 
 FABRICATION = "5b6f5630c54706bde7cc2afb72bd032efd289b9c"
+CALIBRATION_FABRICATION = "12685070a3c7cccd2c1a6ab0a429d1881ac58465"
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def materialize_historical_guard_sources(destination: Path) -> Path:
+def materialize_historical_guard_sources(
+    destination: Path, fabrication: str = FABRICATION,
+) -> Path:
     """Keep original Git objects; exclude private preparations from extraction/index.
 
     This is a synthetic test working tree of a declared historical fabrication.
     No candidate Python code is imported or executed. Private absence is not an
     attestation; the original documentary tests still inspect the actual checkout.
     """
-    fabrication = FABRICATION
+    if fabrication not in {FABRICATION, CALIBRATION_FABRICATION}:
+        raise ValueError("HISTORICAL_FABRICATION_REJECTED")
 
     def git(*args: str, cwd: Path = destination) -> bytes:
         return subprocess.run(["git", "-c", "safe.directory=" + str(cwd), *args],

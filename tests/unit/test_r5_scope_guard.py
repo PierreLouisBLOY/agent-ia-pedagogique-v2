@@ -5,6 +5,7 @@ import pytest
 from tests.support import r5_scope_guard as guard
 
 ROOT = Path(__file__).resolve().parents[2]
+pytestmark = pytest.mark.usefixtures("historical_guard_sources")
 
 
 def test_exact_successor_and_unknown_path():

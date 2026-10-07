@@ -72,6 +72,16 @@ searchForm.addEventListener("submit", async (event) => {
       const row = document.createElement("li");
       appendSearchText(row, "h3", item.read15?.canonical_title || "Passage · " + item.object_kind);
       appendSearchText(row, "p", item.excerpt + (item.excerpt_truncated ? "…" : ""));
+      if (item.source_status) {
+        const source = item.source_status;
+        if (source.contract_id !== "SEARCH-SOURCE-STATUS-1.0" ||
+            [source.identity_status, source.lifecycle_status, source.validation_status].some(value => typeof value !== "string" || !/^[A-Z][A-Z0-9_]{0,39}$/.test(value)))
+          throw new Error("INVALID_PUBLIC_SOURCE_STATUS");
+        appendSearchText(row, "p", "Identité : " + source.identity_status + " · Cycle de vie : " +
+          source.lifecycle_status + " · Validation : " + source.validation_status +
+          (source.status_basis === "EXACT_VERSION_REQUIRED" ? " · Version exacte à consulter." : "") +
+          " Ces statuts n'attestent pas l'autorité officielle.", "provenance");
+      }
       const trace = document.createElement("details"); trace.className = "secondary";
       appendSearchText(trace, "summary", "Provenance et version");
       appendSearchText(trace, "p", "Objet : " + item.object_ref + " · Passage : " + item.passage_ref +

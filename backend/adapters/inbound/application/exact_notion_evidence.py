@@ -21,6 +21,7 @@ class ExactNotionEvidenceInbound:
                 "object_ref": p.object_ref, "object_kind": p.object_kind,
                 "passage_ref": p.passage_ref, "version_or_checksum": p.version_or_checksum,
                 "excerpt": p.excerpt, "excerpt_truncated": p.excerpt_truncated,
+                **({"source_status": p.source_status.as_dict()} if p.source_status is not None else {}),
                 "provenance": {"source_kind": "canonical_search_chunk", "freshness": "CURRENT",
                     "admission_policy": "F2A", "authority_absolute": False,
                     "content_trust": "UNTRUSTED_CONTENT", "channel": "EXACT_ID"},

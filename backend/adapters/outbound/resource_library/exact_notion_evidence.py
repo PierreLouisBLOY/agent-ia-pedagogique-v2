@@ -41,16 +41,17 @@ class SQLiteExactNotionEvidenceAdapter:
             if p.canonical_object_ref != notion_id and notion_id not in p.semantic_rollup_refs:
                 continue
             hit = SearchHit(p.canonical_object_ref, p.chunk_type, p.passage_ref,
-                            p.version_or_checksum, p.text, 0.0, p.object_type)
+                            p.version_or_checksum, p.text, 0.0, p.object_type,
+                            self._search.passage_source_status(p.passage_ref))
             candidate = _candidate(hit, RetrievalChannel.STRUCTURED, len(passages) + 1)
             if not self._admission.is_admissible(candidate=candidate, query=query):
                 continue
             fragment = self._content.read_passage(p.passage_ref)
             if fragment is None or (fragment.source_ref, fragment.version_or_checksum) != (
                 p.canonical_object_ref, p.version_or_checksum,
-            ):
+            ) or fragment.source_status != hit.source_status:
                 raise ValueError("R6_EXACT_NOTION_PROVENANCE_MISMATCH")
             excerpt, truncated = minimized_excerpt(fragment.text)
             passages.append(AdmittedLocalPassage(p.canonical_object_ref, p.object_type,
-                p.passage_ref, p.version_or_checksum, excerpt, truncated))
+                p.passage_ref, p.version_or_checksum, excerpt, truncated, fragment.source_status))
         return ExactNotionEvidence(identity, tuple(passages))

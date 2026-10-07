@@ -11,6 +11,7 @@ from backend.adapters.outbound.document_content.sqlite import DocumentContentAcc
 from backend.adapters.outbound.evidence.sqlite import SQLiteEvidenceSearchAdapter
 from backend.adapters.outbound.search.sqlite import BusinessSearchAdapter
 from backend.agent_runtime.agents.evidence import RetrievalChannel, RetrievalQuery
+from backend.modules.resource_library.contracts.dto.search_source_status import SearchSourceStatus
 from backend.modules.resource_library.domain.value_objects.search_text import SearchText
 from backend.modules.resource_library.ports.outbound.local_search import (
     AdmittedLocalPassage,
@@ -96,8 +97,12 @@ class SQLiteLocalSearchAdapter:
             if not isinstance(checksum, str):
                 raise ValueError("INVALID_SEARCH_PROVENANCE")
             excerpt, truncated = minimized_excerpt(fragment.text)
+            source_status = candidate.metadata.get("source_status")
+            if source_status is not None and (fragment.source_status is None or fragment.source_status.as_dict() != source_status):
+                raise ValueError("SEARCH_SOURCE_STATUS_CHANGED")
             passages.append(AdmittedLocalPassage(
                 candidate.source_ref, kind, candidate.locator, checksum, excerpt, truncated,
+                SearchSourceStatus.from_mapping(source_status) if source_status is not None else None,
             ))
         return LocalSearchWindow(
             tuple(passages), len(candidates) == candidate_limit, len(admitted) > result_limit,

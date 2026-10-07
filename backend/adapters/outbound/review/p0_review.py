@@ -19,13 +19,16 @@ from backend.agent_runtime.contracts import (
     ActorKind,
     ActorRef,
     ContractMeta,
-    InvocationStatus,
     ReviewDimension,
     ReviewRequest,
     ReviewStatus,
 )
 from backend.core_contracts.capability import CapabilityId
-from backend.infrastructure.composition.bindings.r3_agents import version_target
+from backend.infrastructure.composition.bindings.r3_agents import (
+    operation_meta,
+    operation_projection,
+    version_target,
+)
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     as_plain,
     items,
@@ -35,7 +38,7 @@ from backend.modules.quality_evaluation.contracts.dto.p0_review_report import (
     DIAGNOSTIC_CONTRACT,
     HISTORICAL_CONTRACT,
 )
-from backend.shared_kernel.correlation import CorrelationId
+from backend.modules.work_orchestration.contracts.dto.operation_identity import OperationIdentity
 from backend.shared_kernel.time import Instant
 
 
@@ -51,12 +54,19 @@ class P0ReviewAdapter:
         return self.permission(request)
 
     def review(self, *, request: Mapping[str, object]) -> Mapping[str, object]:
+        fields = {"contract_id", "production", "bundle_sha256", "plan", "evidence_pack", "validation"}
+        if request.get("contract_id") == "P0-INDEPENDENT-REVIEW-REQUEST-1.1":
+            fields.add("operation_identity")
+        elif request.get("contract_id") != "P0-INDEPENDENT-REVIEW-REQUEST-1.0":
+            raise ValueError("P0_REVIEW_REQUEST_CONTRACT")
+        if set(request) != fields:
+            raise ValueError("P0_REVIEW_REQUEST_FIELDS")
         production = object_data(request["production"])
         contract = DIAGNOSTIC_CONTRACT if self.metadata_policy_version is ReviewMetadataPolicyVersion.NEGATIVE_AUTHORITY_DIAGNOSTICS_V1 else HISTORICAL_CONTRACT
         target = version_target(str(production["production_ref"]), str(production["version_ref"]))
         now = Instant(datetime.now(UTC))
-        meta = ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, "p0-review", "p0-review", None,
-            CorrelationId("p0-review"), now, ActorRef(ActorKind.AGENT, "AG-04"), InvocationStatus.PLANNED)
+        identity = OperationIdentity.from_mapping(request.get("operation_identity")) if request.get("contract_id") == "P0-INDEPENDENT-REVIEW-REQUEST-1.1" else None
+        meta = operation_meta(identity, "AG-04")
         evidence = object_data(request["evidence_pack"])
         # AG-04 receives the same immutable programme/version/selection as AG-03.
         # It cannot infer an enrichment or an admission from a shared notion label.
@@ -93,12 +103,13 @@ class P0ReviewAdapter:
             ResolvedReviewTarget(target, structured_payload=reviewed),
             resolved_inputs={"passages": evidence["passages"], "plan": request["plan"],
                              "structural_validation": request["validation"]},
-            output_contract={"contract_id": contract, "no_authority": True}))
+            output_contract={"contract_id": contract, "no_authority": True,
+                             "operation_identity": operation_projection(meta)}))
         status = ReviewStatus.COMPLETED if result.status.value == "SUCCEEDED" else ReviewStatus.INCOMPLETE
-        output_meta = ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, meta.run_id, meta.step_id, None,
+        output_meta = ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, meta.run_id, meta.step_id, meta.parent_step_id,
             meta.correlation_id, now, ActorRef(ActorKind.AGENT, "AG-04"), status)
         report = agent.build_review_result(request=ReviewResultMaterializationRequest(
-            prepared, result, output_meta, "p0-review",
+            prepared, result, output_meta, "review:" + meta.step_id,
             security_policy=ReviewSecurityPolicy(allow_whole_target_locator=True,
                 metadata_policy_version=self.metadata_policy_version)))
         output = {"contract_id": contract, "status": report.meta.status.value,

@@ -15,6 +15,7 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_revision import
     AssessmentRevisionRequest,
     EditorialCorrectionPlan,
 )
+from backend.modules.work_orchestration.contracts.dto.operation_identity import OperationIdentity
 from backend.shared_kernel._safe_data import freeze_safe_mapping
 
 DIMENSIONS = ("REV-ACC", "REV-COV", "REV-PED", "REV-INS", "REV-STR",
@@ -88,6 +89,12 @@ class R3JobRequest:
     revision: AssessmentRevisionRequest | None = None
     bundle: AssessmentBundle | None = None
     dimensions: tuple[str, ...] = ()
+    identity: OperationIdentity | None = None
+
+    def __post_init__(self) -> None:
+        if self.identity is not None and (type(self.identity) is not OperationIdentity
+                or self.identity.run_id != self.operation_ref):
+            raise ValueError("R3_JOB_IDENTITY")
 
 
 @dataclass(frozen=True, slots=True)

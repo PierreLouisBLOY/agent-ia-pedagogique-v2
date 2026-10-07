@@ -8,6 +8,7 @@ from collections.abc import Callable, Mapping
 
 from backend.adapters.inbound.api.read15 import HttpProjection, public_error
 from backend.agent_runtime.contracts import UseCaseResult
+from backend.modules.resource_library.contracts.dto.search_source_status import SearchSourceStatus
 
 MAX_SEARCH_RESPONSE_BYTES = 64 * 1_024
 _FIELDS = frozenset({
@@ -42,8 +43,10 @@ def _identifier(value: object, maximum: int) -> bool:
 
 
 def _item(data: object, position: int) -> dict[str, object]:
-    if not isinstance(data, Mapping) or set(data) != _FIELDS:
+    if not isinstance(data, Mapping) or set(data) not in (_FIELDS, _FIELDS | {"source_status"}):
         raise ValueError("INVALID_SEARCH_PROJECTION")
+    if "source_status" in data:
+        SearchSourceStatus.from_mapping(data["source_status"])
     if type(data["position"]) is not int or data["position"] != position:
         raise ValueError("INVALID_SEARCH_POSITION")
     for field, maximum in (

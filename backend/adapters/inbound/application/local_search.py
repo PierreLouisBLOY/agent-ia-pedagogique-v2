@@ -45,6 +45,7 @@ def search_data(view: LocalSearchView | None) -> dict[str, object] | None:
                 "availability_status": resource.availability_status,
             },
             "open_status": item.open_status.value,
+            **({"source_status": passage.source_status.as_dict()} if passage.source_status is not None else {}),
         })
     return {"items": items, "window_full": view.window_full,
             "more_admitted_in_window": view.more_admitted_in_window}

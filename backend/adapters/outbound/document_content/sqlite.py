@@ -5,6 +5,9 @@ from __future__ import annotations
 import sqlite3
 from dataclasses import dataclass
 
+from backend.adapters.outbound.search.source_status import passage_source_status
+from backend.modules.resource_library.contracts.dto.search_source_status import SearchSourceStatus
+
 
 @dataclass(frozen=True, slots=True)
 class ContentFragment:
@@ -14,6 +17,7 @@ class ContentFragment:
     version_or_checksum: str | None
     text: str
     evidence_ref: str
+    source_status: SearchSourceStatus | None = None
 
 
 class DocumentContentAccessAdapter:
@@ -55,6 +59,7 @@ class DocumentContentAccessAdapter:
             str(row[1]),
             str(row[2]),
             f"evidence:{passage_ref}",
+            passage_source_status(self._connection, passage_ref),
         )
 
     def close(self) -> None:

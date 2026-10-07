@@ -1,6 +1,7 @@
 """Existing canonical agents, caller-resolved in-memory projections only."""
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from uuid import uuid4
 
 from backend.agent_runtime.agents.generation import (
     GenerationCoordinator,
@@ -39,10 +40,27 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
 from backend.modules.pedagogical_design.contracts.dto.assessment_revision import (
     AssessmentRevisionRequest,
 )
+from backend.modules.work_orchestration.contracts.dto.operation_identity import OperationIdentity
 from backend.shared_kernel.correlation import CorrelationId
 from backend.shared_kernel.identifiers import TypedEntityId
 from backend.shared_kernel.references import ObjectVersionRef, TypedEntityRef, VersionRef
 from backend.shared_kernel.time import Instant
+
+
+def operation_meta(identity: OperationIdentity | None, actor: str) -> ContractMeta[InvocationStatus]:
+    if identity is None:
+        unique = uuid4().hex
+        identity = OperationIdentity("run:" + unique, "step:" + unique, None, "run:" + unique)
+    if type(identity) is not OperationIdentity:
+        raise ValueError("OPERATION_IDENTITY_REJECTED")
+    return ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, identity.run_id, identity.step_id,
+        identity.parent_step_id, CorrelationId(identity.correlation_id), Instant(datetime.now(UTC)),
+        ActorRef(ActorKind.AGENT, actor), InvocationStatus.PLANNED)
+
+
+def operation_projection(meta: ContractMeta[InvocationStatus]) -> dict[str, object]:
+    return OperationIdentity(meta.run_id, meta.step_id, meta.parent_step_id,
+                             meta.correlation_id.value).as_dict()
 
 
 def version_target(production_ref: str, version_ref: str) -> ObjectVersionRef:
@@ -50,12 +68,10 @@ def version_target(production_ref: str, version_ref: str) -> ObjectVersionRef:
                             VersionRef(version_ref))
 
 
-def transform(port: GenerationPort, request: AssessmentRevisionRequest) -> Mapping[str, object]:
+def transform(port: GenerationPort, request: AssessmentRevisionRequest, *, identity: OperationIdentity | None = None) -> Mapping[str, object]:
     from backend.infrastructure.composition.bindings.r3_harden_projection import harden_projection
 
-    meta = ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, "r3-transform", "r3-transform", None,
-        CorrelationId("r3-transform"), Instant(datetime.now(UTC)), ActorRef(ActorKind.AGENT, "AG-03"),
-        InvocationStatus.PLANNED)
+    meta = operation_meta(identity, "AG-03")
     canonical = ProductionRequest(meta, "ASSESSMENT", request.operation, "JSON",
         request.context, {"scope": request.operation, "no_authority": True},
         tuple(str(r["evidence_id"]) for r in request.references),
@@ -66,6 +82,7 @@ def transform(port: GenerationPort, request: AssessmentRevisionRequest) -> Mappi
                 {"subject": as_plain(request.subject),
                  "base_bundle": as_plain(request.base.data) if request.base else None}),
             output_contract={"contract_id": "R3-TRANSFORMATION-1.0", "strict_local_parser": True,
+                "operation_identity": operation_projection(meta),
                 **({"harden_contract_id": "R3-HARDEN-WIRE-1.0"} if request.operation == "HARDEN_DOSSIER_3" else {}),
                 "section": "R3_RESULT_JSON", "encoding": "one JSON object, no fences, no extra keys",
                 "prepare_fields": ["questions", "correction", "marking", "case_data", "limitations"],
@@ -83,11 +100,10 @@ def transform(port: GenerationPort, request: AssessmentRevisionRequest) -> Mappi
     return result.structured_payload
 
 
-def review(port: ReviewPort, bundle: AssessmentBundle, dimensions: tuple[str, ...]) -> dict[str, object]:
+def review(port: ReviewPort, bundle: AssessmentBundle, dimensions: tuple[str, ...], *, identity: OperationIdentity | None = None) -> dict[str, object]:
     target = version_target(bundle.production_ref, bundle.version_ref)
     now = Instant(datetime.now(UTC))
-    meta = ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, "r3-review", "r3-review", None,
-        CorrelationId("r3-review"), now, ActorRef(ActorKind.AGENT, "AG-04"), InvocationStatus.PLANNED)
+    meta = operation_meta(identity, "AG-04")
     canonical = ReviewRequest(meta, target, tuple(ReviewDimension(d) for d in dimensions),
         {"scope": "subject-correction-marking"},
         tuple(str(r["evidence_id"]) for r in items(bundle.data["references"], 3)),
@@ -102,12 +118,12 @@ def review(port: ReviewPort, bundle: AssessmentBundle, dimensions: tuple[str, ..
         CapabilityId("CAP-V01"), canonical,
         ResolvedReviewTarget(target, content=str(object_data(bundle.data["subject"])["content"]),
                              structured_payload=projection),
-        output_contract={"contract_id": "R3-REVIEW-1.0"}))
+        output_contract={"contract_id": "R3-REVIEW-1.0", "operation_identity": operation_projection(meta)}))
     status = ReviewStatus.COMPLETED if result.status.value == "SUCCEEDED" else ReviewStatus.INCOMPLETE
-    output_meta = ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, meta.run_id, meta.step_id, None,
+    output_meta = ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, meta.run_id, meta.step_id, meta.parent_step_id,
         meta.correlation_id, now, ActorRef(ActorKind.AGENT, "AG-04"), status)
     materialized = agent.build_review_result(request=ReviewResultMaterializationRequest(
-        prepared, result, output_meta, "r3-review"))
+        prepared, result, output_meta, "review:" + meta.step_id))
     return {"status": materialized.meta.status.value,
         "production_ref": bundle.production_ref, "version_ref": bundle.version_ref,
         "subject_sha256": bundle.data["subject_sha256"], "bundle_sha256": bundle.sha256,

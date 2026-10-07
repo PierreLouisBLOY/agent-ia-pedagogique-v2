@@ -6,6 +6,7 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
+from backend.modules.resource_library.contracts.dto.search_source_status import SearchSourceStatus
 from backend.modules.resource_library.domain.value_objects.search_text import SearchText
 
 
@@ -24,6 +25,7 @@ class AdmittedLocalPassage:
     version_or_checksum: str
     excerpt: str
     excerpt_truncated: bool
+    source_status: SearchSourceStatus | None = None
 
     def __post_init__(self) -> None:
         for value, maximum in (
@@ -37,6 +39,8 @@ class AdmittedLocalPassage:
             raise ValueError("INVALID_SEARCH_PROJECTION")
         if type(self.excerpt_truncated) is not bool:
             raise ValueError("INVALID_SEARCH_PROJECTION")
+        if self.source_status is not None and type(self.source_status) is not SearchSourceStatus:
+            raise ValueError("INVALID_SEARCH_SOURCE_STATUS")
 
 
 @dataclass(frozen=True, slots=True)

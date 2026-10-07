@@ -6,6 +6,9 @@ import sqlite3
 import unicodedata
 from dataclasses import dataclass
 
+from backend.adapters.outbound.search.source_status import passage_source_status, source_status
+from backend.modules.resource_library.contracts.dto.search_source_status import SearchSourceStatus
+
 
 @dataclass(frozen=True, slots=True)
 class SearchHit:
@@ -16,6 +19,7 @@ class SearchHit:
     snippet: str
     rank: float
     registry_object_type: str
+    source_status: SearchSourceStatus | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,7 +61,7 @@ class BusinessSearchAdapter:
         return tuple(
             SearchHit(
                 str(row[0]), str(row[1]), str(row[2]), str(row[3]),
-                str(row[4]), float(row[5]), str(row[6])
+                str(row[4]), float(row[5]), str(row[6]), source_status(self._connection, str(row[0]), str(row[6]))
             )
             for row in rows
         )
@@ -82,10 +86,13 @@ class BusinessSearchAdapter:
         return tuple(
             SearchHit(
                 str(row[0]), str(row[1]), str(row[2]), str(row[3]),
-                str(row[4]), float(index), str(row[5])
+                str(row[4]), float(index), str(row[5]), source_status(self._connection, str(row[0]), str(row[5]))
             )
             for index, row in enumerate(rows, start=1)
         )
+
+    def passage_source_status(self, passage_ref: str) -> SearchSourceStatus | None:
+        return passage_source_status(self._connection, passage_ref)
 
     def canonical_search_passages(self) -> tuple[CanonicalSearchPassage, ...]:
         """Enumerate the deterministic CURRENT canonical search universe."""

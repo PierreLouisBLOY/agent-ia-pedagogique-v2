@@ -27,6 +27,7 @@ from backend.modules.work_orchestration.application.services.p0_agentic import (
     evidence_pack,
     quality_status,
 )
+from backend.modules.work_orchestration.contracts.dto.operation_identity import OperationIdentity
 from backend.modules.work_orchestration.contracts.dto.p0_production_read_view import (
     P0ProductionReadView,
 )
@@ -235,7 +236,11 @@ class P0CreationService:
         if root.version_ref in self.review_consumed:
             raise ValueError("P0_REVIEW_ALREADY_CONSUMED")
         validation = self._validate(data)
-        request = freeze_safe_mapping({"contract_id": "P0-INDEPENDENT-REVIEW-REQUEST-1.0",
+        lineage = object_data(candidate.data["lineage"])
+        operation = OperationIdentity("op:" + str(data["command_id"]), "step:" + str(data["command_id"]),
+                                      str(lineage["source_step_id"]), str(lineage["conversation_id"]))
+        request = freeze_safe_mapping({"contract_id": "P0-INDEPENDENT-REVIEW-REQUEST-1.1",
+            "operation_identity": operation.as_dict(),
             "production": candidate.mutable_copy(), "bundle_sha256": candidate.sha256,
             "plan": self.plans[candidate.version_ref], "evidence_pack": self.packs[candidate.version_ref],
             "validation": validation})

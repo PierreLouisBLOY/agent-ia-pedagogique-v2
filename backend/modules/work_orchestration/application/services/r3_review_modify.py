@@ -314,8 +314,14 @@ class R3ReviewModifyService:
             revision = AssessmentRevisionRequest(HARDEN if command.operation == "modifications" else PREPARE,
                 view.production_ref, view.version_ref, subject, object_data(view.data["pedagogical_context"]),
                 tuple(items(view.data["references"], 3)), bundle if command.operation == "modifications" else None)
+        from backend.modules.work_orchestration.contracts.dto.operation_identity import (
+            OperationIdentity,
+        )
+
         job = R3JobRequest(operation_ref, command.operation, revision, bundle,
-                          tuple(cast(tuple[str, ...], command.body.get("dimensions", ()))))
+                          tuple(cast(tuple[str, ...], command.body.get("dimensions", ()))),
+                          OperationIdentity(operation_ref, "step:" + operation_ref.split(":", 1)[1],
+                                            None, self._id))
         self._jobs.authorize(job)
         trace = self._trace(operation_ref)
         trace.mark("STORE_CAS_OR_IDEMPOTENCY")

@@ -4,14 +4,46 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path
 
 BASELINE = "5bdd49be35149a7134e866fa4473926b65a5ee69"
 ROOT = Path(__file__).resolve().parents[2]
 SELF = "tests/support/r6_scope_guard.py"
 MANIFEST = "tests/support/r6_scope_manifest.json"
-SELF_SHA256 = "ab446fe66374921e22aac873546067ee703fdc0094696132c987a2182ebc38cf"
-MANIFEST_SHA256 = "eca5e96c2d4f9ac6f4f36033eb87a3f9ed6c251d0845cb471ec0f3c758f4220d"
+SELF_SHA256 = "bb813b672cb5ad9f79239735394625721a44b072820c81883b50dd7ee51115d3"
+MANIFEST_SHA256 = "d12ab562362206514ae0b4a409ede5b3c3a625c0babb7b2353417427250bd4b4"
+
+# Populated by the bounded private-source successor; never an open deletion list.
+PRIVATE_PREPARATION_PATHS: frozenset[str] = frozenset((
+    'docs/development/phase_12_18_h1_audit_cumulatif/01_BASELINE_ET_PERIMETRE.md',
+    'docs/development/phase_12_18_h1_audit_cumulatif/02_MATRICE_CUMULATIVE_12_1_12_17.json',
+    'docs/development/phase_12_18_h1_audit_cumulatif/03_ETAT_INTEGRATION_PRODUIT.md',
+    'docs/development/phase_12_18_h1_audit_cumulatif/04_ECARTS_ET_PREPARATION_RECETTE.json',
+    'docs/development/phase_12_18_h1_audit_cumulatif/LIVRABLE_12_18_H1_AUDIT_CUMULATIF.md',
+    'docs/development/phase_12_18_h1_audit_cumulatif/MANIFEST_SHA256.txt',
+    'docs/development/phase_12_18_h1a_sources_et_evolution_guard/01_SOURCES_ET_ECARTS_RECONCILIES.json',
+    'docs/development/phase_12_18_h1a_sources_et_evolution_guard/02_PROPOSITION_EVOLUTION_GUARD.md',
+    'docs/development/phase_12_18_h1a_sources_et_evolution_guard/03_PAQUET_DECISION_ET_PLAN_H2.md',
+    'docs/development/phase_12_18_h1a_sources_et_evolution_guard/LIVRABLE_H1A_SOURCES_ET_GUARD.md',
+    'docs/development/phase_12_18_h1a_sources_et_evolution_guard/MANIFEST_SHA256.txt',
+    'docs/development/phase_12_18_h2_r2_generation_preparation/01_CONTRAT_R2_GENERATION_CONVERSATIONNELLE.md',
+    'docs/development/phase_12_18_h2_r2_generation_preparation/02_INVENTAIRE_GUARDS_TESTS_PERMISSIONS_R2.json',
+    'docs/development/phase_12_18_h2_r2_generation_preparation/03_DECISION_ET_PLAN_EXECUTION_R2.md',
+    'docs/development/phase_12_18_h2_r2_generation_preparation/MANIFEST_SHA256.txt',
+    'docs/development/phase_12_18_h2_r3_review_modify_preparation/01_CONTRAT_R3_REVIEW_VALIDATION_MODIFICATION.md',
+    'docs/development/phase_12_18_h2_r3_review_modify_preparation/02_INVENTAIRE_FICHIERS_GUARDS_R3.json',
+    'docs/development/phase_12_18_h2_r3_review_modify_preparation/03_DECISION_ET_PLAN_EXECUTION_R3.md',
+    'docs/development/phase_12_18_h2_r3_review_modify_preparation/04_SCENARIO_ACCEPTATION_R3.md',
+    'docs/development/phase_12_18_h2_r3_review_modify_preparation/LIVRABLE_PROPOSITION_R3.md',
+    'docs/development/phase_12_18_h2_r3_review_modify_preparation/MANIFEST_SHA256.txt',
+    'docs/development/phase_12_18_h2_recherche_locale_preparation/01_BASELINE_ET_REUTILISATION.md',
+    'docs/development/phase_12_18_h2_recherche_locale_preparation/02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md',
+    'docs/development/phase_12_18_h2_recherche_locale_preparation/03_INVENTAIRE_FICHIERS_ET_GUARDS.json',
+    'docs/development/phase_12_18_h2_recherche_locale_preparation/04_DECISION_ET_PLAN_IMPLEMENTATION.md',
+    'docs/development/phase_12_18_h2_recherche_locale_preparation/LIVRABLE_PROPOSITION_RECHERCHE_LOCALE.md',
+    'docs/development/phase_12_18_h2_recherche_locale_preparation/MANIFEST_SHA256.txt',
+))
 
 
 def digest(raw: bytes) -> str:
@@ -96,14 +128,32 @@ def violations(root: Path = ROOT, *, changed: set[str] | None = None) -> list[st
     return errors
 
 
+def private_source_inventory(value: object) -> frozenset[str] | None:
+    """Only the exact canonical private preparation list may be withdrawn."""
+    if type(value) is not list or any(type(p) is not str for p in value):
+        return None
+    if len(value) != len(set(value)) or set(value) != PRIVATE_PREPARATION_PATHS:
+        return None
+    return frozenset(value)
+
+
 def active_delta_violations(root: Path, changed: set[str]) -> list[str]:
     """Authenticate the declared fabrication delta separately from protected reuse."""
     errors = violations(root)
     if errors:
         return errors
     value = _manifest(root)
+    excluded = private_source_inventory(value.get("private_source_exclusions"))
+    if excluded is None:
+        return ["R6_PRIVATE_SOURCE_EXCLUSION_INVENTORY"]
+    try:
+        indexed = set(subprocess.run(["git", "ls-files", "-z"], cwd=root,
+            check=True, capture_output=True, text=True).stdout.split("\0"))
+    except (OSError, subprocess.CalledProcessError):
+        return ["R6_PRIVATE_SOURCE_INDEX_UNREADABLE"]
+    errors.extend("R6_PRIVATE_SOURCE_INDEXED:" + p for p in sorted(indexed & excluded))
     declared = set(value["active_delta_paths"])
-    protected = set(value["sha256"]) | {SELF, MANIFEST}
+    protected = set(value["sha256"]) | {SELF, MANIFEST} | excluded
     if not declared <= protected:
         return ["R6_ACTIVE_DELTA_NOT_PROTECTED"]
     errors.extend("R6_ACTIVE_UNAPPROVED:" + p for p in sorted(changed - declared))

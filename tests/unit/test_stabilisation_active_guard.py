@@ -91,7 +91,11 @@ def test_active_owner_working_and_real_index_mutations(active_clone, path):
 def test_active_delta_uses_real_git_inventory_without_archival_exemption():
     changed = set(git(ROOT, "diff", "--name-only", guard.BASELINE, "--").decode().splitlines())
     changed.update(git(ROOT, "ls-files", "--others", "--exclude-standard").decode().splitlines())
-    assert not changed & set(r3_guard_oracle.PREPARATION)
+    # Declared withdrawals stay visible in the delta; their bytes must never
+    # regain authority through the current index.
+    assert changed & set(r3_guard_oracle.PREPARATION) == set(guard.PRIVATE_PREPARATION_PATHS)
+    indexed = set(git(ROOT, "ls-files").decode().splitlines())
+    assert not indexed & set(r3_guard_oracle.PREPARATION)
     assert guard.active_delta_violations(ROOT, changed) == []
     assert set(HISTORICAL_OWNERS) <= set(guard.PATHS)
 

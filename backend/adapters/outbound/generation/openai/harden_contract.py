@@ -104,6 +104,9 @@ def validate_harden_inputs(request: GenerationPortRequest) -> None:
         ConfirmedConversationContext,
     )
     from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import as_plain
+    from backend.modules.work_orchestration.contracts.dto.operation_identity import (
+        OperationIdentity,
+    )
 
     ConfirmedConversationContext(request.pedagogical_context)
     contract: Any = as_plain(request.output_contract)
@@ -132,6 +135,11 @@ def validate_harden_inputs(request: GenerationPortRequest) -> None:
         "max_calculations": 60,
         "no_authority": True,
     }
+    if "operation_identity" in contract:
+        identity = OperationIdentity.from_mapping(contract["operation_identity"])
+        if identity.step_id != request.source_step_id:
+            raise ValueError("R3_HARDEN_OPERATION_IDENTITY_REJECTED")
+        expected["operation_identity"] = identity.as_dict()
     identities = contract.get("identities")
     if (
         json.dumps(contract, sort_keys=True, allow_nan=False)

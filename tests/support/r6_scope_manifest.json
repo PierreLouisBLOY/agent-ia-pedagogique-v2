@@ -357,6 +357,7 @@
     "tests/unit/test_r6_u1_exact_source.py",
     "tests/unit/test_review_metadata_successor.py",
     "tests/unit/test_stabilisation_active_guard.py",
+    "tests/unit/test_stabilisation_r2_harden_identity.py",
     "tests/unit/test_stabilisation_r2_operation_identity.py",
     "tests/unit/test_stabilisation_r2_p0.py",
     "tests/unit/test_stmg_active_guard.py",
@@ -433,7 +434,7 @@
     "backend/adapters/outbound/generation/conversation.py": "adce06b89d14e967121622174a35fdd2c43aa2879e04efd8eb12ba4a1d212170",
     "backend/adapters/outbound/generation/course_visual_brief.py": "90d6b7679565bbbfc5c6759d3b49e0bb29780161391f9fa52972648479754527",
     "backend/adapters/outbound/generation/openai/adapter.py": "747bb1d21843c4da57f62bd248e9b762fa99351627d98996eb55c8e848f342a4",
-    "backend/adapters/outbound/generation/openai/harden_contract.py": "d18cbf1a8289d618e779b55345b861a0173c48bd875eaedf13967807da2c7ebd",
+    "backend/adapters/outbound/generation/openai/harden_contract.py": "f7356eb7a60a72b46a0c3a05d39c91e5c23754d626139cdbc9d948ff8ceed2a5",
     "backend/adapters/outbound/generation/openai/harden_materialization.py": "2ed6e6c336ba7061c7da445eacb782d20ac7c4a3796dbec65307bbaa06f7b2e1",
     "backend/adapters/outbound/generation/openai/locator_materialization.py": "baa06ce9538b8bb493c3e8a25945f2b099d2dfcb2393249ca21abc6818d01595",
     "backend/adapters/outbound/generation/openai/mapping.py": "c76176325a814aeac97924eb26caa6391f738ace86e890071757d9be554079eb",
@@ -574,7 +575,7 @@
     "docs/development/ADR_M01_VISUAL_ENRICHMENT_2026-10-07.md": "601943ce23aad289a2f7069cba3e0827c38e118e2ea9cd6154ea435da1a75a83",
     "docs/development/ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.md": "5bb3cd8de8352636d73ace76d4db12cda59670cadc1b7b09f2528ec9f4861954",
     "docs/development/ADR_STABILISATION_HISTORICAL_ACTIVE_GUARDS_2026-10-07.md": "ea1d11e5a72d3c6ee065f3e3a3fe522cd609b1777f08e2279fd4b9a1d5ac69ae",
-    "docs/development/ADR_STABILISATION_R2_OPERATION_IDENTITIES_2026-10-07.md": "ac368a184b8302328dae0a9267139e925eef8aea8a37497a0554f8cca75dca82",
+    "docs/development/ADR_STABILISATION_R2_OPERATION_IDENTITIES_2026-10-07.md": "b9bf474dd84dd4cb4716c7c322365c02fbef3b8981acbb370c3cc31bdd6f8636",
     "docs/development/ADR_STABILISATION_R2_P0_CONTRACTS_2026-10-07.md": "b971abe19dd5d03438e2002c927a255843c782772ea0b58a78f709e785ab2897",
     "docs/development/ADR_STABILISATION_R2_SOURCE_STATUS_2026-10-07.md": "b26bc5bc0b873b256458f05e6ecf6e4156726e884a28772e93278e53b90860dc",
     "docs/development/ADR_STMG_INSTITUTIONAL_ALIGNMENT_2026-10-05.md": "bd35a9c3eb8fde2a77882e834863e2001778b0c290d3f0e16fbf73ac0c157970",
@@ -738,6 +739,7 @@
     "tests/unit/test_r6_u1_exact_source.py": "8655c96535c91e3153c283903666fa77a2b32f98b1cd1e2d748fc3d4638792a6",
     "tests/unit/test_review_metadata_successor.py": "ebffcbd1ed2a98bb1afb409cb4cac957594fb96955b0fc587290971170110210",
     "tests/unit/test_stabilisation_active_guard.py": "9aa913be07f1946afba4e50e4d41b07091673a5bfc3733d65c5227c7d504e6e4",
+    "tests/unit/test_stabilisation_r2_harden_identity.py": "023d125ca6ed3bc8c4d0be0629f3ec1d2c55bba47fa7ced4935c48aff0a7c071",
     "tests/unit/test_stabilisation_r2_operation_identity.py": "cb4d8c05d62fbb37bf041bc0936b22a67c390e4edfc077beffd7272b7e9cd575",
     "tests/unit/test_stabilisation_r2_p0.py": "fc50447e6893272c7659624481268a7d0625e0aacd8056ae1874a6f37c60576d",
     "tests/unit/test_stmg_active_guard.py": "bf9128daf1ffdeb4405ff3c128e6aeca409546955a2c61b26d3b22a64677689c",
@@ -787,6 +789,7 @@
     "backend/adapters/outbound/export/r6_readable_word.py",
     "backend/adapters/outbound/generation/assessment_revision.py",
     "backend/adapters/outbound/generation/course_visual_brief.py",
+    "backend/adapters/outbound/generation/openai/harden_contract.py",
     "backend/adapters/outbound/generation/openai/locator_materialization.py",
     "backend/adapters/outbound/generation/openai/p0_content.py",
     "backend/adapters/outbound/persistence/saved_production.py",
@@ -976,6 +979,7 @@
     "tests/unit/test_r6_u1_exact_source.py",
     "tests/unit/test_review_metadata_successor.py",
     "tests/unit/test_stabilisation_active_guard.py",
+    "tests/unit/test_stabilisation_r2_harden_identity.py",
     "tests/unit/test_stabilisation_r2_operation_identity.py",
     "tests/unit/test_stabilisation_r2_p0.py",
     "tests/unit/test_stmg_active_guard.py",
@@ -1923,6 +1927,21 @@
         "frontend/app.js",
         "tests/integration/test_stabilisation_r2_source_status.py",
         "tests/unit/test_stabilisation_r2_operation_identity.py"
+      ]
+    },
+    {
+      "purpose": "STABILISATION_HARDEN_CLOSED_IDENTITY_COMPATIBILITY",
+      "entry": "dccd70d19673846b580b375edc3ecd51e21a1335",
+      "prior_manifest_sha256": "fe25a93821263c13c38bc002719fc4ea0e420d388e8cd051396520803825c2b3",
+      "adrs": [
+        "docs/development/ADR_STABILISATION_R2_SOURCE_STATUS_2026-10-07.md",
+        "docs/development/ADR_STABILISATION_R2_OPERATION_IDENTITIES_2026-10-07.md"
+      ],
+      "scope": "Closed HARDEN consumer compatibility with OperationIdentity 1.0; unknown metadata refused before effects",
+      "changed_owners": [
+        "backend/adapters/outbound/generation/openai/harden_contract.py",
+        "docs/development/ADR_STABILISATION_R2_OPERATION_IDENTITIES_2026-10-07.md",
+        "tests/unit/test_stabilisation_r2_harden_identity.py"
       ]
     }
   ]

@@ -39,3 +39,20 @@ fournisseur antérieures ne qualifient pas ce nouveau dispatch.
 
 Aucun appel fournisseur n'est nécessaire pour ces preuves locales. La PR
 technique doit relire cet ADR et les preuves avant l'intégration.
+
+## Complément de compatibilité HARDEN
+
+Le rejeu de l'adaptateur établit que son validateur fermé refuse l'identité
+ajoutée au contrat de transformation. Le complément conserve la forme
+historique sans identité et admet uniquement `OPERATION-IDENTITY-1.0`, validée
+par le DTO existant et liée au `source_step_id` de la demande. Les champs
+inconnus, versions inconnues, valeurs invalides et auto-parentages restent
+refusés avant réservation, résolution de credential ou transport. Les six
+champs du résultat HARDEN et leurs protections restent inchangés.
+
+La revue locale préalable confirme que cette adaptation du consommateur
+n'ajoute aucune autorité ni format permissif. Elle exige des tests positifs
+des deux formes, des substitutions de métadonnées et le parcours one-shot
+avec doubles déclarés. Aucune preuve ou autorisation fournisseur historique
+n'est réutilisée pour qualifier la nouvelle requête. Le successeur des gardes
+inventorie ce complément ; la revue de PR reste requise.

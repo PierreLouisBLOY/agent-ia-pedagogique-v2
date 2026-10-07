@@ -199,6 +199,7 @@
     "docs/development/ADR_M01_VISUAL_ENRICHMENT_2026-10-07.md",
     "docs/development/ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.md",
     "docs/development/ADR_STABILISATION_HISTORICAL_ACTIVE_GUARDS_2026-10-07.md",
+    "docs/development/ADR_STABILISATION_R2_CALIBRATION_REPLAY_2026-10-07.md",
     "docs/development/ADR_STABILISATION_R2_OPERATION_IDENTITIES_2026-10-07.md",
     "docs/development/ADR_STABILISATION_R2_P0_CONTRACTS_2026-10-07.md",
     "docs/development/ADR_STABILISATION_R2_SOURCE_STATUS_2026-10-07.md",
@@ -271,6 +272,7 @@
     "tests/integration/test_r6_u1_exact_source_application.py",
     "tests/integration/test_stabilisation_r2_source_status.py",
     "tests/support/conversation_fakes.py",
+    "tests/support/historical_calibration_replay.py",
     "tests/support/historical_git_successor.py",
     "tests/support/historical_guard_fixture.py",
     "tests/support/institutional_http_fixture.py",
@@ -322,6 +324,7 @@
     "tests/unit/test_p0_content_projection.py",
     "tests/unit/test_p0_creation_contract.py",
     "tests/unit/test_p0_selected_source_boundary.py",
+    "tests/unit/test_pedagogical_calibration_r4_r3_r3.py",
     "tests/unit/test_qualified_institutional_corpus.py",
     "tests/unit/test_r3_assets.py",
     "tests/unit/test_r3_cap_a01_targeted.py",
@@ -575,6 +578,7 @@
     "docs/development/ADR_M01_VISUAL_ENRICHMENT_2026-10-07.md": "601943ce23aad289a2f7069cba3e0827c38e118e2ea9cd6154ea435da1a75a83",
     "docs/development/ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.md": "5bb3cd8de8352636d73ace76d4db12cda59670cadc1b7b09f2528ec9f4861954",
     "docs/development/ADR_STABILISATION_HISTORICAL_ACTIVE_GUARDS_2026-10-07.md": "ea1d11e5a72d3c6ee065f3e3a3fe522cd609b1777f08e2279fd4b9a1d5ac69ae",
+    "docs/development/ADR_STABILISATION_R2_CALIBRATION_REPLAY_2026-10-07.md": "71671af76bda95e94ee44d284a1eeee25a1e756d127a1a4f3f554249a4efd966",
     "docs/development/ADR_STABILISATION_R2_OPERATION_IDENTITIES_2026-10-07.md": "b9bf474dd84dd4cb4716c7c322365c02fbef3b8981acbb370c3cc31bdd6f8636",
     "docs/development/ADR_STABILISATION_R2_P0_CONTRACTS_2026-10-07.md": "b971abe19dd5d03438e2002c927a255843c782772ea0b58a78f709e785ab2897",
     "docs/development/ADR_STABILISATION_R2_SOURCE_STATUS_2026-10-07.md": "b26bc5bc0b873b256458f05e6ecf6e4156726e884a28772e93278e53b90860dc",
@@ -652,6 +656,7 @@
     "tests/non_functional/test_semantic_retrieval_live_gate.py": "f971647244ea79b0e2f22ccfbfdc452e76868d292bc17ed2f08a2db26f851228",
     "tests/non_functional/test_semantic_retrieval_offline_r1_gate.py": "f85112e84e0d42bd4db84bc8939c83be4f2491b4c007b4d990ccb65cb66dcee5",
     "tests/support/conversation_fakes.py": "596a52914dbdb7de36a1af4e407b3ff0aa18fefd97131b1eb27f608424758eac",
+    "tests/support/historical_calibration_replay.py": "4f79f0cf0b0dda42720760c51a3c2c004b978bad6039d434bbecf612f3112063",
     "tests/support/historical_git_successor.py": "f6289459b084dcdaa4cd39f35b268f2639cb087455b2398914d1827840bd7681",
     "tests/support/historical_guard_fixture.py": "22db5d71f74570fe9694cb63623282d1f10a4bb65a9452e10b24b3fcdef2a756",
     "tests/support/institutional_http_fixture.py": "083beff604bf248cd8b412eaa5452b8aa5b5f8446b174d6a00eed482c0f00415",
@@ -704,6 +709,7 @@
     "tests/unit/test_p0_content_projection.py": "476d358f97590e1f9284f685215aebd08cecb6ed4b34e8fbf743e35b35b3dc39",
     "tests/unit/test_p0_creation_contract.py": "43cd55ebe27bd7a93048dd2e4aef8bf28e3906ba09956a959d4abb64f784076f",
     "tests/unit/test_p0_selected_source_boundary.py": "ed94317ec28650733d37970d53af5751fdaa4661bc2e918d8e8806fe4c6caa0e",
+    "tests/unit/test_pedagogical_calibration_r4_r3_r3.py": "ccb59fb4d3787fb2e42a497f25cfffa5fb66d53e38c5f5b39c8d4ff1aceb50b5",
     "tests/unit/test_qualified_institutional_corpus.py": "88d3fb17189fbea0259f8a13be8b9a6048c08b838cdc19beddf71537254b9362",
     "tests/unit/test_r3_assets.py": "28466cbb35d68b13904d8ab0d9d8a41b7179465b65f5b6fa02aed7bc8929c390",
     "tests/unit/test_r3_cap_a01_targeted.py": "dc64b4772a5e2d3c7f7332acd4ea3fbd703efdf69e11e5733b8910b7e6a0f6b4",
@@ -887,6 +893,7 @@
     "docs/development/ADR_M01_VISUAL_ENRICHMENT_2026-10-07.md",
     "docs/development/ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.md",
     "docs/development/ADR_STABILISATION_HISTORICAL_ACTIVE_GUARDS_2026-10-07.md",
+    "docs/development/ADR_STABILISATION_R2_CALIBRATION_REPLAY_2026-10-07.md",
     "docs/development/ADR_STABILISATION_R2_OPERATION_IDENTITIES_2026-10-07.md",
     "docs/development/ADR_STABILISATION_R2_P0_CONTRACTS_2026-10-07.md",
     "docs/development/ADR_STABILISATION_R2_SOURCE_STATUS_2026-10-07.md",
@@ -929,6 +936,7 @@
     "tests/integration/test_r6_u1_exact_source_application.py",
     "tests/integration/test_sqlite_runtime_real_gate.py",
     "tests/integration/test_stabilisation_r2_source_status.py",
+    "tests/support/historical_calibration_replay.py",
     "tests/support/historical_git_successor.py",
     "tests/support/historical_guard_fixture.py",
     "tests/support/institutional_http_fixture.py",
@@ -960,6 +968,7 @@
     "tests/unit/test_p0_content_projection.py",
     "tests/unit/test_p0_creation_contract.py",
     "tests/unit/test_p0_selected_source_boundary.py",
+    "tests/unit/test_pedagogical_calibration_r4_r3_r3.py",
     "tests/unit/test_qualified_institutional_corpus.py",
     "tests/unit/test_r3_cap_a01_targeted.py",
     "tests/unit/test_r3_d3_scope_guard.py",
@@ -1942,6 +1951,20 @@
         "backend/adapters/outbound/generation/openai/harden_contract.py",
         "docs/development/ADR_STABILISATION_R2_OPERATION_IDENTITIES_2026-10-07.md",
         "tests/unit/test_stabilisation_r2_harden_identity.py"
+      ]
+    },
+    {
+      "purpose": "STABILISATION_HISTORICAL_AND_CURRENT_CALIBRATION_REPLAY",
+      "entry": "18322aa577c3d8df672d710aae9e7b3b9a576a16",
+      "prior_manifest_sha256": "a48e1aea834869b2fe430a21bc5b600fc74f04305d817b4dc3e602d9bcb2d175",
+      "adrs": [
+        "docs/development/ADR_STABILISATION_R2_CALIBRATION_REPLAY_2026-10-07.md"
+      ],
+      "scope": "Original report assertions on exact Git fabrication; distinct current revalidation; all private evidence prerequisites explicit",
+      "changed_owners": [
+        "docs/development/ADR_STABILISATION_R2_CALIBRATION_REPLAY_2026-10-07.md",
+        "tests/support/historical_calibration_replay.py",
+        "tests/unit/test_pedagogical_calibration_r4_r3_r3.py"
       ]
     }
   ]

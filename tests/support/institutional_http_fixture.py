@@ -89,7 +89,8 @@ def build_test_target(seed, root):
     runtime = root / "synthetic-qualified.sqlite"
     assert not runtime.exists()
     original.validate()
-    shutil.copy2(seed, runtime)
+    # Preserve fresh fixture attributes; a read-only reference stays untouched.
+    shutil.copyfile(seed, runtime)
     original.validate()
     connection = connect_sqlite(runtime, allowed_root=root)
     try:

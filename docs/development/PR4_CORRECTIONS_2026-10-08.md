@@ -78,3 +78,32 @@ Le test synthétique dédié échoue avant et réussit après. Le rejeu R1 réel
 et les contrôles finaux sont consignés séparément, sans convertir son ancien
 SKIP ni effacer le premier échec de préparation. Cette correction ne résout
 aucune des sept réserves de DDL SQL01–SQL07.
+
+## Complément révélé par le global 859826a
+
+Le premier rejeu complet de cette continuation conserve 7 952 PASS, 14 FAIL,
+34 ERROR et 5 SKIP. Il a utilisé la référence R5 authentifiée, protégée en
+lecture seule. La fixture institutionnelle HTTP héritait encore de cet attribut
+via copy2 : les scénarios s'arrêtaient avant leur parcours. La fixture copie
+désormais les octets avec copyfile dans son dossier de test privé, sans changer
+la référence. Son admission reste synthétique, sans autorité pédagogique.
+
+Le fitness de publication atomique exigeait littéralement copy2, malgré son
+effet erroné sur une référence readonly. Son successeur exige copyfile dans le
+temporaire privé et interdit les deux copies directes vers le runtime. Les
+assertions de fichier frais, hardening, immutabilité et atomicité sont conservées,
+avec la régression comportementale readonly et les parcours HTTP. Le premier
+résultat FAIL n'est pas rétroactivement changé.
+
+Le banc initial a aussi exposé des refus transitoires d'ouverture de la référence
+partagée entre processus. Les suites utilisant la seed réelle sont rejouées
+dans une partition séquentielle déclarée. Aucun contrôle filesystem, droit,
+ACL, original ou garde partagé n'est assoupli. Tous les node_ids applicables
+restent exécutés ; aucun résultat n'est masqué. Cette qualification ne démontre
+pas une ouverture concurrente d'une même référence externe sur cet hôte.
+
+La couverture versionnée conserve les 426 owners précédents, les 27 exclusions
+et les fonctions du garde. Le delta fixture/fitness/note est ajouté et protégé.
+Le premier global, les résultats corrigés et le successeur exact restent des
+preuves distinctes. La revue finale demeure requise ; aucun DDL supplémentaire,
+fournisseur, credential, merge ni acceptation enseignante.

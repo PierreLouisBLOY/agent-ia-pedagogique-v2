@@ -283,6 +283,7 @@
     "tests/architecture/test_review_boundary_fitness.py",
     "tests/architecture/test_security_contract_boundary_fitness.py",
     "tests/architecture/test_security_recovery_observability_e2e_fitness.py",
+    "tests/architecture/test_sqlite_seed_runtime_lifecycle_fitness.py",
     "tests/calibration/pedagogical/repair_tranche_v4_2.py",
     "tests/conftest.py",
     "tests/integration/test_conversation_http.py",
@@ -712,7 +713,7 @@
     "tests/support/historical_calibration_replay.py": "d972755d24b77af390d41b7e9e67f3d0689ddfe54e1cf486770e7210c15422bf",
     "tests/support/historical_git_successor.py": "f6289459b084dcdaa4cd39f35b268f2639cb087455b2398914d1827840bd7681",
     "tests/support/historical_guard_fixture.py": "cf8e5e11331a35d7e08a8f686cc7abbe64a829bef354767a47cf39aef2e6339e",
-    "tests/support/institutional_http_fixture.py": "083beff604bf248cd8b412eaa5452b8aa5b5f8446b174d6a00eed482c0f00415",
+    "tests/support/institutional_http_fixture.py": "cac893e6425ecc613ade03cea13bd9f4ef1b76cb0f7d5e9212e2dbdf15dc598a",
     "tests/support/p0_generation_double.py": "29976a7a50fa8ddc9ad1e8ac76b2f4977d0e03cb388239d384de07ccbead5083",
     "tests/support/r3_cap_a01_guard.py": "bf9de68f53e3227a05a09bda089972a2f1785f74f16d593fff495fda5a63a752",
     "tests/support/r3_d3_fixtures.py": "fbd63ad54822fd9a36da54644d52fad95a708f79349f37a2a50db040822763f4",
@@ -863,8 +864,9 @@
     "backend/modules/work_orchestration/ports/outbound/conversation_store.py": "4adc41d6a46ff5f4642bb835d95e7a8d8be2f2a8c0cb3e4f35757073027300a9",
     "tests/unit/test_pr4_quantitative_application.py": "4dffd258d789f13b62b3e28ce6ff2b3fec873cabeeadbded35b82777c4e2d6f9",
     "tools/tests/pr4_lifecycle_regressions.test.cjs": "5904d2d89d13625fbb97b0824a3e5ab5611106d41deb70fe794c3a1c3116f72e",
-    "docs/development/PR4_CORRECTIONS_2026-10-08.md": "001b45f5e62c753d65ae293c520463fec94dc20acb04600ea3d76e3fed435582",
-    "tests/unit/test_pr4_readonly_seed_copy.py": "e7a77072fa43c9d9a5338ba011f6904c97fb4d8019edbe3a9e71ab51f11b7285"
+    "docs/development/PR4_CORRECTIONS_2026-10-08.md": "e906bb4b5b4884019979792da726023f896e5c85590fcb9c98514f9f2cec3e97",
+    "tests/unit/test_pr4_readonly_seed_copy.py": "e7a77072fa43c9d9a5338ba011f6904c97fb4d8019edbe3a9e71ab51f11b7285",
+    "tests/architecture/test_sqlite_seed_runtime_lifecycle_fitness.py": "836463fe50e3b6a18a21b8738cf57e70066e046fb187189e39530d837898cd6f"
   },
   "active_delta_paths": [
     ".gitignore",
@@ -1060,6 +1062,7 @@
     "tests/architecture/test_repository_baseline.py",
     "tests/architecture/test_review_boundary_fitness.py",
     "tests/architecture/test_security_contract_boundary_fitness.py",
+    "tests/architecture/test_sqlite_seed_runtime_lifecycle_fitness.py",
     "tests/conftest.py",
     "tests/integration/test_cp645_evidence_real_gate.py",
     "tests/integration/test_local_browser_navigation_burst.py",
@@ -2332,6 +2335,44 @@
       "historical_results": "UNCHANGED",
       "guard_functions": "UNCHANGED",
       "additional_correction": "D03 exact R1 setup: byte copy into fresh private writable temporary, no original permissions modified"
+    },
+    {
+      "purpose": "PR4_READONLY_FIXTURE_AND_FRESH_COPY_FITNESS",
+      "baseline": "859826a6077536f089425b798264f3bc0ec8dbe0",
+      "parent_manifest_sha256": "2c352c6c25f2ffcd525354c734cfaafc8505e4cbde0cf016bc83e2d051352700",
+      "decision_documents": [
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md"
+      ],
+      "code_paths": [
+        "tests/support/institutional_http_fixture.py",
+        "tests/architecture/test_sqlite_seed_runtime_lifecycle_fitness.py",
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md",
+        "tests/support/r6_scope_manifest.json",
+        "tests/support/r6_scope_guard.py"
+      ],
+      "changed_owner_sha256": {
+        "tests/support/institutional_http_fixture.py": {
+          "before": "083beff604bf248cd8b412eaa5452b8aa5b5f8446b174d6a00eed482c0f00415",
+          "after": "cac893e6425ecc613ade03cea13bd9f4ef1b76cb0f7d5e9212e2dbdf15dc598a"
+        },
+        "tests/architecture/test_sqlite_seed_runtime_lifecycle_fitness.py": {
+          "before": "9b40c84cb3495044322b868c9ac6d16b317a19b740d76d602064006fb785c4a6",
+          "after": "836463fe50e3b6a18a21b8738cf57e70066e046fb187189e39530d837898cd6f"
+        },
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md": {
+          "before": "001b45f5e62c753d65ae293c520463fec94dc20acb04600ea3d76e3fed435582",
+          "after": "e906bb4b5b4884019979792da726023f896e5c85590fcb9c98514f9f2cec3e97"
+        }
+      },
+      "protected_reuse_additions": [
+        "tests/architecture/test_sqlite_seed_runtime_lifecycle_fitness.py"
+      ],
+      "original_owners_preserved": 426,
+      "private_exclusions_preserved": 27,
+      "review_provenance": "Ordinary blockers found in authorized complete qualification; final distinct review required",
+      "private_attestation": "NOT_PERFORMED",
+      "historical_results": "UNCHANGED",
+      "guard_functions": "UNCHANGED"
     }
   ],
   "private_source_exclusions": [

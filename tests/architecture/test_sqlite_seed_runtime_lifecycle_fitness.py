@@ -23,8 +23,10 @@ def test_runtime_publication_is_fresh_and_atomic() -> None:
     assert "tempfile.mkstemp" in filesystem
     assert "atomic_publish_fresh" in source
     assert "os.link(source_snapshot.path, destination_snapshot.path)" in filesystem
-    assert "shutil.copy2(seed_path, temporary)" in source
+    assert "shutil.copyfile(seed_path, temporary)" in source
+    assert "shutil.copy2(seed_path, temporary)" not in source
     assert "shutil.copy2(seed_path, runtime_path)" not in source
+    assert "shutil.copyfile(seed_path, runtime_path)" not in source
 
 
 def test_migration_policy_is_allowlisted_and_unknowns_remain_deferred() -> None:

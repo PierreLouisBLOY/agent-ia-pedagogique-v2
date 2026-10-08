@@ -31,8 +31,18 @@ def _normalized(text: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFKD", text.casefold()) if not unicodedata.combining(c))
 
 
-def _quantitative_signal(text: str) -> bool:
+def _without_context_dates(text: str) -> str:
     normalized = _normalized(text)
+    if re.search(r"\d\s*[+*=−]\s*[-+]?\d", normalized):
+        return normalized
+    # A date is contextual data, not an arithmetic operation or measured result.
+    normalized = re.sub(r"\b(?:\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}[-/]\d{1,2}[-/]\d{4})\b", "", normalized)
+    normalized = re.sub(r"\b\d{1,2}\s+(?:janvier|fevrier|mars|avril|mai|juin|juillet|aout|septembre|octobre|novembre|decembre)\s+\d{4}\b", "", normalized)
+    return re.sub(r"\b(?:en|depuis|annee|le)\s+(?:19|20)\d{2}\b", "", normalized)
+
+
+def _quantitative_signal(text: str) -> bool:
+    normalized = _without_context_dates(text)
     # Operations and measured outputs; keywords are a supplementary conservative signal.
     operation = re.search(r"\b(?:calcul\w*|determiner|trouver|estimer|deduire|evaluer|quel montant)\b", normalized)
     measure = re.search(r"\b(?:tva|taxe|van|valeur actu\w*|resultat net|benefice|recette\w*|depense\w*|taux|montant|pourcent\w*|chiffre d.affaires|charges|flux)\b", normalized)
@@ -44,7 +54,8 @@ def _quantitative_signal(text: str) -> bool:
     comparison = re.search(r"\b(?:variation\w*|difference\w*|ecart\w*|augmentation\w*|diminution\w*|evolution\w*)\b", normalized)
     count_question = re.search(r"\bcombien\b", normalized)
     return bool((operation and (measure or quantity)) or (comparison and quantity)
-        or count_question or expression or units or keywords)
+        or count_question or expression or units or keywords
+        or re.search(r"\b(?:total|totaux|somme|addition\w*|soustra\w*|multipl\w*|divis\w*|cumul\w*|moyenne\w*)\b", normalized))
 
 
 def _declared_applicability(data: Mapping[str, object]) -> dict[str, str]:
@@ -70,11 +81,27 @@ def _production_requires_control(value: object, *, field: str = "") -> bool:
     if isinstance(value, (tuple, list)):
         return any(_production_requires_control(item, field=field) for item in value)
     if isinstance(value, str):
-        numeric_answer = field == "expected_answer" and re.match(
-            r"\s*[-+]?\d[\d .,]*(?:$|\s+[^\W\d_]\w*)", value, re.UNICODE) is not None
+        numeric_answer = field == "expected_answer" and re.search(
+            r"(?<!\w)[-+]?\d+(?:[.,]\d+)?(?!\w)", _without_context_dates(value)) is not None
         return numeric_answer or _quantitative_signal(value)
     return type(value) in {int, float} and field in {
         "amount", "quantity", "rate", "result", "expected_answer", "unit_price", "subtotal", "total", "balance"}
+
+
+def _production_has_unresolved_quantity(value: object, *, field: str = "") -> bool:
+    if isinstance(value, Mapping):
+        return any(_production_has_unresolved_quantity(item, field=str(key))
+            for key, item in value.items()
+            if key not in {"context", "lineage", "references", "marking", "media_assets"}
+            and not str(key).endswith(("_id", "_ref", "_sha256")))
+    if isinstance(value, (tuple, list)):
+        return any(_production_has_unresolved_quantity(item, field=field) for item in value)
+    if isinstance(value, str):
+        # An isolated contextual year cannot establish a calculation; other
+        # quantities without an operation cannot establish non-applicability.
+        text = _without_context_dates(value)
+        return re.search(r"(?<!\w)[-+]?\d+(?:[.,]\d+)?(?!\w)", text) is not None
+    return type(value) in {int, float} and field in {"amount", "quantity", "rate", "result", "total"}
 
 
 def effort_plan(context: P0Context, *, production: Mapping[str, object] | None = None) -> dict[str, object]:
@@ -86,6 +113,8 @@ def effort_plan(context: P0Context, *, production: Mapping[str, object] | None =
     applicability = _declared_applicability(data)
     if production is not None and _production_requires_control(production):
         applicability = {"status": "REQUIRED", "reason": "PRODUCTION_QUANTITATIVE_OPERATION_OR_DATA"}
+    elif production is not None and applicability["status"] != "REQUIRED" and _production_has_unresolved_quantity(production):
+        applicability = {"status": "UNDETERMINED", "reason": "PRODUCTION_QUANTITY_OPERATION_UNRESOLVED"}
     quantitative = applicability["status"] == "REQUIRED"
     if data["resource_type"] == "ASSESSMENT" or quantitative:
         effort = "HAUT_RISQUE_PEDAGOGIQUE"
@@ -167,6 +196,8 @@ def quality_status(plan: Mapping[str, object], *, review: Mapping[str, object] |
     required = bool(plan["quantitative_review_required"]) or (production is not None and _production_requires_control(production))
     applicability = plan.get("calculation_applicability", {})
     justified = isinstance(applicability, Mapping) and applicability.get("status") == "NOT_REQUIRED" and applicability.get("reason") == "EXPLICIT_QUALITATIVE_OBJECTIVES"
+    if production is not None and _production_has_unresolved_quantity(production):
+        justified = False
     calculations = "ECHEC" if required else "NON_APPLICABLE" if justified else "A_DETERMINER"
     reason = "INDEPENDENT_ORACLE_NOT_EXECUTED" if required else "EXPLICIT_QUALITATIVE_OBJECTIVES" if justified else "APPLICABILITY_NOT_ESTABLISHED"
     if calculation_control is not None:

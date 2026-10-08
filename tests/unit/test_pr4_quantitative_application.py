@@ -9,21 +9,22 @@ from tests.unit.test_bts_institutional_preparation import context, prepare, serv
 
 
 class QuantityDouble(P0GenerationDouble):
-    def __init__(self, document, question, answer):
+    def __init__(self, document, question, answer, rationale=None):
         super().__init__()
         self.document, self.question, self.answer = document, question, answer
+        self.rationale = rationale or "Réponse synthétique de test ; aucun oracle indépendant exécuté."
 
     def generate(self, *, request):
         result = dict(super().generate(request=request))
         result["sections"][0]["text"] = self.document
         result["questions"][0]["prompt"] = self.question
-        result["corrections"][0].update(expected_answer=self.answer, rationale="Réponse synthétique de test ; aucun oracle indépendant exécuté.")
+        result["corrections"][0].update(expected_answer=self.answer, rationale=self.rationale)
         return result
 
 
-def generated(objective, document, question, answer):
+def generated(objective, document, question, answer, *, rationale=None):
     app, _, _ = service()
-    double = QuantityDouble(document, question, answer)
+    double = QuantityDouble(document, question, answer, rationale)
     app.generation = double
     data = context()
     data.update(topics=["Application synthétique"], objectives=[objective])
@@ -94,3 +95,118 @@ def test_year_is_not_an_arithmetic_proof_and_analysis_is_not_a_qualitative_proof
     _, _, result = generated(objective, "L’association est fondée en 2024.",
         "Présentez les rôles des acteurs.", "Les bénévoles assurent l’organisation.")
     assert result["agentic"]["quality"]["calculations"] == expected
+
+
+def assert_consumed_quality(app, result, expected):
+    view = result["view"]
+    quality = result.get("quality", result.get("agentic", {}).get("quality"))
+    assert quality["calculations"] == expected
+    assert quality["human_review"] == "HUMAN_REVIEW_REQUIRED"
+    command = {k: view[k] for k in ("production_ref", "version_ref", "bundle_sha256")}
+    validated = app.execute("validate", {"command_id": token_hex(16), **command})
+    assert validated["quality"]["calculations"] == expected
+    reviewed = app.execute("review", {"command_id": token_hex(16), **command})
+    assert reviewed["provider_attempts"] == 0
+    assert reviewed["quality"]["calculations"] == expected
+    assert reviewed["quality"]["human_review"] == "HUMAN_REVIEW_REQUIRED"
+    saved = app.saved_source(view["production_ref"], view["version_ref"])
+    assert saved.view.version_ref == view["version_ref"]
+    assert saved.view.data["bundle_sha256"] == view["bundle_sha256"]
+    assert app.read(view["production_ref"], view["version_ref"]) == view
+    assert app.read(view["production_ref"], view["version_ref"], teacher=True)["corrections"]
+    assert "corrections" not in view
+
+
+@pytest.mark.parametrize("answer,rationale", [
+    ("42", "Réunir les chaises des deux salles."),
+    ("42 chaises disponibles.", "Réunir les chaises des deux salles."),
+    ("Chaises disponibles : 42.", "Réunir les chaises des deux salles."),
+    ("Il y a 42 chaises disponibles.", "Réunir les chaises des deux salles."),
+    ("La réunion dispose de 42 chaises.", "Réunir les chaises des deux salles."),
+    ("Il y a 42 chaises disponibles.", "18 + 24 = 42."),
+])
+def test_review_residual_total_from_qualitative_context_is_formulation_invariant(answer, rationale):
+    app, prepared, result = generated("Expliquer l’organisation de la réunion.",
+        "La salle A contient 18 chaises et la salle B contient 24 chaises.",
+        "Donnez le total des chaises disponibles pour la réunion.", answer, rationale=rationale)
+    assert prepared["agentic"]["plan"]["calculation_applicability"]["status"] == "NOT_REQUIRED"
+    assert result["agentic"]["plan"]["calculation_applicability"]["status"] == "REQUIRED"
+    assert result["agentic"]["quality"]["calculation_reason"] == "INDEPENDENT_ORACLE_NOT_EXECUTED"
+    assert_consumed_quality(app, result, "ECHEC")
+
+
+@pytest.mark.parametrize("unit", ["dossiers", "lampes", "minutes"])
+def test_review_residual_total_does_not_depend_on_a_unit_lexicon(unit):
+    app, prepared, result = generated("Expliquer l’organisation de l’activité.",
+        f"Le premier groupe dispose de 18 {unit} et le second de 24 {unit}.",
+        f"Donnez le total des {unit}.", f"Il y a 42 {unit}.", rationale="Réunir les deux groupes.")
+    assert prepared["agentic"]["plan"]["calculation_applicability"]["status"] == "NOT_REQUIRED"
+    assert_consumed_quality(app, result, "ECHEC")
+
+
+@pytest.mark.parametrize("answer", ["Il y a 42 objets.", "Objets : 42."])
+def test_review_residual_numeric_answer_without_operation_keyword_requires_control(answer):
+    app, prepared, result = generated("Expliquer l’organisation de l’activité.",
+        "Des objets sont disponibles.", "Présentez la réponse.", answer)
+    assert prepared["agentic"]["quality"]["calculations"] == "NON_APPLICABLE"
+    assert_consumed_quality(app, result, "ECHEC")
+
+
+def test_review_residual_unresolved_quantity_cannot_inherit_qualitative_non_applicability():
+    app, prepared, result = generated("Expliquer l’organisation de la réunion.",
+        "La salle A accueille 18 personnes et la salle B en accueille 24.",
+        "Présentez l’organisation de la réunion.", "Les groupes occupent les salles.")
+    assert prepared["agentic"]["quality"]["calculations"] == "NON_APPLICABLE"
+    assert result["agentic"]["plan"]["calculation_applicability"]["status"] == "UNDETERMINED"
+    assert_consumed_quality(app, result, "A_DETERMINER")
+
+
+@pytest.mark.parametrize("date", ["2024", "2024-10-09", "09/10/2024", "9 octobre 2024"])
+def test_review_residual_contextual_dates_preserve_qualitative_witnesses(date):
+    app, prepared, result = generated("Identifier les acteurs de l’association.",
+        f"L’association est fondée le {date}.", "Présentez les acteurs et leur date de création.",
+        f"Les bénévoles ont fondé l’association en {date}.")
+    assert prepared["agentic"]["quality"]["calculations"] == "NON_APPLICABLE"
+    assert_consumed_quality(app, result, "NON_APPLICABLE")
+
+
+def test_review_residual_revision_introduces_total_and_preserves_parent_and_identity():
+    app, _, parent_result = generated("Expliquer l’organisation de la réunion.",
+        "Les participants se réunissent dans les salles.", "Présentez l’organisation.",
+        "Les groupes occupent les salles.")
+    assert parent_result["agentic"]["quality"]["calculations"] == "NON_APPLICABLE"
+    parent = parent_result["view"]
+    original = deepcopy(app.records[parent["version_ref"]].mutable_copy())
+    child = app.execute("revise", {"command_id": token_hex(16),
+        **{k: parent[k] for k in ("production_ref", "version_ref", "bundle_sha256")},
+        "edits": {"sections": [{**original["sections"][0], "text":
+            "La salle A contient 18 chaises et la salle B contient 24 chaises."}],
+            "questions": [{**original["questions"][0], "prompt":
+                "Donnez le total des chaises disponibles pour la réunion."}],
+            "corrections": [{"question_id": "Q01", "expected_answer": "Il y a 42 chaises disponibles.",
+                "rationale": "Réunir les chaises des deux salles."}]}})
+    assert child["provider_attempts"] == 0
+    assert child["quality"]["review"] == "RESERVE"
+    assert app.plans[child["view"]["version_ref"]]["calculation_applicability"]["status"] == "REQUIRED"
+    assert_consumed_quality(app, child, "ECHEC")
+    assert app.records[parent["version_ref"]].mutable_copy() == original
+    assert app.read(parent["production_ref"], parent["version_ref"]) == parent
+    assert app.saved_source(child["view"]["production_ref"], child["view"]["version_ref"]).data["reviews"] == ()
+    with pytest.raises(ValueError, match="P0_VERSION_CHANGED"):
+        app.execute("validate", {"command_id": token_hex(16),
+            "production_ref": child["view"]["production_ref"], "version_ref": child["view"]["version_ref"],
+            "bundle_sha256": parent["bundle_sha256"]})
+
+
+
+@pytest.mark.parametrize("document,expected", [
+    ("Expression : 2024-10-09 = 2005.", "ECHEC"),
+    ("Expression : 15+2024-10-09.", "ECHEC"),
+    ("La salle accueille 2024 personnes.", "A_DETERMINER"),
+])
+def test_review_residual_date_filter_cannot_erase_operation_or_quantity(document, expected):
+    app, prepared, result = generated("Expliquer l’organisation de la réunion.",
+        document, "Présentez l’organisation.", "Les groupes occupent les salles.",
+        rationale="Réponse qualitative.")
+    assert prepared["agentic"]["quality"]["calculations"] == "NON_APPLICABLE"
+    assert_consumed_quality(app, result, expected)

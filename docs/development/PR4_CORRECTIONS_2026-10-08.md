@@ -107,3 +107,40 @@ et les fonctions du garde. Le delta fixture/fitness/note est ajouté et protég�
 Le premier global, les résultats corrigés et le successeur exact restent des
 preuves distinctes. La revue finale demeure requise ; aucun DDL supplémentaire,
 fournisseur, credential, merge ni acceptation enseignante.
+
+
+## REV4-01 : résidu de la revue distincte du 9 octobre
+
+La revue COMMENTED 5463587979 porte sur le delta de 8746f74 ; elle ne vaut
+ni approbation de merge ni revue préalable de l'ADR SQL. Son contre-exemple
+est reproduit dans le service Application réel : contexte initial qualitatif,
+total de deux quantités, réponse précédée de « Il y a ». Le banc utilise
+une résolution institutionnelle synthétique valide et un transport doublé.
+
+Le contrôle détecte les agrégations et les résultats numériques dans la
+réponse sans dépendre de sa position ni d'un lexique d'objets. Une quantité
+isolée dont l'opération n'est pas établie laisse A_DETERMINER, même si le
+contexte préparé était qualitatif. Les dates contextuelles reconnues ne sont
+pas assimilées à une opération. La détection reste déterministe et prudente,
+sans prétendre résoudre toutes les formulations en langue naturelle.
+
+Le même banc Application passe de 22 PASS / 12 FAIL sur le backend exact
+8746f74 à 34 PASS après correction. Il couvre six formulations du total,
+trois autres unités, deux réponses avec préfixe sans mot d'opération,
+l'indétermination, quatre dates et une révision qualitative vers numérique.
+Création, validation, revue refusée sans transport, conservation et séparation
+élève/professeur conservent le statut de la version exacte. Aucun oracle
+n'est inventé ; CALCULS_VERIFIES reste lié au contrôle existant du même bundle.
+Trois témoins supplémentaires contrôlent que le filtre de dates ne masque
+pas une équation ni une quantité de quatre chiffres : les années sont
+contextuelles par leur formulation, pas par leur seule valeur.
+Le premier banc avec une assertion DTO erronée reste dans les bruts privés.
+
+Le successeur conserve les 427 propriétaires, toutes les fonctions du garde
+et les 27 exclusions. Seules les empreintes de ces trois fichiers protégés
+et la pin du manifeste évoluent. Le global de 8746f74 reste daté et immuable ;
+les contrôles par impact du nouveau delta sont consignés séparément.
+L'ADR SQL et ses annexes exactes sont disponibles dans le dossier privé existant,
+sans revue préalable présumée ni changement DDL. Revue du nouveau delta,
+dispositions historiques, Windows, règles GitHub et recette enseignante
+gardent leurs conditions. Aucun appel fournisseur ni merge.

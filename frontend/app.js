@@ -929,8 +929,9 @@ function p0Field(parent, id, label, value, multiline = true) {
   input.id = id; input.value = value; if (multiline) input.rows = 3;
   parent.append(text, input); return input;
 }
-function p0Render(view) {
+function p0Render(view, quality = null) {
   p0.view = view; p0.teacher = null;
+  uxQuality(quality, view);
   const region = p0Element("review"); region.replaceChildren();
   p0Element("teacher-content").replaceChildren();
   appendSearchText(region, "p", "Préparation à relire avant usage pédagogique.");
@@ -949,12 +950,17 @@ function p0Identity() {
   return {production_ref: p0.view.production_ref, version_ref: p0.view.version_ref,
     bundle_sha256: p0.view.bundle_sha256};
 }
+function p0DisplayedVersion(target) {
+  const region = document.getElementById("drawer-quality");
+  return p0.view?.production_ref === target.production_ref && p0.view?.version_ref === target.version_ref &&
+    p0.view?.bundle_sha256 === target.bundle_sha256 && region.dataset.productionRef === target.production_ref &&
+    region.dataset.versionRef === target.version_ref && region.dataset.bundleSha256 === target.bundle_sha256;
+}
 p0Element("generate").addEventListener("click", () => p0Run(async () => {
   const result = await p0Fetch("/api/v2/p0/generate", {command_id: p0Command(),
     preparation_ref: p0.prepared.preparation_ref, preparation_sha256: p0.prepared.preparation_sha256});
   if (result.state === "CANDIDATE") {
-    uxQuality(result.agentic?.quality);
-    p0Render(result.view); p0.prepared = null;
+    p0Render(result.view, result.agentic?.quality); p0.prepared = null;
     p0Element("status").textContent = "Candidate reçue. Relisez et modifiez la version exacte ; aucune promotion effectuée.";
   } else { p0Element("status").dataset.state = "unavailable";
     p0Element("status").textContent = "Génération indisponible : autorisation requise. Aucun transport fournisseur n’est lié à cette composition hors ligne."; }
@@ -985,12 +991,16 @@ p0Element("revise").addEventListener("click", () => p0Run(async () => {
     edits.marking = p0.teacher.marking.map((m, i) => ({...m, points: document.getElementById("p0-edit-points-" + i).value,
       criteria: document.getElementById("p0-edit-criteria-" + i).value.split("\n")}));
   }
-  const result = await p0Fetch("/api/v2/p0/revise", {command_id: p0Command(), ...p0Identity(), edits});
-  p0Render(result.view); p0Element("status").textContent = "Nouvelle version conservée ; la version parente est inchangée.";
+  const parent = p0Identity();
+  const result = await p0Fetch("/api/v2/p0/revise", {command_id: p0Command(), ...parent, edits});
+  if (!p0DisplayedVersion(parent)) { p0Element("status").textContent = "Révision reçue pour une autre version consultée. Rouvrez sa version exacte."; return; }
+  p0Render(result.view, result.quality); p0Element("status").textContent = "Nouvelle version conservée ; la version parente est inchangée.";
 }, true));
 p0Element("validate").addEventListener("click", () => p0Run(async () => {
-  const report = await p0Fetch("/api/v2/p0/validate", {command_id: p0Command(), ...p0Identity()});
-  uxQuality(report.quality);
+  const target = p0Identity();
+  const report = await p0Fetch("/api/v2/p0/validate", {command_id: p0Command(), ...target});
+  if (!p0DisplayedVersion(target)) { p0Element("status").textContent = "Vérification conservée pour sa version exacte ; la version consultée a changé."; return; }
+  uxQuality(report.quality, target);
   p0Element("status").textContent = "Vérification structurelle : " + report.status + ". Aucune validation pédagogique ni promotion.";
 }, true, "validating"));
 async function p0SaveVersion() {
@@ -1089,14 +1099,17 @@ function uxContext(context) {
   appendSearchText(region, "p", (context.topics || []).join(" · "));
   if (context.duration_minutes) appendSearchText(region, "p", context.duration_minutes + " minutes · /" + context.total_points);
 }
-function uxQuality(quality) {
-  if (!quality) return;
+function uxQuality(quality, view = p0.view) {
   const labels = {SOURCES_OK: "Identité des sources contrôlée", SOURCES_INSUFFICISANTES: "Sources insuffisantes", CALCULS_VERIFIES: "Calculs vérifiés", ECHEC: "Preuve indépendante des calculs manquante", NON_APPLICABLE: "Aucun calcul requis par le travail qualitatif explicite", A_DETERMINER: "Applicabilité des calculs à déterminer", CONSIGNE_COUVERTE: "Couverture examinée", PARTIELLE: "Couverture à examiner", REVUE_OK: "Revue technique sans réserve", RESERVE: "Revue pédagogique en attente ou avec réserves", HUMAN_REVIEW_REQUIRED: "Relecture enseignante nécessaire"};
   const region = document.getElementById("drawer-quality"); region.replaceChildren();
+  region.dataset.productionRef = view?.production_ref || "";
+  region.dataset.versionRef = view?.version_ref || "";
+  region.dataset.bundleSha256 = view?.bundle_sha256 || "";
+  if (!quality) { appendSearchText(region, "p", "Non vérifié pour cette version. Les rapports conservés couvrent uniquement leur version exacte. Relecture enseignante nécessaire."); return; }
   for (const key of ["sources", "calculations", "instruction", "review", "human_review"]) appendSearchText(region, "p", labels[quality[key]] || "Non vérifié");
 }
 function uxPreparation(prepared) {
-  uxContext(prepared.context); uxQuality(prepared.agentic?.quality);
+  uxContext(prepared.context); uxQuality(prepared.agentic?.quality, null);
   const region = document.getElementById("drawer-sources"); region.replaceChildren();
   const passages = prepared.agentic?.evidence_pack?.passages || [];
   appendSearchText(region, "h4", "Sources de contenu");
@@ -1160,7 +1173,7 @@ function uxSavedCard(saved) {
     appendSearchText(region, "p", "Source institutionnelle distincte : " + resolved.document_provenance.title);
     appendSearchText(region, "p", "Admission du propriétaire sur la version exacte conservée ; la recette enseignante reste à réaliser.");
   } else appendSearchText(region, "p", "Aucune autorité institutionnelle attestée dans cette version historique.");
-  document.getElementById("drawer-quality").textContent = "Relecture nécessaire. Les rapports conservés couvrent uniquement leur version exacte.";
+  uxQuality(null, view);
 }
 document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => uxShow(button.dataset.view)));
 document.getElementById("new-preparation").addEventListener("click", () => {
@@ -1196,6 +1209,7 @@ document.getElementById("preparation-composer").addEventListener("submit", event
   p0Element("family").dispatchEvent(new Event("change")); p0Invalidate();
   document.getElementById("preparation-parameters").open = true;
   if (proposed.level.includes("STMG")) uxMessage("assistant", "Choisissez l’enseignement exact et sa question : Management et SGN sont distincts ; en terminale, précisez le commun ou l’enseignement spécifique.");
+  else if (proposed.level.startsWith("BTS_")) uxMessage("assistant", "Choisissez le référentiel exact, son processus et son activité, les compétences, les notions et la profondeur avant de confirmer le contexte. L’année BTS relève de la progression locale.");
   else uxContext(p0Context());
   uxMessage("assistant", proposed.ambiguities.length ? "À préciser pour préparer : " + proposed.ambiguities.join(", ") + ". Complétez le contexte puis sélectionnez une source." :
     "Le contexte proposé est prêt à confirmer. Relisez les paramètres, puis sélectionnez une référence ou un passage de la Bibliothèque.");

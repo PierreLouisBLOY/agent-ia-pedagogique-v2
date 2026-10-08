@@ -12,7 +12,7 @@ const frames = [
   questions:[{question_ref:'question:'+frame,label:'1.1 Question '+frame,theme_ref:'theme:1'}],
   capacities:[{capacity_ref:'capacity:'+frame,label:'Capacité '+frame,question_ref:'question:'+frame}]}));
 const nodes = {};
-function node(id) {return nodes[id] ||= {value:'',children:[],selectedOptions:[],listeners:{},addEventListener(type,callback){(this.listeners[type] ||= []).push(callback);},dispatch(type){for(const callback of this.listeners[type] || []) callback();},replaceChildren(){this.children=[];this.value='';this.selectedOptions=[];},append(x){this.children.push(x);}};}
+function node(id) {return nodes[id] ||= {value:'',children:[],selectedOptions:[],dataset:{},listeners:{},addEventListener(type,callback){(this.listeners[type] ||= []).push(callback);},dispatch(type){for(const callback of this.listeners[type] || []) callback();},replaceChildren(){this.children=[];this.value='';this.selectedOptions=[];},append(x){this.children.push(x);}};}
 const sandbox={p0:{institutionalCatalog:{frames,notions:[{notion_ref:'notion:shared',label:'Notion partagée'}]},view:null,busy:false,uncertain:false,nonce:'unit',liveBinding:'EXPLICIT_PORT'},
   p0Element:node,document:{createElement:()=>node('new-'+Math.random()),getElementById:node}};
 vm.createContext(sandbox);
@@ -95,6 +95,7 @@ labels.length=0;
 sandbox.uxContext({...btsContext,institutional_resolution:{version_label:'UNIT',process:{official_label:'Processus 1'},activity:{official_label:'Activité 1'},competencies:[{official_label:'Lettrer'}],notions:[],gaps:[]}});
 assert(labels.includes('Processus 1 · Activité 1'));assert(labels.includes('Compétences : Lettrer'));
 assert(labels.some(t=>t.includes('progression locale')));assert(!labels.some(t=>t.startsWith('Thème')));
+vm.runInContext(source.slice(source.indexOf('function uxQuality('),source.indexOf('function uxPreparation(')),sandbox);
 const savedStart=source.indexOf('function uxSavedCard(');
 vm.runInContext(source.slice(savedStart,source.indexOf('document.querySelectorAll("[data-view]")',savedStart)),sandbox);
 labels.length=0;

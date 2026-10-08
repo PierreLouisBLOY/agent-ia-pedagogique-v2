@@ -237,6 +237,7 @@
     "docs/development/MEGA_LOT_POST_20D6B49.md",
     "docs/development/P0_UI_CREATION_CONTINUATION.md",
     "docs/development/P0_UI_QUALIFICATION_2026_10_04.md",
+    "docs/development/PR4_CORRECTIONS_2026-10-08.md",
     "docs/development/R4_SAVE_REOPEN_WORD.md",
     "docs/development/R5_EXACT_SELECTION_WORKER.md",
     "docs/development/R5_REAL_REFERENCES.md",
@@ -369,6 +370,8 @@
     "tests/unit/test_p0_selected_source_boundary.py",
     "tests/unit/test_pedagogical_calibration_r3b_r3.py",
     "tests/unit/test_pedagogical_calibration_r4_r3_r3.py",
+    "tests/unit/test_pr4_quantitative_application.py",
+    "tests/unit/test_pr4_readonly_seed_copy.py",
     "tests/unit/test_production_read.py",
     "tests/unit/test_qualified_institutional_corpus.py",
     "tests/unit/test_r3_assets.py",
@@ -425,6 +428,7 @@
     "tools/r6/run_all_notions.py",
     "tools/tests/p0_conversation_shell.test.cjs",
     "tools/tests/p0_ui_request.test.cjs",
+    "tools/tests/pr4_lifecycle_regressions.test.cjs",
     "tools/tests/stmg_context.test.cjs"
   ],
   "cp645_pre_sha256": {
@@ -493,7 +497,7 @@
     "backend/adapters/outbound/generation/openai/r5_contract.py": "7f356578700542b553e13c811b386e63821b451e3e48433e3ba47dd30d966bac",
     "backend/adapters/outbound/generation/parse_diagnostic.py": "4032684e9c609f14d0a8a1e0ecd11c617a9cfd08e291979776587d9db4d0023a",
     "backend/adapters/outbound/persistence/conversation_memory.py": "67f7610d0daa3bd45ee9b746aad4e4bcb53d7ab12916626f39f6c805ba45d77d",
-    "backend/adapters/outbound/persistence/migrations.py": "8664c33b91e3060bf1d198bddeef820f8eac6119a7551b49e9412918cf3824b9",
+    "backend/adapters/outbound/persistence/migrations.py": "950faf5da41f51888d2ee613c0e80fe1ab999170cdc9a812c0959457dfa5fd14",
     "backend/adapters/outbound/persistence/saved_production.py": "2f1615c4781c0a3502ba0b2ce0276c9378823e7980ac71cf75b6db4f804fb086",
     "backend/adapters/outbound/resource_library/__init__.py": "c0265eb5f1dcd68354ee359b5d7e0908a376298200986949ae68eb1038c099ea",
     "backend/adapters/outbound/resource_library/boreal_documentary.py": "ee1be3719bde0369736cc78d55be0a0c7d3072aeb77ac82bd0b41f1d4f2236ef",
@@ -601,7 +605,7 @@
     "backend/modules/validation_control/contracts/dto/editorial_scope.py": "4a94db413acfcf4f80a3462423f48a7ce331f8392eb598b106173421c3c93724",
     "backend/modules/validation_control/domain/policies/assessment_checks.py": "a86263d56df152fc2c94a63f719e8ff9645977d3401edae3f17e8a91cc4dd97b",
     "backend/modules/validation_control/ports/inbound/validate_assessment.py": "73fdcac5dd767cec5553d98e02c52a5b34cd9aa57832b3d86591704e06e32e37",
-    "backend/modules/work_orchestration/application/services/p0_agentic.py": "c56bd7549ce0e4bd2feb32e181f1137db2f922f39d3b897722cf5de53d8af876",
+    "backend/modules/work_orchestration/application/services/p0_agentic.py": "e7c90709f3a1e95d947147b050b070310314465aa19689d072442b7198766dea",
     "backend/modules/work_orchestration/application/services/p0_creation.py": "6156d966f6d683c77318322d0feb9fb048e72464b2cf4ba83f5f2288db4f0526",
     "backend/modules/work_orchestration/application/services/r3_review_modify.py": "68b1cbc355de1b41418a4cbf8c98e228104256ec8091b4aaf8bb464ac5a07609",
     "backend/modules/work_orchestration/application/services/saved_production.py": "09ca3bf1ccd613dd564e959cac98202cf661e20948055c31a26198d0a8ec616e",
@@ -658,7 +662,7 @@
     "docs/development/phase_12_18_h2_r3_review_modify/MANIFEST_SHA256.txt": "b01b86970f653393469661f95c6b7d1f7ec3b2097200da1e216444a9f765fb3a",
     "docs/development/phase_12_18_h2_r3_review_modify/R3_HTTP_LOCAL_V1.json": "a953d64380ad516733e2ac22dc5dd41db85d8db8c673e6bee84809b23501458b",
     "docs/user/LOCAL_PRODUCT_LAUNCH_R6_H3.md": "2e14d281084f60d72fe656d6a74c7ffbe2d659c80c9b76907256059bd3dc418d",
-    "frontend/app.js": "992bcde85210501f15555ad5fe71d27e9e0facfb503e3548d13b20402a32fa76",
+    "frontend/app.js": "5576c34c7de646954d3b08167ea55eb85a08d6204f572150824e6fbf05ba1ae2",
     "frontend/index.html": "54774234c07a50798680bec14f9997bb7127edd89a552c0581f5b15fe0921fbb",
     "frontend/styles.css": "b7dd20537ef28f3653eb56ffe6d1b879bf1e82613ad1d54669cb29b124af7c9a",
     "tests/architecture/test_conversation_product_boundary.py": "57510a497f8fd4b01fdc218a070d9253e50836da1815bd553b6bbcf7737158e4",
@@ -815,7 +819,7 @@
     "tools/r6/run_all_notions.py": "9f29a14426ab0d74ac64d35472d6ab0ac5364fca14669c5b308f14b3c9746275",
     "tools/tests/p0_conversation_shell.test.cjs": "c271c8d8233d6dffc5c98f6a3e64735278c2f1a7cba99c1bbfd625da8953ba94",
     "tools/tests/p0_ui_request.test.cjs": "6f8f04cab090d652dff9f8cb81de1d5a13654e0781224ab448dc245dae758b50",
-    "tools/tests/stmg_context.test.cjs": "0b1f359546d965236da517aca01697215308f4d378d7bffc35288db409099821",
+    "tools/tests/stmg_context.test.cjs": "e8328e3ee41f01596c1cf5c6d6ca9bac3a65345b226c0ec25c4a17bf67604e83",
     "backend/modules/work_orchestration/ports/inbound/production_read.py": "b164cedbc87b717db06636173bc582c53a4a4a1641c571318115a4d20668c1c3",
     "backend/modules/pedagogical_context/contracts/dto/conversation_context.py": "02cbdf1f24286b6b04f3891e93d8c7a36b07e64863f40c1e206271097ba224d3",
     "backend/modules/work_orchestration/ports/outbound/production_store.py": "5701bdaf9cfb463c6da546adf4b6f596d2bcbd6b33fd1296afead55f9d58f73b",
@@ -856,7 +860,11 @@
     "tests/unit/test_openai_conversation_mapping.py": "ff459b8caf7c73d72fd9c0c6ffc1b0b2ea244c3ff70c9f7a45c3181a875670b5",
     "backend/adapters/inbound/application/conversation.py": "b23c8188b987b6c686bcb937df0f9f6ed537e938326bd1aab229250acb261cb6",
     "docs/development/phase_12_18_h2_r2_generation/CONVERSATION_HTTP_LOCAL_V1.json": "b65f7927ff0b8605be3038600f365ada359680596051a57ddae5282d81ce5332",
-    "backend/modules/work_orchestration/ports/outbound/conversation_store.py": "4adc41d6a46ff5f4642bb835d95e7a8d8be2f2a8c0cb3e4f35757073027300a9"
+    "backend/modules/work_orchestration/ports/outbound/conversation_store.py": "4adc41d6a46ff5f4642bb835d95e7a8d8be2f2a8c0cb3e4f35757073027300a9",
+    "tests/unit/test_pr4_quantitative_application.py": "4dffd258d789f13b62b3e28ce6ff2b3fec873cabeeadbded35b82777c4e2d6f9",
+    "tools/tests/pr4_lifecycle_regressions.test.cjs": "5904d2d89d13625fbb97b0824a3e5ab5611106d41deb70fe794c3a1c3116f72e",
+    "docs/development/PR4_CORRECTIONS_2026-10-08.md": "001b45f5e62c753d65ae293c520463fec94dc20acb04600ea3d76e3fed435582",
+    "tests/unit/test_pr4_readonly_seed_copy.py": "e7a77072fa43c9d9a5338ba011f6904c97fb4d8019edbe3a9e71ab51f11b7285"
   },
   "active_delta_paths": [
     ".gitignore",
@@ -891,6 +899,7 @@
     "backend/adapters/outbound/generation/openai/harden_contract.py",
     "backend/adapters/outbound/generation/openai/locator_materialization.py",
     "backend/adapters/outbound/generation/openai/p0_content.py",
+    "backend/adapters/outbound/persistence/migrations.py",
     "backend/adapters/outbound/persistence/saved_production.py",
     "backend/adapters/outbound/resource_library/__init__.py",
     "backend/adapters/outbound/resource_library/boreal_documentary.py",
@@ -1000,6 +1009,7 @@
     "docs/development/MEGA_LOT_POST_20D6B49.md",
     "docs/development/P0_UI_CREATION_CONTINUATION.md",
     "docs/development/P0_UI_QUALIFICATION_2026_10_04.md",
+    "docs/development/PR4_CORRECTIONS_2026-10-08.md",
     "docs/development/R6_H3_CONTINUATION_2026-10-03.md",
     "docs/development/R6_P0_AUDIT_49B804B_2026-10-04.md",
     "docs/development/R6_P0_RECIPE_2026-10-04.md",
@@ -1093,6 +1103,8 @@
     "tests/unit/test_p0_selected_source_boundary.py",
     "tests/unit/test_pedagogical_calibration_r3b_r3.py",
     "tests/unit/test_pedagogical_calibration_r4_r3_r3.py",
+    "tests/unit/test_pr4_quantitative_application.py",
+    "tests/unit/test_pr4_readonly_seed_copy.py",
     "tests/unit/test_qualified_institutional_corpus.py",
     "tests/unit/test_r3_cap_a01_targeted.py",
     "tests/unit/test_r3_d3_scope_guard.py",
@@ -1134,6 +1146,7 @@
     "tools/r6/run_all_notions.py",
     "tools/tests/p0_conversation_shell.test.cjs",
     "tools/tests/p0_ui_request.test.cjs",
+    "tools/tests/pr4_lifecycle_regressions.test.cjs",
     "tools/tests/stmg_context.test.cjs"
   ],
   "active_delta_entry": "03bd272074810b9ef4a29d77b059b3efefbfd2ea",
@@ -2264,6 +2277,61 @@
       "original_owners_preserved": 381,
       "private_exclusions_preserved": 27,
       "private_attestation": "NOT_PERFORMED"
+    },
+    {
+      "purpose": "PR4_REVIEW_REQUESTED_REV4_01_02_03_CORRECTIONS",
+      "baseline": "057f6874f47e5da6d5227f427cfb395a2b703054",
+      "parent_manifest_sha256": "c1eb08bf2e470fea5937d6b00be7ded01fe30e3c25e3c9e1ec258b27d8def2b7",
+      "decision_documents": [
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md"
+      ],
+      "code_paths": [
+        "backend/modules/work_orchestration/application/services/p0_agentic.py",
+        "frontend/app.js",
+        "tests/unit/test_pr4_quantitative_application.py",
+        "tools/tests/pr4_lifecycle_regressions.test.cjs",
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md",
+        "tests/support/r6_scope_guard.py",
+        "tests/support/r6_scope_manifest.json",
+        "tools/tests/stmg_context.test.cjs",
+        "backend/adapters/outbound/persistence/migrations.py",
+        "tests/unit/test_pr4_readonly_seed_copy.py"
+      ],
+      "changed_owner_sha256": {
+        "backend/modules/work_orchestration/application/services/p0_agentic.py": {
+          "before": "c56bd7549ce0e4bd2feb32e181f1137db2f922f39d3b897722cf5de53d8af876",
+          "after": "e7c90709f3a1e95d947147b050b070310314465aa19689d072442b7198766dea"
+        },
+        "frontend/app.js": {
+          "before": "992bcde85210501f15555ad5fe71d27e9e0facfb503e3548d13b20402a32fa76",
+          "after": "5576c34c7de646954d3b08167ea55eb85a08d6204f572150824e6fbf05ba1ae2"
+        },
+        "tools/tests/stmg_context.test.cjs": {
+          "before": "0b1f359546d965236da517aca01697215308f4d378d7bffc35288db409099821",
+          "after": "e8328e3ee41f01596c1cf5c6d6ca9bac3a65345b226c0ec25c4a17bf67604e83"
+        },
+        "backend/adapters/outbound/persistence/migrations.py": {
+          "before": "8664c33b91e3060bf1d198bddeef820f8eac6119a7551b49e9412918cf3824b9",
+          "after": "950faf5da41f51888d2ee613c0e80fe1ab999170cdc9a812c0959457dfa5fd14"
+        },
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md": {
+          "before": "46d61255f275f8e566aacf2bdcbfa81121dae24badaccc0fa18c296509ccd6d6",
+          "after": "001b45f5e62c753d65ae293c520463fec94dc20acb04600ea3d76e3fed435582"
+        }
+      },
+      "protected_reuse_additions": [
+        "tests/unit/test_pr4_quantitative_application.py",
+        "tools/tests/pr4_lifecycle_regressions.test.cjs",
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md",
+        "tests/unit/test_pr4_readonly_seed_copy.py"
+      ],
+      "original_owners_preserved": 422,
+      "private_exclusions_preserved": 27,
+      "review_provenance": "Distinct ChatGPT technical review on parent requested these corrections; final delta review remains required",
+      "private_attestation": "NOT_PERFORMED",
+      "historical_results": "UNCHANGED",
+      "guard_functions": "UNCHANGED",
+      "additional_correction": "D03 exact R1 setup: byte copy into fresh private writable temporary, no original permissions modified"
     }
   ],
   "private_source_exclusions": [

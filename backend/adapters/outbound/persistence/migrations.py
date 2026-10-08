@@ -898,7 +898,8 @@ def provision_runtime(
                 prefix=".projet-v2-runtime-",
                 data_root=runtime_root,
             )
-            shutil.copy2(seed_path, temporary)
+            # Retain the fresh private file attributes; copy2 inherits seed read-only.
+            shutil.copyfile(seed_path, temporary)
             try:
                 harden_private_file(temporary, allowed_root=runtime_root)
             except LocalFileSecurityError as error:

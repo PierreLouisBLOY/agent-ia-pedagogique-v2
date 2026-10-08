@@ -39,7 +39,12 @@ def _quantitative_signal(text: str) -> bool:
     expression = re.search(r"\d[\d .,]*\s*[+*/=−-]\s*\d", normalized)
     units = re.search(r"\d[\d .,]*\s*(?:%|€|euros?\b|usd\b|keur\b)", normalized)
     keywords = re.search(r"\b(?:calcul\w*|bfr|frng|tresorerie|cout\w*|seuil|amortissement|lettrage|proportion\w*)\b", normalized)
-    return bool((operation and measure) or expression or units or keywords)
+    # Counting/comparing measured quantities is quantitative beyond financial units.
+    quantity = re.search(r"\b(?:nombre|quantite\w*|effectif\w*|volume\w*|duree\w*|distance\w*|masse\w*|population\w*|capacite\w*)\b", normalized)
+    comparison = re.search(r"\b(?:variation\w*|difference\w*|ecart\w*|augmentation\w*|diminution\w*|evolution\w*)\b", normalized)
+    count_question = re.search(r"\bcombien\b", normalized)
+    return bool((operation and (measure or quantity)) or (comparison and quantity)
+        or count_question or expression or units or keywords)
 
 
 def _declared_applicability(data: Mapping[str, object]) -> dict[str, str]:
@@ -49,7 +54,7 @@ def _declared_applicability(data: Mapping[str, object]) -> dict[str, str]:
     if any(_quantitative_signal(text) for text in texts):
         return {"status": "REQUIRED", "reason": "REQUESTED_QUANTITATIVE_OPERATION_OR_DATA"}
     qualitative = isinstance(objectives, (list, tuple)) and bool(objectives) and all(
-        re.match(r"^(?:identifier|distinguer|decrire|expliquer|presenter|analyser|justifier|caracteriser)\b", _normalized(str(text)))
+        re.match(r"^(?:identifier|distinguer|decrire|expliquer|presenter|justifier|caracteriser)\b", _normalized(str(text)))
         for text in objectives)
     if qualitative:
         return {"status": "NOT_REQUIRED", "reason": "EXPLICIT_QUALITATIVE_OBJECTIVES"}
@@ -65,7 +70,8 @@ def _production_requires_control(value: object, *, field: str = "") -> bool:
     if isinstance(value, (tuple, list)):
         return any(_production_requires_control(item, field=field) for item in value)
     if isinstance(value, str):
-        numeric_answer = field == "expected_answer" and re.fullmatch(r"\s*[-+]?\d[\d .,]*\s*", value) is not None
+        numeric_answer = field == "expected_answer" and re.match(
+            r"\s*[-+]?\d[\d .,]*(?:$|\s+[^\W\d_]\w*)", value, re.UNICODE) is not None
         return numeric_answer or _quantitative_signal(value)
     return type(value) in {int, float} and field in {
         "amount", "quantity", "rate", "result", "expected_answer", "unit_price", "subtotal", "total", "balance"}

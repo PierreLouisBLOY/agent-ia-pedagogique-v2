@@ -179,6 +179,41 @@ def _copy_exact(source: Path, destination: Path, root: Path, expected: str) -> N
         raise ValueError("SQL_SUCCESSOR_COPY_HASH")
 
 
+def reviewed_post_objects(
+    snapshot: RuntimeSchemaSnapshot,
+) -> dict[str, tuple[str, str, str, str | None]]:
+    reviewed_sql()
+    expected = {o.name: (o.kind, o.name, o.table, o.definition) for o in snapshot.objects}
+    for sql in statements(DDL):
+        match = re.match(r"CREATE (TRIGGER|TABLE|VIEW) (\w+)", sql)
+        if match:
+            kind, name = match.groups()
+            on = re.search(r"\bON (\w+)\s", sql) if kind == "TRIGGER" else None
+            table = on.group(1) if on else name
+            expected[name] = (kind.lower(), name, table, sql.rstrip(";"))
+    expected["sqlite_autoindex__pr4_published_version_seal_1"] = (
+        "index",
+        "sqlite_autoindex__pr4_published_version_seal_1",
+        "_pr4_published_version_seal",
+        None,
+    )
+    return expected
+
+
+def verify_initial_seal(c: sqlite3.Connection) -> None:
+    if (
+        c.execute(
+            "SELECT id FROM resource_version WHERE lifecycle_status='PUBLISHED' "
+            "EXCEPT SELECT resource_version_id FROM _pr4_published_version_seal"
+        ).fetchall()
+        or c.execute(
+            "SELECT resource_version_id FROM _pr4_published_version_seal "
+            "EXCEPT SELECT id FROM resource_version WHERE lifecycle_status='PUBLISHED'"
+        ).fetchall()
+    ):
+        raise ValueError("SQL_SUCCESSOR_INITIAL_SEAL_MISMATCH")
+
+
 class SQLiteSQLSuccessorAdapter:
     def __init__(
         self, source: Path, source_root: Path, root: Path, binding: SQLSuccessorBinding
@@ -195,8 +230,10 @@ class SQLiteSQLSuccessorAdapter:
         return SQLiteRuntimeSchemaInspectionAdapter(path, root, digest).inspect_schema()
 
     def _verify_existing(self) -> SQLSuccessorResult:
-        if self._snapshot(self.source, self.source_root,
-                          self.binding.snapshot.source_sha256) != self.binding.snapshot:
+        if (
+            self._snapshot(self.source, self.source_root, self.binding.snapshot.source_sha256)
+            != self.binding.snapshot
+        ):
             raise ValueError("SQL_SUCCESSOR_FULL_SOURCE_BINDING_CHANGED")
         raw = read_file_nofollow(
             self.receipt, allowed_root=self.root, maximum_bytes=2 * 1024 * 1024
@@ -214,14 +251,20 @@ class SQLiteSQLSuccessorAdapter:
         if hash_file_nofollow(self.final, allowed_root=self.root) != row["final_sha256"]:
             raise ValueError("SQL_SUCCESSOR_FINAL_CHANGED")
         snap = self._snapshot(self.final, self.root, row["final_sha256"])
+        observed = {o.name: (o.kind, o.name, o.table, o.definition) for o in snap.objects}
+        if observed != reviewed_post_objects(self.binding.snapshot):
+            raise ValueError("SQL_SUCCESSOR_POST_SCHEMA_MISMATCH")
         if snap.schema_sha256 != row["post_schema_sha256"]:
             raise ValueError("SQL_SUCCESSOR_POST_SCHEMA_MISMATCH")
         with closing(sqlite3.connect(self.final.as_uri() + "?mode=ro&immutable=1", uri=True)) as c:
             c.execute("PRAGMA foreign_keys=ON")
             _integrity(c)
+            verify_initial_seal(c)
             actual = fingerprints(c, tuple(t.name for t in self.binding.snapshot.tables))
-        expected = tuple(tuple(v) for v in row["table_fingerprints"])
-        if actual != expected:
+        with closing(sqlite3.connect(self.backup.as_uri() + "?mode=ro&immutable=1", uri=True)) as c:
+            expected = fingerprints(c, tuple(t.name for t in self.binding.snapshot.tables))
+        recorded = tuple(tuple(v) for v in row["table_fingerprints"])
+        if actual != expected or recorded != expected:
             raise ValueError("SQL_SUCCESSOR_FINAL_ROWS_CHANGED")
         return SQLSuccessorResult(
             "ALREADY_APPLIED",

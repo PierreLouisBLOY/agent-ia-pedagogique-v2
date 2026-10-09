@@ -879,7 +879,7 @@
     "backend/modules/work_orchestration/ports/outbound/conversation_store.py": "4adc41d6a46ff5f4642bb835d95e7a8d8be2f2a8c0cb3e4f35757073027300a9",
     "tests/unit/test_pr4_quantitative_application.py": "cead6f573b84922d0241e9d81788839f05c975db611058ba32458c222b1d2458",
     "tools/tests/pr4_lifecycle_regressions.test.cjs": "5904d2d89d13625fbb97b0824a3e5ab5611106d41deb70fe794c3a1c3116f72e",
-    "docs/development/PR4_CORRECTIONS_2026-10-08.md": "5ef5367914a710e1a2c33d2affd4ab210d2aabd3082823cc40b02484ca89f54c",
+    "docs/development/PR4_CORRECTIONS_2026-10-08.md": "d2b485988cd4f3dbd3357ac60fa07ab64f52ca50a0cad117ed372b0e95556d05",
     "tests/unit/test_pr4_readonly_seed_copy.py": "e7a77072fa43c9d9a5338ba011f6904c97fb4d8019edbe3a9e71ab51f11b7285",
     "tests/architecture/test_sqlite_seed_runtime_lifecycle_fitness.py": "836463fe50e3b6a18a21b8738cf57e70066e046fb187189e39530d837898cd6f",
     "backend/adapters/inbound/application/runtime_schema_inspection.py": "4c2c43d2f5ee4d098e95ce134574e637d0310eb0ad3e71c03432cfad34021ddf",
@@ -890,13 +890,13 @@
     "backend/modules/local_provisioning/ports/runtime_schema_inspection.py": "c2ea62928f7bbc25efc4052625fd5c5702f0e4c914b557815cec0acd57768cd8",
     "tests/unit/test_runtime_schema_inspection.py": "6d1af8df909543babd095b74a41c7fdd69326ab437ef23c320eb4d1270c4d51a",
     "backend/adapters/inbound/application/sql_successor.py": "28ff0591b8f8eb05eb6e529c7086ec47d7b468cce8e93b73fa854f86b76802df",
-    "backend/adapters/outbound/persistence/sql_successor.py": "3a3a140a2b7352c942244bb8f7600858842d868a93b7d82b6593bc8f962c6525",
+    "backend/adapters/outbound/persistence/sql_successor.py": "6f04170acdecadfb3a5c620bafcb7bb4802106b7c4abfd2858b8af9602fb6569",
     "backend/adapters/outbound/persistence/sql_successor_sql.py": "c2ffa2bb76e258ceb4bcb6b5b53367c7bf5fe714debaad0aa83c06d58a858780",
     "backend/adapters/outbound/persistence/sql_successor_stability.py": "4f28d5ad7dfaa5db2c86c726815e576c79238f279f234e8c841a7ca581f94437",
     "backend/infrastructure/composition/factories/sql_successor.py": "676a345d287cd9f1726fb34399e18a43c46ce296b67689b8283a3e3834cd6ff1",
     "backend/modules/local_provisioning/application/sql_successor.py": "25c144c842164903d56afc8d59730cb4bcc671f829c9e5c056a32792109cb4d1",
     "tests/support/sql_successor_fixture.py": "ce88f0b28db2797b401bbc1354df605c9889fbd763d1fc680153ecfe67dfb993",
-    "tests/unit/test_sql_successor.py": "c77f0f6be12bbe27445229d720814ca9b933b5eb0fe1d32956ed82506a879dcf"
+    "tests/unit/test_sql_successor.py": "c57c9bfca184aa048a840060872d50c6aad045c1e83299b89815cf83816009d3"
   },
   "active_delta_paths": [
     ".gitignore",
@@ -2660,6 +2660,39 @@
       "default_enabled": false,
       "operational_rollback": "STOP_PENDING_SAFE_REPLACEMENT_REVIEW",
       "historical_results": "UNCHANGED"
+    },
+    {
+      "purpose": "PR4_RSQL_REPLAY_REFERENCE_INDEPENDENCE_FIX_1",
+      "baseline": "baedbc224183d2b215497c5bdb95484a78cf1bc4",
+      "parent_manifest_sha256": "8c32754530f5175fd7c7f7f2783ebf87d8c8e7b9a9871d11bac883149b3c2315",
+      "code_paths": [
+        "backend/adapters/outbound/persistence/sql_successor.py",
+        "tests/unit/test_sql_successor.py",
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md",
+        "tests/support/r6_scope_guard.py",
+        "tests/support/r6_scope_manifest.json"
+      ],
+      "changed_owner_sha256": {
+        "backend/adapters/outbound/persistence/sql_successor.py": {
+          "before": "3a3a140a2b7352c942244bb8f7600858842d868a93b7d82b6593bc8f962c6525",
+          "after": "6f04170acdecadfb3a5c620bafcb7bb4802106b7c4abfd2858b8af9602fb6569"
+        },
+        "tests/unit/test_sql_successor.py": {
+          "before": "c77f0f6be12bbe27445229d720814ca9b933b5eb0fe1d32956ed82506a879dcf",
+          "after": "c57c9bfca184aa048a840060872d50c6aad045c1e83299b89815cf83816009d3"
+        },
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md": {
+          "before": "5ef5367914a710e1a2c33d2affd4ab210d2aabd3082823cc40b02484ca89f54c",
+          "after": "d2b485988cd4f3dbd3357ac60fa07ab64f52ca50a0cad117ed372b0e95556d05"
+        }
+      },
+      "protected_reuse_additions": [],
+      "current_owners": 442,
+      "private_exclusions_preserved": 27,
+      "guard_functions": "UNCHANGED",
+      "reviewed_ddl": "UNCHANGED",
+      "initial_regression": "2 FAIL coordinated receipt/target forgery preserved",
+      "runtime_originals": "UNCHANGED"
     }
   ],
   "private_source_exclusions": [

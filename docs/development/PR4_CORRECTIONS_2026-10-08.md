@@ -452,3 +452,17 @@ Le dernier global7988/13/0/5 reste rattaché à8746f74, non au successeur.
 Deux SKIP Windows, gates live fermées, D07, attestations privées applicables,
 sauvegarde indépendante du disque et recette enseignante gardent leurs conditions.
 Aucun nouveau fournisseur, COUNT, credential, changement de sécurité ou merge.
+
+
+### Correction ordinaire de reprise : reçu et cible substitués ensemble
+
+Le checkpoint baedbc2 conserve l'implémentation initiale et ses151/38 résultats
+distincts. Deux contre-exemples réellement exécutés ont ensuite révélé qu'une
+substitution coordonnée du reçu et de la cible pouvait faire accepter une reprise.
+Ces2 FAIL ciblés sont conservés. La correction compare désormais les objets
+postérieurs au DDL exact relu, les empreintes métier au backup lui-même épinglé
+par le SHA du source, et le sceau à l'ensemble exact des publications initiales.
+Les hashes inscrits dans le reçu ne constituent plus leur propre référence.
+Le troisième cas retire un sceau puis réinstalle sa garde avant de falsifier le
+reçu ; il doit aussi être refusé. Aucun DDL proposé, source original, registre
+global, guard partagé ou périmètre d'autorisation n'est changé.

@@ -763,3 +763,37 @@ def test_complete_metadata_binding_not_only_definition_digest(source, tmp_path):
     with pytest.raises(ValueError, match="FULL_SOURCE_BINDING_CHANGED"):
         inbound.apply(request(wrong))
     assert not (tmp_path / "successor").exists()
+
+
+@pytest.mark.parametrize("corruption", ("schema", "data", "seal"))
+def test_coordinated_receipt_and_target_forgery_is_rejected(source, tmp_path, corruption):
+    b = binding(source)
+    root = tmp_path / "successor"
+    inbound = build_sql_successor_inbound(target(source), root, b)
+    inbound.apply(request(b))
+    final = root / "runtime-copy.sqlite"
+    c = sqlite3.connect(final)
+    if corruption == "schema":
+        c.execute("DROP TRIGGER pr4_version_sealed_update")
+    elif corruption == "data":
+        c.execute("UPDATE resource_version SET title='forged draft' WHERE id='vdraft'")
+    else:
+        original = c.execute(
+            "SELECT sql FROM sqlite_schema WHERE name='pr4_seal_delete'"
+        ).fetchone()[0]
+        c.execute("DROP TRIGGER pr4_seal_delete")
+        c.execute("DELETE FROM _pr4_published_version_seal WHERE resource_version_id='vpub'")
+        c.execute(original)
+    c.commit()
+    rows = fingerprints(c, tuple(t.name for t in b.snapshot.tables))
+    c.close()
+    current = build_runtime_schema_inspection_inbound(target(final)).inspect()
+    receipt = json.loads((root / "applied-receipt.json").read_text())
+    receipt["result"]["final_sha256"] = hashlib.sha256(final.read_bytes()).hexdigest()
+    receipt["result"]["post_schema_sha256"] = current.schema_sha256
+    receipt["result"]["table_fingerprints"] = rows
+    (root / "applied-receipt.json").write_text(json.dumps(receipt), encoding="utf-8")
+    with pytest.raises(
+        ValueError, match="POST_SCHEMA_MISMATCH|FINAL_ROWS_CHANGED|INITIAL_SEAL_MISMATCH"
+    ):
+        inbound.apply(request(b))

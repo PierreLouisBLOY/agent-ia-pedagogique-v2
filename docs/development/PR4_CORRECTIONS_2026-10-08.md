@@ -390,3 +390,65 @@ Les20 PASS de l'inspection synthétique/frontières sont un banc différent des 
 11/5/211. Le global7988/13/0/5 reste daté8746f74. R1, Word technique, REV4 et erratum
 sont conservés. Revue du diff final, Windows, D07 et recette enseignante demeurent
 distincts ; gates live fermées et aucun merge.
+
+## A06 : successeur SQL fermé après revue concrète (10 octobre 2026)
+
+La revue COMMENTED5475808797, sur9446728d433561354f4d15aaf8732c9cc18bac33,
+est reçue et vérifiée : FAVOURABLE_TARGETED_SQL_REVIEW_WITH_EXECUTION_PRECONDITIONS.
+Le DDL15, la requête17, les préconditions18 et la convention de digest nommée ont
+un avis favorable dans leur portée. Les88 probes de revue restent une preuve
+distincte en mémoire/Linux/Python3.13, sans addition aux compteurs du projet.
+Les dix dispositions D02 et trois antérieures restent acquises dans leurs limites.
+
+Le chemin sql_successor appartient à local_provisioning : use cases, contrats et
+port typés, inbound Application propriétaire, composition explicite et persistence.
+La requête d'application ne contient que les trois identités de plan/décision/revue.
+Aucun SQL ou path libre, outil agent, route HTTP, activation du lanceur, dépendance
+ou extension du registre001/002. Les trois textes SQL exacts sont épinglés par SHA.
+L'ancien pin de schéma reste distinct du digest actuel ; le binding porte le relevé
+complet, colonnes/FK/index/flags et identités/hash de main et de tous ses sidecars.
+
+Le cycle impose : stabilité Windows avant effet, copie initiale exacte dans un
+temporaire privé, backup frais conservé et restauration de contrôle exacte avant DDL,
+transaction unique, préconditions à zéro, objets existants inchangés sauf SQL05,
+empreintes multiensembles/comptes des tables métier, intégrité/FK et sceaux exacts,
+puis publication fraîche unique. Reprise seulement sur binding/reçu/hashes/postschéma
+et contenu exacts, sans réécriture. Une collision ou histoire partielle est conservée.
+
+Stabilité : OPEN_EXISTING de main et des sidecars présents sans SHARE_WRITE ni
+SHARE_DELETE, chaînes de parents épinglées sans SHARE_DELETE. Un writer déjà présent
+ou une mapping écrivable refuse l'acquisition ; les writers futurs sont refusés.
+Le source reste lu immutable, mais cette option ne tient pas lieu de verrou.
+Les fichiers absents, journal ou nouveaux sidecars sont revérifiés ; aucun sidecar,
+mode source, permission ou original n'est modifié pour satisfaire les conditions.
+Les destinations de copie sont ouvertes sans partage, sans suivre de reparse point,
+avec identité physique/fichier régulier/lien unique vérifiés avant troncature.
+La documentation primaire de cette règle de partage est
+https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew.
+
+SQL05 utilise la requête unique revue : ABSENT/EXACT/AMBIGUOUS_CURRENT_VERSION ;
+version seulement pour EXACT. Eligibilité, bornes temporelles et maximalité NOT EXISTS
+sont conservées, sans sélection arbitraire, filtre de validation ou fallback.
+SQL06 reste notion.id. SQL07 conserve sa garantie Application, aucune réparation DDL.
+
+Les fixtures reprennent treize tables authentifiées et leurs contraintes utiles,
+avec des lignes exclusivement synthétiques. Les mutations de chacune des dix-huit
+nouvelles gardes ont des contre-exemples ; les anciennes protections redondantes
+sont isolées explicitement dans ces seuls tests, jamais supprimées en production.
+Le banc comprend publication/archivage, toutes colonnes, REPLACE/IGNORE/UPSERT,
+refus de préconditions, rollback transactionnel, diagnostics temporels, processus
+Windows concurrents, hardlink/substitution, collision, idempotence et altération du
+binding complet. Chaque résultat reste lié à son XML et à ses octets datés.
+
+Retour arrière après publication : STOP_PENDING_SAFE_REPLACEMENT_REVIEW.
+Le contrôle de restauration avant DDL est distinct. Aucun remplacement n'est exécuté :
+la primitive partagée vérifie puis remplace par path et ne prouve pas l'exclusion d'une
+substitution dans cet intervalle. Son éventuel successeur sûr et sa revue restent
+nécessaires avant ce seul effet. La primitive partagée n'est pas assouplie/modifiée.
+
+Les reçus d'exécution, l'application réelle éventuelle sur la seule copie D autorisée
+et la revue finale du code sont distincts de la revue des SQL proposés.
+Le dernier global7988/13/0/5 reste rattaché à8746f74, non au successeur.
+Deux SKIP Windows, gates live fermées, D07, attestations privées applicables,
+sauvegarde indépendante du disque et recette enseignante gardent leurs conditions.
+Aucun nouveau fournisseur, COUNT, credential, changement de sécurité ou merge.

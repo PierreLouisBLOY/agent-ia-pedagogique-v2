@@ -336,3 +336,57 @@ bytes et preuves exacts ; elle ne dispose d'aucune approbation automatique.
 Elle ne modifie ni les treize FAIL, ni les trois OPEN_DEFERRED acquis, ni les
 dix décisions supplémentaires encore proposées. Le résultat des tests est
 consigné dans le dossier privé, sans addition au global historique.
+## A06 : revue reçue, adoption D02 et préflight préparatoire du 9 octobre 2026
+
+La [revue COMMENTED 5472372189](https://github.com/PierreLouisBLOY/agent-ia-pedagogique-v2/pull/4#pullrequestreview-5472372189)
+est vérifiée sur f6fe3e409a584d8d851e7d752656bede8bda1f20. L'addendum RSQL-1.0
+reçoit FAVOURABLE_DESIGN_REVIEW : les trois demandes de conception sont satisfaites.
+La lecture distincte du successeur MD13 et de ses consommateurs reçoit un avis
+favorable ciblé. Les six compagnons portables reçoivent un avis favorable dans leur
+portée. Aucun de ces avis ne vaut nouveau PASS applicatif ni revue universelle.
+
+Le propriétaire a adopté explicitement les dix propositions exactes D02-A à D02-E
+de la matrice16, SHA-256
+41f129ed41d46ef2bec4ccc16f74b46d12054b552a421ed61ad25e6ccd5c24a9.
+Les trois dispositions antérieures restent acquises. Les limites par ligne, les
+FAIL/SKIP historiques et les attestations privées distinctes sont conservés.
+Ce constat ne vaut pas merge ni clôture automatique d'une précondition privée.
+
+L'inspection préparatoire runtime_schema_inspection reste dans local_provisioning :
+use case via port, inbound Application propriétaire, composition explicite, adaptateur
+de persistance en lecture seule. Aucune route HTTP, outil agent, SQL ou path libre.
+Elle relève tous les objets du schéma, table_xinfo/FK/index et les fichiers du runtime
+authentifié. Le contrat de migration demeure distinct et non implémenté.
+L'inspection institutionnelle existante et son contrat restent inchangés.
+
+Le lecteur immutable n'interprète pas de WAL ; il refuse un WAL non vide, tout
+journal et un SHM incohérent. Un WAL vide accompagné d'un SHM de32768 octets peut
+être conservé pendant une lecture des octets main authentifiés. Le jeu complet est
+contrôlé avant/après. Cela ne constitue pas une preuve de quiescence des writers,
+une permission de copie ni une mutation du mode SQLite natif.
+
+Le préflight réel par Application a relevé 121 tables, 157 index dont autoindex,
+7 triggers et 11 vues ; intégrité/quick_check=ok et0 violation FK. Les59 définitions
+du relevé historique concordent. Source et sidecars inchangés ; cible/backup absents.
+Un premier refus strict de sidecars est conservé avec ses preuves et sa résolution
+limitée à la lecture immutable ; aucun fichier n'a été supprimé pour le contourner.
+
+SQL05 : E conserve exactement PUBLISHED et les bornes valid_from/valid_to avec
+CURRENT_TIMESTAMP. La maximalité reste NOT EXISTS d'un created_at strictement
+supérieur dans le même E ; pas de filtre de validation, tri/id ou MAX nouveau.
+created_at est TEXT NOT NULL dans le schéma authentifié. Le diff privé préparé
+sépare cardinalité/diagnostic et ne sélectionne une version que pour EXACT ;
+une seule requête fermée donnera ABSENT/EXACT/AMBIGUOUS_CURRENT_VERSION.
+
+Le DDL, le diff des vues, le contrat de maintenance fermé, les préconditions et
+les contrôles de mutation sont préparés pour la lecture d'implémentation expressément
+requise par ADR40/RSQL-1.0. Ils ne sont ni exécutés ni enregistrés dans001/002.
+L'ancienne empreinte de schéma est conservée ; la nouvelle sérialisation exhaustive
+est explicite et leur liaison doit être relue, sans ancien pin changé silencieusement.
+Aucune copie, sauvegarde, restauration, migration ou publication SQL réalisée.
+SQL06 reste notion.id ; SQL07 demeure une garantie Application distincte du DDL.
+
+Les20 PASS de l'inspection synthétique/frontières sont un banc différent des anciens
+11/5/211. Le global7988/13/0/5 reste daté8746f74. R1, Word technique, REV4 et erratum
+sont conservés. Revue du diff final, Windows, D07 et recette enseignante demeurent
+distincts ; gates live fermées et aucun merge.

@@ -430,7 +430,14 @@
     "tools/tests/p0_conversation_shell.test.cjs",
     "tools/tests/p0_ui_request.test.cjs",
     "tools/tests/pr4_lifecycle_regressions.test.cjs",
-    "tools/tests/stmg_context.test.cjs"
+    "tools/tests/stmg_context.test.cjs",
+    "backend/adapters/inbound/application/runtime_schema_inspection.py",
+    "backend/adapters/outbound/persistence/runtime_schema_inspection.py",
+    "backend/infrastructure/composition/factories/runtime_schema_inspection.py",
+    "backend/modules/local_provisioning/application/inspect_runtime_schema.py",
+    "backend/modules/local_provisioning/application/runtime_schema_snapshot.py",
+    "backend/modules/local_provisioning/ports/runtime_schema_inspection.py",
+    "tests/unit/test_runtime_schema_inspection.py"
   ],
   "cp645_pre_sha256": {
     "backend/adapters/outbound/persistence/migrations.py": "8664c33b91e3060bf1d198bddeef820f8eac6119a7551b49e9412918cf3824b9",
@@ -864,9 +871,16 @@
     "backend/modules/work_orchestration/ports/outbound/conversation_store.py": "4adc41d6a46ff5f4642bb835d95e7a8d8be2f2a8c0cb3e4f35757073027300a9",
     "tests/unit/test_pr4_quantitative_application.py": "cead6f573b84922d0241e9d81788839f05c975db611058ba32458c222b1d2458",
     "tools/tests/pr4_lifecycle_regressions.test.cjs": "5904d2d89d13625fbb97b0824a3e5ab5611106d41deb70fe794c3a1c3116f72e",
-    "docs/development/PR4_CORRECTIONS_2026-10-08.md": "eb1401c5a7682880bb01cc36b93448a7137acd37b90c48196079c47c8919585d",
+    "docs/development/PR4_CORRECTIONS_2026-10-08.md": "5c39524449fd13fa96c24e0c76e5b728f6dbf2256729b79b18765838670b0c1a",
     "tests/unit/test_pr4_readonly_seed_copy.py": "e7a77072fa43c9d9a5338ba011f6904c97fb4d8019edbe3a9e71ab51f11b7285",
-    "tests/architecture/test_sqlite_seed_runtime_lifecycle_fitness.py": "836463fe50e3b6a18a21b8738cf57e70066e046fb187189e39530d837898cd6f"
+    "tests/architecture/test_sqlite_seed_runtime_lifecycle_fitness.py": "836463fe50e3b6a18a21b8738cf57e70066e046fb187189e39530d837898cd6f",
+    "backend/adapters/inbound/application/runtime_schema_inspection.py": "4c2c43d2f5ee4d098e95ce134574e637d0310eb0ad3e71c03432cfad34021ddf",
+    "backend/adapters/outbound/persistence/runtime_schema_inspection.py": "6b015acdf28d81aa2102784955e371154af99bcc239b52759093c3f5e612f69b",
+    "backend/infrastructure/composition/factories/runtime_schema_inspection.py": "a788083f486ec449fa6c5fd30833c916ce73caaaecf02077c1f213999d11de52",
+    "backend/modules/local_provisioning/application/inspect_runtime_schema.py": "da07bbfa28ea436da7bedee819ddc0cad370fdcd2e87a006d0fd0aa891e14046",
+    "backend/modules/local_provisioning/application/runtime_schema_snapshot.py": "80b72011e31386ced39b29f822068a41620c8b57914d58560e29be444505738a",
+    "backend/modules/local_provisioning/ports/runtime_schema_inspection.py": "c2ea62928f7bbc25efc4052625fd5c5702f0e4c914b557815cec0acd57768cd8",
+    "tests/unit/test_runtime_schema_inspection.py": "6d1af8df909543babd095b74a41c7fdd69326ab437ef23c320eb4d1270c4d51a"
   },
   "active_delta_paths": [
     ".gitignore",
@@ -1150,7 +1164,14 @@
     "tools/tests/p0_conversation_shell.test.cjs",
     "tools/tests/p0_ui_request.test.cjs",
     "tools/tests/pr4_lifecycle_regressions.test.cjs",
-    "tools/tests/stmg_context.test.cjs"
+    "tools/tests/stmg_context.test.cjs",
+    "backend/adapters/inbound/application/runtime_schema_inspection.py",
+    "backend/adapters/outbound/persistence/runtime_schema_inspection.py",
+    "backend/infrastructure/composition/factories/runtime_schema_inspection.py",
+    "backend/modules/local_provisioning/application/inspect_runtime_schema.py",
+    "backend/modules/local_provisioning/application/runtime_schema_snapshot.py",
+    "backend/modules/local_provisioning/ports/runtime_schema_inspection.py",
+    "tests/unit/test_runtime_schema_inspection.py"
   ],
   "active_delta_entry": "03bd272074810b9ef4a29d77b059b3efefbfd2ea",
   "recipe_continuation_entry": "a0b83aa4a83f1b91d8b3f492fe93d17053376034",
@@ -2499,6 +2520,75 @@
       "guard_functions": "UNCHANGED",
       "content_change": "TRAILING_EOL_ONLY_NO_TEST_OR_DOCUMENT_STATEMENT_CHANGED",
       "historical_results": "UNCHANGED"
+    },
+    {
+      "purpose": "PR4_RSQL_READ_ONLY_PREFLIGHT_AND_D02_ADOPTION_1_0",
+      "baseline": "f6fe3e409a584d8d851e7d752656bede8bda1f20",
+      "parent_manifest_sha256": "47a608ca84bb6ff4185359634ede9eddf87989d8e7bd8460243b91695503cbed",
+      "decision_documents": [
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md"
+      ],
+      "code_paths": [
+        "backend/adapters/inbound/application/runtime_schema_inspection.py",
+        "backend/adapters/outbound/persistence/runtime_schema_inspection.py",
+        "backend/infrastructure/composition/factories/runtime_schema_inspection.py",
+        "backend/modules/local_provisioning/application/inspect_runtime_schema.py",
+        "backend/modules/local_provisioning/application/runtime_schema_snapshot.py",
+        "backend/modules/local_provisioning/ports/runtime_schema_inspection.py",
+        "tests/unit/test_runtime_schema_inspection.py",
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md",
+        "tests/support/r6_scope_guard.py",
+        "tests/support/r6_scope_manifest.json"
+      ],
+      "changed_owner_sha256": {
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md": {
+          "before": "eb1401c5a7682880bb01cc36b93448a7137acd37b90c48196079c47c8919585d",
+          "after": "5c39524449fd13fa96c24e0c76e5b728f6dbf2256729b79b18765838670b0c1a"
+        }
+      },
+      "protected_reuse_additions": [
+        "backend/adapters/inbound/application/runtime_schema_inspection.py",
+        "backend/adapters/outbound/persistence/runtime_schema_inspection.py",
+        "backend/infrastructure/composition/factories/runtime_schema_inspection.py",
+        "backend/modules/local_provisioning/application/inspect_runtime_schema.py",
+        "backend/modules/local_provisioning/application/runtime_schema_snapshot.py",
+        "backend/modules/local_provisioning/ports/runtime_schema_inspection.py",
+        "tests/unit/test_runtime_schema_inspection.py"
+      ],
+      "original_owners_preserved": 427,
+      "current_owners": 434,
+      "private_exclusions_preserved": 27,
+      "review_provenance": "COMMENTED 5472372189 favourable RSQL design, MD13 and portable companions; concrete implementation review distinct and pending",
+      "owner_d02_matrix_sha256": "41f129ed41d46ef2bec4ccc16f74b46d12054b552a421ed61ad25e6ccd5c24a9",
+      "owner_d02_disposition": "EXPLICITLY_ADOPTED_TEN_LIMITED_EFFECTS",
+      "guard_functions": "UNCHANGED",
+      "sql_migration_path": "NOT_IMPLEMENTED",
+      "runtime_originals": "UNCHANGED",
+      "historical_results": "UNCHANGED"
+    },
+    {
+      "purpose": "PR4_READ_ONLY_PREFLIGHT_ACTIVE_DELTA_DECLARATION_FIX",
+      "baseline": "f6fe3e409a584d8d851e7d752656bede8bda1f20",
+      "parent_manifest_sha256": "542fffb7dff2c25e4bac28800bffd470e797d006f00c25f2b1ed5a15f2873ec8",
+      "code_paths": [
+        "tests/support/r6_scope_guard.py",
+        "tests/support/r6_scope_manifest.json"
+      ],
+      "added_active_delta_paths": [
+        "backend/adapters/inbound/application/runtime_schema_inspection.py",
+        "backend/adapters/outbound/persistence/runtime_schema_inspection.py",
+        "backend/infrastructure/composition/factories/runtime_schema_inspection.py",
+        "backend/modules/local_provisioning/application/inspect_runtime_schema.py",
+        "backend/modules/local_provisioning/application/runtime_schema_snapshot.py",
+        "backend/modules/local_provisioning/ports/runtime_schema_inspection.py",
+        "tests/unit/test_runtime_schema_inspection.py"
+      ],
+      "protected_owners": 434,
+      "private_exclusions_preserved": 27,
+      "guard_functions": "UNCHANGED",
+      "initial_validation": "22_ACTIVE_GUARD:16_PASS_1_FAIL_PRESERVED",
+      "cause": "7 new protected owners omitted from active_delta_paths; no relaxed scanner or test changes",
+      "owner_dispositions": "UNCHANGED"
     }
   ],
   "private_source_exclusions": [

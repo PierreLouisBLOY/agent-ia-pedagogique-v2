@@ -144,3 +144,195 @@ L'ADR SQL et ses annexes exactes sont disponibles dans le dossier privé existan
 sans revue préalable présumée ni changement DDL. Revue du nouveau delta,
 dispositions historiques, Windows, règles GitHub et recette enseignante
 gardent leurs conditions. Aucun appel fournisseur ni merge.
+
+## D04 : addendum ciblé après revue SQL du 9 octobre 2026
+
+**Version documentaire RSQL-1.0 / PROPOSED / RELECTURE CIBLÉE ATTENDUE.**
+Rattachement source : `38768829a50d02d4ed1808d5f84fd38024ed347e`.
+La revue [COMMENTED 5464372510](https://github.com/PierreLouisBLOY/agent-ia-pedagogique-v2/pull/4#pullrequestreview-5464372510)
+a reçu l'ADR SQL exact, SHA-256
+`f95537a767cd8390f0ea7a98e9b30d92cbe5a01f9202955d964d4868f5fdb583`,
+et demande RSQL-01, RSQL-02 et RSQL-03. La revue préalable a donc été
+effectuée avec verdict REQUEST_CHANGES ; elle n'est plus une pièce manquante.
+Le présent addendum répond uniquement à ces points. Il ne vaut pas approbation
+par le producteur ni permission d'appliquer le DDL.
+
+L'accord propriétaire de portée reste acquis sur la fiche exacte SHA-256
+`5eb33f27e03c570482fb4f8b1f15b40591be21fcbc66edfcd66d269168d5fe5a`.
+L'ADR initial et ses octets sont conservés hors Git. Les chemins et identités
+privés restent ceux de cette pièce et de son reçu de décision ; aucune cible
+supplémentaire, sélection par le lanceur ou migration globale 001/002.
+
+### RSQL-01 / SQL04 : mémoire de publication append-only
+
+Le registre proposé `_pr4_published_version_seal` comporte exactement une
+colonne `resource_version_id`, TEXT, NOT NULL, clé primaire, référence exacte
+à `resource_version.id`, avec suppression de la version référencée interdite,
+sans cascade ni SET NULL. Aucun champ mutable ni commande « unseal ».
+Son alimentation initiale est exclusivement l'ensemble des versions PUBLISHED
+authentifiées, dans la transaction d'installation ; l'alimentation future
+suit l'insertion d'une version PUBLISHED ou son passage effectif à PUBLISHED.
+Une identité PUBLISHED NULL, dupliquée ou incohérente provoque STOP avant
+migration ; aucun élargissement de la correction de clé SQL06.
+
+Des gardes supplémentaires du registre refusent tout DELETE et tout UPDATE,
+même une réaffectation, et tout INSERT en collision avec une identité déjà
+scellée. Le refus est explicite avant la résolution d'un conflit : REPLACE,
+INSERT OR REPLACE, IGNORE, UPSERT et UPDATE OR REPLACE doivent être examinés
+et testés, sans dépendre de l'exécution des seuls triggers de suppression
+implicite de SQLite. L'idempotence de migration vient du manifeste déjà
+appliqué à checksum identique, pas d'une réinsertion tolérée des sceaux.
+
+Les gardes de resource_version refusent aussi un INSERT visant une identité
+déjà scellée et un UPDATE qui substitue une identité scellée en destination,
+avant un éventuel remplacement. DELETE d'une version scellée demeure refusé.
+Aucun chemin couvert de remplacement ou de conflit ne peut effacer le sceau,
+modifier les anciens octets ou le réaffecter à une autre version.
+
+Liste de colonnes observée dans la pièce Application 28A, à réauthentifier
+intégralement avant application : `id`, `resource_id`, `version_number`,
+`previous_version_id`, `title`, `summary`, `body`, `lifecycle_status`,
+`validation_status`, `published_at`, `valid_from`, `valid_to`,
+`created_at`, `created_by_actor_id`. La définition, les types, contraintes,
+defaults, colonnes cachées/générées et tous les triggers concernés sont
+figés dans le manifeste exact. Une colonne ou définition supplémentaire,
+absente ou inattendue entraîne STOP ; pas de projection partielle silencieuse.
+
+Toute colonne hors lifecycle_status est comparée avec une égalité sensible
+à NULL, équivalente à IS/IS NOT, sans != nullable ni COALESCE confondant des
+valeurs. Le seul changement autorisé pour une version scellée est
+PUBLISHED → ARCHIVED, toutes les autres valeurs inchangées. Un UPDATE
+strictement sans changement peut rester admis ; ARCHIVED reste scellé.
+Les triggers préexistants sont conservés et leur graphe d'effets est relu.
+Si l'archivage modifie automatiquement un autre champ, STOP : aucun trigger
+n'est supprimé et aucune exception implicite n'est ajoutée à l'immutabilité.
+
+Contrôles prévus, **non exécutés** : publication initiale/future, nouvelle
+version enfant et archivage strict licites ; DELETE/UPDATE/réaffectation du
+sceau ; collisions REPLACE/UPSERT/IGNORE du registre et de la version,
+puis tentative de mutation ; chaque colonne et NULL↔valeur ; changement
+conjoint statut/contenu ; démotion et mutation après archivage ; chemins
+de cascade pertinents ; retrait ou altération de chaque garde et du registre.
+Chaque refus doit conserver les octets et sceaux concernés.
+
+Un administrateur pouvant modifier le schéma ou le contexte de connexion
+reste un pouvoir distinct : le manifeste et le préflight détectent les DDL
+retirés/substitués et les réglages inattendus ; ils ne rendent pas impossible
+une intervention administrateur. Les anciennes démotions non identifiables
+avant installation restent NON COUVERTES.
+
+### RSQL-02 / SQL05 : une requête, un ensemble éligible, un état de lecture
+
+Le contrat fermé retourne en une seule requête de lecture le diagnostic et
+l'éventuelle version exacte à partir du même ensemble éligible E et de la
+même règle de maximalité. Il n'effectue pas « lire le diagnostic, puis relire
+la candidate » dans deux états indépendants. Zéro candidate donne ABSENT ;
+une seule candidate maximale donne EXACT avec son identité ; plusieurs
+candidates maximales donnent AMBIGUOUS_CURRENT_VERSION sans version choisie.
+Les libellés de diagnostic sont ceux du contrat fermé à relire.
+
+Le préflight Application en lecture seule doit relever le texte exact de
+v_current_resource_version, ses colonnes, tables/triggers dépendants,
+prédicats d'éligibilité, expression de maximalité et comportement NULL.
+Ces octets et empreintes sont figés avant de construire le diff. Ce relevé
+complet n'est pas prétendu disponible dans 28A, qui inventorie des tables.
+Aucun nouveau filtre de lifecycle_status, validation_status, tri par id,
+COALESCE de date ou critère d'insertion n'est déduit du seul nom de la vue.
+Définition absente/inattendue ou sémantique non authentifiée : STOP.
+
+La vue diagnostique proposée et le consommateur utilisent exactement E ;
+la vue courante ne rend aucune candidate pour une collision. Le diff concret
+des vues et du contrat doit encore être relu avant application. La sélection
+explicite d'une version historique autorisée est un parcours distinct ;
+une ambiguïté n'est jamais résolue automatiquement par ce parcours.
+
+Contrôles prévus, **non exécutés** : zéro/une/plusieurs candidates, maxima
+égaux, permutations d'insertion, statuts éligibles/inéligibles et valeurs
+NULL selon la définition figée ; substitutions du diagnostic ; version
+historique explicite. Un writer concurrent entre deux appels indépendants
+peut changer la réponse ultérieure, mais ne doit pas mélanger diagnostic et
+version dans une même réponse. Si une implémentation introduit plusieurs
+lectures, elle dévie de cette stratégie et doit obtenir une relecture de
+son snapshot/transaction avant application.
+
+### RSQL-03 : copie et sauvegarde avant une publication fraîche unique
+
+Stratégie retenue pour la relecture : la cible finale autorisée reste absente
+jusqu'à l'unique appel de publication fraîche. Aucun fichier n'est supprimé
+pour simuler cette absence et atomic_publish_fresh n'est pas assoupli.
+
+1. Authentifier source, schéma complet, identités filesystem et état cohérent
+   des sidecars par Application. Les pins source et schéma restent ceux
+   de l'ADR initial. Refuser alias, hardlinks, redirections et cible existante.
+2. Préparer la copie initiale dans le temporaire privé sécurisé du mécanisme
+   existant, sous le seul périmètre admis, **pas à la cible finale**.
+   Vérifier bytes, taille, hash et schéma égaux à la source authentifiée.
+3. Avant migration, sauvegarder cet état initial dans le backup déjà prévu,
+   absent et distinct de source/temporaire/cible. Vérifier backup et
+   restauration vers le chemin de contrôle déjà prévu, jamais vers l'original.
+   Pas de nouvel emplacement hors de la racine privée admise.
+4. Appliquer le successeur fermé dans ce temporaire, en transaction, après
+   les préconditions et la relecture des DDL/contrats exacts. Vérifier
+   invariants, contenu légitime, schéma, FK, intégrité et reçu. Échec :
+   rollback, reçu conservé, aucune publication.
+5. Revalider identités et absence de la cible ; publier **une seule fois**
+   le temporaire vérifié vers la cible finale fraîche via le mécanisme
+   sécurisé existant. Une collision concurrente provoque STOP sans écrasement.
+   Recalculer les empreintes finales et l'immutabilité source/backup.
+6. Démontrer le retour arrière prévu via Application vers le contrôle distinct.
+   Après publication, un remplacement de la seule copie est une opération
+   distincte à identité exacte, jamais un second atomic_publish_fresh.
+   Son contrat sûr et ses preuves doivent être établis avant son utilisation.
+   Sans ce contrat, STOP du rollback opérationnel, conserver le successeur
+   et la sauvegarde ; aucun effacement ou remplacement improvisé.
+
+Le manifeste distingue source, copie initiale temporaire, backup, restauration
+de contrôle, successeur temporaire et cible publiée avec leurs identités et
+empreintes avant/après. Une sauvegarde du même dossier n'est pas une preuve
+de sauvegarde indépendante du disque. Aucun changement du lanceur ou de
+configuration utilisateur et aucun original modifié.
+
+### Conditions et statuts conservés
+
+Les contrôles ci-dessus sont une spécification à relire, pas des PASS
+d'implémentation. SQL01/02/03/06 gardent leurs orientations ciblées ;
+SQL06 reste limité à notion.id, SQL07 à la garantie Application du bundle
+exact, sans réparation de jointures relationnelles ni « 7/7 SQL corrigés ».
+
+L'avis ciblé favorable à REV4-01 et les avis REV4-02/03 sont consignés.
+La revue documentaire des treize FAIL et des huit ADR est réalisée dans
+sa couverture déclarée ; elle ne vaut pas revue exhaustive des 274 chemins.
+Seules les trois dispositions OPEN_DEFERRED PR #3 demeurent acquises.
+Les dix autres restent proposées avec une matrice exigence/contrat/preuve/
+limite/décision exacte dans le dossier privé ; aucun brut FAIL/SKIP réécrit.
+
+L'erratum bénéficie d'un avis favorable documentaire : premier ajout observé
+des 27 préparations à 5bdd49be, distinct du pin map 5b6f563, dans la chaîne
+examinée. Les objets historiques et bundles privés sont conservés, sans purge.
+R1 et Word Q18 restent datés ; Windows, D07, revue complète, recette enseignante
+et décision de merge gardent leurs conditions. Deux gates live fermées,
+aucun fournisseur, credential, DDL ou merge.
+
+### D02 : compagnons portables du contrat courant, à relire
+
+Le banc actif conserve les assertions historiques inchangées et ajoute six
+témoins distincts dans test_stabilisation_active_guard.py : trois états Git
+réels untracked/staged/committed et trois retraits contracts.py/transport.py/both.
+La fixture ne contient que les 427 propriétaires publics et les deux fichiers
+de garde/manifeste. Elle n'importe aucun original privé ni ancien runtime.
+L'inventaire courant, le véritable index et les blobs du HEAD synthétique sont
+contrôlés selon l'état. Les propriétaires publics des frontières historiques
+restent inclus ; cette preuve ne reconstitue pas l'inventaire privé ancien.
+
+La vérification privée conserve explicitement NOT_PERFORMED_ABSENT ; le mode
+exigeant une attestation complète refuse l'absence. Les retraits de modules
+contrôlent séparément le travail valide/index substitué et le travail retiré/
+index valide, puis l'absence du véritable index, pour les deux modules ensemble
+et chacun. Les mutations sont limitées aux fixtures et restaurées.
+
+Cette succession de tests relève de la séparation historique/actif des ADR
+déjà lus et de l'avis documentaire 5464372510. Elle reste à relire sur ses
+bytes et preuves exacts ; elle ne dispose d'aucune approbation automatique.
+Elle ne modifie ni les treize FAIL, ni les trois OPEN_DEFERRED acquis, ni les
+dix décisions supplémentaires encore proposées. Le résultat des tests est
+consigné dans le dossier privé, sans addition au global historique.

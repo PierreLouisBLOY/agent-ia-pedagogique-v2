@@ -799,7 +799,7 @@
     "tests/unit/test_r6_saved_p0_documentary.py": "5c63237b844a30c0c778e0ff4175c1cf1ae14949f7ec363557b5f56e81cfadba",
     "tests/unit/test_r6_u1_exact_source.py": "8655c96535c91e3153c283903666fa77a2b32f98b1cd1e2d748fc3d4638792a6",
     "tests/unit/test_review_metadata_successor.py": "ebffcbd1ed2a98bb1afb409cb4cac957594fb96955b0fc587290971170110210",
-    "tests/unit/test_stabilisation_active_guard.py": "b3a2dbf1e55f7d01a644df1754cd3ea7fa1d347e8a7854eff201dada22b58343",
+    "tests/unit/test_stabilisation_active_guard.py": "0aad38dc9bb6bdb010ec45743c878da39d152506258345f65571b82c6a5b49ab",
     "tests/unit/test_stabilisation_private_source_exclusions.py": "f16fd42b346a608e051476812a7f7b4205381b243199c06c505a8ae203a7ebb5",
     "tests/unit/test_stabilisation_r2_harden_identity.py": "023d125ca6ed3bc8c4d0be0629f3ec1d2c55bba47fa7ced4935c48aff0a7c071",
     "tests/unit/test_stabilisation_r2_operation_identity.py": "690578101b1acb0cd56a421f36f39deeb026a19576e47b1529b9e526d5c02f27",
@@ -864,7 +864,7 @@
     "backend/modules/work_orchestration/ports/outbound/conversation_store.py": "4adc41d6a46ff5f4642bb835d95e7a8d8be2f2a8c0cb3e4f35757073027300a9",
     "tests/unit/test_pr4_quantitative_application.py": "cead6f573b84922d0241e9d81788839f05c975db611058ba32458c222b1d2458",
     "tools/tests/pr4_lifecycle_regressions.test.cjs": "5904d2d89d13625fbb97b0824a3e5ab5611106d41deb70fe794c3a1c3116f72e",
-    "docs/development/PR4_CORRECTIONS_2026-10-08.md": "175e1fe9a88c7e7652ff2f30dfac6bcde2d87a69b04813e73881d173658188b5",
+    "docs/development/PR4_CORRECTIONS_2026-10-08.md": "eb1401c5a7682880bb01cc36b93448a7137acd37b90c48196079c47c8919585d",
     "tests/unit/test_pr4_readonly_seed_copy.py": "e7a77072fa43c9d9a5338ba011f6904c97fb4d8019edbe3a9e71ab51f11b7285",
     "tests/architecture/test_sqlite_seed_runtime_lifecycle_fitness.py": "836463fe50e3b6a18a21b8738cf57e70066e046fb187189e39530d837898cd6f"
   },
@@ -2409,6 +2409,96 @@
       "private_attestation": "NOT_PERFORMED",
       "historical_results": "UNCHANGED",
       "guard_functions": "UNCHANGED"
+    },
+    {
+      "purpose": "PR4_SQL_REVIEW_RSQL_DOCUMENTARY_ADDENDUM_ONLY",
+      "baseline": "38768829a50d02d4ed1808d5f84fd38024ed347e",
+      "parent_manifest_sha256": "dd6688a15e5c032dcfeed81997f093c7e11b6e81711186832d5b7ff90102941d",
+      "decision_documents": [
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md"
+      ],
+      "code_paths": [
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md",
+        "tests/support/r6_scope_guard.py",
+        "tests/support/r6_scope_manifest.json"
+      ],
+      "changed_owner_sha256": {
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md": {
+          "before": "175e1fe9a88c7e7652ff2f30dfac6bcde2d87a69b04813e73881d173658188b5",
+          "after": "360b1fc6e0bc1af2eb27c99308c7ac649ed4d066b0b988b096deb50c3c01f489"
+        }
+      },
+      "protected_reuse_additions": [],
+      "original_owners_preserved": 427,
+      "private_exclusions_preserved": 27,
+      "review_provenance": "COMMENTED 5464372510: SQL ADR REQUEST_CHANGES RSQL-01/02/03; revised documentary delta review pending",
+      "quantitative_review": "FAVOURABLE_TARGETED_ON_3876882",
+      "sql_ddl": "NOT_IMPLEMENTED",
+      "private_attestation": "NOT_PERFORMED",
+      "historical_results": "UNCHANGED",
+      "guard_functions": "UNCHANGED"
+    },
+    {
+      "purpose": "PR4_D02_PORTABLE_ACTIVE_COMPANIONS",
+      "baseline": "38768829a50d02d4ed1808d5f84fd38024ed347e",
+      "parent_manifest_sha256": "666b8e8f2c149d1d4c0bd33581ca583adf721529149ecb8a814a6ef592e7db1f",
+      "decision_documents": [
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md"
+      ],
+      "code_paths": [
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md",
+        "tests/unit/test_stabilisation_active_guard.py",
+        "tests/support/r6_scope_guard.py",
+        "tests/support/r6_scope_manifest.json"
+      ],
+      "changed_owner_sha256": {
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md": {
+          "before": "360b1fc6e0bc1af2eb27c99308c7ac649ed4d066b0b988b096deb50c3c01f489",
+          "after": "71a369f28412bcbbe9c1c554430ff502ff139d74cdf58ca22eb862a51b263a3b"
+        },
+        "tests/unit/test_stabilisation_active_guard.py": {
+          "before": "b3a2dbf1e55f7d01a644df1754cd3ea7fa1d347e8a7854eff201dada22b58343",
+          "after": "eb59bbedd8c2953f4d42c9f7ebd74228d07e13b5cbc83550bb7fdd356f066539"
+        }
+      },
+      "protected_reuse_additions": [],
+      "original_owners_preserved": 427,
+      "private_exclusions_preserved": 27,
+      "review_provenance": "COMMENTED 5464372510: favourable explicit portable successor; new tests and dispositions review pending",
+      "private_attestation": "NOT_PERFORMED_ABSENT_AND_REQUIRED_MODE_REFUSES",
+      "historical_results": "UNCHANGED",
+      "guard_functions": "UNCHANGED",
+      "production_code": "UNCHANGED"
+    },
+    {
+      "purpose": "PR4_DOCUMENTARY_FINAL_EOL_NORMALIZATION",
+      "baseline": "38768829a50d02d4ed1808d5f84fd38024ed347e",
+      "parent_manifest_sha256": "47a291d6f198b5dc5c43cbc5d46ed9453fb5d2afd5d5ee486078300397768d24",
+      "decision_documents": [
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md"
+      ],
+      "code_paths": [
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md",
+        "tests/unit/test_stabilisation_active_guard.py",
+        "tests/support/r6_scope_guard.py",
+        "tests/support/r6_scope_manifest.json"
+      ],
+      "changed_owner_sha256": {
+        "docs/development/PR4_CORRECTIONS_2026-10-08.md": {
+          "before": "71a369f28412bcbbe9c1c554430ff502ff139d74cdf58ca22eb862a51b263a3b",
+          "after": "eb1401c5a7682880bb01cc36b93448a7137acd37b90c48196079c47c8919585d"
+        },
+        "tests/unit/test_stabilisation_active_guard.py": {
+          "before": "eb59bbedd8c2953f4d42c9f7ebd74228d07e13b5cbc83550bb7fdd356f066539",
+          "after": "0aad38dc9bb6bdb010ec45743c878da39d152506258345f65571b82c6a5b49ab"
+        }
+      },
+      "protected_reuse_additions": [],
+      "original_owners_preserved": 427,
+      "private_exclusions_preserved": 27,
+      "guard_functions": "UNCHANGED",
+      "content_change": "TRAILING_EOL_ONLY_NO_TEST_OR_DOCUMENT_STATEMENT_CHANGED",
+      "historical_results": "UNCHANGED"
     }
   ],
   "private_source_exclusions": [

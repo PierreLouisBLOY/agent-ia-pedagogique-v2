@@ -113,3 +113,89 @@ def test_guard_or_manifest_substitution_rejects_all_active_owners(active_clone, 
         assert not guard.exact(active_clone, HISTORICAL_OWNERS[0])
     finally:
         target.write_bytes(raw)
+
+
+@pytest.mark.parametrize("stage", ("untracked", "staged", "committed"))
+def test_portable_active_public_inventory_at_each_real_git_state(tmp_path, stage):
+    """Current public ownership is separate from a private historical attestation."""
+    root = tmp_path / stage
+    root.mkdir()
+    public = set(guard.PATHS) | {guard.SELF, guard.MANIFEST}
+    assert not public & set(guard.PRIVATE_PREPARATION_PATHS)
+    for path in sorted(public):
+        destination = root / path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes((ROOT / path).read_bytes())
+    git(root, "init", "--quiet")
+    if stage != "untracked":
+        git(root, "add", "--", *sorted(public))
+    if stage == "committed":
+        git(root, "-c", "commit.gpgsign=false", "-c", "user.name=Portable synthetic fixture", "-c",
+            "user.email=portable-fixture@example.invalid", "commit", "--quiet",
+            "-m", "Synthetic public inventory only")
+    tracked = set(git(root, "ls-files").decode().splitlines())
+    untracked = set(git(root, "ls-files", "--others", "--exclude-standard").decode().splitlines())
+    assert tracked == (set() if stage == "untracked" else public)
+    assert untracked == (public if stage == "untracked" else set())
+    assert not (tracked | untracked) & set(guard.PRIVATE_PREPARATION_PATHS)
+    assert all(not (root / path).exists() for path in guard.PRIVATE_PREPARATION_PATHS)
+    private = r3_portable_clone_guard._inspect_preparations(
+        root, r3_guard_oracle.PREPARATION, require_complete=False, git_paths=tracked)
+    assert private.status == "NOT_PERFORMED_ABSENT" and private.present_count == 0
+    assert not private.errors
+    required_private = r3_portable_clone_guard._inspect_preparations(
+        root, r3_guard_oracle.PREPARATION, require_complete=True, git_paths=tracked)
+    assert required_private.status == "FAIL", "public ownership cannot attest absent private bytes"
+    assert set(HISTORICAL_OWNERS) <= set(guard.PATHS)
+    assert guard.violations(root) == []
+    if stage != "untracked":
+        for path in guard.PATHS:
+            assert guard.index_matches(root, path, git(root, "show", ":" + path))
+    head = subprocess.run(["git", "rev-parse", "--verify", "HEAD"],
+                          cwd=root, capture_output=True)
+    if stage == "committed":
+        assert head.returncode == 0
+        committed = set(git(root, "ls-tree", "-r", "--name-only", "HEAD").decode().splitlines())
+        assert committed == public
+        for path in guard.PATHS:
+            assert guard.index_matches(root, path, git(root, "show", "HEAD:" + path))
+    else:
+        assert head.returncode != 0
+
+
+@pytest.mark.parametrize("missing", ("contracts.py", "transport.py", "both"))
+def test_portable_shared_modules_missing_worktree_and_real_index(active_clone, missing):
+    """Module absence is a current defect, without private-fixture diagnostics."""
+    root = active_clone
+    modules = tuple("backend/adapters/outbound/openai/" + name
+                    for name in ("contracts.py", "transport.py"))
+    selected = modules if missing == "both" else tuple(p for p in modules if p.endswith(missing))
+    saved = {path: ((root / path).read_bytes(), git(root, "rev-parse", ":" + path).decode().strip())
+             for path in selected}
+    assert set(modules) <= set(guard.PATHS)
+    try:
+        for path in selected:
+            (root / path).unlink()
+        assert set(guard.violations(root)) == {"R6_IDENTITY:" + path for path in selected}
+        assert all(guard.index_matches(root, path, git(root, "show", ":" + path))
+                   for path in modules)
+        for path in selected:
+            raw, _ = saved[path]
+            (root / path).write_bytes(raw)
+            replacement = raw + b"\n# synthetic rejected shared module substitution\n"
+            oid = git(root, "hash-object", "-w", "--stdin", input_bytes=replacement).decode().strip()
+            git(root, "update-index", "--cacheinfo", "100644", oid, path)
+        assert guard.violations(root) == []
+        for path in selected:
+            assert not guard.index_matches(root, path, git(root, "show", ":" + path))
+            git(root, "update-index", "--force-remove", "--", path)
+            assert subprocess.run(["git", "show", ":" + path],
+                                  cwd=root, capture_output=True).returncode != 0
+        assert not set(selected) & set(git(root, "ls-files").decode().splitlines())
+        assert not set(git(root, "ls-files").decode().splitlines()) & set(guard.PRIVATE_PREPARATION_PATHS)
+    finally:
+        for path, (raw, oid) in saved.items():
+            (root / path).write_bytes(raw)
+            git(root, "update-index", "--add", "--cacheinfo", "100644", oid, path)
+    assert guard.violations(root) == []
+    assert all(guard.index_matches(root, path, git(root, "show", ":" + path)) for path in modules)

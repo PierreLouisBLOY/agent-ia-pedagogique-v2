@@ -466,3 +466,32 @@ Les hashes inscrits dans le reçu ne constituent plus leur propre référence.
 Le troisième cas retire un sceau puis réinstalle sa garde avant de falsifier le
 reçu ; il doit aussi être refusé. Aucun DDL proposé, source original, registre
 global, guard partagé ou périmètre d'autorisation n'est changé.
+
+### RUN8741-01 : référence authentifiée avant le premier APPLIED
+
+La revue technique COMMENTED 5476593436 porte sur 8741c24. Le défaut de référence
+initiale a été reproduit par Application sous Windows : trois injections synthétiques
+après backup, avant transaction et après transaction. Ces FAIL PRE sont conservés.
+
+Le successeur dérive maintenant les empreintes métier du backup épinglé au SHA source.
+La lecture du schéma et de la référence initiale intervient après BEGIN IMMEDIATE ;
+la première application et le résultat gelé sont comparés à ce backup indépendant.
+Un handle du temporaire sans partage DELETE reste tenu pendant ouverture/transaction.
+Après l'écriture légitime SQLite, un gel sans partage WRITE/DELETE est acquis sans
+relâcher l'identité ; les données, schéma, sceaux et intégrité sont alors revérifiés.
+Les fstat vérifient aussi les identités des handles effectivement ouverts.
+
+La publication fraîche propre au successeur conserve le nom initial comme preuve,
+car unlink est incompatible avec son pin Windows. Les deux noms désignent le même
+fichier ; le nom final est épinglé et rapproché du fichier tenu avant tout APPLIED.
+Un contre-exemple Windows a révélé que le nouveau nom devait lui-même être protégé.
+L'injection entre lien et pin final est refusée sans reçu ; occupant/histoire conservés.
+La primitive partagée reste inchangée, sans nouvel effet sur les bases propriétaires.
+
+Les tests conservent les conflits, rollback transactionnel et falsifications de reprise,
+et ajoutent mutations aux transitions et processus Windows indépendants.
+Les résultats bruts sont datés dans le dossier privé, jamais ajoutés au global historique.
+Les SQL relus, responsabilités Application, 442 owners, exclusions et dispositions D02
+restent inchangés. Aucun nouveau fournisseur, credential, activation ou merge.
+Retour arrière après publication : STOP_PENDING_SAFE_REPLACEMENT_REVIEW ; contrôle de
+restauration préalable et remplacement opérationnel demeurent deux preuves distinctes.

@@ -471,13 +471,13 @@ def test_closed_cycle_application_and_idempotence(source, tmp_path, monkeypatch)
     raw = source.read_bytes()
     inbound = build_sql_successor_inbound(target(source), root, b)
     calls = []
-    original = adapter.atomic_publish_fresh
+    original = adapter.publish_pinned_fresh
 
     def publish(*args, **kwargs):
         calls.append(1)
         return original(*args, **kwargs)
 
-    monkeypatch.setattr(adapter, "atomic_publish_fresh", publish)
+    monkeypatch.setattr(adapter, "publish_pinned_fresh", publish)
     first = inbound.apply(request(b))
     assert first.state == "APPLIED" and len(calls) == 1
     assert first.backup_sha256 == b.snapshot.source_sha256
@@ -563,13 +563,13 @@ def test_existing_writer_blocks_before_any_destination(source, tmp_path):
 def test_fresh_collision_is_preserved_without_receipt(source, tmp_path, monkeypatch):
     b = binding(source)
     root = tmp_path / "successor"
-    original = adapter.atomic_publish_fresh
+    original = adapter.publish_pinned_fresh
 
     def collision(src, dst, **kwargs):
         dst.write_bytes(b"concurrent independent occupant")
         return original(src, dst, **kwargs)
 
-    monkeypatch.setattr(adapter, "atomic_publish_fresh", collision)
+    monkeypatch.setattr(adapter, "publish_pinned_fresh", collision)
     with pytest.raises(RuntimeError):
         build_sql_successor_inbound(target(source), root, b).apply(request(b))
     assert (root / "runtime-copy.sqlite").read_bytes() == b"concurrent independent occupant"
@@ -647,7 +647,7 @@ def test_concurrent_change_blocks_publication_and_keeps_history(
             session.temporary.write_bytes(b"changed candidate")
 
     monkeypatch.setattr(adapter._Session, "migrate_and_check", changed)
-    with pytest.raises((ValueError, sqlite3.DatabaseError)):
+    with pytest.raises((ValueError, sqlite3.DatabaseError, PermissionError)):
         build_sql_successor_inbound(target(source), root, b).apply(request(b))
     assert not (root / "runtime-copy.sqlite").exists()
     assert not (root / "applied-receipt.json").exists()
@@ -797,3 +797,201 @@ def test_coordinated_receipt_and_target_forgery_is_rejected(source, tmp_path, co
         ValueError, match="POST_SCHEMA_MISMATCH|FINAL_ROWS_CHANGED|INITIAL_SEAL_MISMATCH"
     ):
         inbound.apply(request(b))
+
+
+@pytest.mark.parametrize(
+    "transition", ("after_backup", "before_transaction", "after_reference", "after_transaction")
+)
+def test_initial_application_rejects_rows_not_bound_to_backup(
+    source, tmp_path, monkeypatch, transition
+):
+    b = binding(source)
+    root = tmp_path / "successor"
+    source_bytes = source.read_bytes()
+
+    def alter(c):
+        c.execute(
+            "UPDATE resource_version SET title='changed only working draft' WHERE id='vdraft'"
+        )
+
+    if transition == "after_backup":
+        previous = adapter._Session.backup_and_verify_restore
+
+        def injected(session):
+            previous(session)
+            with sqlite3.connect(session.temporary) as c:
+                alter(c)
+            c.close()
+
+        monkeypatch.setattr(adapter._Session, "backup_and_verify_restore", injected)
+    elif transition == "after_reference":
+        previous = adapter.fingerprints
+        changed = False
+
+        def injected(c, tables):
+            nonlocal changed
+            rows = previous(c, tables)
+            path = Path(c.execute("PRAGMA database_list").fetchone()[2])
+            if c.in_transaction and path.name.startswith("initial-") and not changed:
+                changed = True
+                alter(c)
+            return rows
+
+        monkeypatch.setattr(adapter, "fingerprints", injected)
+    else:
+        previous = adapter.install_reviewed_successor
+
+        def injected(c, snapshot, *args, **kwargs):
+            if transition == "before_transaction":
+                alter(c)
+            result = previous(c, snapshot, *args, **kwargs)
+            if transition == "after_transaction":
+                alter(c)
+            return result
+
+        monkeypatch.setattr(adapter, "install_reviewed_successor", injected)
+    with pytest.raises(ValueError, match="ROWS_CHANGED|INITIAL_COPY_CHANGED"):
+        build_sql_successor_inbound(target(source), root, b).apply(request(b))
+    assert source.read_bytes() == source_bytes
+    assert (root / "before-sql-successor.sqlite").read_bytes() == source_bytes
+    assert not (root / "runtime-copy.sqlite").exists()
+    assert not (root / "applied-receipt.json").exists()
+    assert (root / "FAILED.json").is_file()
+
+
+def test_continuous_windows_binding_across_open_transaction_freeze_and_publication(
+    source, tmp_path, monkeypatch
+):
+    b = binding(source)
+    root = tmp_path / "successor"
+    phases = []
+    real_connect = sqlite3.connect
+    real_fingerprints = adapter.fingerprints
+    real_migrate = adapter._Session.migrate_and_check
+    real_publish = adapter.publish_pinned_fresh
+
+    def child_refused(path, operation):
+        code = {
+            "replace": "q=p.with_name('child-replacement');q.write_bytes(b'replacement');os.replace(q,p)",
+            "write": "p.write_bytes(b'changed')",
+            "sqlite": "c=sqlite3.connect(p,timeout=0);c.execute(\"UPDATE resource_version SET title='child' WHERE id='vdraft'\");c.commit()",
+        }[operation]
+        child = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from pathlib import Path;import os,sys,sqlite3;p=Path(sys.argv[1]);" + code,
+                str(path),
+            ],
+            capture_output=True,
+        )
+        assert child.returncode != 0
+        assert b"PermissionError" in child.stderr or b"OperationalError" in child.stderr
+
+    def connected(path, *args, **kwargs):
+        if isinstance(path, Path) and path.name.startswith("initial-"):
+            child_refused(path, "replace")
+            phases.append("SQLITE_OPEN_IDENTITY")
+        return real_connect(path, *args, **kwargs)
+
+    transaction_seen = False
+
+    def fingerprinted(c, tables):
+        nonlocal transaction_seen
+        db_path = Path(c.execute("PRAGMA database_list").fetchone()[2])
+        if c.in_transaction and db_path.name.startswith("initial-") and not transaction_seen:
+            transaction_seen = True
+            child_refused(db_path, "replace")
+            child_refused(db_path, "sqlite")
+            phases.append("TRANSACTION_IDENTITY_AND_SQLITE_WRITER")
+        return real_fingerprints(c, tables)
+
+    def migrated(session):
+        real_migrate(session)
+        child_refused(session.temporary, "replace")
+        child_refused(session.temporary, "write")
+        phases.append("READ_FREEZE")
+
+    def published(src, dst, **kwargs):
+        child_refused(src, "write")
+        child_refused(src, "replace")
+        real_publish(src, dst, **kwargs)
+        assert src.is_file() and src.stat().st_ino == dst.stat().st_ino
+        child_refused(dst, "write")
+        child_refused(dst, "replace")
+        phases.append("PUBLICATION_CONTINUOUS_FREEZE")
+
+    monkeypatch.setattr(adapter.sqlite3, "connect", connected)
+    monkeypatch.setattr(adapter, "fingerprints", fingerprinted)
+    monkeypatch.setattr(adapter._Session, "migrate_and_check", migrated)
+    monkeypatch.setattr(adapter, "publish_pinned_fresh", published)
+    inbound = build_sql_successor_inbound(target(source), root, b)
+    first = inbound.apply(request(b))
+    assert first.state == "APPLIED"
+    assert phases == [
+        "SQLITE_OPEN_IDENTITY",
+        "TRANSACTION_IDENTITY_AND_SQLITE_WRITER",
+        "READ_FREEZE",
+        "PUBLICATION_CONTINUOUS_FREEZE",
+    ]
+    before = {p.name: (p.read_bytes(), p.stat().st_mtime_ns) for p in root.iterdir()}
+    assert inbound.apply(request(b)).state == "ALREADY_APPLIED"
+    assert {p.name: (p.read_bytes(), p.stat().st_mtime_ns) for p in root.iterdir()} == before
+    assert (root / "before-sql-successor.sqlite").read_bytes() == source.read_bytes()
+
+
+def test_child_mutation_after_backup_refused_before_publication(source, tmp_path, monkeypatch):
+    b = binding(source)
+    root = tmp_path / "successor"
+    old = adapter._Session.backup_and_verify_restore
+
+    def injected(session):
+        old(session)
+        child = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import sqlite3,sys;c=sqlite3.connect(sys.argv[1]);c.execute(\"UPDATE resource_version SET title='child mutation' WHERE id='vdraft'\");c.commit();c.close()",
+                str(session.temporary),
+            ],
+            capture_output=True,
+        )
+        assert child.returncode == 0
+
+    monkeypatch.setattr(adapter._Session, "backup_and_verify_restore", injected)
+    with pytest.raises(ValueError, match="INITIAL_COPY_CHANGED"):
+        build_sql_successor_inbound(target(source), root, b).apply(request(b))
+    assert not (root / "runtime-copy.sqlite").exists()
+    assert not (root / "applied-receipt.json").exists()
+    assert (root / "before-sql-successor.sqlite").read_bytes() == source.read_bytes()
+
+
+def test_final_name_substitution_during_link_acquisition_never_receives_applied(
+    source, tmp_path, monkeypatch
+):
+    import backend.adapters.outbound.persistence.sql_successor_stability as stability
+
+    b = binding(source)
+    root = tmp_path / "successor"
+    original = stability.os.link
+
+    def switched(src, dst, *args, **kwargs):
+        original(src, dst, *args, **kwargs)
+        child = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from pathlib import Path;import os,sys;p=Path(sys.argv[1]);q=p.with_name('substituted');q.write_bytes(b'foreign occupant');os.replace(q,p)",
+                str(dst),
+            ],
+            capture_output=True,
+        )
+        assert child.returncode == 0
+
+    monkeypatch.setattr(stability.os, "link", switched)
+    with pytest.raises(ValueError, match="PUBLICATION_SUBSTITUTION"):
+        build_sql_successor_inbound(target(source), root, b).apply(request(b))
+    assert not (root / "applied-receipt.json").exists()
+    assert (root / "runtime-copy.sqlite").read_bytes() == b"foreign occupant"
+    assert (root / "before-sql-successor.sqlite").read_bytes() == source.read_bytes()
+    assert (root / "FAILED.json").is_file()

@@ -19,9 +19,10 @@ from backend.adapters.outbound.persistence.sql_successor_sql import DDL, PRECOND
 from backend.adapters.outbound.persistence.sql_successor_stability import (
     exclusive_copy_destination,
     pinned_windows_paths,
+    pinned_working_copy,
+    publish_pinned_fresh,
 )
 from backend.infrastructure.filesystem import (
-    atomic_publish_fresh,
     capture_secure_path,
     ensure_private_directory,
     harden_private_file,
@@ -108,20 +109,24 @@ def _integrity(c: sqlite3.Connection) -> None:
 def install_reviewed_successor(
     c: sqlite3.Connection,
     snapshot: RuntimeSchemaSnapshot,
+    expected_rows: tuple[tuple[str, int, str], ...] | None = None,
 ) -> tuple[tuple[str, int, str], ...]:
     """No dynamic SQL input: fixed approved statements, one explicit transaction."""
     reviewed_sql()
     old = tuple((o.kind, o.name, o.table, o.definition) for o in snapshot.objects)
     tables = tuple(t.name for t in snapshot.tables)
-    if definitions(c) != old:
-        raise ValueError("SQL_SUCCESSOR_SCHEMA_SUBSTITUTION")
     if c.execute("PRAGMA foreign_keys").fetchone() != (1,) or c.execute(
         "PRAGMA recursive_triggers"
     ).fetchone() != (0,):
         raise ValueError("SQL_SUCCESSOR_CONNECTION_FLAGS")
-    prior = fingerprints(c, tables)
     c.execute("BEGIN IMMEDIATE")
+    prior = None
     try:
+        if definitions(c) != old:
+            raise ValueError("SQL_SUCCESSOR_SCHEMA_SUBSTITUTION")
+        prior = fingerprints(c, tables)
+        if expected_rows is not None and prior != expected_rows:
+            raise ValueError("SQL_SUCCESSOR_INITIAL_ROWS_CHANGED")
         if any(c.execute(sql).fetchone() != (0,) for sql in statements(PRECONDITIONS)):
             raise ValueError("SQL_SUCCESSOR_PRECONDITION_VIOLATION")
         for sql in statements(DDL):
@@ -160,7 +165,7 @@ def install_reviewed_successor(
         c.commit()
     except BaseException:
         c.rollback()
-        if definitions(c) != old or fingerprints(c, tables) != prior:
+        if prior is not None and (definitions(c) != old or fingerprints(c, tables) != prior):
             raise ValueError("SQL_SUCCESSOR_TRANSACTION_ROLLBACK_FAILED") from None
         raise
     return prior
@@ -300,6 +305,7 @@ class _Session:
         self.steps: list[str] = []
         self.temporary: Path | None = None
         self.rows: tuple[tuple[str, int, str], ...] = ()
+        self.backup_rows: tuple[tuple[str, int, str], ...] = ()
         self.final_hash = ""
         self.post_schema_hash = ""
 
@@ -402,6 +408,9 @@ class _Session:
         with closing(sqlite3.connect(control.as_uri() + "?mode=ro&immutable=1", uri=True)) as c:
             c.execute("PRAGMA foreign_keys=ON")
             _integrity(c)
+        with closing(sqlite3.connect(a.backup.as_uri() + "?mode=ro&immutable=1", uri=True)) as c:
+            c.execute("PRAGMA query_only=ON")
+            self.backup_rows = fingerprints(c, tuple(t.name for t in expected.tables))
         self.steps.append("BACKUP_RESTORE_CONTROL_VERIFIED")
         self._evidence(
             "02_BACKUP_RESTORE",
@@ -410,21 +419,44 @@ class _Session:
                 "control_sha256": a.binding.snapshot.source_sha256,
                 "schema": copied.schema_sha256,
                 "control_retained": True,
+                "authenticated_table_fingerprints": self.backup_rows,
             },
         )
 
     def migrate_and_check(self) -> None:
         if len(self.steps) != 2 or self.temporary is None:
             raise ValueError("SQL_SUCCESSOR_STEP_ORDER")
+        self.stack.enter_context(pinned_working_copy(self.temporary, self.a.root))
+        if (
+            hash_file_nofollow(self.temporary, allowed_root=self.a.root)
+            != self.a.binding.snapshot.source_sha256
+        ):
+            raise ValueError("SQL_SUCCESSOR_INITIAL_COPY_CHANGED")
         # This setting affects only the newly created working copy.
         c = sqlite3.connect(self.temporary, isolation_level=None)
         try:
             c.execute("PRAGMA foreign_keys=ON")
             c.execute("PRAGMA recursive_triggers=OFF")
             c.execute("PRAGMA journal_mode=DELETE")
-            self.rows = install_reviewed_successor(c, self.a.binding.snapshot)
+            self.rows = install_reviewed_successor(c, self.a.binding.snapshot, self.backup_rows)
         finally:
             c.close()
+        # Acquire the read-only freeze while the identity pin is still held.
+        # A writer in the transition causes refusal; bytes are verified afterwards.
+        self.stack.enter_context(pinned_windows_paths(root=self.a.root, files=(self.temporary,)))
+        with closing(
+            sqlite3.connect(self.temporary.as_uri() + "?mode=ro&immutable=1", uri=True)
+        ) as check:
+            check.execute("PRAGMA foreign_keys=ON")
+            _integrity(check)
+            verify_initial_seal(check)
+            actual = fingerprints(check, tuple(t.name for t in self.a.binding.snapshot.tables))
+            if actual != self.backup_rows or self.rows != self.backup_rows:
+                raise ValueError("SQL_SUCCESSOR_FINAL_ROWS_CHANGED")
+            if {row[1]: row for row in definitions(check)} != reviewed_post_objects(
+                self.a.binding.snapshot
+            ):
+                raise ValueError("SQL_SUCCESSOR_POST_SCHEMA_MISMATCH")
         self.final_hash = hash_file_nofollow(self.temporary, allowed_root=self.a.root)
         snap = self.a._snapshot(self.temporary, self.a.root, self.final_hash)
         self.post_schema_hash = snap.schema_sha256
@@ -435,6 +467,9 @@ class _Session:
                 "post_schema_sha256": self.post_schema_hash,
                 "table_fingerprints": self.rows,
                 "final_sha256": self.final_hash,
+                "working_identity_continuous": True,
+                "read_freeze_through_publication": True,
+                "business_reference": "AUTHENTICATED_BACKUP",
             },
         )
 
@@ -445,12 +480,11 @@ class _Session:
         self._source_check()
         if hash_file_nofollow(a.backup, allowed_root=a.root) != a.binding.snapshot.source_sha256:
             raise ValueError("SQL_SUCCESSOR_BACKUP_CHANGED")
-        # Pin candidate bytes until the last checks. Fresh primitive remains unchanged.
+        # The working identity and read-only freeze remain held through publication.
         with pinned_windows_paths(root=a.root, files=(self.temporary,)):
             if hash_file_nofollow(self.temporary, allowed_root=a.root) != self.final_hash:
                 raise ValueError("SQL_SUCCESSOR_TEMPORARY_SUBSTITUTION")
-        atomic_publish_fresh(self.temporary, a.final, allowed_root=a.root)
-        self.stack.enter_context(pinned_windows_paths(root=a.root, files=(a.final,)))
+        publish_pinned_fresh(self.temporary, a.final, allowed_root=a.root, guard=self.stack)
         if hash_file_nofollow(a.final, allowed_root=a.root) != self.final_hash:
             raise ValueError("SQL_SUCCESSOR_PUBLICATION_SUBSTITUTION")
         self.steps.append("FRESH_FINAL_PUBLISHED_ONCE")
@@ -471,6 +505,7 @@ class _Session:
                 "binding": asdict(a.binding),
                 "result": asdict(result),
                 "operational_rollback": "STOP_PENDING_SAFE_REPLACEMENT_REVIEW",
+                "temporary_evidence_name_retained": True,
             },
         )
         return result

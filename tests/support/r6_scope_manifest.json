@@ -445,7 +445,17 @@
     "backend/infrastructure/composition/factories/sql_successor.py",
     "backend/modules/local_provisioning/application/sql_successor.py",
     "tests/support/sql_successor_fixture.py",
-    "tests/unit/test_sql_successor.py"
+    "tests/unit/test_sql_successor.py",
+    "backend/modules/local_provisioning/application/use_cases.py",
+    "tests/unit/test_local_provisioning_application.py",
+    "architecture/adr/ADR-sql-successor-rollback-rback83.md",
+    "backend/adapters/inbound/application/sql_rollback.py",
+    "backend/adapters/outbound/persistence/sql_rollback.py",
+    "backend/adapters/outbound/persistence/sql_rollback_handles.py",
+    "backend/infrastructure/composition/factories/sql_rollback.py",
+    "backend/modules/local_provisioning/application/sql_rollback.py",
+    "tests/support/sql_rollback_worker.py",
+    "tests/unit/test_sql_rollback.py"
   ],
   "cp645_pre_sha256": {
     "backend/adapters/outbound/persistence/migrations.py": "8664c33b91e3060bf1d198bddeef820f8eac6119a7551b49e9412918cf3824b9",
@@ -718,7 +728,7 @@
     "tests/integration/test_r5_worker.py": "c35709e25060fd22070dfd517b20aed11afb1b43d9b15f506bd21bae168db12b",
     "tests/integration/test_r6_exact_notion_evidence_real.py": "f202989799ade1afbfadd3b7a07e45d8407ceb42a511f971251270edddac8a3b",
     "tests/integration/test_r6_p0_matrix_application.py": "f2fd429ffa41446c96d4047c500f82f0f8ceb216d3d94b459647e4adb1386b29",
-    "tests/integration/test_r6_u1_exact_source_application.py": "24e565a538c200680bf08b93bda97632bb54a029a8b0dd2949edfb3560c90e73",
+    "tests/integration/test_r6_u1_exact_source_application.py": "15d1da6fa6f636a07ea86215dca248b692b22d19ad302f15e7de7f108ec1e720",
     "tests/integration/test_sqlite_runtime_real_gate.py": "d04894325aaa1672456968f84d3ad1ee4047630def444a3a1d7cae5f6cf11530",
     "tests/integration/test_stabilisation_r2_source_status.py": "ca3e36338b87b1e830320178b60df466a9de113a80daf3b75059b948a80db09c",
     "tests/non_functional/test_retrieval_quality_real_gate.py": "c7591b461477ca8983d21ea1c2f71a6f24bcbfc7c36d181494510a5245c30309",
@@ -890,13 +900,23 @@
     "backend/modules/local_provisioning/ports/runtime_schema_inspection.py": "c2ea62928f7bbc25efc4052625fd5c5702f0e4c914b557815cec0acd57768cd8",
     "tests/unit/test_runtime_schema_inspection.py": "6d1af8df909543babd095b74a41c7fdd69326ab437ef23c320eb4d1270c4d51a",
     "backend/adapters/inbound/application/sql_successor.py": "28ff0591b8f8eb05eb6e529c7086ec47d7b468cce8e93b73fa854f86b76802df",
-    "backend/adapters/outbound/persistence/sql_successor.py": "33e8333366e87a304315da957c559c48b93db892a83fe1e508d550c057c1ee2e",
+    "backend/adapters/outbound/persistence/sql_successor.py": "e1306c7f6ec09e48168698e9313fff05e2188ad9d3f3807b205d612d9c037497",
     "backend/adapters/outbound/persistence/sql_successor_sql.py": "c2ffa2bb76e258ceb4bcb6b5b53367c7bf5fe714debaad0aa83c06d58a858780",
     "backend/adapters/outbound/persistence/sql_successor_stability.py": "d67dcca2b5a41dbadcfd589faac6898d36af69278f24823a2b2b6c201b0e0a01",
     "backend/infrastructure/composition/factories/sql_successor.py": "676a345d287cd9f1726fb34399e18a43c46ce296b67689b8283a3e3834cd6ff1",
     "backend/modules/local_provisioning/application/sql_successor.py": "25c144c842164903d56afc8d59730cb4bcc671f829c9e5c056a32792109cb4d1",
     "tests/support/sql_successor_fixture.py": "ce88f0b28db2797b401bbc1354df605c9889fbd763d1fc680153ecfe67dfb993",
-    "tests/unit/test_sql_successor.py": "51317f5c0248edb7146f575ae80b5c73d5dab237ec5e62e18bce68eca1e22c25"
+    "tests/unit/test_sql_successor.py": "51317f5c0248edb7146f575ae80b5c73d5dab237ec5e62e18bce68eca1e22c25",
+    "backend/modules/local_provisioning/application/use_cases.py": "e8c8fe4ed0650362a06feb9b0f80fea107de96d83e511d4073a4332ebfd0c028",
+    "tests/unit/test_local_provisioning_application.py": "b4c2df1acd670dad007479582e60a71cb11c5524a8ee71e13878852a58516da9",
+    "architecture/adr/ADR-sql-successor-rollback-rback83.md": "9f7d243ef80fab22fb2ca1a3ad31800b510146ae0df0edd46e7c31a4fecb32c0",
+    "backend/adapters/inbound/application/sql_rollback.py": "6b20ffe49a6e43ef13c8cef9fc2561d5f1a1b2bfb974b8b93ff90379c74627aa",
+    "backend/adapters/outbound/persistence/sql_rollback.py": "53436020b5a04d6f974b403702b3c96c32b14faa743cfc1a5ceffe60adfc6d37",
+    "backend/adapters/outbound/persistence/sql_rollback_handles.py": "4430b5734b95d5fbbee8c3537e06f2583fa0143080a47faaa5647f2ff8031241",
+    "backend/infrastructure/composition/factories/sql_rollback.py": "b995bcf928f0fb12ab0b0b0c392a81a5c3ffa63147ca64d4c0fec0327a4bc2db",
+    "backend/modules/local_provisioning/application/sql_rollback.py": "a9186255d35fff48ea242191e0e80011db4a696843e7c1033aa78873a071830e",
+    "tests/support/sql_rollback_worker.py": "9eddcda6b50dde804705bfc20a4f35c2c10e05fc03f454cb159d5bf6170a4763",
+    "tests/unit/test_sql_rollback.py": "bd6b8ef73330fbf6d3acf8a1e6f4bab78052b2bfc0a1cc0d405d1bc406ad37e8"
   },
   "active_delta_paths": [
     ".gitignore",
@@ -1195,7 +1215,17 @@
     "backend/infrastructure/composition/factories/sql_successor.py",
     "backend/modules/local_provisioning/application/sql_successor.py",
     "tests/support/sql_successor_fixture.py",
-    "tests/unit/test_sql_successor.py"
+    "tests/unit/test_sql_successor.py",
+    "backend/modules/local_provisioning/application/use_cases.py",
+    "tests/unit/test_local_provisioning_application.py",
+    "architecture/adr/ADR-sql-successor-rollback-rback83.md",
+    "backend/adapters/inbound/application/sql_rollback.py",
+    "backend/adapters/outbound/persistence/sql_rollback.py",
+    "backend/adapters/outbound/persistence/sql_rollback_handles.py",
+    "backend/infrastructure/composition/factories/sql_rollback.py",
+    "backend/modules/local_provisioning/application/sql_rollback.py",
+    "tests/support/sql_rollback_worker.py",
+    "tests/unit/test_sql_rollback.py"
   ],
   "active_delta_entry": "03bd272074810b9ef4a29d77b059b3efefbfd2ea",
   "recipe_continuation_entry": "a0b83aa4a83f1b91d8b3f492fe93d17053376034",
@@ -2732,6 +2762,92 @@
       "initial_regression": "3 native Windows FAIL preserved",
       "runtime_originals": "UNCHANGED",
       "publication": "FRESH_PINNED_HARDLINK_RETAINS_INITIAL_EVIDENCE_NAME"
+    },
+    {
+      "purpose": "PR4_RBACK_83F_1_3_APPLICATION_ROLLBACK_AND_REVIEWED_CONFIG_BINDING",
+      "baseline": "83f7a1c918824bf777e9352673eb5c861fee8d56",
+      "parent_manifest_sha256": "89b72b39760760becb18f62bdac573a83a4562a4b5c739e494adb64280c7ed1e",
+      "code_paths": [
+        "architecture/adr/ADR-sql-successor-rollback-rback83.md",
+        "backend/adapters/inbound/application/sql_rollback.py",
+        "backend/adapters/outbound/persistence/sql_rollback.py",
+        "backend/adapters/outbound/persistence/sql_rollback_handles.py",
+        "backend/infrastructure/composition/factories/sql_rollback.py",
+        "backend/modules/local_provisioning/application/sql_rollback.py",
+        "tests/support/sql_rollback_worker.py",
+        "tests/unit/test_sql_rollback.py",
+        "backend/adapters/outbound/persistence/sql_successor.py",
+        "backend/modules/local_provisioning/application/use_cases.py",
+        "tests/unit/test_local_provisioning_application.py",
+        "tests/support/r6_scope_manifest.json",
+        "tests/support/r6_scope_guard.py"
+      ],
+      "changed_owner_sha256": {
+        "backend/adapters/outbound/persistence/sql_successor.py": {
+          "before": "33e8333366e87a304315da957c559c48b93db892a83fe1e508d550c057c1ee2e",
+          "after": "e1306c7f6ec09e48168698e9313fff05e2188ad9d3f3807b205d612d9c037497"
+        },
+        "backend/modules/local_provisioning/application/use_cases.py": {
+          "before": "061984f6b06acadd39c3099de5d334450a59ddad3b22d8988b25b81c08c3d7c2",
+          "after": "e8c8fe4ed0650362a06feb9b0f80fea107de96d83e511d4073a4332ebfd0c028"
+        },
+        "tests/unit/test_local_provisioning_application.py": {
+          "before": "db22a69aa32e2050ff36acc2eb02f323b69bf0844d8c2cba778651375ad2f184",
+          "after": "b4c2df1acd670dad007479582e60a71cb11c5524a8ee71e13878852a58516da9"
+        }
+      },
+      "protected_reuse_additions": [
+        "architecture/adr/ADR-sql-successor-rollback-rback83.md",
+        "backend/adapters/inbound/application/sql_rollback.py",
+        "backend/adapters/outbound/persistence/sql_rollback.py",
+        "backend/adapters/outbound/persistence/sql_rollback_handles.py",
+        "backend/infrastructure/composition/factories/sql_rollback.py",
+        "backend/modules/local_provisioning/application/sql_rollback.py",
+        "tests/support/sql_rollback_worker.py",
+        "tests/unit/test_sql_rollback.py",
+        "backend/modules/local_provisioning/application/use_cases.py",
+        "tests/unit/test_local_provisioning_application.py"
+      ],
+      "original_owners_preserved": 442,
+      "current_owners": 452,
+      "private_exclusions_preserved": 27,
+      "guard_functions": "UNCHANGED",
+      "reviewed_ddl": "UNCHANGED",
+      "runtime_originals": "UNCHANGED",
+      "prior_design_review_sha256": "c7dd63273e06436d9f64c37d170ce580f07098c890f9c02cb41fb0ef9c86b754",
+      "reviewed_addendum_sha256": "b1b7fdebbe4a0fa0e4563b637cf050b50db219b8b606d99d9215a29def53bdb9",
+      "default_enabled": false,
+      "operational_rollback": "EXPLICIT_APPLICATION_ONLY_SYNTHETIC_QUALIFICATION_PENDING",
+      "limits": [
+        "NON_ATOMIC_NAMESPACE_GAP",
+        "UNOBSERVED_TRANSIENT_ALIAS_NOT_EXCLUDED",
+        "POWER_LOSS_NOT_QUALIFIED"
+      ],
+      "implementation_review": "PENDING",
+      "live_gates": "CLOSED"
+    },
+    {
+      "purpose": "PR4_R6_02_EXPLICIT_REAL_SOURCE_PRECONDITION",
+      "baseline": "83f7a1c918824bf777e9352673eb5c861fee8d56",
+      "parent_manifest_sha256": "8d885568e2af7798d77c5006e5df61053e2600c4f13144f509f9dc4eb438843e",
+      "code_paths": [
+        "tests/integration/test_r6_u1_exact_source_application.py",
+        "tests/support/r6_scope_manifest.json",
+        "tests/support/r6_scope_guard.py"
+      ],
+      "changed_owner_sha256": {
+        "tests/integration/test_r6_u1_exact_source_application.py": {
+          "before": "24e565a538c200680bf08b93bda97632bb54a029a8b0dd2949edfb3560c90e73",
+          "after": "15d1da6fa6f636a07ea86215dca248b692b22d19ad302f15e7de7f108ec1e720"
+        }
+      },
+      "current_owners": 452,
+      "private_exclusions_preserved": 27,
+      "guard_functions": "UNCHANGED",
+      "pre_defect_proof_sha256": "d4f87cc966e2be33d27909b1fc3708b98c38ce89aaa4e90937309f18314893e6",
+      "precondition": "Missing or empty seed explicitly refuses; eight exact source cases unchanged with configured seed",
+      "skip_or_xfail_added": false,
+      "provider_calls": 0
     }
   ],
   "private_source_exclusions": [

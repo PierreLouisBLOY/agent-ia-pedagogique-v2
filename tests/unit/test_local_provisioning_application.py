@@ -437,3 +437,35 @@ def test_startup_failure_restores_previous_user_configuration(tmp_path):
     with pytest.raises(ValueError, match="NORMAL_STARTUP_PROBE_FAILED_CONFIG_RESTORED"):
         ApplyLocalProvisioning(gateway).execute(_plan(tmp_path))
     assert gateway.calls[-1] == "write_config"
+
+
+@pytest.mark.parametrize("name", ["PROJET_V2_CANONICAL_DB", "PROJET_V2_RUNTIME_DB"])
+def test_configuration_database_must_match_plan_before_any_effect(tmp_path, name):
+    plan = _plan(tmp_path)
+    bad = replace(
+        plan,
+        config_values=tuple(
+            (key, str(plan.old_data_root / "outside.sqlite") if key == name else value)
+            for key, value in plan.config_values
+        ),
+    )
+    gateway = Gateway(tmp_path)
+    with pytest.raises(ValueError, match="CONFIG_DATABASE_BINDING_MISMATCH"):
+        ApplyLocalProvisioning(gateway).execute(bad)
+    assert gateway.calls == []
+
+
+def test_configuration_duplicate_key_refused_before_any_effect(tmp_path):
+    plan = _plan(tmp_path)
+    bad = replace(plan, config_values=plan.config_values + (plan.config_values[-1],))
+    gateway = Gateway(tmp_path)
+    with pytest.raises(ValueError, match="CONFIG_TARGET_INVALID"):
+        ApplyLocalProvisioning(gateway).execute(bad)
+    assert gateway.calls == []
+
+
+def test_configuration_exact_complete_binding_positive(tmp_path):
+    plan = _plan(tmp_path)
+    result = ApplyLocalProvisioning(Gateway(tmp_path)).execute(plan)
+    assert result.startup_ready
+    assert dict(result.config_after) == dict(plan.config_values)

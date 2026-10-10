@@ -63,10 +63,9 @@ SCENARIOS = (
 )
 
 
-def _real_target() -> Read15RuntimeTarget | None:
+def _real_target() -> Read15RuntimeTarget:
     value = os.environ.get(SEED_PATH_ENV)
-    if value is None:
-        return None
+    assert value, "R6_REAL_SOURCE_PRECONDITION_REQUIRED"
     path = Path(value)
     return Read15RuntimeTarget(
         path, path.parent, hashlib.sha256(path.read_bytes()).hexdigest()
@@ -79,9 +78,6 @@ def _binding(scenario: str) -> ExactSourceBinding:
 
 def test_six_exact_bindings_materialize_hashes_statuses_and_required_facts() -> None:
     target = _real_target()
-    if target is None:
-        assert len(R6_EXACT_SOURCE_BINDINGS) == 6
-        return
     before = hashlib.sha256(target.runtime_path.read_bytes()).hexdigest()
     materialized = {
         binding.resource_ref: load_p0_exact_reference(
@@ -250,9 +246,6 @@ def test_seven_scenarios_use_exact_application_source_and_full_local_lifecycle(
     facts: tuple[str, ...],
 ) -> None:
     target = _real_target()
-    if target is None:
-        assert scenario in {item for binding in R6_EXACT_SOURCE_BINDINGS for item in binding.scenarios}
-        return
     binding = _binding(scenario)
     loaded = load_p0_exact_reference(
         target,
@@ -330,3 +323,15 @@ def test_seven_scenarios_use_exact_application_source_and_full_local_lifecycle(
         assert service.open(child.production_ref, child.version_ref)["record_sha256"] == child_record.sha256
         assert exporter.execute(child_record, "correction").startswith(b"PK")
         assert exporter.execute(child_record, "marking").startswith(b"PK")
+
+
+@pytest.mark.parametrize("value", (None, ""))
+def test_missing_source_precondition_is_explicit_before_materialization(
+    monkeypatch: pytest.MonkeyPatch, value: str | None,
+) -> None:
+    if value is None:
+        monkeypatch.delenv(SEED_PATH_ENV, raising=False)
+    else:
+        monkeypatch.setenv(SEED_PATH_ENV, value)
+    with pytest.raises(AssertionError, match="R6_REAL_SOURCE_PRECONDITION_REQUIRED"):
+        _real_target()

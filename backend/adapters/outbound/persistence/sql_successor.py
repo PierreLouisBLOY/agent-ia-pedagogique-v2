@@ -15,6 +15,9 @@ from typing import Literal, cast
 from backend.adapters.outbound.persistence.runtime_schema_inspection import (
     SQLiteRuntimeSchemaInspectionAdapter,
 )
+from backend.adapters.outbound.persistence.sql_rollback_handles import (
+    refuse_successor_rollback_history,
+)
 from backend.adapters.outbound.persistence.sql_successor_sql import DDL, PRECONDITIONS, READ
 from backend.adapters.outbound.persistence.sql_successor_stability import (
     exclusive_copy_destination,
@@ -285,6 +288,8 @@ class SQLiteSQLSuccessorAdapter:
 
     def resolve_current(self, resource_ref: str) -> CurrentVersionResolution:
         reviewed_sql()
+        with refuse_successor_rollback_history(self.root):
+            pass
         with pinned_windows_paths(root=self.root, files=(self.final, self.backup, self.receipt)):
             self._verify_existing()
             with closing(
@@ -337,6 +342,7 @@ class _Session:
             return None
         if not capture_secure_path(a.receipt, allowed_root=a.root).exists:
             raise ValueError("SQL_SUCCESSOR_PARTIAL_HISTORY_RETAINED")
+        self.stack.enter_context(refuse_successor_rollback_history(a.root))
         self.stack.enter_context(
             pinned_windows_paths(root=a.root, files=(a.final, a.backup, a.receipt))
         )

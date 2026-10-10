@@ -244,12 +244,18 @@ class ApplyLocalProvisioning:
             raise ValueError("TARGET_OUTSIDE_NEW_DATA_ROOT")
         if plan.seed.candidate.path.resolve() in (target.resolve() for target in targets):
             raise ValueError("SEED_SOURCE_TARGET_COLLISION")
-        if set(dict(plan.config_values)) != set(_OWNER_CONFIG) or any(
-            not value for _, value in plan.config_values
-        ):
+        if (
+            len(plan.config_values) != len(_OWNER_CONFIG)
+            or set(dict(plan.config_values)) != set(_OWNER_CONFIG)
+        ) or any(not value for _, value in plan.config_values):
             raise ValueError("CONFIG_TARGET_INVALID")
         if dict(plan.config_values).get("PROJET_V2_DATA_DIR") != str(root):
             raise ValueError("CONFIG_DATA_ROOT_MISMATCH")
+        configured = dict(plan.config_values)
+        if configured.get("PROJET_V2_CANONICAL_DB") != str(
+            plan.reference_seed.resolve()
+        ) or configured.get("PROJET_V2_RUNTIME_DB") != str(plan.runtime.resolve()):
+            raise ValueError("CONFIG_DATABASE_BINDING_MISMATCH")
         if plan.config_target != "HKCU\\Environment":
             raise ValueError("CONFIG_TARGET_INVALID")
         if not self.gateway.validate_migration_sources(plan.migrations):

@@ -1367,6 +1367,12 @@ function p0TransferDestination(result, preview) {
   } catch { return null; }
   return destination;
 }
+function p0CostBoundWithinCeiling(value) {
+  if (typeof value !== "string" || !/^0\.\d{1,18}$/.test(value)) return false;
+  // Compare exact decimal digits: rounding to Number could admit a value above 0.14.
+  const fraction = value.slice(2).padEnd(18, "0");
+  return fraction > "000000000000000000" && fraction <= "140000000000000000";
+}
 function p0ConsentMatches(result, prepared, now = Date.now()) {
   const preview = result?.preview;
   if (!prepared || result.state !== "LOCAL_OPERATOR_CONSENT_REQUIRED" ||
@@ -1379,7 +1385,7 @@ function p0ConsentMatches(result, prepared, now = Date.now()) {
       !/^[0-9a-f]{64}$/.test(preview.request_sha256 || "") ||
       !p0TransferDestination(result, preview) ||
       !Array.isArray(preview.source_receipts) || !preview.source_receipts.length ||
-      !/^0\.\d{1,6}$/.test(preview.cost_bound_usd || "") || Number(preview.cost_bound_usd) > 0.14 ||
+      !p0CostBoundWithinCeiling(preview.cost_bound_usd) ||
       !Number.isFinite(Date.parse(preview.expires_at_utc)) || now >= Date.parse(preview.expires_at_utc))
     return false;
   return true;

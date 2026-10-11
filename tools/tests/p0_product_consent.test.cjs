@@ -72,6 +72,33 @@ test("cancel clears the exact body and consent without changing the preparation"
   assert.equal(h.node("consent-summary").children.length,0);
 });
 
+for (const cost of ["0.0820245", "0.0000001", "0.139999999999999999", "0.14", "0.140000000000000000"])
+test("exact positive decimal cost " + cost + " reaches consent without rounding or dispatch",async()=>{
+  const h=harness(); h.consent.preview.cost_bound_usd=cost;
+  assert.equal(h.context.p0ConsentMatches(h.consent,h.prepared),true);
+  await h.node("generate").click();
+  assert.equal(h.node("consent").hidden,false);
+  assert.match(h.node("consent-summary").children[1].text,new RegExp(cost.replace(".","\\.")));
+  assert.equal(h.context.p0.consent.preview.cost_bound_usd,cost,"The exact bound remains unchanged");
+  assert.equal(h.node("consent-transfer").checked,false);
+  assert.equal(h.node("consent-cost").checked,false);
+  assert.equal(h.calls.length,1);
+  assert.equal(h.calls[0].route,"/api/v2/p0/consent-preview");
+});
+
+const invalidCosts=["0.1400001","0.140000000000000001","0.141","1.00","0","0.0","0.0000000",
+  "-0.01","+0.01"," 0.01","0.01 ","8.20245e-2","NaN","Infinity","0.0000000000000000001",0.0820245,null,undefined];
+for (const [index,cost] of invalidCosts.entries())
+test("invalid or above-ceiling decimal cost mutation " + index + " refuses before dispatch",async()=>{
+  const h=harness(); h.consent.preview.cost_bound_usd=cost;
+  assert.equal(h.context.p0ConsentMatches(h.consent,h.prepared),false);
+  assert.throws(()=>h.context.p0ConsentPreview(h.consent,h.prepared),/P0_CONSENT_PREVIEW_BINDING/);
+  h.context.p0.consent=h.consent;
+  h.node("consent-transfer").checked=h.node("consent-cost").checked=true;
+  await assert.rejects(h.node("consent-send").click(),/P0_CONSENT_REQUIRED/);
+  assert.equal(h.calls.length,0);
+});
+
 test("destination is displayed exactly from the validated permission projection",async()=>{
   const h=harness();await h.node("generate").click();
   assert.equal(h.context.p0TransferDestination(h.consent,h.consent.preview),h.consent.transfer_destination);

@@ -1,7 +1,7 @@
 {
   "schema": "LU-PRODUCT-GUARD-REGISTRY-1.0",
   "status": "REVIEWED_EXACT_DELTA_PENDING_TARGETED_QUALIFICATION",
-  "timestamp_utc": "2026-10-11T14:14:40.817205+00:00",
+  "timestamp_utc": "2026-10-11T15:11:16.871498+00:00",
   "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
   "baseline_tree": "93bdaa387815f6a6654496120b40e6853629f082",
   "predecessor_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
@@ -627,7 +627,7 @@
     },
     "frontend/app.js": {
       "before": "5576c34c7de646954d3b08167ea55eb85a08d6204f572150824e6fbf05ba1ae2",
-      "after": "91d3840b940f5c8af96f576c4bcceb8990e37a7b4159672a8cc92206b35fcbfc",
+      "after": "92c944966a0e13e631e21188d2fe49a577769c11e4eae9598363a54de044917b",
       "received_guard_protected": true,
       "change": "MODIFICATION"
     },
@@ -801,7 +801,7 @@
     },
     "tools/tests/p0_ui_async_binding.test.cjs": {
       "before": null,
-      "after": "3a15d5e0ed754367ec3d810163ad0bc7bf2d1db81e7f3356d09d6a632ed66d93",
+      "after": "1175ce61663b494660fa4777f42779c4b80d746bb5b8e10996d32f8a7fc0e3a4",
       "received_guard_protected": false,
       "change": "ADDITION"
     },
@@ -1317,6 +1317,31 @@
   "runtime_reads": 0,
   "runtime_writes": 0,
   "historical_results": "UNCHANGED",
-  "exact_delta_review_sha256": "b81a93155ff0ee57bb275918bae2a85c4bdb628ff1e1ef3b703f7510bee47321",
+  "refresh_scope": {
+    "qualified_commit": "30bab7adf21c1e45a08fd7a3b5cabb38b39a6bb5",
+    "qualified_tree": "163272cdf57e00e926d234154dfd57fb142f316e",
+    "qualified_control_sha256": {
+      "tests/support/lu_product_guard_registry.json": "2726f1256e9bb1f3855f27083fcd227b7aed21eab835e6a28a97d74317e87592",
+      "tests/support/r6_scope_manifest.json": "e169b563f07c512c4e425f9fd25f3e596489324b69060048dc54f8962af4cc52",
+      "tests/support/r6_scope_guard.py": "b09d0d3c481820b9eca21c4ef052105a6ec21cc1e19f3827fd45c6e434b075b7"
+    },
+    "source_head": "b6d91b4f6ea8aacd4af0a89d2328837d68aba37b",
+    "source_tree": "377cee8c9723a377e9a549dcecadaf0d5af2903a",
+    "changed_since_qualified": [
+      "frontend/app.js",
+      "tools/tests/p0_ui_async_binding.test.cjs"
+    ],
+    "owner_sha256_since_qualified": {
+      "frontend/app.js": {
+        "before": "91d3840b940f5c8af96f576c4bcceb8990e37a7b4159672a8cc92206b35fcbfc",
+        "after": "92c944966a0e13e631e21188d2fe49a577769c11e4eae9598363a54de044917b"
+      },
+      "tools/tests/p0_ui_async_binding.test.cjs": {
+        "before": "3a15d5e0ed754367ec3d810163ad0bc7bf2d1db81e7f3356d09d6a632ed66d93",
+        "after": "1175ce61663b494660fa4777f42779c4b80d746bb5b8e10996d32f8a7fc0e3a4"
+      }
+    }
+  },
+  "exact_delta_review_sha256": "eb6bebeb3a44af683240bce2a36537345900d0ceca994579b0207deccd560b07",
   "exact_delta_reviewer": "/root/templates_media"
 }

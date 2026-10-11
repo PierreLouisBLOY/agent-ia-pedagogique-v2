@@ -757,7 +757,7 @@
     "docs/development/phase_12_18_h2_r3_review_modify/MANIFEST_SHA256.txt": "b01b86970f653393469661f95c6b7d1f7ec3b2097200da1e216444a9f765fb3a",
     "docs/development/phase_12_18_h2_r3_review_modify/R3_HTTP_LOCAL_V1.json": "a953d64380ad516733e2ac22dc5dd41db85d8db8c673e6bee84809b23501458b",
     "docs/user/LOCAL_PRODUCT_LAUNCH_R6_H3.md": "2e14d281084f60d72fe656d6a74c7ffbe2d659c80c9b76907256059bd3dc418d",
-    "frontend/app.js": "91d3840b940f5c8af96f576c4bcceb8990e37a7b4159672a8cc92206b35fcbfc",
+    "frontend/app.js": "92c944966a0e13e631e21188d2fe49a577769c11e4eae9598363a54de044917b",
     "frontend/index.html": "847969294ec48069ad3d2b6655f05cd7a30132560158caea701adc0b37074641",
     "frontend/styles.css": "bf295938537e18931d883a77621a725712f88a110208a84c7d469056a8e7551c",
     "tests/architecture/test_conversation_product_boundary.py": "57510a497f8fd4b01fdc218a070d9253e50836da1815bd553b6bbcf7737158e4",
@@ -1053,8 +1053,8 @@
     "tools/tests/p0_course_media_editor.test.cjs": "a34730e0ab4e332ecbf1c55a3b1888822dca58d18458e20962c8c4b0d2b6e7b0",
     "tools/tests/p0_product_consent.test.cjs": "b1059abba51f9d6bdd10be4f94d0000b33b846f43a861347cc2b4ef612619c8c",
     "tools/tests/p0_rich_course_preview.test.cjs": "13da2ab8849bf71e68e819db5f656690ff055bcca312abf7d2c00754dd952424",
-    "tools/tests/p0_ui_async_binding.test.cjs": "3a15d5e0ed754367ec3d810163ad0bc7bf2d1db81e7f3356d09d6a632ed66d93",
-    "tests/support/lu_product_guard_registry.json": "2726f1256e9bb1f3855f27083fcd227b7aed21eab835e6a28a97d74317e87592"
+    "tools/tests/p0_ui_async_binding.test.cjs": "1175ce61663b494660fa4777f42779c4b80d746bb5b8e10996d32f8a7fc0e3a4",
+    "tests/support/lu_product_guard_registry.json": "8ff2f71b73ab302b92f3d19ad37ac05d8778c43868f85e9b77851bb6e1303a14"
   },
   "active_delta_paths": [
     ".gitignore",
@@ -3064,7 +3064,7 @@
       "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
       "parent_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
       "registry_path": "tests/support/lu_product_guard_registry.json",
-      "registry_sha256": "2726f1256e9bb1f3855f27083fcd227b7aed21eab835e6a28a97d74317e87592",
+      "registry_sha256": "8ff2f71b73ab302b92f3d19ad37ac05d8778c43868f85e9b77851bb6e1303a14",
       "changed_owners": [
         "backend/adapters/inbound/api/p0_creation.py",
         "backend/adapters/inbound/api/p0_notion_evidence.py",
@@ -3577,7 +3577,7 @@
         },
         "frontend/app.js": {
           "before": "5576c34c7de646954d3b08167ea55eb85a08d6204f572150824e6fbf05ba1ae2",
-          "after": "91d3840b940f5c8af96f576c4bcceb8990e37a7b4159672a8cc92206b35fcbfc",
+          "after": "92c944966a0e13e631e21188d2fe49a577769c11e4eae9598363a54de044917b",
           "received_guard_protected": true,
           "change": "MODIFICATION"
         },
@@ -3751,7 +3751,7 @@
         },
         "tools/tests/p0_ui_async_binding.test.cjs": {
           "before": null,
-          "after": "3a15d5e0ed754367ec3d810163ad0bc7bf2d1db81e7f3356d09d6a632ed66d93",
+          "after": "1175ce61663b494660fa4777f42779c4b80d746bb5b8e10996d32f8a7fc0e3a4",
           "received_guard_protected": false,
           "change": "ADDITION"
         },
@@ -3766,7 +3766,7 @@
       "original_owners_preserved": 452,
       "private_exclusions_preserved": 27,
       "guard_functions": "UNCHANGED",
-      "exact_delta_review_sha256": "b81a93155ff0ee57bb275918bae2a85c4bdb628ff1e1ef3b703f7510bee47321",
+      "exact_delta_review_sha256": "eb6bebeb3a44af683240bce2a36537345900d0ceca994579b0207deccd560b07",
       "structural_review_sha256": "1f63930c472e21b6e4a1db4127ebc1de87aba1e469dc33dc9201f6e51c86ae82",
       "live_gates": "CLOSED",
       "provider_calls": 0,

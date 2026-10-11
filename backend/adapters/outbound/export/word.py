@@ -37,6 +37,8 @@ def _paragraph(body: Element, style: str, text: str) -> None:
 
 class OOXMLWordWriter:
     def write(self, document: WordDocument) -> bytes:
+        if document.production_media:
+            raise ValueError("PRODUCTION_MEDIA_PRODUCT_WRITER_REQUIRED")
         root = Element(_w("document"))
         body = SubElement(root, _w("body"))
         _paragraph(body, "Title", document.title)

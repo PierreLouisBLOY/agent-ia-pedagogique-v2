@@ -72,13 +72,18 @@ def readable_document(document: WordDocument) -> tuple[WordDocument, tuple[Lot1W
 
 class R6ReadableWordWriter(Lot1OOXMLWordWriter):
     def __init__(self, *, profile: str = "classroom-v2") -> None:
-        if profile not in {"classroom-v2", "readable-v1", "diffusion-v5", "diffusion-v6"}:
+        if profile not in {"classroom-v2", "readable-v1", "diffusion-v5", "diffusion-v6", "product-v7"}:
             raise ValueError("R6_WORD_PROFILE_REJECTED")
         self.classroom = profile != "readable-v1"
         self.diffusion = profile == "diffusion-v5"
         self.diffusion_v6 = profile == "diffusion-v6"
+        self.product_v7 = profile == "product-v7"
 
     def write(self, document: WordDocument) -> bytes:
+        if self.product_v7:
+            from backend.adapters.outbound.export.product_word import ProductWordWriter
+
+            return ProductWordWriter().write(document)
         if document.course_chapter is not None:
             from backend.adapters.outbound.export.course_word import CourseOOXMLWordWriter
 

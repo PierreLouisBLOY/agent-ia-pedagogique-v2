@@ -14,7 +14,7 @@ const code = [
   between('function p0Context()', 'function p0Field('),
   between('function p0Field(', 'p0Element("teacher").addEventListener'),
   between('p0Element("revise").addEventListener', 'async function p0SaveVersion()'),
-  between('function proposePreparation(text)', 'function uxContext('),
+  between('async function proposePreparation(text)', 'function uxContext('),
   between('function uxQuality(', 'function uxPreparation('),
   between('function uxProductionCard(', 'async function uxTeacherCard('),
   between('function uxSavedCard(', 'document.querySelectorAll("[data-view]")'),
@@ -37,12 +37,17 @@ function harness() {
   const ctx = {p0: {busy:false, uncertain:false, references:[], institutionalCatalog:{frames:[], bts_frameworks:[], notions:[]}},
     document:{getElementById:node, createElement:() => new Node()}, p0Element:pe,
     Event:class {constructor(type) {this.type=type;} preventDefault() {}}, uxRequests:[],
-    uxMessage:(role,text) => messages.push({role,text}), uxShow:() => {}, uxContext:c => contexts.push(c),
+    uxMessage:(role,text) => messages.push({role,text}), uxShow:() => {}, uxDraftConfirm:()=>true, uxContext:c => contexts.push(c),
     uxPreparation:p => {contexts.push(p.context); ctx.uxQuality(p.agentic?.quality, null);},
     appendSearchText:(parent,tag,text) => {const n = new Node(); n.textContent=text; parent.append(n);},
     uxNames:{EXERCISE:'Exercice', BTS_CG_YEAR_2:'BTS CG deuxième année', FIRST_STMG:'Première STMG'},
     classroomPreview:(parent,blocks) => {for(const b of blocks) {const n=new Node(); n.textContent=b.text; parent.append(n);}},
-    p0Command:() => 'a'.repeat(32), p0Fetch:async (...args) => {calls.push(args); return ctx.transport ? ctx.transport(...args) : ctx.nextResponse;}, console};
+    p0Command:() => 'a'.repeat(32), p0Fetch:async (...args) => {calls.push(args);
+      if(args[0]==='/api/v2/p0/intention')return {contract_id:"P0-INTENTION-PROPOSAL-1.0",
+        command_id:args[1].command_id,confirmation_required:true,provider_attempts:0,
+        implementation:"DETERMINISTIC_APPLICATION_PROPOSAL",authority:"NONE",state:"CONTEXT_PROPOSED",
+        proposal:ctx.proposal||{},missing_fields:[],ambiguities:[]};
+      return ctx.transport ? ctx.transport(...args) : ctx.nextResponse;}, console};
   ctx.p0.institutionalCatalog.bts_frameworks = [{program_ref:'bts:test', program_version:'version:test', label:'BTS CG synthétique', version_label:'TEST',
     elements:[{id:'process:test', element_type:'PROCESS', parent_ref:null},
       {id:'activity:test', element_type:'ACTIVITY', parent_ref:'process:test', official_code:'TEST', official_label:'Activité synthétique'},
@@ -57,9 +62,12 @@ function select(h) {
 }
 for(const year of ['1','2']) for(const preset of [false,true]) test(`BTS CG${year} submit, preset=${preset}, clarification before confirmation`, async () => {
   const h=harness(); h.pe('level').value='BTS_CG_YEAR_2'; h.ctx.p0InstitutionalOptions(); if(preset) select(h);
+  h.ctx.proposal={family:'EXERCISE',level:'BTS_CG_YEAR_'+year,difficulty:'STANDARD',
+    topics:['Effectifs'],objectives:['Justifier la méthode'],duration_minutes:null,total_points:null};
   h.node('preparation-prompt').value=`Un exercice BTS CG ${year} sur les effectifs.`;
   assert.doesNotThrow(() => h.node('preparation-composer').dispatchEvent(new h.ctx.Event('submit')));
-  assert.equal(h.pe('frame').value,''); assert.equal(h.calls.length,0); assert.equal(h.node('preparation-parameters').open,true);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.pe('frame').value,''); assert.equal(h.calls.length,1); assert.equal(h.calls[0][0],'/api/v2/p0/intention'); assert.equal(h.node('preparation-parameters').open,true);
   assert(h.messages.some(m => m.role === 'assistant' && /référentiel/.test(m.text) && /activité/.test(m.text)));
   assert.equal(h.node('preparation-prompt').value,'');
   assert.throws(() => h.ctx.p0Context(), /CONTEXT_REQUIRED/);
@@ -68,20 +76,23 @@ for(const year of ['1','2']) for(const preset of [false,true]) test(`BTS CG${yea
   h.ctx.transport=async (route,body) => ({context:body.context, references:[], preparation_ref:'prepared:test', preparation_sha256:'a'.repeat(64)});
   h.pe('form').dispatchEvent(new h.ctx.Event('submit'));
   await new Promise(resolve => setImmediate(resolve));
-  assert.equal(h.calls.length,1); assert.equal(h.calls[0][0],'/api/v2/p0/prepare');
-  const selection=h.calls[0][1].context.institutional;
+  assert.equal(h.calls.length,2); assert.equal(h.calls[1][0],'/api/v2/p0/prepare');
+  const selection=h.calls[1][1].context.institutional;
   assert.equal(selection.program_ref,'bts:test'); assert.equal(selection.process_ref,'process:test'); assert.equal(selection.activity_ref,'activity:test');
   assert.deepEqual(Array.from(selection.competency_refs),['competency:test']);
   assert.equal(selection.local_year,'BTS_CG_YEAR_'+year); assert.equal(h.ctx.p0.uncertain,false);
 });
-for(const prompt of ['Un cours première STMG sur les organisations.', 'Prépare un document sur les organisations.']) test('composer witness: '+prompt, () => {
-  const h=harness(); h.node('preparation-prompt').value=prompt;
+for(const prompt of ['Un cours première STMG sur les organisations.', 'Prépare un document sur les organisations.']) test('composer witness: '+prompt, async () => {
+  const h=harness(); h.ctx.proposal={family:prompt.startsWith('Un cours')?'COURSE':null,
+    level:prompt.startsWith('Un cours')?'FIRST_STMG':null,difficulty:null,topics:['Organisations'],
+    objectives:[],duration_minutes:null,total_points:null}; h.node('preparation-prompt').value=prompt;
   assert.doesNotThrow(() => h.node('preparation-composer').dispatchEvent(new h.ctx.Event('submit')));
-  assert.equal(h.calls.length,0); assert.equal(h.node('preparation-parameters').open,true);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.calls.length,1); assert.equal(h.calls[0][0],'/api/v2/p0/intention'); assert.equal(h.node('preparation-parameters').open,true);
   assert(h.messages.some(m => m.role === 'assistant')); assert.equal(h.node('preparation-prompt').value,'');
 });
 function view(digit='2') {return {production_ref:'prod:'+'1'.repeat(32), version_ref:'ver:'+digit.repeat(32), bundle_sha256:digit.repeat(64), title:'Test synthétique',
-  pedagogical_context:{resource_type:'EXERCISE',level:'BTS_CG_YEAR_2'}, references:[], sections:[{section_id:'S01',heading:'Situation',text:'Une association.'}],
+  pedagogical_context:{resource_type:'EXERCISE',level:'BTS_CG_YEAR_2',objectives:['Présenter les acteurs']}, references:[], sections:[{section_id:'S01',heading:'Situation',text:'Une association.'}],
   questions:[{question_id:'Q01',prompt:'Présentez les acteurs.',options:[]}]};}
 const parentQuality={sources:'SOURCES_OK',calculations:'NON_APPLICABLE',instruction:'CONSIGNE_COUVERTE',review:'REVUE_OK',human_review:'HUMAN_REVIEW_REQUIRED'};
 const childQuality={...parentQuality,calculations:'ECHEC',instruction:'PARTIELLE',review:'RESERVE'};

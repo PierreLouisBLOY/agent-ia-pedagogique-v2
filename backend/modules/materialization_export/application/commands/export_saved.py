@@ -1,24 +1,46 @@
 """CAP-A03 from complete structured fields, never from locator slices."""
+import re
 from collections.abc import Callable
+from dataclasses import replace
 from typing import cast
 
 from backend.modules.materialization_export.contracts.dto.word_document import (
     WordBlock,
     WordDocument,
+    WordMedia,
 )
 from backend.modules.materialization_export.ports.outbound.word_writer import WordWriter
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import items, object_data
+from backend.modules.pedagogical_design.contracts.dto.production_media import ProductionMediaPlan
 from backend.modules.work_orchestration.contracts.dto.saved_production import SavedProduction
+
+_FICTIVE_TITLE = re.compile(r"^(Évaluation|Exercice|Cours|QCM|Quiz|Questions ouvertes)\s+ficti(?:f|ve|fs|ves)(?=\s*[—−-])", re.I)
 
 
 class ExportSavedCommand:
-    def __init__(self, writer: WordWriter, *, presentation: Callable[[WordDocument], WordDocument] | None = None) -> None:
+    def __init__(self, writer: WordWriter, *, presentation: Callable[[WordDocument], WordDocument] | None = None,
+                 product_projection: bool = False) -> None:
         self.writer = writer
         self.presentation = presentation
+        self.product_projection = product_projection
 
     def preview(self, record: SavedProduction, kind: str, *, promoted: bool = False) -> WordDocument:
         document = self._preview(record, kind, promoted=promoted)
-        if document.course_chapter is not None:
+        if self.product_projection and record.p0_bundle is not None and document.course_chapter is None:
+            bundle = record.p0_bundle
+            suffix = {"student": "", "correction": " Corrigé", "marking": " Barème"}[kind]
+            blocks: list[WordBlock] = []
+            open_prompts = {str(q["prompt"]) for q in items(bundle.data["questions"], 60) if not q["options"]}
+            for block in document.blocks:
+                blocks.append(block)
+                if kind == "student" and block.style == "Normal" and block.text in open_prompts:
+                    blocks.append(WordBlock("Normal", "Réponse\n" + "\n".join("................................................................................................" for _ in range(4))))
+            if kind == "student" and bundle.context.resource_type == "ASSESSMENT":
+                blocks.insert(0, WordBlock("Normal", str(bundle.context.data["duration_minutes"]) + " minutes · "
+                    + str(bundle.context.data["total_points"]) + " points"))
+            document = replace(document, title=_FICTIVE_TITLE.sub(r"\1", str(bundle.data["title"])) + suffix,
+                               blocks=tuple(blocks))
+        if self.product_projection or document.course_chapter is not None or document.production_media:
             return document
         if (self.presentation and kind != "student" and record.p0_bundle is not None
                 and "fictif" in str(record.p0_bundle.data["title"]).casefold()):
@@ -162,7 +184,39 @@ class ExportSavedCommand:
                 for criterion in cast(tuple[str, ...], entry["criteria"]):
                     blocks.append(WordBlock("Normal", criterion))
         title = str(bundle.data["title"]) if header is not None and kind == "student" else titles[kind]
-        return WordDocument(kind, title, tuple(blocks))
+        media: tuple[WordMedia, ...] = ()
+        if "media_plan" in bundle.data:
+            plan = ProductionMediaPlan(object_data(bundle.data["media_plan"]))
+            plan.bind(bundle.data)
+            attached = plan.media(kind)
+            headings = {str(section["section_id"]): str(section["heading"])
+                        for section in items(bundle.data["sections"], 16)}
+            if kind != "student":
+                section_refs = {str(pair.brief.data["section_ref"]) for pair in attached}
+                contextual = tuple(block for section in items(bundle.data["sections"], 16)
+                    if str(section["section_id"]) in section_refs for block in (
+                        WordBlock("Heading1", str(section["heading"])), WordBlock("Normal", str(section["text"]))))
+                position = next((i for i, block in enumerate(blocks) if block.style in {"Heading1", "Heading2"}), len(blocks))
+                blocks[position:position] = contextual
+            points = {str(m["question_id"]): str(m["points"]) for m in items(bundle.data["marking"], 60)}
+            headings.update({str(q["question_id"]): str(q["question_id"]) + (
+                " — " + points[str(q["question_id"])] + " points" if kind == "marking" and str(q["question_id"]) in points else "")
+                for q in items(bundle.data["questions"], 60)})
+            if kind == "marking":
+                question_refs = {str(pair.brief.data["section_ref"]) for pair in attached}
+                for question in items(bundle.data["questions"], 60):
+                    question_id = str(question["question_id"])
+                    if question_id in question_refs and question_id not in points:
+                        blocks.extend((WordBlock("Heading1", question_id), WordBlock("Normal", str(question["prompt"]))))
+            selected = []
+            for pair in attached:
+                anchor = str(pair.brief.data["section_ref"])
+                heading = headings.get(anchor)
+                if heading is None or not any(b.style in {"Heading1", "Heading2"} and b.text == heading for b in blocks):
+                    raise ValueError("PRODUCTION_MEDIA_EXPORT_ANCHOR_UNAVAILABLE:" + anchor)
+                selected.append(WordMedia(heading, pair))
+            media = tuple(selected)
+        return WordDocument(kind, title, tuple(blocks), production_media=media)
 
     def execute(self, record: SavedProduction, kind: str, *, promoted: bool = False) -> bytes:
         return self.writer.write(self.preview(record, kind, promoted=promoted))

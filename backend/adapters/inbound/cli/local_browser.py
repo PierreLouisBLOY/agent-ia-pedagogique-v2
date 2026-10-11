@@ -32,7 +32,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--runtime-sha256")
     parser.add_argument("--saved-root", type=Path, help="Stockage R4 explicitement désigné hors dépôt")
     parser.add_argument("--create-saved", action="store_true", help="Créer une racine R4 neuve uniquement")
+    parser.add_argument("--observability-root", type=Path, help="Dossier local de traces explicitement désigné")
     parser.add_argument("--saved-only", action="store_true", help="Ouvrir R4 sans bibliothèque ni fournisseur")
+    parser.add_argument("--word-profile", choices=("diffusion-v5", "diffusion-v6", "product-v7"),
+                        default="diffusion-v5", help="Profil explicite des exports, sans retouche des archives")
     parser.add_argument("--enable-conversation", action="store_true",
                         help="R2 volatile, sans autorisation fournisseur implicite")
     parser.add_argument("--enable-review-modify", action="store_true",
@@ -41,7 +44,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                         help="Fichier explicite réservé au handoff live ; refusé tant que ses préconditions ne sont pas établies")
     parser.add_argument("--r5-scope", type=Path, help="Sélection R5 exacte, opt-in distinct de R2")
     parser.add_argument("--r5-authorization", type=Path, help="Accord R5 distinct ; aucun accord live implicite")
+    parser.add_argument("--p0-normal-profile", type=Path,
+        help="Profil P1 fermé explicitement adopté ; consentement local exact et budget requis")
     args = parser.parse_args(argv)
+    if args.p0_normal_profile is not None and (args.saved_root is None or args.word_profile != "product-v7"
+            or args.create_saved or any((args.saved_only, args.enable_conversation, args.enable_review_modify,
+                args.live_authorization, args.r5_scope, args.r5_authorization))):
+        print("P0_NORMAL_EXPLICIT_PROFILE_AND_LIBRARY_REQUIRED")
+        return 1
     if (bool(args.r5_scope) != bool(args.r5_authorization) or
             (args.r5_scope and (args.live_authorization or args.saved_only or args.enable_review_modify
                                or not args.enable_conversation))):
@@ -54,7 +64,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 1
         try:
             saved = build_local_saved(LocalBrowserHttpConfiguration(port=args.port, bind_host=args.bind_host),
-                                      args.saved_root, create=args.create_saved)
+                                      args.saved_root, create=args.create_saved, word_profile=args.word_profile)
         except Exception:
             print("R4_STARTUP_REJECTED")
             return 1
@@ -75,6 +85,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     jobs = None
     secret_value = ""
+    normal = None
     if args.r5_scope is not None:
         try:
             from backend.infrastructure.composition.factories.r5_generation import (
@@ -118,6 +129,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         except Exception:
             print("R2_LIVE_PREFLIGHT_NOT_READY")
             return 1
+    if args.p0_normal_profile is not None:
+        try:
+            from backend.infrastructure.composition.factories.p0_normal_profile import (
+                P0NormalProductComposition,
+            )
+            normal = P0NormalProductComposition(path=args.p0_normal_profile,
+                target=Read15RuntimeTarget(args.runtime, args.data_root, args.runtime_sha256), saved_root=args.saved_root)
+        except Exception:
+            print("P0_NORMAL_PROFILE_NOT_ADOPTED_OR_INVALID")
+            return 1
     try:
         composition = build_local_read15(
             LocalBrowserHttpConfiguration(port=args.port, bind_host=args.bind_host),
@@ -126,8 +147,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             generation_jobs=jobs,
             enable_review_modify=args.enable_review_modify,
             saved_root=args.saved_root, create_saved=args.create_saved,
+            word_profile=args.word_profile,
+            observability_root=args.observability_root,
+            p0_generation=normal.generation if normal is not None else None,
+            p0_product_binder=normal.bind if normal is not None else None,
         )
     except Exception:
+        if normal is not None:
+            normal.close()
         print("LOCAL_READ15_STARTUP_REJECTED")
         return 1
     try:
@@ -139,8 +166,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("LOCAL_READ15_EXECUTION_FAILED")
         return 1
     finally:
-        composition.close()
-        secret_value = ""
+        try:
+            composition.close()
+        finally:
+            if normal is not None:
+                normal.close()
+            secret_value = ""
     return 0
 
 

@@ -4,6 +4,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$applicationRoot = Split-Path -Parent $PSScriptRoot
 
 function Stop-Launch([int]$Code, [string]$Message) {
     [Console]::Error.WriteLine($Message)
@@ -63,9 +64,32 @@ if ($config.PSObject.Properties.Name -contains 'saved_root' -and $config.saved_r
     }
 }
 
+if ($config.PSObject.Properties.Name -contains 'observability_root' -and $config.observability_root) {
+    $arguments += @('--observability-root', [Environment]::ExpandEnvironmentVariables([string]$config.observability_root))
+}
+if ($config.PSObject.Properties.Name -contains 'word_profile') {
+    if ($config.word_profile -notin @('diffusion-v5', 'diffusion-v6', 'product-v7')) {
+        Stop-Launch 2 'CONFIG_INVALID: word_profile is not a supported export profile.'
+    }
+    $arguments += @('--word-profile', [string]$config.word_profile)
+}
+
+if ($config.PSObject.Properties.Name -contains 'p0_normal_profile') {
+    if ($config.p0_normal_profile -isnot [string] -or -not $config.p0_normal_profile) {
+        Stop-Launch 2 'CONFIG_INVALID: p0_normal_profile must identify an explicitly adopted closed P1 profile.'
+    }
+    $arguments += @('--p0-normal-profile', [Environment]::ExpandEnvironmentVariables($config.p0_normal_profile))
+}
+
 $url = "http://$hostAddress`:$($config.port)/"
-[Console]::WriteLine("Starting the local read-only product at $url")
+[Console]::WriteLine("Starting V2 at $url")
+if ($config.PSObject.Properties.Name -contains 'p0_normal_profile') {
+    [Console]::WriteLine('Normal P0: adopted profile, exact local consent and verified budget required. No automatic provider call at startup.')
+} else {
+    [Console]::WriteLine('Local P0 mode: no provider composition enabled.')
+}
 [Console]::WriteLine('The server runs in this terminal. Press Ctrl+C to stop; run this script again to restart.')
+Set-Location -LiteralPath $applicationRoot
 if ($pythonPath) {
     & $pythonPath @arguments
 } else {

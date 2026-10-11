@@ -8,21 +8,36 @@
   <script src="/assets/app.js" defer></script>
 </head>
 <body>
+  <a class="skip" href="#main-content">Aller au contenu</a>
   <aside class="sidebar" aria-label="Navigation principale">
-    <a class="brand" href="/">▤ <span>Projet V2</span></a>
-    <button id="new-preparation" type="button">＋ Nouvelle préparation</button>
-    <nav><button type="button" data-view="conversations">Conversations</button><button type="button" data-view="productions">Productions</button><button type="button" data-view="library">Bibliothèque</button><button type="button" data-view="settings">Réglages</button></nav>
-    <p class="nav-caption">Dans cette session</p><ol id="recent-preparations"><li>Aucune préparation envoyée.</li></ol>
-    <p class="sidebar-note">Vos versions sauvegardées restent accessibles dans Productions.</p>
+    <a class="logo" href="#home" data-view="home"><span class="mark">V2</span><span><strong>Projet V2</strong><small>Assistant pédagogique</small></span></a>
+    <nav class="nav"><button class="new" id="new-preparation" type="button">＋ Nouvelle création</button>
+      <button type="button" data-view="home">Accueil</button>
+      <button type="button" data-view="productions">Mes productions</button>
+      <button type="button" data-view="library">Bibliothèque et références</button>
+      <button type="button" data-view="conversations">Conversations</button>
+      <button type="button" data-view="settings">Paramètres</button>
+    </nav><p class="nav-caption">Dans cette session</p><ol id="recent-preparations"><li>Aucune préparation envoyée.</li></ol>
+    <div class="side-bottom"><p class="sidebar-note">Sauvegardez les versions à conserver dans votre bibliothèque locale.</p><div class="profile"><span class="avatar">EN</span><span>Espace enseignant<small>Usage individuel</small></span></div></div>
   </aside>
   <div class="app-shell">
   <header class="masthead">
-<div><span class="eyebrow">Atelier pédagogique</span><h1 id="workspace-title">Nouvelle préparation</h1></div>
+<div><span class="eyebrow">Atelier pédagogique</span><h1 id="workspace-title">Accueil</h1></div>
 <div class="header-actions"><span class="local-indicator">Local</span><button id="sources-toggle" type="button" aria-expanded="true" aria-controls="sources-drawer">Sources &amp; contexte</button></div>
   </header>
-  <main>
+  <main id="main-content" tabindex="-1">
 
-    <section id="prepare-view" class="workspace conversation-main" aria-labelledby="p0-heading" data-panel="prepare">
+
+    <section id="product-home" class="content" data-panel="home" aria-labelledby="home-heading">
+      <div class="intro"><div><div class="eyebrow">Votre atelier pédagogique</div><h1 id="home-heading">Que souhaitez-vous préparer ?</h1><p>Un espace pour concevoir et faire évoluer vos ressources.</p></div><span class="badge">STMG &amp; BTS CG</span></div>
+      <form id="home-composer" class="home-composer"><label for="home-prompt">Votre idée ou votre consigne</label><textarea id="home-prompt" required maxlength="1500" rows="3" placeholder="Décrivez la ressource, le niveau et votre objectif…"></textarea><button class="btn primary" type="submit">Préparer ma demande →</button></form>
+      <div class="section-heading"><h2>Commencer une création</h2><span>À partir d’une idée ou d’une consigne</span></div>
+      <div class="quick-grid"><button type="button" class="quick" data-start-family="COURSE"><span class="iconbox">＋</span>Cours</button><button type="button" class="quick" data-start-family="EXERCISE"><span class="iconbox">＋</span>Exercice</button><button type="button" class="quick" data-start-family="ASSESSMENT"><span class="iconbox">＋</span>Évaluation</button><button type="button" class="quick" data-start-family="QCM"><span class="iconbox">＋</span>QCM</button><button type="button" class="quick" data-start-family="QUIZ"><span class="iconbox">＋</span>Quiz</button><button type="button" class="quick" data-start-family="OPEN_QUESTIONS"><span class="iconbox">＋</span>Questions ouvertes</button></div>
+      <section class="resume" id="home-resume" hidden><div><div class="eyebrow">Reprendre votre travail</div><h2 id="home-resume-title"></h2><p id="home-resume-context" class="meta"></p></div><button type="button" id="home-resume-open" class="btn primary">Reprendre la production</button></section>
+      <div class="section-heading"><h2>Vos versions conservées</h2><button type="button" data-view="productions" class="btn small">Toutes les productions</button></div><div id="home-productions" class="resource-grid"><p>Aucune version chargée.</p></div>
+      <section class="search-callout"><div><h3>Partir d’une référence pédagogique</h3><p>Explorez les notions et les extraits de votre bibliothèque configurée.</p></div><button type="button" data-view="library" class="btn">Rechercher dans la bibliothèque</button></section>
+    </section>
+    <section id="prepare-view" class="workspace conversation-main" aria-labelledby="p0-heading" data-panel="prepare" hidden>
       <div class="welcome"><p class="eyebrow">Une idée, une préparation</p><h2 id="p0-heading">Que préparez-vous aujourd’hui ?</h2><p>Un cours, un exercice, des questions ou une évaluation : décrivez votre besoin, puis confirmez le contexte et vos sources.</p></div>
       <ol id="preparation-messages" aria-label="Votre conversation" aria-live="polite"></ol>
       <details id="preparation-parameters" class="secondary"><summary>Contexte à confirmer · paramètres de préparation</summary>
@@ -51,6 +66,12 @@
         <div id="p0-assessment" class="context-grid" hidden><label for="p0-duration">Durée en minutes</label><input id="p0-duration" type="number" min="1" max="480"><label for="p0-points">Note sur</label><input id="p0-points" type="number" min="1" max="200"></div>
         <label for="p0-reference">Référence locale exacte</label><select id="p0-reference"><option value="">Choisir une référence</option></select>
         <p>Références locales à relire. Leur présence ne garantit pas une autorité officielle. Vous pouvez aussi sélectionner un passage dans Bibliothèque.</p>
+        <section aria-label="Sources de la notion sélectionnée" class="secondary">
+          <label for="p0-source-notion">Notion pour la source de contenu</label>
+          <select id="p0-source-notion"><option value="">Sélectionnez d’abord une notion du contexte</option></select>
+          <button id="p0-source-load" type="button">Voir les sources exactes de cette notion</button>
+          <div id="p0-source-choices"></div>
+        </section>
         <details class="secondary"><summary>Choisir un autre passage de la bibliothèque</summary>
         <label for="p0-search-query">Recherche du passage sélectionné — facultatif</label><input id="p0-search-query" maxlength="500">
         <label for="p0-notion-id">Notion canonique exacte — facultatif, à la place de la recherche</label><input id="p0-notion-id" maxlength="256">
@@ -62,6 +83,16 @@
       <details class="secondary"><summary>Connexion et limites</summary><p>Sans autorisation fournisseur distincte, la génération est indisponible. Une vérification de structure ne constitue pas une validation pédagogique.</p><button id="p0-connect" type="button">Vérifier la connexion au service</button></details>
       <div id="p0-preparation"></div>
       <button id="p0-generate" type="button" disabled>Demander la génération autorisée</button>
+      <section id="p0-consent" class="secondary" aria-labelledby="p0-consent-heading" hidden>
+        <h3 id="p0-consent-heading">Vérifier avant l’envoi</h3>
+        <div id="p0-consent-summary"></div>
+        <details><summary>Contenu exact transmis</summary><pre id="p0-consent-body"></pre></details>
+        <details><summary>Identités et contrôles de cette demande</summary><pre id="p0-consent-identities"></pre></details>
+        <label><input id="p0-consent-transfer" type="checkbox"> J’autorise l’envoi à OpenAI de ce contenu exact.</label>
+        <label><input id="p0-consent-cost" type="checkbox"> J’accepte le coût maximal affiché pour cette création.</label>
+        <button id="p0-consent-send" type="button" disabled>Envoyer cette requête et créer la ressource</button>
+        <button id="p0-consent-cancel" type="button">Annuler cet envoi</button>
+      </section>
       <article id="production-card" class="production-card" hidden>
       <p class="eyebrow">Votre production · à relire</p><h2 id="production-card-title"></h2><p id="production-card-context"></p>
       <div class="card-actions"><button id="card-open" type="button">Ouvrir</button><button id="card-modify" type="button">Modifier</button><button id="card-check" type="button">Vérifier</button><button id="card-correction" type="button">Correction</button><button id="card-marking" type="button">Barème</button><button id="card-export" type="button">Exporter</button></div>
@@ -70,12 +101,28 @@
       <details id="production-edit-panel" class="secondary"><summary>Modifier le contenu de cette version</summary><div id="p0-review"></div></details>
       <button id="p0-teacher" type="button" disabled>Consulter séparément le corrigé et le barème</button>
       <div id="p0-teacher-content"></div>
+      <details id="p0-media-panel" class="secondary"><summary>Visuel pédagogique de cette version</summary>
+        <p id="p0-media-note">Choisissez un schéma local lié au contenu ou justifiez l’absence de visuel. Une nouvelle version conserve ce choix.</p>
+        <form id="p0-media-form">
+          <label for="p0-media-mode">Choix du visuel</label><select id="p0-media-mode"><option value="NO_MEDIA">Sans visuel — justification</option><option value="LOCAL_DIAGRAM">Schéma local en quatre étapes</option></select>
+          <label for="p0-media-reason">Justification ou fonction pédagogique</label><textarea id="p0-media-reason" maxlength="1000" rows="2" required></textarea>
+          <div id="p0-diagram-fields" hidden>
+            <label for="p0-media-anchor">Section illustrée</label><select id="p0-media-anchor"></select>
+            <label for="p0-media-capacity">Capacité ou compétence rattachée</label><select id="p0-media-capacity"></select>
+            <label for="p0-media-objective">Objectif d’apprentissage</label><select id="p0-media-objective"></select>
+            <label for="p0-media-nodes">Quatre étapes — une par ligne</label><textarea id="p0-media-nodes" rows="4" maxlength="284"></textarea>
+            <label for="p0-media-caption">Légende et description accessible</label><textarea id="p0-media-caption" rows="2" maxlength="220"></textarea>
+            <label><input id="p0-media-required" type="checkbox"> Visuel indispensable à l’exercice</label>
+          </div>
+          <button id="p0-media-apply" type="submit" disabled>Conserver ce choix dans une nouvelle version</button>
+        </form>
+      </details>
       <div class="conversation-actions">
       <button id="p0-revise" type="button" disabled>Conserver mes modifications dans une nouvelle version</button>
       <button id="p0-validate" type="button" disabled>Vérifier la structure et la traçabilité</button>
       <button id="p0-save" type="button" disabled>Sauvegarder et rouvrir cette version</button>
       </div>
-      <p>Après sauvegarde, retrouvez les trois exports dans Productions. La vérification de structure ne vaut pas validation pédagogique.</p></article>
+      <p>Après sauvegarde, retrouvez les exports applicables dans Productions. La vérification de structure ne vaut pas validation pédagogique.</p></article>
       <form id="preparation-composer" class="composer">
         <label for="preparation-prompt">Votre demande</label><textarea id="preparation-prompt" required rows="2" maxlength="1500" placeholder="Prépare un exercice BTS CG deuxième année sur le seuil de rentabilité…"></textarea>
         <div class="composer-bottom"><div class="context-chips"><button type="button" data-family="COURSE">Cours</button><button type="button" data-family="EXERCISE">Exercice</button><button type="button" data-family="OPEN_QUESTIONS">Questions ouvertes</button><button type="button" data-family="QCM">QCM</button><button type="button" data-family="QUIZ">Quiz</button><button type="button" data-family="ASSESSMENT">Évaluation</button></div><button id="preparation-send" type="submit" aria-label="Envoyer votre demande">Envoyer ↑</button></div>
@@ -89,6 +136,7 @@
       <button id="r4-refresh" type="button">Retrouver les versions sauvegardées</button>
       <label for="r4-version">Version sauvegardée</label>
       <select id="r4-version"></select>
+      <button id="r4-resume" type="button" disabled>Reprendre dans l’atelier</button>
       <button id="r4-open" type="button">Rouvrir</button>
       <p id="r4-status" role="status" aria-live="polite">Chargement des documents…</p>
       <details class="secondary"><summary>Provenance, version et réserves</summary><div id="r4-details"></div></details>

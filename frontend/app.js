@@ -93,8 +93,9 @@ searchForm.addEventListener("submit", async (event) => {
       selectButton.type = "button";
       selectButton.textContent = "Utiliser ce passage pour ma production";
       selectButton.addEventListener("click", () => {
-        p0Element("search-query").value = searchInput.value;
-        p0Element("notion-id").value = "";
+        const notions = [...p0Element("program-notions").selectedOptions].map(option => option.value);
+        p0Element("search-query").value = notions.length === 1 ? "" : searchInput.value;
+        p0Element("notion-id").value = notions.length === 1 ? notions[0] : "";
         p0Element("search-passage").value = item.passage_ref;
         p0Element("search-query").closest("details").open = true;
         p0Invalidate();
@@ -270,9 +271,10 @@ function updateConversation(view) {
     "Précisez puis confirmez le contexte.";
 }
 
-async function localBoundedRequest(path, options, consume) {
+async function localBoundedRequest(path, options, consume, timeoutMs = 10000) {
+  if (![10000, 60000, 150000].includes(timeoutMs)) throw new Error("LOCAL_REQUEST_TIMEOUT_POLICY");
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await consume(await fetch(path, {...options, signal: controller.signal}));
   } finally { clearTimeout(timeout); }
@@ -549,6 +551,7 @@ let r4Nonce = "";
 let r4Record = null;
 let r4Busy = false;
 let r4Uncertain = false;
+let r4SavedVersions = [];
 const r4Status = document.getElementById("r4-status");
 const r4Versions = document.getElementById("r4-version");
 function r4Base() {
@@ -556,7 +559,20 @@ function r4Base() {
   if (!view) throw new Error("R4_NOT_OPEN");
   return "/api/v2/productions/" + view.production_ref + "/versions/" + view.version_ref;
 }
+function r4AvailableKinds(record) {
+  const bundle = record?.bundle, context = bundle?.context;
+  if (!context) return ["student", "correction", "marking"];
+  if (context.resource_type === "ASSESSMENT") return ["student", "correction", "marking"];
+  if (context.resource_type === "COURSE") return bundle.course_chapter ? ["student", "correction"] : ["student"];
+  return ["student", "correction"];
+}
 function r4Controls() {
+  const kinds = r4AvailableKinds(r4Record?.record);
+  const selector = document.getElementById("r4-kind");
+  for (const option of selector.options) option.disabled = !kinds.includes(option.value);
+  if (!kinds.includes(selector.value)) selector.value = "student";
+  document.getElementById("r4-resume").disabled = r4Busy || !r4Record ||
+    r4Record.record.origin !== "LOCAL_APPLICATION" || !r4Record.record.view.bundle_sha256;
   for (const id of ["r4-preview", "r4-download", "r4-validate", "r4-promote"])
     document.getElementById(id).disabled = r4Busy || !r4Record ||
       (["r4-validate", "r4-promote"].includes(id) &&
@@ -578,10 +594,18 @@ async function r4Fetch(path, body = null, binary = false) {
     return response.blob();
   }
   const envelope = await response.json();
+  if (!response.ok && response.status === 409 && envelope?.meta?.contract_id === "P0-MEDIA-EXPORT-REFUSAL-1.0") {
+    const messages = {
+      PRODUCTION_MEDIA_REQUIRED_MISSING: "Un visuel obligatoire manque. Complétez le plan média avant l’export.",
+      PRODUCTION_MEDIA_EXPORT_ANCHOR_UNAVAILABLE: "Le document ne contient plus le point d’insertion du visuel. Corrigez son rattachement avant l’export.",
+      PRODUCTION_WORD_ANCHOR_AMBIGUOUS: "Plusieurs titres correspondent au visuel. Clarifiez son point d’insertion avant l’export."
+    };
+    if (messages[envelope?.error?.code]) throw new Error(messages[envelope.error.code]);
+  }
   if (!response.ok || envelope?.meta?.contract_id !== "SAVE-REOPEN-WORD-HTTP-LOCAL-1.0")
     throw new Error(envelope?.error?.code || "R4_REFUSED");
   return envelope.data;
-  });
+  }, 60000);
 }
 async function r4Refresh() {
   const data = await r4Fetch("/api/v2/conversation/saved");
@@ -591,18 +615,29 @@ async function r4Refresh() {
   for (const version of data.versions) {
     const option = document.createElement("option");
     option.value = version.production_ref + "/" + version.version_ref;
-    option.textContent = "Version " + (r4Versions.options.length + 1) + (version.origin === "IMPORTED_DOCUMENTARY" ? " · document conservé" : " · préparation locale");
+    option.textContent = (version.title || "Production conservée") + " · " + version.version_ref.slice(-8) +
+      (version.origin === "IMPORTED_DOCUMENTARY" ? " · lecture seule" : " · préparation locale");
+    option.dataset.recordSha256 = version.record_sha256;
     option.selected = option.value === selected;
     r4Versions.append(option);
   }
   r4Status.textContent = data.versions.length + " version(s) conservée(s) sur disque. Aucune autorité restaurée.";
+  r4SavedVersions = data.versions;
+  uxHomeVersions(data.versions);
   r4Controls();
 }
 async function r4Open() {
+  if (!uxDraftConfirm()) return;
   const refs = r4Versions.value.split("/");
   if (refs.length !== 2 || !/^prod:[0-9a-f]{32}$/.test(refs[0]) || !/^ver:[0-9a-f]{32}$/.test(refs[1]))
     throw new Error("R4_INVALID_SELECTION");
-  r4Record = await r4Fetch("/api/v2/productions/" + refs[0] + "/versions/" + refs[1] + "/saved");
+  const selected = r4Versions.value;
+  const expectedHash = r4Versions.selectedOptions[0]?.dataset.recordSha256;
+  const opened = await r4Fetch("/api/v2/productions/" + refs[0] + "/versions/" + refs[1] + "/saved");
+  if (r4Versions.value !== selected) throw new Error("R4_SELECTION_CHANGED");
+  if (opened.record?.view?.production_ref !== refs[0] || opened.record?.view?.version_ref !== refs[1] ||
+      (expectedHash && opened.record_sha256 !== expectedHash)) throw new Error("R4_SAVED_IDENTITY_CHANGED");
+  r4Record = opened;
   const details = document.getElementById("r4-details");
   details.replaceChildren();
   appendSearchText(details, "p", r4Record.status === "PROMOTED" ? "Promotion explicite enregistrée" : "CANDIDATE — NON VALIDÉE");
@@ -615,6 +650,7 @@ async function r4Open() {
   document.getElementById("r4-preview-content").replaceChildren();
   r4Status.textContent = "Version rouverte. Consultez les réserves dans Sources & contexte avant diffusion.";
   uxSavedCard(r4Record);
+  uxHomeVersions(r4SavedVersions);
   r4Controls();
 }
 async function r4Run(action, writes = false) {
@@ -636,7 +672,22 @@ document.getElementById("r4-save").addEventListener("click", () => r4Run(async (
   r4Versions.value = r3State.production_ref + "/" + r3State.version_ref;
   await r4Open();
 }, true));
-function classroomPreview(target, blocks) {
+function classroomPreview(target, blocks, assets = []) {
+  const insertions = new Map();
+  for (const asset of assets) {
+    const matches = blocks.map((block, index) => ({block,index})).filter(({block}) =>
+      /^Heading/.test(block.style) && (asset.anchor_heading ? block.text === asset.anchor_heading : block.anchor_ref === asset.section_ref));
+    if (matches.length !== 1) throw new Error("P0_MEDIA_PREVIEW_ANCHOR_UNAVAILABLE");
+    let index = matches[0].index;
+    const following = blocks[index + 1]?.text || "";
+    if (following.split("\n").some(line => /^#+\s/.test(line) &&
+        line.replace(/^#+\s*/, "").trim().toLocaleLowerCase("fr").startsWith(
+          blocks[index].text.trim().toLocaleLowerCase("fr")))) index++;
+    if (asset.preferred_position === "AFTER_DOCUMENT" || asset.preferred_position === "AFTER_CONTEXT") {
+      while (index + 1 < blocks.length && !/^Heading/.test(blocks[index + 1].style)) index++;
+    }
+    insertions.set(index, [...(insertions.get(index) || []), asset]);
+  }
   const inline = (parent, text) => {
     const pattern = /\*\*([^*]+)\*\*|(?<!\w)\*([^*\n]*\S)\*(?!\w)|`([^`]+)`/g;
     let cursor = 0;
@@ -651,6 +702,17 @@ function classroomPreview(target, blocks) {
   const canonical = value => value.replace(/^#+\s*/, "").trim().toLocaleLowerCase("fr");
   for (let index = 0; index < blocks.length; index++) {
     const block = blocks[index], next = blocks[index + 1]?.text || "";
+    if (block.table) {
+      const table = document.createElement("table");
+      for (const [rowIndex, cells] of [block.table.columns, ...block.table.rows].entries()) {
+        const row = document.createElement("tr");
+        for (const text of cells) {const cell=document.createElement(rowIndex === 0 ? "th" : "td");inline(cell,text);row.append(cell);}
+        table.append(row);
+      }
+      target.append(table);
+      if (insertions.has(index)) uxMediaAssets(target, insertions.get(index));
+      continue;
+    }
     if (block.style === "Note" && /^Version exacte : ver:[0-9a-f]{32}$/.test(block.text)) continue;
     if (/^Heading/.test(block.style) && next.split("\n").some(line =>
       /^#+\s/.test(line) && (canonical(line) === canonical(block.text) || canonical(line).startsWith(canonical(block.text) + " —")))) continue;
@@ -676,19 +738,26 @@ function classroomPreview(target, blocks) {
       line = heading ? heading[2] : line.replace(/^Q(\d{2})(?=\s|$)/, (_, n) => "Question " + Number(n));
       const paragraph = document.createElement(tag); inline(paragraph, line); target.append(paragraph);
     }
+    if (insertions.has(index)) uxMediaAssets(target, insertions.get(index));
   }
 }
 
 document.getElementById("r4-preview").addEventListener("click", () => r4Run(async () => {
-  const data = await r4Fetch(r4Base() + "/preview/" + document.getElementById("r4-kind").value);
+  const saved = r4Record, kind = document.getElementById("r4-kind").value;
+  const data = await r4Fetch(r4Base() + "/preview/" + kind);
+  if (r4Record !== saved || document.getElementById("r4-kind").value !== kind || data.kind !== kind)
+    throw new Error("R4_PREVIEW_SELECTION_CHANGED");
   const target = document.getElementById("r4-preview-content");
   target.replaceChildren();
   appendSearchText(target, "h3", data.title);
-  classroomPreview(target, data.blocks);
+  classroomPreview(target, data.blocks, data.media_assets || data.course_chapter?.media_assets || []);
 }));
 document.getElementById("r4-download").addEventListener("click", () => r4Run(async () => {
+  const saved = r4Record;
   const kind = document.getElementById("r4-kind").value;
   const data = await r4Fetch(r4Base() + "/word/" + kind, null, true);
+  if (r4Record !== saved || document.getElementById("r4-kind").value !== kind)
+    throw new Error("R4_DOWNLOAD_SELECTION_CHANGED");
   const url = URL.createObjectURL(data);
   const anchor = document.createElement("a");
   anchor.href = url;
@@ -712,21 +781,29 @@ document.getElementById("r4-promote").addEventListener("click", () => r4Run(asyn
 r4Run(r4Refresh);
 
 // P0 companion: all families use the same Application lifecycle and exact versions.
-const p0 = {nonce: null, references: [], prepared: null, view: null, teacher: null,
-  busy: false, uncertain: false};
+const p0 = {nonce: null, references: [], prepared: null, view: null, teacher: null, consent: null,
+  busy: false, uncertain: false, contextRevision: 0, editInputs: []};
 const p0Element = id => document.getElementById("p0-" + id);
 function p0Controls() {
+  for (const input of p0.editInputs || []) input.disabled = p0.busy;
   p0Element("prepare").disabled = p0.busy || p0.uncertain || !p0.nonce;
   p0Element("generate").disabled = p0.busy || p0.uncertain || !p0.prepared || p0.liveBinding === "NONE" ||
     p0.prepared?.context?.institutional_resolution?.status === "CONTENT_GAP";
+  p0Element("consent-send").disabled = p0.busy || p0.uncertain || !p0.consent ||
+    !p0Element("consent-transfer").checked || !p0Element("consent-cost").checked ||
+    !p0ConsentMatches(p0.consent, p0.prepared);
   for (const id of ["teacher", "revise", "validate", "save"])
     p0Element(id).disabled = p0.busy || p0.uncertain || !p0.view;
+  p0Element("teacher").disabled ||= !!p0.dirty;
+  for (const id of ["save", "validate"]) p0Element(id).disabled ||= !!p0.dirty;
+  p0Element("media-apply").disabled = p0.busy || p0.uncertain || !p0.view || !!p0.view.course_chapter || p0.mediaBinding !== "LOCAL_DIAGRAM_OR_NO_MEDIA";
   for (const id of ["open", "modify", "check", "correction", "marking", "export"])
     document.getElementById("card-" + id).disabled = p0.busy || p0.uncertain || !p0.view ||
       (id === "correction" && !p0.view.questions.length && !p0.view.course_chapter) ||
-      (id === "marking" && p0.view.pedagogical_context.resource_type !== "ASSESSMENT");
+      (id === "marking" && p0.view.pedagogical_context.resource_type !== "ASSESSMENT") ||
+      (["export", "check"].includes(id) && !!p0.dirty);
 }
-async function p0Fetch(path, body = null) {
+async function p0Fetch(path, body = null, contract = "R6-P0-HTTP-LOCAL-1.0") {
   const options = {method: body ? "POST" : "GET", credentials: "omit", cache: "no-store",
     redirect: "error", headers: {"X-Local-Intent": "conversation-v1"}};
   if (body) {
@@ -736,14 +813,15 @@ async function p0Fetch(path, body = null) {
   }
   return localBoundedRequest(path, options, async response => {
   const envelope = await response.json();
-  if (!response.ok || envelope?.meta?.contract_id !== "R6-P0-HTTP-LOCAL-1.0") {
+  if (!response.ok || envelope?.meta?.contract_id !== contract) {
     const error = new Error(envelope?.error?.code || "P0_REFUSED");
-    error.confirmedRefusal = envelope?.meta?.contract_id === "R6-P0-HTTP-LOCAL-1.0" &&
+    error.confirmedRefusal = envelope?.meta?.contract_id === contract && response.status < 500 &&
       envelope?.error?.code !== "P0_OUTCOME_UNKNOWN";
     throw error;
   }
   return envelope.data;
-  });
+  }, path === "/api/v2/p0/generate" || path === "/api/v2/p0/consent-generate" ? 150000 :
+    path === "/api/v2/p0/media" || /^\/api\/v2\/p0\/(versions\/|notion-evidence\?)/.test(path) ? 60000 : 10000);
 }
 async function p0Run(action, mutation = false, state = "loading") {
   if (p0.busy || (mutation && p0.uncertain)) return;
@@ -892,10 +970,65 @@ p0Element("family").addEventListener("change", () => {
   for (const id of ["duration", "points"]) p0Element(id).required = assessment;
 });
 function p0Invalidate() {
-  p0.prepared = null; p0Controls();
+  p0.contextRevision += 1;
+  p0.prepared = null; p0ClearConsent(); p0Controls();
 }
 p0Element("form").addEventListener("input", p0Invalidate);
 p0Element("form").addEventListener("change", p0Invalidate);
+function p0SourceNotionOptions() {
+  const selected = [...p0Element("program-notions").selectedOptions];
+  p0Element("source-notion").replaceChildren(); p0Element("source-choices").replaceChildren();
+  const empty = document.createElement("option"); empty.value="";empty.textContent="Choisir une notion du contexte";
+  p0Element("source-notion").append(empty);
+  for (const notion of selected) {const option=document.createElement("option");option.value=notion.value;
+    option.textContent=notion.textContent;p0Element("source-notion").append(option);}
+  if (selected.length===1) p0Element("source-notion").value=selected[0].value;
+}
+p0Element("program-notions").addEventListener("change",p0SourceNotionOptions);
+p0Element("source-load").addEventListener("click",()=>p0Run(async()=>{
+  const notion = p0Element("source-notion").value;
+  const revision = p0.contextRevision;
+  if (!notion || ![...p0Element("program-notions").selectedOptions].some(option=>option.value===notion))
+    throw Object.assign(new Error("Choisissez une notion de votre contexte pour consulter ses sources"),{confirmedRefusal:true});
+  const data = await p0Fetch("/api/v2/p0/notion-evidence?notion_id="+encodeURIComponent(notion),null,"P0-NOTION-EVIDENCE-HTTP-1.0");
+  if (revision !== p0.contextRevision || notion !== p0Element("source-notion").value || data.notion_id!==notion || !Array.isArray(data.items) ||
+      data.items.length>256 || data.available_authority!=="UNKNOWN")
+    throw new Error("P0_NOTION_SOURCE_RESPONSE_BINDING");
+  if (data.items.some(item => item.selection?.notion_id!==notion || item.selection.passage_ref!==item.passage_ref ||
+      typeof item.excerpt!=="string" || !item.excerpt || item.excerpt_truncated!==false ||
+      !["NOTION", "PEDAGOGICAL_CONTENT", "METHOD"].includes(item.object_kind)))
+    throw new Error("P0_NOTION_SOURCE_RESPONSE_BINDING");
+  const region=p0Element("source-choices");region.replaceChildren();
+  appendSearchText(region,"p","Passages disponibles. Leur identité et leur présence ne valent pas admission comme source officielle.");
+  for (const item of data.items) {
+    const article=document.createElement("article");
+    appendSearchText(article,"h4",item.object_kind==="NOTION" ? "Notion — "+p0Element("source-notion").selectedOptions[0].textContent :
+      item.object_kind==="METHOD" ? "Méthode" : "Contenu pédagogique");
+    appendSearchText(article,"p",item.excerpt);
+    const details=document.createElement("details");appendSearchText(details,"summary","Provenance, version et statut");
+    appendSearchText(details,"pre",JSON.stringify({object_ref:item.object_ref,passage_ref:item.passage_ref,
+      version:item.version_or_checksum,excerpt_sha256:item.excerpt_sha256,provenance:item.provenance,
+      source_status:item.source_status,authority:data.available_authority},null,2));article.append(details);
+    const button=document.createElement("button");button.type="button";button.textContent="Sélectionner ce passage exact";
+    const bts = p0Element("level").value.startsWith("BTS_");
+    const selectable = !bts || (item.object_kind==="NOTION" && item.object_ref===notion);
+    button.disabled = !selectable;
+    if (!selectable) appendSearchText(article,"p","Passage consultable ; son utilisation comme source de préparation n’est pas admise dans ce contexte BTS CG.");
+    button.addEventListener("click",()=>{
+      if (!selectable || p0.busy || p0.uncertain || p0.contextRevision!==revision || p0Element("source-notion").value!==notion) return;
+      p0Element("search-query").value="";p0Element("notion-id").value=item.selection.notion_id;
+      p0Element("search-passage").value=item.selection.passage_ref;p0Element("reference").value="";
+      p0.prepared=null;p0ClearConsent();p0Controls();
+      p0Element("status").textContent="Source exacte sélectionnée. Confirmez votre contexte pour préparer la ressource.";
+      uxMessage("assistant",p0Element("status").textContent);
+    });article.append(button);region.append(article);
+  }
+  if (!data.items.length) appendSearchText(region,"p","Aucun passage complet utilisable pour cette notion.");
+  if (data.exclusions?.length) appendSearchText(region,"p",data.exclusions.length+
+    " passage(s) exclus : consultez leur disposition dans Sources & contexte.");
+  document.getElementById("drawer-identities").textContent=JSON.stringify(data,null,2);
+  p0Element("status").textContent="Sources de la notion affichées. Sélectionnez le passage adapté à votre travail.";
+}));
 p0Element("form").addEventListener("submit", event => {
   event.preventDefault();
   p0Run(async () => {
@@ -909,7 +1042,13 @@ p0Element("form").addEventListener("submit", event => {
       throw Object.assign(new Error("P0_REFERENCE_REQUIRED"), {confirmedRefusal: true});
     const reference = notion && passage ? {notion_id: notion, passage_ref: passage} : query && passage ? {query, passage_ref: passage} :
       {resource_ref: selected.resource_ref, resource_version_ref: selected.resource_version_ref};
-    p0.prepared = await p0Fetch("/api/v2/p0/prepare", {command_id: p0Command(), context: p0Context(), reference});
+    const revision = p0.contextRevision;
+    const prepared = await p0Fetch("/api/v2/p0/prepare", {command_id: p0Command(), context: p0Context(), reference});
+    if (revision !== p0.contextRevision) {
+      p0Element("status").textContent = "Le contexte a changé pendant la préparation. Confirmez la demande actuelle avant de continuer.";
+      return;
+    }
+    p0.prepared = prepared;
     p0Element("preparation").replaceChildren();
     appendSearchText(p0Element("preparation"), "p", "Contexte et référence confirmés. Relisez ce choix avant de générer.");
     const sourceDetails = document.createElement("details"); sourceDetails.className = "secondary";
@@ -927,16 +1066,141 @@ function p0Field(parent, id, label, value, multiline = true) {
   const text = document.createElement("label"); text.htmlFor = id; text.textContent = label;
   const input = document.createElement(multiline ? "textarea" : "input");
   input.id = id; input.value = value; if (multiline) input.rows = 3;
+  p0.editInputs.push(input);
   parent.append(text, input); return input;
 }
+function p0CourseFields(region, chapter, teacher = false) {
+  if (teacher) {
+    (chapter.teacher_answers || []).forEach((answer, i) => {
+      for (const [key, label] of [["expected_answer", "Réponse"], ["rationale", "Explication"],
+        ["vigilance", "Vigilance"], ["remediation", "Remédiation"]])
+        p0Field(region, "p0-course-teacher-" + key + "-" + i, label + " " + answer.id, answer[key]);
+    });
+    return;
+  }
+  p0Field(region, "p0-course-context-title", "Titre du contexte", chapter.context.title, false);
+  p0Field(region, "p0-course-context-text", "Situation d’apprentissage", chapter.context.text);
+  for (const [field, keys] of [["documents", [["title", "Titre du document"], ["text", "Texte du document"]]],
+    ["questions", [["prompt", "Consigne"]]],
+    ["concepts", [["definition", "Définition"], ["explanation", "Explication"], ["example", "Exemple"]]],
+    ["parts", [["title", "Titre de partie"]]]])
+    chapter[field].forEach((row, i) => keys.forEach(([key, label]) =>
+      p0Field(region, "p0-course-" + field + "-" + key + "-" + i, label + " " + row.id, row[key])));
+  p0Field(region, "p0-course-synthesis", "Synthèse du cours", chapter.synthesis);
+  appendSearchText(region, "p", "Les sources et les liens du cours sont conservés. Une modification affectant un visuel existant nécessite sa révision explicite.");
+}
+function p0CourseEdits(chapter, teacher = null) {
+  const changed = (before, after) => before !== after;
+  const patch = {};
+  const story = {};
+  for (const key of ["title", "text"]) {
+    const value = document.getElementById("p0-course-context-" + key).value;
+    if (changed(chapter.context[key], value)) story[key] = value;
+  }
+  if (Object.keys(story).length) patch.context = story;
+  const fields = [["documents", ["title", "text"]], ["questions", ["prompt"]],
+    ["concepts", ["definition", "explanation", "example"]], ["parts", ["title"]]];
+  for (const [field, keys] of fields) {
+    const rows = chapter[field].map((row, i) => {
+      const edited = {id: row.id};
+      keys.forEach(key => { const value = document.getElementById("p0-course-" + field + "-" + key + "-" + i).value;
+        if (changed(row[key], value)) edited[key] = value; });
+      return edited;
+    }).filter(row => Object.keys(row).length > 1);
+    if (rows.length) patch[field] = rows;
+  }
+  const synthesis = document.getElementById("p0-course-synthesis").value;
+  if (changed(chapter.synthesis, synthesis)) patch.synthesis = synthesis;
+  if (teacher) {
+    const answers = teacher.teacher_answers.map((row, i) => {
+      const edited = {id: row.id};
+      for (const key of ["expected_answer", "rationale", "vigilance", "remediation"]) {
+        const value = document.getElementById("p0-course-teacher-" + key + "-" + i).value;
+        if (changed(row[key], value)) edited[key] = value;
+      }
+      return edited;
+    }).filter(row => Object.keys(row).length > 1);
+    if (answers.length) patch.teacher_answers = answers;
+  }
+  return {title: document.getElementById("p0-edit-title").value, course_edits: patch};
+}
+function p0MediaOptions(view) {
+  const selected = view.pedagogical_context.institutional || {};
+  const capacities = view.pedagogical_context.institutional_resolution?.capacities || [];
+  for (const [id, options] of [["media-anchor", view.sections.map(s => [s.section_id, s.heading])],
+    ["media-capacity", (selected.capacity_refs || selected.competency_refs || []).map(ref => [ref,
+      capacities.find(row => (row.capacity_ref || row.competency_ref) === ref)?.label || ref])],
+    ["media-objective", view.pedagogical_context.objectives.map(text => [text, text])]]) {
+    const select = p0Element(id); select.replaceChildren();
+    options.forEach(([value, label]) => { const option = document.createElement("option");
+      option.value = value; option.textContent = label; select.append(option); });
+  }
+  for (const id of ["media-reason", "media-nodes", "media-caption"]) p0Element(id).value = "";
+  p0Element("media-mode").value = "NO_MEDIA"; p0Element("diagram-fields").hidden = true;
+  p0Element("media-required").checked = false;
+  p0Element("media-note").textContent = view.course_chapter ?
+    "Ce cours structuré conserve son dossier de visuels existant. Les changements de contenu qui affectent un visuel sont refusés ; sa révision reste distincte." :
+    "Le schéma local utilise les étapes que vous fournissez. Relisez sa pertinence ; aucune image fournisseur n’est générée.";
+}
+function p0MediaSelection(view) {
+  const reason = p0Element("media-reason").value.trim();
+  if (!reason) throw new Error("P0_MEDIA_JUSTIFICATION_REQUIRED");
+  if (p0Element("media-mode").value === "NO_MEDIA") return {mode: "NO_MEDIA", reason};
+  if (p0Element("media-mode").value !== "LOCAL_DIAGRAM") throw new Error("P0_MEDIA_MODE_REJECTED");
+  const selected = view.pedagogical_context.institutional;
+  const capacity = p0Element("media-capacity").value;
+  const objective = p0Element("media-objective").value;
+  const anchor = p0Element("media-anchor").value;
+  if (view.pedagogical_context.institutional_resolution?.status !== "RESOLVED_ADMITTED" || !selected ||
+      !(selected.capacity_refs || selected.competency_refs || []).includes(capacity) ||
+      !view.pedagogical_context.objectives.includes(objective) ||
+      !view.sections.some(section => section.section_id === anchor)) throw new Error("P0_MEDIA_CONTEXT_REQUIRED");
+  const labels = p0Element("media-nodes").value.split("\n").map(text => text.trim());
+  const caption = p0Element("media-caption").value.trim();
+  if (labels.length !== 4 || labels.some(text => !text || text.length > 70) || new Set(labels).size !== 4 || !caption)
+    throw new Error("P0_MEDIA_FOUR_DISTINCT_STEPS_REQUIRED");
+  const brief = {contract_id: "VISUAL-BRIEF-1.0", visual_id: "VISUAL_" + p0Command().slice(0, 8).toUpperCase(),
+    production_ref: view.production_ref, section_ref: anchor, learning_objective: objective,
+    institutional_capability_ref: capacity, notion_refs: selected.notion_refs,
+    visual_type: "FLOWCHART", pedagogical_function: reason, content_description: reason,
+    must_show: labels, must_not_show: [], caption, alt_text: caption,
+    student_visibility: true, teacher_visibility: true, preferred_position: "AFTER_DOCUMENT",
+    source_policy: "LOCAL_DETERMINISTIC", style_policy: "COURSE_LOCAL_DIAGRAM_V1",
+    diagram: {layout: "FLOW", nodes: labels.map((label, i) => ({id: "N" + i, label, detail: "", icon: "NONE"})),
+      edges: labels.slice(1).map((_, i) => ({source: "N" + i, target: "N" + (i + 1), label: ""})), note: caption}};
+  // Each detail is explicit visible content, required by the existing visual contract.
+  brief.diagram.nodes.forEach(node => { node.detail = node.label; });
+  return {mode: "LOCAL_DIAGRAM", entries: [{brief, required: p0Element("media-required").checked,
+    dependency_refs: ["section:" + anchor]}]};
+}
+p0Element("media-mode").addEventListener("change", () => {
+  p0Element("diagram-fields").hidden = p0Element("media-mode").value !== "LOCAL_DIAGRAM";
+});
+p0Element("media-form").addEventListener("submit", event => {
+  event.preventDefault();
+  p0Run(async () => {
+    if (p0.dirty) throw new Error("P0_MEDIA_SAVE_LOCAL_EDITS_FIRST");
+    const parent = p0Identity(); const selection = p0MediaSelection(p0.view);
+    const result = await p0Fetch("/api/v2/p0/media", {command_id: p0Command(), ...parent, selection}, "P0-LOCAL-MEDIA-HTTP-1.0");
+    if (!p0DisplayedVersion(parent) || result.view?.production_ref !== parent.production_ref ||
+        result.view?.lineage?.parent_version_ref !== parent.version_ref || result.provider_attempts !== 0)
+      throw new Error("P0_MEDIA_VERSION_CHANGED");
+    p0Render(result.view, result.quality);
+    p0Element("status").textContent = "Choix du visuel conservé dans une nouvelle version. Relisez puis sauvegardez cette version ; le parent est inchangé.";
+  }, true);
+});
 function p0Render(view, quality = null) {
   p0.view = view; p0.teacher = null;
+  p0.editInputs = [];
+  p0.dirty = false;
   uxQuality(quality, view);
   const region = p0Element("review"); region.replaceChildren();
   p0Element("teacher-content").replaceChildren();
   appendSearchText(region, "p", "Préparation à relire avant usage pédagogique.");
   uxProductionCard(view);
+  p0MediaOptions(view);
   p0Field(region, "p0-edit-title", "Titre", view.title, false);
+  if (view.course_chapter) { p0CourseFields(region, view.course_chapter); return; }
   view.sections.forEach((s, i) => {
     p0Field(region, "p0-edit-heading-" + i, "Titre de section " + (i + 1), s.heading, false);
     p0Field(region, "p0-edit-section-" + i, "Texte de section " + (i + 1), s.text);
@@ -956,19 +1220,95 @@ function p0DisplayedVersion(target) {
     p0.view?.bundle_sha256 === target.bundle_sha256 && region.dataset.productionRef === target.production_ref &&
     region.dataset.versionRef === target.version_ref && region.dataset.bundleSha256 === target.bundle_sha256;
 }
+function p0ClearConsent() {
+  p0.consent = null; p0Element("consent").hidden = true;
+  p0Element("consent-transfer").checked = p0Element("consent-cost").checked = false;
+  for (const id of ["consent-summary", "consent-body", "consent-identities"]) p0Element(id).replaceChildren();
+}
+function p0ConsentMatches(result, prepared, now = Date.now()) {
+  const preview = result?.preview;
+  if (!prepared || result.state !== "LOCAL_OPERATOR_CONSENT_REQUIRED" ||
+      result.provider_attempts !== 0 || result.review_state !== "NOT_RUN" ||
+      result.source_status !== "RESERVE" || result.consent_actor !== "LOCAL_OPERATOR_DELEGATED" ||
+      !/^[0-9a-f]{64}$/.test(result.preview_sha256 || "") ||
+      preview?.schema !== "P0-PRODUCT-CONSENT-PREVIEW-1.0" ||
+      preview.preparation_ref !== prepared.preparation_ref || preview.preparation_sha256 !== prepared.preparation_sha256 ||
+      typeof preview.request_body_utf8 !== "string" || preview.request_body_utf8.length > 512 * 1024 ||
+      !/^[0-9a-f]{64}$/.test(preview.request_sha256 || "") ||
+      !Array.isArray(preview.source_receipts) || !preview.source_receipts.length ||
+      !/^0\.\d{1,6}$/.test(preview.cost_bound_usd || "") || Number(preview.cost_bound_usd) > 0.14 ||
+      !Number.isFinite(Date.parse(preview.expires_at_utc)) || now >= Date.parse(preview.expires_at_utc))
+    return false;
+  return true;
+}
+function p0ConsentPreview(result, prepared) {
+  if (!p0ConsentMatches(result, prepared)) throw new Error("P0_CONSENT_PREVIEW_BINDING");
+  const preview = result.preview, body = JSON.parse(preview.request_body_utf8);
+  if (body.model !== "gpt-5.6-terra" || body.max_output_tokens !== 4096 ||
+      body.store !== false || body.stream !== false || body.background !== false)
+    throw new Error("P0_CONSENT_PROVIDER_PROFILE");
+  p0ClearConsent(); p0.consent = result; p0Element("consent").hidden = false;
+  const summary = p0Element("consent-summary");
+  appendSearchText(summary, "p", "OpenAI · gpt-5.6-terra · https://api.openai.com/v1/responses");
+  appendSearchText(summary, "p", "Coût maximal de cette création : " + preview.cost_bound_usd +
+    " USD. Budget disponible : " + result.remaining_budget_usd + " USD · " + result.remaining_calls + " création(s) restante(s).");
+  appendSearchText(summary, "p", "Contenu transmis : " + preview.request_bytes + " octets. Accord valable jusqu’au " +
+    new Date(preview.expires_at_utc).toLocaleString("fr-FR") + ".");
+  appendSearchText(summary, "p", "Sources sélectionnées pour cette demande :");
+  for (const receipt of preview.source_receipts)
+    appendSearchText(summary, "p", JSON.stringify(receipt));
+  appendSearchText(summary, "p", "Une seule tentative, aucun renvoi automatique. Revue indépendante non exécutée ; relecture enseignante nécessaire.");
+  p0Element("consent-body").textContent = preview.request_body_utf8;
+  p0Element("consent-identities").textContent = JSON.stringify({...preview, request_body_utf8:undefined}, null, 2);
+}
+function p0GeneratedResult(result) {
+  if (result.state !== "CANDIDATE") throw Object.assign(new Error("P0_GENERATION_NOT_CONFIRMED"), {confirmedRefusal:true});
+  p0Render(result.view, result.agentic?.quality); p0.prepared = null; p0ClearConsent();
+  p0Element("status").textContent = result.publication?.state === "APPLICATION_SAVED" ?
+    "Ressource reçue et conservée dans votre bibliothèque. Relisez ses contrôles et ses réserves avant usage." :
+    "Candidate reçue. Relisez et sauvegardez la version exacte ; aucune promotion effectuée.";
+}
 p0Element("generate").addEventListener("click", () => p0Run(async () => {
+  if (p0.normalConsentBinding === "EXPLICIT_PRODUCT_PERMISSION") {
+    const prepared = p0.prepared;
+    const result = await p0Fetch("/api/v2/p0/consent-preview", {command_id:p0Command(),
+      preparation_ref:prepared.preparation_ref, preparation_sha256:prepared.preparation_sha256});
+    if (p0.prepared !== prepared) throw new Error("P0_CONSENT_PREPARATION_CHANGED");
+    p0ConsentPreview(result, prepared);
+    p0Element("status").textContent = "Vérifiez le contenu et le coût maximal, puis confirmez cet envoi dans l’application.";
+    return;
+  }
   const result = await p0Fetch("/api/v2/p0/generate", {command_id: p0Command(),
     preparation_ref: p0.prepared.preparation_ref, preparation_sha256: p0.prepared.preparation_sha256});
   if (result.state === "CANDIDATE") {
-    p0Render(result.view, result.agentic?.quality); p0.prepared = null;
-    p0Element("status").textContent = "Candidate reçue. Relisez et modifiez la version exacte ; aucune promotion effectuée.";
+    p0GeneratedResult(result);
   } else { p0Element("status").dataset.state = "unavailable";
     p0Element("status").textContent = "Génération indisponible : autorisation requise. Aucun transport fournisseur n’est lié à cette composition hors ligne."; }
+}, p0.normalConsentBinding !== "EXPLICIT_PRODUCT_PERMISSION", "generating"));
+for (const id of ["consent-transfer", "consent-cost"]) p0Element(id).addEventListener("change", p0Controls);
+p0Element("consent-cancel").addEventListener("click", () => {p0ClearConsent(); p0Controls();});
+p0Element("consent-send").addEventListener("click", () => p0Run(async () => {
+  const consent = p0.consent, prepared = p0.prepared;
+  if (!p0ConsentMatches(consent, prepared) || !p0Element("consent-transfer").checked || !p0Element("consent-cost").checked)
+    throw Object.assign(new Error("P0_CONSENT_REQUIRED"), {confirmedRefusal:true});
+  p0ClearConsent();
+  const result = await p0Fetch("/api/v2/p0/consent-generate", {command_id:p0Command(),
+    preparation_ref:prepared.preparation_ref, preparation_sha256:prepared.preparation_sha256,
+    preview_sha256:consent.preview_sha256, transfer_accepted:true, cost_bound_accepted:true});
+  p0GeneratedResult(result);
 }, true, "generating"));
 p0Element("teacher").addEventListener("click", () => p0Run(async () => {
-  p0.teacher = await p0Fetch("/api/v2/p0/versions/" + p0.view.production_ref + "/" + p0.view.version_ref + "/teacher");
+  if (p0.dirty) throw Object.assign(new Error("Conservez votre modification avant de recharger les réponses professeur"), {confirmedRefusal:true});
+  const target = p0Identity();
+  const teacher = await p0Fetch("/api/v2/p0/versions/" + target.production_ref + "/" + target.version_ref + "/teacher");
+  if (p0.dirty) throw Object.assign(new Error("Une modification est en cours. Les réponses consultées ne remplacent pas votre travail"), {confirmedRefusal:true});
+  if (!p0DisplayedVersion(target) || teacher.production_ref !== target.production_ref ||
+      teacher.version_ref !== target.version_ref || teacher.bundle_sha256 !== target.bundle_sha256)
+    throw new Error("P0_TEACHER_VERSION_CHANGED");
+  p0.teacher = teacher;
   const region = p0Element("teacher-content"); region.replaceChildren();
   appendSearchText(region, "h3", "Compagnons professeur — consultation séparée");
+  if (teacher.course_chapter) { p0CourseFields(region, teacher.course_chapter, true); return; }
   p0.teacher.corrections.forEach((c, i) => {
     p0Field(region, "p0-edit-answer-" + i, "Réponse " + c.question_id, c.expected_answer);
     p0Field(region, "p0-edit-rationale-" + i, "Explication " + c.question_id, c.rationale);
@@ -979,12 +1319,12 @@ p0Element("teacher").addEventListener("click", () => p0Run(async () => {
   });
 }));
 p0Element("revise").addEventListener("click", () => p0Run(async () => {
-  const edits = {title: document.getElementById("p0-edit-title").value,
+  const edits = p0.view.course_chapter ? p0CourseEdits(p0.view.course_chapter, p0.teacher?.course_chapter) : {title: document.getElementById("p0-edit-title").value,
     sections: p0.view.sections.map((s, i) => ({...s, heading: document.getElementById("p0-edit-heading-" + i).value,
       text: document.getElementById("p0-edit-section-" + i).value})),
     questions: p0.view.questions.map((q, i) => ({...q, prompt: document.getElementById("p0-edit-question-" + i).value,
       options: q.options.length ? document.getElementById("p0-edit-options-" + i).value.split("\n") : []}))};
-  if (p0.teacher) {
+  if (p0.teacher && !p0.view.course_chapter) {
     edits.corrections = p0.teacher.corrections.map((c, i) => ({...c,
       expected_answer: document.getElementById("p0-edit-answer-" + i).value,
       rationale: document.getElementById("p0-edit-rationale-" + i).value}));
@@ -1004,6 +1344,7 @@ p0Element("validate").addEventListener("click", () => p0Run(async () => {
   p0Element("status").textContent = "Vérification structurelle : " + report.status + ". Aucune validation pédagogique ni promotion.";
 }, true, "validating"));
 async function p0SaveVersion() {
+  if (p0.dirty) throw Object.assign(new Error("Conservez d’abord vos modifications dans une nouvelle version"), {confirmedRefusal:true});
   const refs = {production_ref: p0.view.production_ref, version_ref: p0.view.version_ref};
   await r4Fetch("/api/v2/conversation/saved", refs);
   await r4Refresh(); r4Versions.value = refs.production_ref + "/" + refs.version_ref;
@@ -1016,7 +1357,10 @@ async function p0Connect() {
   p0.institutionalCatalog = metadata.institutional_catalog;
   p0InstitutionalOptions();
   p0.liveBinding = metadata.live_binding;
-  p0Element("generate").textContent = metadata.live_binding === "NONE" ? "Génération indisponible dans cette composition" : "Demander la génération autorisée";
+  p0.normalConsentBinding = metadata.normal_consent_binding || "NONE";
+  p0.mediaBinding = metadata.media_binding;
+  p0Element("generate").textContent = metadata.live_binding === "NONE" ? "Génération indisponible dans cette composition" :
+    p0.normalConsentBinding === "EXPLICIT_PRODUCT_PERMISSION" ? "Examiner l’envoi et son coût" : "Demander la génération autorisée";
   p0Element("reference").replaceChildren();
   const empty = document.createElement("option"); empty.value = ""; empty.textContent = "Choisir une référence";
   p0Element("reference").append(empty);
@@ -1036,9 +1380,12 @@ const uxRequests = [];
 const uxNames = {COURSE: "Cours", EXERCISE: "Exercice", OPEN_QUESTIONS: "Questions ouvertes", QCM: "QCM", QUIZ: "Quiz", ASSESSMENT: "Évaluation",
   FIRST_STMG: "Première STMG", FINAL_STMG: "Terminale STMG", BTS_CG_YEAR_1: "BTS CG première année", BTS_CG_YEAR_2: "BTS CG deuxième année"};
 function uxShow(name) {
+  if (typeof uxDraftConfirm === "function" && !uxDraftConfirm()) return false;
   document.querySelectorAll("[data-panel]").forEach(panel => { panel.hidden = panel.dataset.panel !== name; });
   document.querySelectorAll("[data-view]").forEach(button => { button.setAttribute("aria-current", button.dataset.view === name ? "page" : "false"); });
-  document.getElementById("workspace-title").textContent = {prepare: "Nouvelle préparation", conversations: "Conversations", productions: "Productions", library: "Bibliothèque", settings: "Réglages"}[name];
+  document.getElementById("workspace-title").textContent = {home: "Accueil", prepare: "Atelier de création", conversations: "Conversations", productions: "Productions", library: "Bibliothèque", settings: "Réglages"}[name];
+  document.getElementById("main-content").focus({preventScroll:true});
+  return true;
 }
 function uxMessage(role, text) {
   const messages = document.getElementById("preparation-messages");
@@ -1046,24 +1393,14 @@ function uxMessage(role, text) {
   appendSearchText(messages, "li", text, "message-" + role);
   while (messages.children.length > 64) messages.firstElementChild.remove();
 }
-function proposePreparation(text) {
-  const normalized = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const families = [["COURSE", /\bcours\b/], ["EXERCISE", /\bexercice[s]?\b/], ["OPEN_QUESTIONS", /\bquestions? ouvertes?\b/],
-    ["QCM", /\bqcm\b/], ["QUIZ", /\bquiz\b/], ["ASSESSMENT", /\b(evaluation|controle|epreuve)\b/]];
-  const levels = [["FIRST_STMG", /\b(premiere|1re|1ere) stmg\b/], ["FINAL_STMG", /\b(terminale|tle) stmg\b/],
-    ["BTS_CG_YEAR_1", /\bbts cg (?:1|premiere annee|annee 1)\b/], ["BTS_CG_YEAR_2", /\bbts cg (?:2|deuxieme annee|seconde annee|annee 2)\b/]];
-  const foundFamilies = families.filter(([, pattern]) => pattern.test(normalized)).map(([name]) => name);
-  const foundLevels = levels.filter(([, pattern]) => pattern.test(normalized)).map(([name]) => name);
-  const topic = text.match(/\bsur\s+(.+?)(?:[.!?]|,\s*(?:durée|noté|pour)|$)/i)?.[1]?.trim() || "";
-  const minutes = normalized.match(/\b(\d{1,3})\s*(?:minutes?|min)\b/);
-  const hours = normalized.match(/\b(\d)\s*(?:heures?|h)\b/);
-  const points = normalized.match(/(?:note\s*)?sur\s+(\d{1,3})\b/);
-  return {family: foundFamilies.length === 1 ? foundFamilies[0] : "", level: foundLevels.length === 1 ? foundLevels[0] : "", topic,
-    difficulty: /\b(approfondi|avance|difficile)\b/.test(normalized) ? "ADVANCED" : /\b(initiation|debutant)\b/.test(normalized) ? "INTRODUCTORY" : "STANDARD",
-    duration: minutes ? Number(minutes[1]) : hours ? Number(hours[1]) * 60 : null, points: points ? Number(points[1]) : null,
-    objective: text.length <= 500 ? text : "",
-    ambiguities: [...(foundFamilies.length === 1 ? [] : ["type de production"]), ...(foundLevels.length === 1 ? [] : ["niveau exact"]),
-      ...(topic ? [] : ["notions"]), ...(text.length <= 500 ? [] : ["objectif synthétique (500 caractères maximum)"])]};
+async function proposePreparation(text) {
+  const command = p0Command();
+  const result = await p0Fetch("/api/v2/p0/intention", {command_id:command, intention:text});
+  if (result.contract_id !== "P0-INTENTION-PROPOSAL-1.0" || result.command_id !== command ||
+      result.confirmation_required !== true || result.provider_attempts !== 0 ||
+      result.implementation !== "DETERMINISTIC_APPLICATION_PROPOSAL" || result.authority !== "NONE")
+    throw new Error("P0_INTENTION_RESPONSE_REJECTED");
+  return result;
 }
 function uxContext(context) {
   const region = document.getElementById("drawer-context"); region.replaceChildren();
@@ -1129,35 +1466,103 @@ function uxProductionCard(view) {
   const preview = document.getElementById("production-card-preview"); preview.replaceChildren();
   const teacherPreview = document.getElementById("production-card-teacher-preview");
   teacherPreview.replaceChildren(); teacherPreview.hidden = true;
-  classroomPreview(preview, [...view.sections.flatMap(section => [{style: "Heading1", text: section.heading}, {style: "Normal", text: section.text}]),
-    ...view.questions.flatMap((question, i) => [{style: "Heading2", text: "Question " + (i + 1)}, {style: "Normal", text: question.prompt},
-      ...question.options.map(option => ({style: "Normal", text: option}))])]);
+  const blocks = view.course_chapter ? uxCourseBlocks(view.course_chapter) :
+    [...view.sections.flatMap(section => [{style: "Heading1", text: section.heading, anchor_ref: section.section_id}, {style: "Normal", text: section.text}]),
+      ...view.questions.flatMap((question, i) => [{style: "Heading2", text: "Question " + (i + 1), anchor_ref: question.question_id}, {style: "Normal", text: question.prompt},
+        ...question.options.map(option => ({style: "Normal", text: option}))])];
+  classroomPreview(preview, blocks, view.media_assets || view.course_chapter?.media_assets || []);
   uxContext(context);
   document.getElementById("drawer-identities").textContent = JSON.stringify({production_ref: view.production_ref, version_ref: view.version_ref, bundle_sha256: view.bundle_sha256, references: view.references}, null, 2);
   document.getElementById("production-edit-panel").open = false;
 }
+function uxCourseBlocks(chapter) {
+  const blocks = [{style:"Heading1",text:chapter.context.title,anchor_ref:"CONTEXT"},
+    {style:"Normal",text:chapter.context.text}];
+  const documents = new Map(chapter.documents.map(item=>[item.id,item]));
+  const questions = new Map(chapter.questions.map(item=>[item.id,item]));
+  const concepts = new Map(chapter.concepts.map(item=>[item.id,item]));
+  const question = ref => {const item=questions.get(ref);if (!item) throw new Error("P0_COURSE_VIEW_BINDING");
+    blocks.push({style:"Heading2",text:"Question "+item.number,anchor_ref:ref},{style:"Normal",text:item.prompt});
+    if (item.response.table) blocks.push({style:"Normal",text:"",table:item.response.table});
+    else blocks.push({style:"Normal",text:Array(item.response.lines).fill("………………………………………………………………").join("\n")});
+  };
+  const document = ref => {const item=documents.get(ref);if (!item) throw new Error("P0_COURSE_VIEW_BINDING");
+    blocks.push({style:"Heading2",text:item.title,anchor_ref:ref},{style:"Normal",text:item.text});
+    if (item.table) blocks.push({style:"Normal",text:"",table:item.table});
+  };
+  chapter.parts.forEach(part=>{
+    blocks.push({style:"Heading1",text:part.title});
+    part.document_ids.forEach(document);
+    for (const role of ["observation", "analysis"]) {
+      blocks.push({style:"Heading2",text:role === "observation" ? "Observer" : "Analyser"});
+      part[role].forEach(question);
+    }
+    part.concept_ids.forEach(ref=>{const item=concepts.get(ref);if (!item) throw new Error("P0_COURSE_VIEW_BINDING");
+      blocks.push({style:"Heading2",text:item.notion,anchor_ref:ref},{style:"Normal",text:item.definition},
+        {style:"Normal",text:item.explanation},{style:"Normal",text:item.example});});
+    blocks.push({style:"Heading2",text:"Réinvestir"});part.reinvestment.forEach(question);
+  });
+  blocks.push({style:"Heading1",text:"Tester ses connaissances"});chapter.knowledge_check.forEach(question);
+  blocks.push({style:"Heading1",text:"À retenir"},{style:"Normal",text:chapter.synthesis},
+    {style:"Heading1",text:chapter.transfer.title});
+  chapter.transfer.document_ids.forEach(document);chapter.transfer.question_ids.forEach(question);
+  return blocks;
+}
+function uxMediaAssets(region, assets) {
+  assets.forEach(asset => {
+    if (asset.mime_type !== "image/png" || !/^iVBORw0KGgo/.test(asset.bytes_base64) ||
+        asset.bytes_base64.length > 1500000 || !/^[0-9a-f]{64}$/.test(asset.png_sha256))
+      throw new Error("P0_MEDIA_VIEW_REJECTED");
+    const figure = document.createElement("figure"); const image = document.createElement("img");
+    image.src = "data:image/png;base64," + asset.bytes_base64; image.alt = asset.alt_text;
+    image.width = asset.width; image.height = asset.height;
+    figure.append(image); appendSearchText(figure, "figcaption", asset.caption); region.append(figure);
+  });
+}
 async function uxTeacherCard(kind) {
   await p0Run(async () => {
-    const teacher = await p0Fetch("/api/v2/p0/versions/" + p0.view.production_ref + "/" + p0.view.version_ref + "/teacher");
+    const target = p0Identity();
+    const teacher = await p0Fetch("/api/v2/p0/versions/" + target.production_ref + "/" + target.version_ref + "/teacher");
+    if (!p0DisplayedVersion(target) || teacher.production_ref !== target.production_ref ||
+        teacher.version_ref !== target.version_ref || teacher.bundle_sha256 !== target.bundle_sha256)
+      throw new Error("P0_TEACHER_VERSION_CHANGED");
     const region = document.getElementById("production-card-teacher-preview");
     region.replaceChildren(); region.hidden = false;
     appendSearchText(region, "h3", kind === "correction" ? "Correction — document professeur séparé" : "Barème — document professeur séparé");
-    if (kind === "correction" && teacher.course_chapter) teacher.course_chapter.teacher_answers.forEach((c, i) => {
-      appendSearchText(region, "h4", "Question " + (i + 1));
-      appendSearchText(region, "p", c.expected_answer); appendSearchText(region, "p", c.rationale);
-      appendSearchText(region, "p", "Point de vigilance : " + c.vigilance);
-      appendSearchText(region, "p", "Remédiation : " + c.remediation);
-    });
-    else if (kind === "correction") teacher.corrections.forEach((c, i) => {
-      appendSearchText(region, "h4", "Question " + (i + 1));
-      appendSearchText(region, "p", c.expected_answer); appendSearchText(region, "p", c.rationale);
-    });
-    else teacher.marking.forEach((m, i) => {
-      appendSearchText(region, "h4", "Question " + (i + 1) + " — " + m.points + " points");
-      m.criteria.forEach(criterion => appendSearchText(region, "p", criterion));
-    });
+    const blocks = uxTeacherBlocks(p0.view, teacher, kind);
+    classroomPreview(region,blocks,teacher.media_assets || teacher.course_chapter?.media_assets || []);
     p0Element("status").textContent = "Document professeur consulté séparément. Le sujet élève est inchangé.";
   });
+}
+function uxTeacherBlocks(view, teacher, kind) {
+  const chapter=teacher.course_chapter;
+  if (chapter) {
+    if (kind!=="correction") throw new Error("P0_COURSE_MARKING_NOT_AVAILABLE");
+    const answers=new Map(chapter.teacher_answers.map(answer=>[answer.id,answer]));
+    const blocks=uxCourseBlocks(chapter), result=[];
+    for (const block of blocks) {
+      result.push(block);
+      if (answers.has(block.anchor_ref)) {
+        const answer=answers.get(block.anchor_ref);
+        result.push({style:"Normal",text:answer.expected_answer},{style:"Normal",text:answer.rationale},
+          {style:"Normal",text:"Point de vigilance : "+answer.vigilance},{style:"Normal",text:"Remédiation : "+answer.remediation});
+      }
+    }
+    return result;
+  }
+  const blocks=view.sections.flatMap(section=>[{style:"Heading1",text:section.heading,anchor_ref:section.section_id},
+    {style:"Normal",text:section.text}]);
+  const companions=new Map((kind==="correction" ? teacher.corrections : teacher.marking).map(item=>[item.question_id,item]));
+  for (const [index,question] of view.questions.entries()) {
+    const companion=companions.get(question.question_id);
+    if (!companion) throw new Error("P0_TEACHER_VIEW_BINDING");
+    blocks.push({style:"Heading2",text:"Question "+(index+1),anchor_ref:question.question_id},
+      {style:"Normal",text:question.prompt});
+    if (kind==="correction") blocks.push({style:"Normal",text:companion.expected_answer},{style:"Normal",text:companion.rationale});
+    else blocks.push({style:"Normal",text:companion.points+" points"},
+      ...companion.criteria.map(text=>({style:"Normal",text})));
+  }
+  return blocks;
 }
 function uxSavedCard(saved) {
   const view = saved.record.view;
@@ -1177,7 +1582,8 @@ function uxSavedCard(saved) {
 }
 document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => uxShow(button.dataset.view)));
 document.getElementById("new-preparation").addEventListener("click", () => {
-  uxShow("prepare"); document.getElementById("preparation-prompt").value = ""; document.getElementById("preparation-prompt").focus();
+  if (!uxShow("prepare")) return;
+  document.getElementById("preparation-prompt").value = ""; document.getElementById("preparation-prompt").focus();
 });
 document.getElementById("sources-toggle").addEventListener("click", () => {
   const drawer = document.getElementById("sources-drawer"); drawer.hidden = !drawer.hidden;
@@ -1191,31 +1597,55 @@ document.querySelectorAll("[data-family]").forEach(button => button.addEventList
 document.getElementById("preparation-composer").addEventListener("submit", event => {
   event.preventDefault();
   if (p0.busy || p0.uncertain) { uxMessage("assistant", "Terminez ou vérifiez l’action en attente avant une nouvelle préparation."); return; }
-  const text = document.getElementById("preparation-prompt").value.trim(); if (!text) return;
-  const proposed = proposePreparation(text);
-  uxMessage("user", text); uxRequests.push(text); if (uxRequests.length > 32) uxRequests.shift();
-  for (const id of ["recent-preparations", "session-conversations"]) {
-    const region = document.getElementById(id); region.replaceChildren();
-    [...uxRequests].reverse().forEach(request => { const item = document.createElement("li"), button = document.createElement("button");
-      button.type = "button"; button.textContent = request; button.addEventListener("click", () => { uxShow("prepare"); document.getElementById("preparation-prompt").value = request; }); item.append(button); region.append(item); });
-  }
-  // Replace the proposed context, but retain the explicitly selected source.
-  p0Element("family").value = proposed.family; p0Element("level").value = proposed.level;
-  p0Element("difficulty").value = proposed.difficulty; p0Element("topics").value = proposed.topic;
-  p0Element("objectives").value = proposed.objective;
-  p0Element("discipline").value = proposed.level.includes("BTS") ? "Comptabilité et gestion" : "";
-  p0InstitutionalOptions();
-  p0Element("duration").value = proposed.duration || ""; p0Element("points").value = proposed.points || "";
-  p0Element("family").dispatchEvent(new Event("change")); p0Invalidate();
-  document.getElementById("preparation-parameters").open = true;
-  if (proposed.level.includes("STMG")) uxMessage("assistant", "Choisissez l’enseignement exact et sa question : Management et SGN sont distincts ; en terminale, précisez le commun ou l’enseignement spécifique.");
-  else if (proposed.level.startsWith("BTS_")) uxMessage("assistant", "Choisissez le référentiel exact, son processus et son activité, les compétences, les notions et la profondeur avant de confirmer le contexte. L’année BTS relève de la progression locale.");
-  else uxContext(p0Context());
-  uxMessage("assistant", proposed.ambiguities.length ? "À préciser pour préparer : " + proposed.ambiguities.join(", ") + ". Complétez le contexte puis sélectionnez une source." :
-    "Le contexte proposé est prêt à confirmer. Relisez les paramètres, puis sélectionnez une référence ou un passage de la Bibliothèque.");
-  if (proposed.duration && proposed.family !== "ASSESSMENT") uxMessage("assistant", "La durée est actuellement enregistrable pour les évaluations uniquement. Votre demande reste visible ; aucune durée ne sera ajoutée au contrat de cette production.");
-  document.getElementById("preparation-prompt").value = "";
+  const text = document.getElementById("preparation-prompt").value.trim(); if (!text || !uxDraftConfirm()) return;
+  p0Run(async () => {
+    const response = await proposePreparation(text);
+    uxMessage("user", text);
+    if (response.state === "OUT_OF_SCOPE") {
+      const actions = {MODIFY:"Modifier", REVIEW:"Vérifier", EXPORT:"Exporter"};
+      uxMessage("assistant", "Cette demande concerne une version active : ouvrez votre production puis utilisez « " +
+        (actions[response.unsupported_operation] || "Ouvrir") + " ». La préparation actuelle est conservée.");
+      return;
+    }
+    const proposed = response.proposal;
+    p0.view = null; p0.teacher = null;
+    for (const id of ["drawer-context", "drawer-sources", "drawer-identities"]) document.getElementById(id).replaceChildren();
+    appendSearchText(document.getElementById("drawer-context"), "p", "Nouvelle demande proposée, contexte à confirmer.");
+    appendSearchText(document.getElementById("drawer-sources"), "p", "Aucune source confirmée pour cette demande.");
+    uxQuality(null, null);
+    document.getElementById("production-card").hidden = true;
+    uxRequests.push(text); if (uxRequests.length > 32) uxRequests.shift();
+    for (const id of ["recent-preparations", "session-conversations"]) {
+      const region = document.getElementById(id); region.replaceChildren();
+      [...uxRequests].reverse().forEach(request => { const item = document.createElement("li"), button = document.createElement("button");
+        button.type = "button"; button.textContent = request; button.addEventListener("click", () => {
+          if (uxShow("prepare")) document.getElementById("preparation-prompt").value = request;
+        }); item.append(button); region.append(item); });
+    }
+    p0Element("family").value = proposed.family || ""; p0Element("level").value = proposed.level || "";
+    p0Element("difficulty").value = proposed.difficulty || ""; p0Element("topics").value = proposed.topics.join("\n");
+    p0Element("objectives").value = proposed.objectives.join("\n");
+    p0Element("discipline").value = proposed.level?.startsWith("BTS_") ? "Comptabilité et gestion" : "";
+    p0InstitutionalOptions();
+    p0Element("duration").value = proposed.duration_minutes ?? ""; p0Element("points").value = proposed.total_points ?? "";
+    p0Element("family").dispatchEvent(new Event("change")); p0Invalidate();
+    document.getElementById("preparation-parameters").open = true;
+    uxMessage("assistant", "Proposition déterministe Application, à confirmer. Choisissez l’enseignement, les capacités et les notions exactes dans le catalogue, puis les références utiles.");
+    if (proposed.level?.startsWith("BTS_")) uxMessage("assistant", "Choisissez le référentiel exact, son processus et son activité, puis les compétences et notions avant de confirmer le contexte. L’année BTS relève de la progression locale.");
+    const names = {family:"type de ressource", level:"niveau exact", topics:"sujet", objectives:"objectifs", difficulty:"difficulté",
+      duration_minutes:"durée", total_points:"barème", duration_constraint_application:"application de la durée hors évaluation",
+      points_constraint_application:"application du barème hors évaluation"};
+    if (response.missing_fields.length) uxMessage("assistant", "À préciser : " + response.missing_fields.map(field => names[field] || field).join(", ") + ".");
+    for (const ambiguity of response.ambiguities) uxMessage("assistant", "Choix à confirmer pour " +
+      (names[ambiguity.field] || ambiguity.field) + " : " + ambiguity.candidates.map(value => uxNames[value] || value).join(" ou ") + ".");
+    if (proposed.family !== "ASSESSMENT" && (proposed.duration_minutes || proposed.total_points))
+      uxMessage("assistant", "La durée et le barème demandés restent visibles ici. Leur application hors évaluation n’est pas prise en charge par le contrat actuel ; aucune valeur n’est effacée silencieusement.");
+    p0Element("status").textContent = response.state === "CONTEXT_PROPOSED" ?
+      "Proposition reçue. Confirmez le contexte et sélectionnez les références." : "Proposition reçue avec des précisions nécessaires.";
+    document.getElementById("preparation-prompt").value = "";
+  });
 });
+
 document.getElementById("card-open").addEventListener("click", () => {
   document.getElementById("production-card-teacher-preview").hidden = true;
   document.getElementById("production-card-preview").hidden = false;
@@ -1229,3 +1659,73 @@ document.getElementById("card-export").addEventListener("click", () => p0Run(asy
   await p0SaveVersion(); uxShow("productions");
 }, true, "saving"));
 if (window.matchMedia("(max-width:1180px)").matches) document.getElementById("sources-toggle").click();
+
+// Persistent content is always read via Application. These are presentation pointers only.
+function uxDraftConfirm() {
+  if (!p0.dirty) return true;
+  if (!window.confirm("Des modifications ne sont pas encore conservées. Les abandonner pour changer de vue ou de document ?")) return false;
+  p0.dirty = false;
+  if (p0.view) p0Render(p0.view);
+  return true;
+}
+function p0Edited() {
+  p0.dirty = true; p0Controls();
+  p0Element("status").textContent = "Modification en cours. Conservez-la dans une nouvelle version avant de vérifier, sauvegarder ou exporter.";
+}
+document.getElementById("production-edit-panel").addEventListener("input", p0Edited);
+p0Element("teacher-content").addEventListener("input", p0Edited);
+window.addEventListener("beforeunload", event => {
+  if (!p0.dirty && !document.getElementById("home-prompt").value.trim() &&
+      !document.getElementById("preparation-prompt").value.trim()) return;
+  event.preventDefault(); event.returnValue = "";
+});
+function uxHomeVersions(versions) {
+  const region = document.getElementById("home-productions"); region.replaceChildren();
+  if (!versions.length) appendSearchText(region, "p", "Aucune production sauvegardée dans cette bibliothèque.");
+  for (const version of versions.slice(-6).reverse()) {
+    const card = document.createElement("article"); card.className = "resource-card";
+    appendSearchText(card, "span", version.origin === "LOCAL_APPLICATION" ? "Candidate à relire" : "Document conservé · lecture seule", "badge");
+    appendSearchText(card, "h3", version.title || "Production conservée");
+    appendSearchText(card, "p", (uxNames[version.context?.level] || "Contexte conservé") + " · Version " + version.version_ref.slice(-8));
+    const open = document.createElement("button"); open.type = "button"; open.className = "btn small"; open.textContent = "Ouvrir";
+    open.addEventListener("click", () => { if (!uxShow("productions")) return;
+      r4Versions.value = version.production_ref + "/" + version.version_ref; r4Run(r4Open); });
+    card.append(open); region.append(card);
+  }
+  const exact = r4Record && versions.find(v => v.production_ref === r4Record.record.view.production_ref && v.version_ref === r4Record.record.view.version_ref);
+  document.getElementById("home-resume").hidden = !exact;
+  if (exact) {
+    document.getElementById("home-resume-title").textContent = exact.title || "Dernière version consultée";
+    document.getElementById("home-resume-context").textContent = "Dernière version consultée · " + exact.version_ref.slice(-8);
+  }
+}
+document.getElementById("home-resume-open").addEventListener("click", () => {
+  if (r4Record && uxShow("productions")) {
+    r4Versions.value = r4Record.record.view.production_ref + "/" + r4Record.record.view.version_ref; r4Run(r4Open);
+  }
+});
+document.getElementById("home-composer").addEventListener("submit", event => {
+  event.preventDefault(); if (!uxShow("prepare")) return;
+  document.getElementById("preparation-prompt").value = document.getElementById("home-prompt").value;
+  document.getElementById("home-prompt").value = "";
+  document.getElementById("preparation-composer").requestSubmit();
+});
+document.querySelectorAll("[data-start-family]").forEach(button => button.addEventListener("click", () => {
+  if (!uxShow("prepare")) return;
+  document.getElementById("preparation-prompt").value = "Prépare " + uxNames[button.dataset.startFamily].toLocaleLowerCase("fr") + " ";
+  document.getElementById("preparation-prompt").focus();
+}));
+document.getElementById("r4-resume").addEventListener("click", () => p0Run(async () => {
+  if (!uxDraftConfirm()) return;
+  const saved = r4Record;
+  if (!saved || saved.record.origin !== "LOCAL_APPLICATION") throw new Error("P0_SAVED_SOURCE_REJECTED");
+  const selected = saved.record.view;
+  uxShow("prepare");
+  p0Element("status").textContent = "Lecture de la version et vérification de sa chaîne de parents…";
+  const view = await p0Fetch("/api/v2/p0/versions/" + selected.production_ref + "/" + selected.version_ref);
+  if (r4Record !== saved || view.production_ref !== selected.production_ref || view.version_ref !== selected.version_ref ||
+      view.bundle_sha256 !== selected.bundle_sha256) throw new Error("P0_SAVED_VERSION_CHANGED");
+  p0Render(view, {sources:"RESERVE", human_review:"HUMAN_REVIEW_REQUIRED"});
+  uxShow("prepare"); document.getElementById("production-edit-panel").open = false;
+  p0Element("status").textContent = "Version exacte reprise pour édition locale. Références historiques non revalidées ; aucun droit fournisseur restauré.";
+}));

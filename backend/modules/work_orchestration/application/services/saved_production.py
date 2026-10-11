@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     AssessmentBundle,
+    as_plain,
     items,
     object_data,
 )
@@ -34,11 +35,24 @@ class SavedProductionService:
                 "status": "PROMOTED" if any(a.get("kind") == "CAP-A02" for a in actions)
                           else "CANDIDATE", "new_actions": [dict(a) for a in actions]}
 
+    def read_local_p0(self, production_ref: str, version_ref: str) -> SavedProduction:
+        """Authenticated immutable record, without restoring session actions or rights."""
+        record = self.store.load(production_ref, version_ref)
+        if (record.production_ref, record.version_ref) != (production_ref, version_ref):
+            raise ValueError("P0_SAVED_VERSION_BINDING")
+        if record.data["origin"] != "LOCAL_APPLICATION" or record.p0_bundle is None:
+            raise ValueError("P0_SAVED_SOURCE_REJECTED")
+        return record
+
     def list_versions(self) -> list[dict[str, object]]:
         return [{"production_ref": r.production_ref, "version_ref": r.version_ref,
                  "record_sha256": r.sha256, "origin": r.data["origin"],
                  "has_bundle": r.bundle is not None or r.p0_bundle is not None,
-                 "contract_id": r.data["contract_id"]} for r in self.store.list_versions()]
+                 "contract_id": r.data["contract_id"],
+                 "title": object_data(r.data["view"]).get("title", "Production conservée"),
+                 "context": as_plain(object_data(r.data["view"]).get("pedagogical_context", {})),
+                 "parent_version_ref": object_data(object_data(r.data["view"])["lineage"]).get("parent_version_ref")}
+                for r in self.store.list_versions()]
 
     def validate_p0(self, production_ref: str, version_ref: str, action_id: str,
                     expected_sha256: str) -> dict[str, object]:

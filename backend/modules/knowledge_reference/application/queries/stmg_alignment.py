@@ -208,6 +208,10 @@ class ReadSTMGAlignment:
     def matrix(self) -> dict[str, object]:
         data = self.catalog.read_institutional_catalog()
         snapshot = self._snapshot(data)
+        treatment = QualifiedInstitutionalCorpus(data).treatment()
+        qualified = {str(link["attachment_ref"]): link
+                     for notion in _rows(treatment, "notions")
+                     for link in _rows(notion, "relations")}
         frames = _rows(snapshot, "frames")
         contexts = {str(c["id"]): c for c in _rows(data, "pedagogical_context")}
         elements = {str(e["id"]): e for e in _rows(data, "official_framework_element")}
@@ -235,11 +239,15 @@ class ReadSTMGAlignment:
                     for link in attachments.get(str(notion["notion_ref"]), []):
                         element = elements.get(str(link["framework_element_id"]))
                         if link["notion_id"] == notion["notion_ref"] and element is not None and element["framework_version_id"] == frame["program_version"]:
+                            proof = qualified.get(str(link["id"]))
                             relationships.append({"program_ref": frame["program_ref"], "program_version": frame["program_version"],
                                 "attachment": link, "element": element, "nature": link["attachment_type"],
-                                "status": link["status"], "provenance": link["origin_type"], "depth": link["depth_level"]})
+                                "status": link["status"], "provenance": link["origin_type"], "depth": link["depth_level"],
+                                "qualification": proof,
+                                "authority": "OWNER_ADMITTED_VERSIONED_PROOF" if proof else "REQUIRES_ADMISSION"})
                 scopes.append({"frame": frame_key, "relationships": relationships,
-                               "status": "LINKS_REQUIRE_ADMISSION" if relationships else "CONTENT_GAP"})
+                               "status": "RESOLVED_ADMITTED" if any(r.get("qualification") for r in relationships)
+                                    else "LINKS_REQUIRE_ADMISSION" if relationships else "CONTENT_GAP"})
             matrix.append({**notion, "scopes": scopes})
         return {"contract_id": "STMG-NOTION-MATRIX-1.0", "notion_count": len(matrix), "frames": list(STMG_FRAMES),
                 "notions": matrix, "authority": "NO_IMPLICIT_PROMOTION", "seed_modified": False}

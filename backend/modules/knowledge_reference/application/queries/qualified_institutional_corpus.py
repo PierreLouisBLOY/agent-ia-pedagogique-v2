@@ -99,6 +99,85 @@ class QualifiedInstitutionalCorpus:
             return []
         return [r for r in items(proof.data["attachments"], 6000) if r["notion_ref"] == notion_ref and r["element_ref"] in element_refs]
 
+    def treatment(self) -> dict[str, object]:
+        """Trace current admissions and gaps, without promoting contextual links."""
+        qualifications = {proof.sha256: proof for proof in self.proofs.values()}
+        qualified_notions: dict[str, list[dict[str, object]]] = {}
+        relations: dict[str, list[dict[str, object]]] = {}
+        for checksum, proof in qualifications.items():
+            for notion in items(proof.data["notions"], 628):
+                qualified_notions.setdefault(str(notion["notion_ref"]), []).append({
+                    **notion, "qualification_sha256": checksum})
+            elements = {str(e["id"]): e for e in items(proof.data["elements"], 3000)}
+            for link in items(proof.data["attachments"], 6000):
+                element = elements[str(link["element_ref"])]
+                version = self.version(element["version_ref"])
+                assert version is not None
+                ancestors = [element]
+                parent = elements.get(str(element["parent_ref"]))
+                while parent is not None:
+                    ancestors.append(parent)
+                    parent = elements.get(str(parent["parent_ref"]))
+                ancestor_ids = {str(e["id"]) for e in ancestors}
+                capabilities = [e for e in elements.values()
+                    if e["version_ref"] == element["version_ref"]
+                    and e["element_type"] in {"CAPACITY", "COMPETENCY"}
+                    and (e["id"] in ancestor_ids or e["parent_ref"] in ancestor_ids)]
+                relations.setdefault(str(link["notion_ref"]), []).append({
+                    "attachment_ref": link["id"],
+                    "relation_type": "EXPLICIT" if link["disposition"] == "VERIFIED_EXPLICIT" else "IMPLICIT",
+                    "disposition": link["disposition"], "justification": link["justification"],
+                    "framework": version, "element": element,
+                    "ancestors": list(reversed(ancestors)), "capabilities": capabilities,
+                    "capability_scope": "SAME_QUESTION_THEME_OR_ACTIVITY_NO_NARROWER_CLAIM",
+                    "document_provenance": self.document(element["version_ref"]),
+                    "qualification_sha256": checksum,
+                    "owner_admission_sha256": proof.data["owner_decision_sha256"],
+                    "authority": "OWNER_ADMITTED_VERSIONED_PROOF",
+                    "pedagogical_depth": link["pedagogical_depth"],
+                    "official_depth": link["official_depth"],
+                    "year_authority": "LOCAL_PROGRESSION_ONLY" if version["frame"] == "BTS CG - Annexe I" else "NOT_APPLICABLE",
+                    "teacher_acceptance": "NOT_PERFORMED"})
+        contexts = {str(c["id"]): c for c in rows(self.data, "pedagogical_context")}
+        contextual: dict[str, list[dict[str, object]]] = {}
+        for link in rows(self.data, "notion_context"):
+            context = contexts.get(str(link["context_id"]))
+            if context is not None:
+                contextual.setdefault(str(link["notion_id"]), []).append({
+                    "context_ref": context["id"],
+                    "program_version": context["framework_version_id"],
+                    "element_ref": context["framework_element_id"],
+                    "role": link["role"], "status": link["status"],
+                    "authority": "CONTEXTUAL_NOT_OFFICIAL_ADMISSION",
+                    "provenance": context["notes"]})
+        treatment = []
+        for notion in rows(self.data, "notion"):
+            if notion["identity_status"] != "CANONICAL":
+                continue
+            ref = str(notion["id"])
+            dispositions = qualified_notions.get(ref, [])
+            links = relations.get(ref, [])
+            if links:
+                disposition = "VERIFIED_EXPLICIT" if any(
+                    link["relation_type"] == "EXPLICIT" for link in links) else "VERIFIED_IMPLICIT"
+            elif dispositions and len({n["disposition"] for n in dispositions}) == 1:
+                disposition = str(dispositions[0]["disposition"])
+            else:
+                disposition = "HUMAN_REVIEW_REQUIRED" if dispositions else "SOURCE_GAP"
+            treatment.append({
+                "notion_ref": ref, "label": notion["canonical_label"],
+                "identity_status": "CANONICAL", "disposition": disposition,
+                "qualification_dispositions": dispositions,
+                "relations": links, "contextual_relationships": contextual.get(ref, []),
+                "reason": " | ".join(str(n["reason"]) for n in dispositions) if dispositions
+                    else "NO_VERSIONED_INSTITUTIONAL_QUALIFICATION_FOR_THIS_IDENTITY",
+                "disciplinary_authority": "SEPARATE_EVIDENCE_REQUIRED",
+                "teacher_acceptance": "NOT_PERFORMED"})
+        return {"contract_id": "INSTITUTIONAL-NOTION-TREATMENT-1.0",
+            "notion_count": len(treatment), "notions": treatment,
+            "qualification_sha256s": sorted(qualifications),
+            "authority": "NO_IMPLICIT_PROMOTION", "provider_calls": 0}
+
     def resolve_scope(self, *, version_ref: str, element_ref: str, notion_refs: tuple[str, ...],
                       local_year: str | None = None) -> dict[str, object]:
         """Native BTS process/activity or STMG question; no inferred yearly syllabus."""

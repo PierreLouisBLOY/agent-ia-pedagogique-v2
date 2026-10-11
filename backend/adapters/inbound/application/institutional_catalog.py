@@ -19,6 +19,9 @@ class InstitutionalCatalogInbound:
     def read(self) -> dict[str, object]:
         return dict(self.query.read())
 
+    def treatment(self) -> dict[str, object]:
+        return self.query.treatment()
+
     def resolve_scope(self, *, version_ref: str, element_ref: str, notion_refs: tuple[str, ...],
                       local_year: str | None = None) -> dict[str, object]:
         return self.query.resolve_scope(version_ref=version_ref, element_ref=element_ref,

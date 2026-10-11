@@ -16,13 +16,14 @@ from backend.modules.knowledge_reference.application.queries.stmg_alignment impo
 
 
 def inspect_institutional_catalog(target: Read15RuntimeTarget, *, read: bool = False,
+                                 treatment: bool = False,
                                  scope: tuple[str, str, tuple[str, ...], str | None] | None = None) -> dict[str, object]:
     target.validate()
     connection = connect_sqlite(target.runtime_path, readonly=True, allowed_root=target.data_root)
     try:
         inbound = InstitutionalCatalogInbound(InspectInstitutionalCatalog(
             SQLiteInstitutionalCatalogAdapter(connection)))
-        result = inbound.resolve_scope(version_ref=scope[0], element_ref=scope[1], notion_refs=scope[2], local_year=scope[3]) if scope else inbound.read() if read else inbound.inspect()
+        result = inbound.resolve_scope(version_ref=scope[0], element_ref=scope[1], notion_refs=scope[2], local_year=scope[3]) if scope else inbound.treatment() if treatment else inbound.read() if read else inbound.inspect()
     finally:
         connection.close()
     target.validate()

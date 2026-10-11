@@ -276,9 +276,16 @@ async function localBoundedRequest(path, options, consume, timeoutMs = 10000) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await consume(await fetch(path, {...options, signal: controller.signal}));
+    const response = await fetch(path, {...options, signal: controller.signal});
+    if (controller.signal.aborted) throw new Error("LOCAL_REQUEST_TIMEOUT");
+    const result = await consume(response);
+    if (controller.signal.aborted) throw new Error("LOCAL_REQUEST_TIMEOUT");
+    return result;
   } catch (error) {
-    if (controller.signal.aborted) error.localTimedOut = true;
+    if (controller.signal.aborted) {
+      error.localTimedOut = true;
+      error.confirmedRefusal = false;
+    }
     throw error;
   } finally { clearTimeout(timeout); }
 }
@@ -820,7 +827,7 @@ async function p0Fetch(path, body = null, contract = "R6-P0-HTTP-LOCAL-1.0") {
     options.headers["X-R2-Nonce"] = p0.nonce;
     options.body = JSON.stringify(body);
   }
-  return localBoundedRequest(path, options, async response => {
+  try { return await localBoundedRequest(path, options, async response => {
   const envelope = await response.json();
   if (!response.ok || envelope?.meta?.contract_id !== contract) {
     const error = new Error(envelope?.error?.code || "P0_REFUSED");
@@ -829,8 +836,14 @@ async function p0Fetch(path, body = null, contract = "R6-P0-HTTP-LOCAL-1.0") {
     throw error;
   }
   return envelope.data;
-  }, path === "/api/v2/p0/generate" || path === "/api/v2/p0/consent-generate" ? 150000 :
-    path === "/api/v2/p0" || path === "/api/v2/p0/media" || /^\/api\/v2\/p0\/(versions\/|notion-evidence\?)/.test(path) ? 60000 : 10000);
+  }, path === "/api/v2/p0/generate" || path === "/api/v2/p0/consent-generate" || path === "/api/v2/p0/consent-preview" ? 150000 :
+    path === "/api/v2/p0" || path === "/api/v2/p0/prepare" ||
+    path === "/api/v2/p0/media" || /^\/api\/v2\/p0\/(versions\/|notion-evidence\?)/.test(path) ? 60000 : 10000);
+  } catch (error) {
+    if (path === "/api/v2/p0/prepare" && /^[0-9a-f]{32}$/.test(body?.command_id))
+      error.localCommandId = body.command_id;
+    throw error;
+  }
 }
 async function p0Run(action, mutation = false, state = "loading") {
   if (p0.busy || (mutation && p0.uncertain)) return;
@@ -844,9 +857,12 @@ async function p0Run(action, mutation = false, state = "loading") {
     p0Element("status").textContent = error.localPrecondition ?
       "Connexion locale indisponible. Aucun envoi de commande ; reconnectez-vous explicitement avant de reprendre." :
       error.localTimedOut && !mutation ? "La consultation locale a dépassé son délai. Aucun envoi de commande ; reprenez la consultation explicitement." :
-      "Action non confirmée : " + error.message +
+      (error.localTimedOut && mutation ? "Le délai local est dépassé ; le résultat de la commande reste à vérifier" :
+        "Action non confirmée : " + error.message) +
       (p0.uncertain ? ". Aucun renvoi automatique ; vérifiez la version avant de reprendre." :
         error.confirmedRefusal ? ". Refus confirmé ; corrigez la demande avant une nouvelle action explicite." : ". Réessayez la consultation explicitement.");
+    if (p0.uncertain && /^[0-9a-f]{32}$/.test(error.localCommandId))
+      p0Element("status").textContent += " Commande locale : " + error.localCommandId + ".";
   } finally { p0.busy = false; p0Controls(); uxMessage("assistant", p0Element("status").textContent); }
 }
 const p0Command = () => crypto.randomUUID().replaceAll("-", "");

@@ -43,7 +43,8 @@ async function check(mode) {
   const result = context.localBoundedRequest('/local', {method:'POST'}, response => response.json());
   await Promise.resolve(); await Promise.resolve();
   if (mode === 'success') assert.equal((await result).state, 'OK');
-  else {deadline(); await assert.rejects(result, /ABORTED/);}
+  else {deadline(); await assert.rejects(result, error => error.localTimedOut === true &&
+    /ABORTED|LOCAL_REQUEST_TIMEOUT/.test(error.message));}
   assert.equal(calls, 1, 'A stalled command must never retry automatically');
 }
 (async () => {for (const mode of ['success','headers','body']) await check(mode); checkPreview(); console.log('3 transport checks and classroom preview PASS');})().catch(error => {console.error(error); process.exitCode=1;});

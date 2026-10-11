@@ -277,6 +277,9 @@ async function localBoundedRequest(path, options, consume, timeoutMs = 10000) {
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await consume(await fetch(path, {...options, signal: controller.signal}));
+  } catch (error) {
+    if (controller.signal.aborted) error.localTimedOut = true;
+    throw error;
   } finally { clearTimeout(timeout); }
 }
 
@@ -550,6 +553,7 @@ for (const [name, operation] of [["prepare", "assessment-preparations"], ["revie
 let r4Nonce = "";
 let r4Record = null;
 let r4Busy = false;
+let r4ResumePending = false;
 let r4Uncertain = false;
 let r4SavedVersions = [];
 const r4Status = document.getElementById("r4-status");
@@ -571,7 +575,7 @@ function r4Controls() {
   const selector = document.getElementById("r4-kind");
   for (const option of selector.options) option.disabled = !kinds.includes(option.value);
   if (!kinds.includes(selector.value)) selector.value = "student";
-  document.getElementById("r4-resume").disabled = r4Busy || !r4Record ||
+  document.getElementById("r4-resume").disabled = r4Busy || r4ResumePending || !r4Record ||
     r4Record.record.origin !== "LOCAL_APPLICATION" || !r4Record.record.view.bundle_sha256;
   for (const id of ["r4-preview", "r4-download", "r4-validate", "r4-promote"])
     document.getElementById(id).disabled = r4Busy || !r4Record ||
@@ -782,21 +786,24 @@ r4Run(r4Refresh);
 
 // P0 companion: all families use the same Application lifecycle and exact versions.
 const p0 = {nonce: null, references: [], prepared: null, view: null, teacher: null, consent: null,
-  busy: false, uncertain: false, contextRevision: 0, editInputs: []};
+  busy: false, uncertain: false, contextRevision: 0, editInputs: [], connected: false,
+  liveBinding: "NONE", normalConsentBinding: "NONE", mediaBinding: "NONE"};
+let p0ConnectionPromise = null;
 const p0Element = id => document.getElementById("p0-" + id);
 function p0Controls() {
   for (const input of p0.editInputs || []) input.disabled = p0.busy;
   p0Element("prepare").disabled = p0.busy || p0.uncertain || !p0.nonce;
-  p0Element("generate").disabled = p0.busy || p0.uncertain || !p0.prepared || p0.liveBinding === "NONE" ||
+  p0Element("generate").disabled = p0.busy || p0.uncertain || !p0.nonce || !p0.prepared || p0.liveBinding === "NONE" ||
     p0.prepared?.context?.institutional_resolution?.status === "CONTENT_GAP";
-  p0Element("consent-send").disabled = p0.busy || p0.uncertain || !p0.consent ||
+  p0Element("consent-send").disabled = p0.busy || p0.uncertain || !p0.nonce || !p0.consent ||
     !p0Element("consent-transfer").checked || !p0Element("consent-cost").checked ||
     !p0ConsentMatches(p0.consent, p0.prepared);
   for (const id of ["teacher", "revise", "validate", "save"])
     p0Element(id).disabled = p0.busy || p0.uncertain || !p0.view;
+  for (const id of ["revise", "validate"]) p0Element(id).disabled ||= !p0.nonce;
   p0Element("teacher").disabled ||= !!p0.dirty;
   for (const id of ["save", "validate"]) p0Element(id).disabled ||= !!p0.dirty;
-  p0Element("media-apply").disabled = p0.busy || p0.uncertain || !p0.view || !!p0.view.course_chapter || p0.mediaBinding !== "LOCAL_DIAGRAM_OR_NO_MEDIA";
+  p0Element("media-apply").disabled = p0.busy || p0.uncertain || !p0.nonce || !p0.view || !!p0.view.course_chapter || p0.mediaBinding !== "LOCAL_DIAGRAM_OR_NO_MEDIA";
   for (const id of ["open", "modify", "check", "correction", "marking", "export"])
     document.getElementById("card-" + id).disabled = p0.busy || p0.uncertain || !p0.view ||
       (id === "correction" && !p0.view.questions.length && !p0.view.course_chapter) ||
@@ -807,6 +814,7 @@ async function p0Fetch(path, body = null, contract = "R6-P0-HTTP-LOCAL-1.0") {
   const options = {method: body ? "POST" : "GET", credentials: "omit", cache: "no-store",
     redirect: "error", headers: {"X-Local-Intent": "conversation-v1"}};
   if (body) {
+    await p0EnsureConnected();
     options.headers["Content-Type"] = "application/json; charset=utf-8";
     options.headers["X-R2-Nonce"] = p0.nonce;
     options.body = JSON.stringify(body);
@@ -821,7 +829,7 @@ async function p0Fetch(path, body = null, contract = "R6-P0-HTTP-LOCAL-1.0") {
   }
   return envelope.data;
   }, path === "/api/v2/p0/generate" || path === "/api/v2/p0/consent-generate" ? 150000 :
-    path === "/api/v2/p0/media" || /^\/api\/v2\/p0\/(versions\/|notion-evidence\?)/.test(path) ? 60000 : 10000);
+    path === "/api/v2/p0" || path === "/api/v2/p0/media" || /^\/api\/v2\/p0\/(versions\/|notion-evidence\?)/.test(path) ? 60000 : 10000);
 }
 async function p0Run(action, mutation = false, state = "loading") {
   if (p0.busy || (mutation && p0.uncertain)) return;
@@ -832,7 +840,10 @@ async function p0Run(action, mutation = false, state = "loading") {
   catch (error) {
     if (mutation && !error.confirmedRefusal) p0.uncertain = true;
     p0Element("status").dataset.state = "error";
-    p0Element("status").textContent = "Action non confirmée : " + error.message +
+    p0Element("status").textContent = error.localPrecondition ?
+      "Connexion locale indisponible. Aucun envoi de commande ; reconnectez-vous explicitement avant de reprendre." :
+      error.localTimedOut && !mutation ? "La consultation locale a dépassé son délai. Aucun envoi de commande ; reprenez la consultation explicitement." :
+      "Action non confirmée : " + error.message +
       (p0.uncertain ? ". Aucun renvoi automatique ; vérifiez la version avant de reprendre." :
         error.confirmedRefusal ? ". Refus confirmé ; corrigez la demande avant une nouvelle action explicite." : ". Réessayez la consultation explicitement.");
   } finally { p0.busy = false; p0Controls(); uxMessage("assistant", p0Element("status").textContent); }
@@ -1351,28 +1362,57 @@ async function p0SaveVersion() {
   await r4Open(); p0Element("status").textContent = "Version sauvegardée et rouverte. Exports disponibles dans l’espace de conservation.";
 }
 p0Element("save").addEventListener("click", () => p0Run(p0SaveVersion, true, "saving"));
+function p0ConnectionReady() {
+  return p0.connected === true && typeof p0.nonce === "string" && /^[A-Za-z0-9_-]{43}$/.test(p0.nonce);
+}
+async function p0EnsureConnected() {
+  if (p0ConnectionReady()) return;
+  try {
+    await p0Connect();
+    if (!p0ConnectionReady()) throw new Error("P0_LOCAL_CONNECTION_REQUIRED");
+  } catch (error) {
+    throw Object.assign(new Error("P0_LOCAL_CONNECTION_UNAVAILABLE"), {
+      confirmedRefusal: true, localPrecondition: true, localTimedOut: !!error.localTimedOut
+    });
+  }
+}
 async function p0Connect() {
-  const metadata = await p0Fetch("/api/v2/p0");
-  p0.nonce = metadata.transport_nonce; p0.references = metadata.references;
-  p0.institutionalCatalog = metadata.institutional_catalog;
-  p0InstitutionalOptions();
-  p0.liveBinding = metadata.live_binding;
-  p0.normalConsentBinding = metadata.normal_consent_binding || "NONE";
-  p0.mediaBinding = metadata.media_binding;
-  p0Element("generate").textContent = metadata.live_binding === "NONE" ? "Génération indisponible dans cette composition" :
-    p0.normalConsentBinding === "EXPLICIT_PRODUCT_PERMISSION" ? "Examiner l’envoi et son coût" : "Demander la génération autorisée";
-  p0Element("reference").replaceChildren();
-  const empty = document.createElement("option"); empty.value = ""; empty.textContent = "Choisir une référence";
-  p0Element("reference").append(empty);
-  p0.references.forEach((ref, i) => {
-    const option = document.createElement("option"); option.value = String(i);
-    option.textContent = ref.title;
-    p0Element("reference").append(option);
-  });
-  p0Element("status").textContent = "Contexte prêt à renseigner. Aucune génération autorisée.";
+  if (p0ConnectionPromise) return p0ConnectionPromise;
+  p0.connected = false; p0.nonce = null;
+  p0.liveBinding = "NONE"; p0.normalConsentBinding = "NONE"; p0.mediaBinding = "NONE";
+  p0Element("generate").textContent = "Génération indisponible : connexion locale à établir";
+  p0ConnectionPromise = (async () => {
+    const metadata = await p0Fetch("/api/v2/p0");
+    if (metadata?.state !== "READY" || metadata.authority !== "NONE" ||
+        typeof metadata.transport_nonce !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(metadata.transport_nonce) ||
+        !Array.isArray(metadata.references) || !metadata.references.every(ref => ref && typeof ref.title === "string") ||
+        !["NONE", "EXPLICIT_PORT"].includes(metadata.live_binding) ||
+        !["NONE", "EXPLICIT_PRODUCT_PERMISSION"].includes(metadata.normal_consent_binding || "NONE") ||
+        !["NONE", "LOCAL_DIAGRAM_OR_NO_MEDIA"].includes(metadata.media_binding))
+      throw new Error("P0_LOCAL_METADATA_REJECTED");
+    p0.references = metadata.references; p0.institutionalCatalog = metadata.institutional_catalog;
+    p0InstitutionalOptions();
+    p0.liveBinding = metadata.live_binding;
+    p0.normalConsentBinding = metadata.normal_consent_binding || "NONE";
+    p0.mediaBinding = metadata.media_binding;
+    p0Element("generate").textContent = metadata.live_binding === "NONE" ? "Génération indisponible dans cette composition" :
+      p0.normalConsentBinding === "EXPLICIT_PRODUCT_PERMISSION" ? "Examiner l’envoi et son coût" : "Demander la génération autorisée";
+    p0Element("reference").replaceChildren();
+    const empty = document.createElement("option"); empty.value = ""; empty.textContent = "Choisir une référence";
+    p0Element("reference").append(empty);
+    p0.references.forEach((ref, i) => {
+      const option = document.createElement("option"); option.value = String(i);
+      option.textContent = ref.title; p0Element("reference").append(option);
+    });
+    p0.nonce = metadata.transport_nonce; p0.connected = true;
+    p0Element("status").textContent = "Contexte prêt à renseigner. Aucune génération autorisée.";
+  })();
+  try { return await p0ConnectionPromise; }
+  finally { p0ConnectionPromise = null; }
 }
 p0Element("connect").addEventListener("click", () => p0Run(p0Connect));
-p0Run(p0Connect);
+let p0InitialConnectionPending = true;
+const p0InitialConnection = p0Run(p0Connect).finally(() => { p0InitialConnectionPending = false; });
 
 // Conversational shell: proposals are deterministic and explicitly confirmed.
 // Business versions are saved through Application, never in browser storage.
@@ -1715,17 +1755,46 @@ document.querySelectorAll("[data-start-family]").forEach(button => button.addEve
   document.getElementById("preparation-prompt").value = "Prépare " + uxNames[button.dataset.startFamily].toLocaleLowerCase("fr") + " ";
   document.getElementById("preparation-prompt").focus();
 }));
-document.getElementById("r4-resume").addEventListener("click", () => p0Run(async () => {
-  if (!uxDraftConfirm()) return;
+async function p0ResumeSaved() {
+  if (r4ResumePending) return;
   const saved = r4Record;
-  if (!saved || saved.record.origin !== "LOCAL_APPLICATION") throw new Error("P0_SAVED_SOURCE_REJECTED");
-  const selected = saved.record.view;
-  uxShow("prepare");
-  p0Element("status").textContent = "Lecture de la version et vérification de sa chaîne de parents…";
-  const view = await p0Fetch("/api/v2/p0/versions/" + selected.production_ref + "/" + selected.version_ref);
-  if (r4Record !== saved || view.production_ref !== selected.production_ref || view.version_ref !== selected.version_ref ||
-      view.bundle_sha256 !== selected.bundle_sha256) throw new Error("P0_SAVED_VERSION_CHANGED");
-  p0Render(view, {sources:"RESERVE", human_review:"HUMAN_REVIEW_REQUIRED"});
-  uxShow("prepare"); document.getElementById("production-edit-panel").open = false;
-  p0Element("status").textContent = "Version exacte reprise pour édition locale. Références historiques non revalidées ; aucun droit fournisseur restauré.";
-}));
+  if (p0.busy && !p0InitialConnectionPending) {
+    r4Status.textContent = "Une action est déjà en cours dans l’atelier. Reprenez explicitement après sa fin.";
+    return;
+  }
+  r4ResumePending = true; r4Controls();
+  try {
+    if (p0InitialConnectionPending) {
+      r4Status.textContent = "Reprise demandée : attente de la connexion locale de l’atelier…";
+      await p0InitialConnection;
+    }
+    if (p0.busy) {
+      r4Status.textContent = "Une action est déjà en cours dans l’atelier. Reprenez explicitement après sa fin.";
+      return;
+    }
+    if (r4Record !== saved) {
+      r4Status.textContent = "La sélection sauvegardée a changé. Reprenez explicitement la version souhaitée.";
+      return;
+    }
+    await p0Run(async () => {
+      if (!uxDraftConfirm()) {
+        p0Element("status").textContent = "Reprise annulée. Les modifications de l’atelier sont conservées.";
+        return;
+      }
+      if (!saved || saved.record.origin !== "LOCAL_APPLICATION") throw new Error("P0_SAVED_SOURCE_REJECTED");
+      const selected = saved.record.view;
+      await p0EnsureConnected();
+      if (r4Record !== saved) throw new Error("P0_SAVED_VERSION_CHANGED");
+      uxShow("prepare");
+      p0Element("status").textContent = "Lecture de la version et vérification de sa chaîne de parents…";
+      const view = await p0Fetch("/api/v2/p0/versions/" + selected.production_ref + "/" + selected.version_ref);
+      if (r4Record !== saved || view.production_ref !== selected.production_ref || view.version_ref !== selected.version_ref ||
+          view.bundle_sha256 !== selected.bundle_sha256) throw new Error("P0_SAVED_VERSION_CHANGED");
+      p0Render(view, {sources:"RESERVE", human_review:"HUMAN_REVIEW_REQUIRED"});
+      uxShow("prepare"); document.getElementById("production-edit-panel").open = false;
+      p0Element("status").textContent = "Version exacte reprise pour édition locale. Références historiques non revalidées ; aucun droit fournisseur restauré.";
+    });
+    r4Status.textContent = p0Element("status").textContent;
+  } finally { r4ResumePending = false; r4Controls(); }
+}
+document.getElementById("r4-resume").addEventListener("click", p0ResumeSaved);

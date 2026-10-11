@@ -162,3 +162,112 @@ test("rechoosing a passage in the same context clears preparation and consent wi
   h.ctx.p0Invalidate();buttons[0].listeners.click[0]();
   assert.equal(h.pe("search-passage").value,"synthetic:second-passage","A real context change still makes old buttons stale");
 });
+
+// The next tests execute the proposed source verbatim. DOM, HTTP and deadlines
+// are explicit doubles. No browser engine, server, SQL or provider is invoked.
+const proposedSource=fs.readFileSync(path.join(__dirname,"../../frontend/app.js"),"utf8");
+const fragment=(start,end)=>{const a=proposedSource.indexOf(start),b=proposedSource.indexOf(end,a+1);
+  assert(a>=0&&b>a,start);return proposedSource.slice(a,b);};
+const flush=()=>new Promise(done=>setImmediate(done));
+const syntheticView=()=>({production_ref:"prod:"+"1".repeat(32),version_ref:"ver:"+"2".repeat(32),
+  bundle_sha256:"2".repeat(64),title:"SYNTHETIC LOCAL DOCUMENT",
+  pedagogical_context:{resource_type:"EXERCISE",level:"BTS_CG_YEAR_2",objectives:[]},references:[],
+  sections:[{section_id:"S1",heading:"Situation",text:"DONNEES SYNTHETIQUES"}],questions:[]});
+const syntheticMetadata=()=>({state:"READY",authority:"NONE",transport_nonce:"N".repeat(43),references:[],
+  live_binding:"NONE",normal_consent_binding:"NONE",media_binding:"NONE",
+  institutional_catalog:{frames:[],bts_frameworks:[],notions:[]}});
+const envelope=data=>({ok:true,status:200,json:async()=>({meta:{contract_id:"R6-P0-HTTP-LOCAL-1.0"},data})});
+function connectionHarness(metadataHandler){
+  const h=ctx.harness(),network=[],deadlines=new Map();let serial=0;
+  Object.assign(h.ctx.p0,{nonce:null,connected:false,liveBinding:"NONE",normalConsentBinding:"NONE",mediaBinding:"NONE"});
+  Object.assign(h.ctx,{AbortController,setTimeout:(fn,ms)=>{const id=++serial;deadlines.set(id,{fn,ms});return id;},
+    clearTimeout:id=>deadlines.delete(id),r4Record:{record:{origin:"LOCAL_APPLICATION",view:syntheticView()}},
+    r4ResumePending:false,r4Status:h.node("r4-status"),r4Controls:()=>{
+      h.node("r4-resume").disabled=h.ctx.r4ResumePending;},fetch:async(route,options)=>{
+      network.push({route,options});
+      if(route==="/api/v2/p0")return metadataHandler?metadataHandler(route,options):envelope(syntheticMetadata());
+      if(route.startsWith("/api/v2/p0/versions/"))return envelope(syntheticView());
+      if(route==="/api/v2/p0/revise"){
+        const body=JSON.parse(options.body);return envelope({state:"CANDIDATE",view:{...syntheticView(),
+          title:body.edits.title,version_ref:"ver:"+"3".repeat(32),bundle_sha256:"3".repeat(64)}});}
+      throw new Error("UNEXPECTED_SYNTHETIC_ROUTE:"+route);
+    }});
+  vm.runInContext(fragment("async function localBoundedRequest(","async function conversationFetch("),h.ctx);
+  vm.runInContext(fragment("async function p0Fetch(","async function p0Run("),h.ctx);
+  vm.runInContext("let p0ConnectionPromise = null;\n"+
+    fragment("function p0ConnectionReady()","// Conversational shell:"),h.ctx);
+  vm.runInContext(proposedSource.slice(proposedSource.indexOf("async function p0ResumeSaved()")),h.ctx);
+  h.network=network;h.deadlines=deadlines;
+  h.initial=()=>vm.runInContext("p0InitialConnection",h.ctx);
+  h.resume=()=>h.node("r4-resume").listeners.click[0]();
+  h.stall=options=>new Promise((resolve,reject)=>options.signal.addEventListener("abort",()=>reject(options.signal.reason),{once:true}));
+  return h;
+}
+test("metadata deadline is 60 seconds and its timeout leaves generation unavailable without any command",async()=>{
+  const h=connectionHarness((route,options)=>new Promise((resolve,reject)=>{
+    options.signal.addEventListener("abort",()=>reject(options.signal.reason),{once:true});}));
+  assert.equal(h.ctx.p0.busy,true);assert.equal(h.deadlines.size,1);
+  const deadline=[...h.deadlines.values()][0];assert.equal(deadline.ms,60000);deadline.fn();await h.initial();
+  assert.equal(h.ctx.p0.nonce,null);assert.equal(h.ctx.p0.connected,false);assert.equal(h.ctx.p0.uncertain,false);
+  assert.equal(h.pe("generate").disabled,true);assert.match(h.pe("generate").textContent,/Génération indisponible/);
+  assert.match(h.pe("status").textContent,/consultation locale a dépassé son délai/);
+  assert.doesNotMatch(h.pe("status").textContent,/signal is aborted/);
+  assert.equal(h.network.length,1);assert.equal(h.network[0].options.method,"GET");
+});
+test("resume clicked during initial connection waits once and the following revision sends the admitted nonce",async()=>{
+  let complete;const h=connectionHarness(()=>new Promise(done=>{complete=()=>done(envelope(syntheticMetadata()));}));
+  const resume=h.resume();await h.resume(); // Forced duplicate click cannot enqueue a second resume.
+  assert.equal(h.ctx.r4ResumePending,true);assert.equal(h.ctx.p0.view,undefined);
+  assert.match(h.node("r4-status").textContent,/attente de la connexion/);assert.equal(h.network.length,1);
+  complete();await resume;
+  assert.equal(h.ctx.p0.nonce,"N".repeat(43));assert.equal(h.ctx.p0.connected,true);
+  assert.equal(h.ctx.p0.view.version_ref,syntheticView().version_ref);assert.equal(h.ctx.p0.busy,false);
+  assert.equal(h.ctx.r4ResumePending,false);assert.equal(h.network.length,2);
+  assert.equal(h.pe("generate").disabled,true);assert.match(h.pe("generate").textContent,/dans cette composition/);
+  h.node("p0-edit-title").value="SYNTHETIC CHILD";await h.pe("revise").listeners.click[0]();
+  const posts=h.network.filter(call=>call.options.method==="POST");assert.equal(posts.length,1);
+  assert.equal(posts[0].route,"/api/v2/p0/revise");assert.equal(posts[0].options.headers["X-R2-Nonce"],"N".repeat(43));
+  assert.equal(h.ctx.p0.view.title,"SYNTHETIC CHILD");assert.equal(h.ctx.p0.uncertain,false);
+});
+test("a changed saved selection during bootstrap wait cannot hydrate the old clicked version",async()=>{
+  let complete;const h=connectionHarness(()=>new Promise(done=>{complete=()=>done(envelope(syntheticMetadata()));}));
+  const pending=h.resume();h.ctx.r4Record={record:{origin:"LOCAL_APPLICATION",view:{...syntheticView(),version_ref:"ver:"+"9".repeat(32)}}};
+  complete();await pending;
+  assert.equal(h.ctx.p0.view,undefined);assert.equal(h.network.length,1);
+  assert.match(h.node("r4-status").textContent,/sélection sauvegardée a changé/);assert.equal(h.ctx.r4ResumePending,false);
+});
+test("a failed metadata precondition blocks a forced revision before POST and preserves its uncommitted edit",async()=>{
+  const h=connectionHarness(async()=>{throw new Error("SYNTHETIC_READ_FAILURE");});await h.initial();
+  h.ctx.p0Render(syntheticView());h.node("p0-edit-title").value="EDIT NOT SENT";h.ctx.p0.dirty=true;
+  await h.pe("revise").listeners.click[0]();
+  assert.equal(h.network.filter(call=>call.options.method==="POST").length,0);assert.equal(h.network.length,2);
+  assert.equal(h.ctx.p0.uncertain,false);assert.equal(h.ctx.p0.view.version_ref,syntheticView().version_ref);
+  assert.equal(h.node("p0-edit-title").value,"EDIT NOT SENT");assert.equal(h.ctx.p0.dirty,true);
+  assert.match(h.pe("status").textContent,/Aucun envoi de commande/);
+  await h.resume();assert.match(h.node("r4-status").textContent,/Aucun envoi de commande/);
+  assert.equal(h.network.filter(call=>call.options.method==="POST").length,0);
+});
+test("malformed nonce or authority cannot install metadata or dispatch a command",async()=>{
+  for(const mutation of [{transport_nonce:"short"},{authority:"OWNER"},{live_binding:"OTHER_PORT"},{references:[{}]}]){
+    const h=connectionHarness(async()=>envelope({...syntheticMetadata(),...mutation}));await h.initial();
+    h.ctx.p0Render(syntheticView());await h.pe("revise").listeners.click[0]();
+    assert.equal(h.ctx.p0.nonce,null);assert.equal(h.ctx.p0.connected,false);assert.equal(h.ctx.p0.liveBinding,"NONE");
+    assert.equal(h.network.filter(call=>call.options.method==="POST").length,0);assert.equal(h.ctx.p0.uncertain,false);
+    assert.match(h.pe("status").textContent,/Aucun envoi de commande/);
+  }
+});
+test("a real POST timeout remains uncertain with one dispatch and no retry",async()=>{
+  const h=connectionHarness();await h.initial();h.ctx.p0Render(syntheticView());
+  h.ctx.fetch=async(route,options)=>{h.network.push({route,options});return h.stall(options);};
+  const pending=h.pe("revise").listeners.click[0]();await flush();
+  assert.equal(h.deadlines.size,1);assert.equal([...h.deadlines.values()][0].ms,10000);
+  [...h.deadlines.values()][0].fn();await pending;
+  assert.equal(h.network.filter(call=>call.options.method==="POST").length,1);assert.equal(h.ctx.p0.uncertain,true);
+  assert.match(h.pe("status").textContent,/Aucun renvoi automatique/);
+  await h.pe("revise").listeners.click[0]();assert.equal(h.network.filter(call=>call.options.method==="POST").length,1);
+});
+test("resume during another atelier action reports the pending action without silently claiming success",async()=>{
+  const h=connectionHarness();await h.initial();h.ctx.p0.busy=true;await h.resume();
+  assert.equal(h.network.length,1);assert.equal(h.ctx.p0.view,undefined);assert.equal(h.ctx.r4ResumePending,false);
+  assert.match(h.node("r4-status").textContent,/action est déjà en cours/);
+});

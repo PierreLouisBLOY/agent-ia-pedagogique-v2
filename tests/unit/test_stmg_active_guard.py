@@ -1,0 +1,108 @@
+"""Active versioned STMG consumers remain exact and reject substitutions."""
+import json
+from pathlib import Path
+
+import pytest
+
+from tests.support import r6_scope_guard as guard
+
+ROOT = Path(__file__).resolve().parents[2]
+OWNER_PATHS = (
+    "backend/modules/knowledge_reference/application/queries/stmg_alignment.py",
+    "backend/modules/knowledge_reference/contracts/dto/stmg_frames.py",
+    "backend/modules/knowledge_reference/ports/outbound/institutional_catalog.py",
+    "backend/modules/knowledge_reference/application/queries/inspect_institutional_catalog.py",
+    "backend/adapters/inbound/application/institutional_catalog.py",
+    "backend/adapters/inbound/application/stmg_alignment.py",
+    "backend/adapters/outbound/resource_library/institutional_sqlite.py",
+    "backend/infrastructure/composition/factories/institutional_catalog.py",
+    "backend/modules/pedagogical_context/contracts/dto/stmg_institutional.py",
+    "backend/modules/pedagogical_context/contracts/dto/p0_context.py",
+    "backend/modules/pedagogical_design/contracts/dto/course_policy.py",
+    "backend/modules/pedagogical_design/application/commands/create_p0_candidate.py",
+    "backend/modules/work_orchestration/application/services/p0_creation.py",
+    "backend/modules/work_orchestration/application/services/p0_agentic.py",
+    "backend/infrastructure/composition/factories/p0_creation.py",
+    "backend/adapters/inbound/api/p0_creation.py",
+    "backend/adapters/outbound/generation/openai/p0_content.py",
+    "backend/adapters/outbound/review/p0_review.py",
+    "backend/modules/materialization_export/application/commands/export_saved.py",
+    "backend/modules/pedagogical_design/application/commands/reframe_course.py",
+    "backend/adapters/inbound/application/reframe_course.py",
+    "backend/modules/validation_control/application/commands/validate_p0.py",
+    "frontend/app.js", "frontend/index.html",
+    "backend/modules/knowledge_reference/application/queries/bts_alignment.py",
+    "backend/modules/pedagogical_context/contracts/dto/bts_institutional.py",
+    "backend/adapters/inbound/application/bts_alignment.py",
+    "tests/unit/test_bts_institutional_preparation.py",
+    "docs/development/ADR_BTS_INSTITUTIONAL_PREPARATION_2026-10-06.md",
+    "tests/unit/test_institutional_provider_projection.py",
+    "docs/development/ADR_INSTITUTIONAL_PROVIDER_PROJECTION_2026-10-06.md",
+    "tests/integration/test_p0_creation_http.py",
+    "tests/integration/test_sqlite_runtime_real_gate.py",
+    "tests/support/institutional_http_fixture.py",
+    "docs/development/INSTITUTIONAL_TEST_PRECONDITIONS_2026-10-06.md",
+)
+
+
+DECLARED_OWNERS = tuple(next(row for row in
+    json.loads((ROOT / guard.MANIFEST).read_text("utf-8"))["successors"]
+    if row["purpose"] == "M01_VISUAL_CLOSED_DISPATCH")["changed_owners"])
+
+
+@pytest.mark.parametrize("path", DECLARED_OWNERS)
+def test_stmg_active_owner_and_mutation(tmp_path, path):
+    for protected in (*guard.PATHS, guard.SELF, guard.MANIFEST):
+        target = tmp_path / protected
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((ROOT / protected).read_bytes())
+    assert guard.violations(tmp_path) == []
+    raw = (ROOT / path).read_bytes()
+    assert guard.index_matches(tmp_path, path, raw)
+    assert not guard.index_matches(tmp_path, path, raw + b"\n# substitution\n")
+    (tmp_path / path).write_bytes(raw + b"\n# substitution\n")
+    assert guard.violations(tmp_path) == ["R6_IDENTITY:" + path]
+
+
+def test_successor_keeps_historical_manifest_and_reviewed_entry():
+    manifest = json.loads((ROOT / guard.MANIFEST).read_text("utf-8"))
+    successor = next(row for row in manifest["successors"] if row["purpose"] == "M01_VISUAL_CLOSED_DISPATCH")
+    assert successor["entry"] == "62890e4e31019e8100e2da1c77dd6b366b66db87"
+    assert successor["purpose"] == "M01_VISUAL_CLOSED_DISPATCH"
+    assert successor["predecessor_manifest_sha256"] == "98c0f4a1e20465f10feecf6209e6b221ef3c42b913a6c204584f80e55920d0d1"
+    enrichment = next(row for row in manifest["successors"] if row["purpose"] == "M01_VISUAL_ENRICHMENT")
+    assert enrichment["entry"] == "b6466778e196f7c4164778a2503b0bcdecd63edd"
+    assert enrichment["predecessor_manifest_sha256"] == "60d9835d600c88c55a4e06e9f0ece8d258e6e4a28d20a52011ad9b71375953cf"
+    assert set(enrichment["changed_owners"]) <= set(successor["changed_owners"])
+    media = next(row for row in manifest["successors"] if row["purpose"] == "M01_PROGRAMME_LOCAL_MEDIA")
+    assert media["entry"] == "db4b52253823ba4f26429b4473ac9ef647208fb2"
+    assert media["predecessor_manifest_sha256"] == "31cb2dd1f9c25cfcd2b547f030077cd181fb07ed97c5300dbb3d6147d62fb8e2"
+    assert set(media["changed_owners"]) <= set(successor["changed_owners"])
+    entry = next(row for row in manifest["successors"] if row["purpose"] == "INSTITUTIONAL_CURRENT_HTTP_AND_CP645_TEST_PRECONDITIONS")
+    assert entry["entry"] == "e2e6c44edf7f517dc64d8eaabb9628865f73a0ce"
+    assert entry["predecessor_manifest_sha256"] == "d66cf3459587bbf4b7684ab086187728ac8618dcfaa12f05bb7f99345143fc17"
+    assert set(entry["changed_owners"]) <= set(successor["changed_owners"])
+    provider_view = next(row for row in manifest["successors"] if row["purpose"] == "INSTITUTIONAL_BOUNDED_PROVIDER_VIEW")
+    assert provider_view["entry"] == "d10e521a245d316c662e4d601be6a8c2a406c32a"
+    assert provider_view["predecessor_manifest_sha256"] == "4e3677cda8bbef951fe117a124d025fde2188a702e6b9ade934a0adfae19d003"
+    assert set(provider_view["changed_owners"]) <= set(successor["changed_owners"])
+    bts = next(row for row in manifest["successors"] if row["purpose"] == "INSTITUTIONAL_BTS_PREPARATION_AND_SAVED_AUTHORITY")
+    assert bts["entry"] == "245011f1621c3a56faac36838b54508e99b5cc8b"
+    assert bts["predecessor_manifest_sha256"] == "f1c1d1e18fa6053e4281db179ea0508da23848d1cf05fe8228f706f4814974c8"
+    assert set(bts["changed_owners"]) <= set(successor["changed_owners"])
+    previous = next(row for row in manifest["successors"] if row["purpose"] == "INSTITUTIONAL_AUTHORITY_628_ACTIVE_APPLICATION")
+    assert previous["entry"] == "796350745174744257593b0caa1cc12818f96237"
+    assert previous["predecessor_manifest_sha256"] == "6103f38e84ed05bbebde056644d34f7771b25984d5c4c42e7d8436bf1b567e27"
+    assert set(previous["changed_owners"]) <= set(successor["changed_owners"])
+    foundation = next(row for row in manifest["successors"] if row["purpose"] == "INSTITUTIONAL_AUTHORITY_628_FOUNDATION")
+    assert foundation["entry"] == "7a54666567f3d11940cb6cb556439d986d487494"
+    assert foundation["predecessor_manifest_sha256"] == "05eaba891801f3821021ab689d4d83bf40ed22aa361295a853ef719c15287e90"
+    course = next(row for row in manifest["successors"] if row["purpose"] == "COURSE_BENCHMARK_PDF3")
+    assert course["entry"] == "790230f7a9762e61ef22800b9fcbeb8f59e221af"
+    assert course["predecessor_manifest_sha256"] == "79bf1a35640f0e1cacb244f139423d2ee46099f21009351434ad8363bf1e700d"
+    historical = next(row for row in manifest["successors"] if row["purpose"] == "STMG_INSTITUTIONAL_ALIGNMENT")
+    assert historical["entry"] == "cb0d6df2ebb4070ef0c89108e4005bf118e3e1f1"
+    assert historical["predecessor_manifest_sha256"] == "f9f406104c24e415f6b9f862e1458571d1020283dac70c32fa8ac23201dce9dd"
+    assert set(historical["changed_owners"]) <= set(successor["changed_owners"])
+    assert set(OWNER_PATHS) <= set(successor["changed_owners"])
+    assert successor["canonical_security_guards_changed"] is False

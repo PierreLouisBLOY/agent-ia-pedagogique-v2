@@ -1,1 +1,1 @@
-"""Structural package for backend.modules.materialization_export.application.services."""
+"""Application media services reuse versioned production persistence."""

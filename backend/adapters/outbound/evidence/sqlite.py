@@ -25,6 +25,7 @@ from backend.agent_runtime.agents.evidence import (
     RetrievalSearchResult,
     RetrievalSignals,
 )
+from backend.modules.resource_library.contracts.dto.search_source_status import SearchSourceStatus
 from backend.shared_kernel.time import Instant
 
 
@@ -68,7 +69,7 @@ class SQLiteEvidenceSearchAdapter:
             return RetrievalSearchResult(
                 channel,
                 tuple(
-                    _semantic_candidate(hit, index)
+                    _semantic_candidate(hit, index, self._search.passage_source_status(hit.passage_ref))
                     for index, hit in enumerate(semantic_hits, start=1)
                 ),
                 metrics={
@@ -112,6 +113,9 @@ class SQLiteEvidenceSearchAdapter:
             version_or_checksum=candidate.version_or_checksum,
         ):
             return False
+        current_status = self._search.passage_source_status(candidate.locator)
+        if current_status is not None and candidate.metadata.get("source_status") != current_status.as_dict():
+            return False
         level = query.scope.get("level")
         if isinstance(level, str) and not self._search.canonical_object_matches_level(
             candidate.source_ref, level
@@ -149,7 +153,8 @@ class SQLiteEvidenceDocumentContentAdapter:
                 "boundary": "sqlite-op13",
                 "evidence_ref": fragment.evidence_ref,
             },
-            metadata={"freshness": "CURRENT", "trust": "UNTRUSTED_CONTENT"},
+            metadata={"freshness": "CURRENT", "trust": "UNTRUSTED_CONTENT",
+                      **({"source_status": fragment.source_status.as_dict()} if fragment.source_status is not None else {})},
         )
 
     def close(self) -> None:
@@ -179,11 +184,11 @@ def _candidate(
             "object_kind": hit.registry_object_type,
         },
         authority={"basis": "canonical-registry", "absolute": False},
-        metadata={"freshness": "CURRENT"},
+        metadata={"freshness": "CURRENT", **({"source_status": hit.source_status.as_dict()} if hit.source_status is not None else {})},
     )
 
 
-def _semantic_candidate(hit: SemanticHit, rank: int) -> RetrievalCandidate:
+def _semantic_candidate(hit: SemanticHit, rank: int, source_status: SearchSourceStatus | None = None) -> RetrievalCandidate:
     return RetrievalCandidate(
         candidate_id=f"semantic:{hit.passage_ref}",
         channel=RetrievalChannel.SEMANTIC,
@@ -204,7 +209,7 @@ def _semantic_candidate(hit: SemanticHit, rank: int) -> RetrievalCandidate:
             "matched_passage_ref": hit.matched_passage_ref,
         },
         authority={"basis": "canonical-registry", "absolute": False},
-        metadata={"freshness": "CURRENT"},
+        metadata={"freshness": "CURRENT", **({"source_status": source_status.as_dict()} if source_status is not None else {})},
     )
 
 

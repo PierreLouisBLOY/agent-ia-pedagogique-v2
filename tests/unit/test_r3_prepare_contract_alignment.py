@@ -224,6 +224,7 @@ def copied_sources(tmp_path):
 
 
 @pytest.mark.parametrize("path", PATHS)
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_every_successor_source_mutation_is_rejected(tmp_path, path):
     copied_sources(tmp_path)
     assert successor_violations(tmp_path) == []
@@ -257,6 +258,7 @@ def test_index_mutation_is_independently_rejected(monkeypatch, path):
         assert_successor_git_state(ROOT)
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_frozen_post_table_and_unapproved_ast_are_authenticated():
     from tests.support.r3_prepare_contract_alignment_guard import ORACLE_AST_SHA256
 

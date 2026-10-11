@@ -56,6 +56,8 @@ def test_review_package_contains_only_the_provider_neutral_boundary() -> None:
         "review_assessment_model.py",
         "review_coordination_model.py",
         "review_coordinator.py",
+        # Pure opt-in policy adopted by ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.
+        "review_metadata_successor.py",
         "review_model.py",
         "review_ports.py",
         "review_security.py",

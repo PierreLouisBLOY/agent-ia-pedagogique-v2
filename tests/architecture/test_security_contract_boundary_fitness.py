@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import ast
+import sys
 import tomllib
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 BACKEND = ROOT / "backend"
@@ -159,6 +162,8 @@ def test_security_contracts_are_integrated_only_into_approved_boundaries() -> No
         BACKEND / "agent_runtime" / "agents" / "review" / "review_coordination_model.py",
         BACKEND / "agent_runtime" / "agents" / "review" / "review_security.py",
         BACKEND / "agent_runtime" / "agents" / "review" / "review_security_model.py",
+        # Exact owner admitted by ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.
+        BACKEND / "agent_runtime" / "agents" / "review" / "review_metadata_successor.py",
         BACKEND / "agent_runtime" / "application_routing" / "router.py",
         BACKEND
         / "agent_runtime"
@@ -186,6 +191,23 @@ def test_security_contracts_are_integrated_only_into_approved_boundaries() -> No
         ):
             continue
         assert all("contracts.security" not in module for module in _imports(path))
+
+
+@pytest.mark.parametrize("relative", [
+    "agent_runtime/agents/review/unapproved_successor.py",
+    "agent_runtime/gates/unapproved.py",
+    "agent_runtime/recovery/unapproved.py",
+    "agent_runtime/sandbox/unapproved.py",
+    "modules/pedagogical_design/application/unapproved.py",
+])
+def test_review_successor_admission_does_not_admit_other_security_consumers(monkeypatch, relative):
+    path = BACKEND / relative
+    monkeypatch.setattr(sys.modules[__name__], "_python_files",
+                        lambda root: (path,) if path.is_relative_to(root) else ())
+    monkeypatch.setattr(sys.modules[__name__], "_imports",
+                        lambda candidate: {"backend.agent_runtime.contracts.security"})
+    with pytest.raises(AssertionError):
+        test_security_contracts_are_integrated_only_into_approved_boundaries()
 
 
 def test_security_event_has_no_free_text_or_raw_content_field() -> None:

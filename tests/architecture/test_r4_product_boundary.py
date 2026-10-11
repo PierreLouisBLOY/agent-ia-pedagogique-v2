@@ -2,6 +2,8 @@ import ast
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from backend.adapters.inbound.api.routes import ROUTE_SPECS
 from tests.support import r4_scope_guard as guard
 from tests.support.r3_guard_oracle import PREPARATION, R3_ROUTES
@@ -9,6 +11,7 @@ from tests.support.r3_guard_oracle import PREPARATION, R3_ROUTES
 ROOT = Path(__file__).resolve().parents[2]
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_exact_r4_scope_routes_and_historical_preservation():
     assert guard.violations(ROOT) == []
     assert ROUTE_SPECS == R3_ROUTES + guard.R4_ROUTES

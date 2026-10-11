@@ -13,6 +13,7 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import o
 from backend.modules.pedagogical_design.contracts.dto.assessment_revision import (
     AssessmentRevisionRequest,
 )
+from backend.modules.work_orchestration.contracts.dto.operation_identity import OperationIdentity
 
 
 def parse_revision_result(payload: Mapping[str, object], *,
@@ -79,6 +80,6 @@ class AssessmentRevisionAdapter:
         """Private inner-parser snapshot; not an Application return value."""
         return self._parse_diagnostic.snapshot()
 
-    def propose(self, request: AssessmentRevisionRequest) -> Mapping[str, object]:
+    def propose(self, request: AssessmentRevisionRequest, *, identity: OperationIdentity | None = None) -> Mapping[str, object]:
         self._parse_diagnostic = ParseDiagnostic(enabled=request.operation in {"PREPARE_SUPPLEMENTS", "HARDEN_DOSSIER_3"})
-        return parse_revision_result(transform(self._port, request), diagnostic=self._parse_diagnostic)
+        return parse_revision_result(transform(self._port, request, identity=identity), diagnostic=self._parse_diagnostic)

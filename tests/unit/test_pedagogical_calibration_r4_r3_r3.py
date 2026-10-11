@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 from copy import deepcopy
@@ -19,7 +20,6 @@ from tests.calibration.pedagogical.r4_r3_r3_analysis import (
     HUMAN_PACKET_RELATIVE_PATH,
     RECONCILIATION_RELATIVE_PATH,
     REPORT_JSON_RELATIVE_PATH,
-    REPORT_MD_RELATIVE_PATH,
     AnalysisError,
     AnalysisErrorCode,
     _relative_classification,
@@ -196,7 +196,15 @@ def test_blind_packet_is_unfilled_and_reconciliation_is_separate() -> None:
     assert reconciliation["content_repeated"] is False
 
 
-def test_reports_are_safe_float_free_and_byte_reproducible() -> None:
+def test_reports_are_safe_float_free_and_byte_reproducible(tmp_path: Path) -> None:
+    from tests.support.historical_calibration_replay import replay_historical_report
+
+    result = replay_historical_report(ROOT, tmp_path)
+    assert result.returncode == 0, result.stdout.decode("utf-8", errors="replace")
+    assert b"1 passed" in result.stdout
+
+
+def test_current_report_revalidation_is_deterministic_and_separate_from_history() -> None:
     json_a = render_report_json(ROOT)
     json_b = render_report_json(ROOT)
     markdown_a = render_report_markdown(ROOT)
@@ -210,8 +218,12 @@ def test_reports_are_safe_float_free_and_byte_reproducible() -> None:
     assert "api_key" not in lowered
     assert "request_id" not in lowered
     assert "candidate_projection" not in lowered
-    assert json_a == (ROOT / REPORT_JSON_RELATIVE_PATH).read_text("utf-8")
-    assert markdown_a == (ROOT / REPORT_MD_RELATIVE_PATH).read_text("utf-8")
+    assert hashlib.sha256((ROOT / REPORT_JSON_RELATIVE_PATH).read_bytes()).hexdigest() == (
+        "f08fad954918f82e690a539b35f02a88ce3d08818a95f6c18df982f4c3d7c272"
+    )
+    assert hashlib.sha256(json_a.encode()).hexdigest() == (
+        "15281ec06c3fbcb9ebf00b6ddf595ac5fb33fbc8b2972603040a6668cd80abf9"
+    )
     assert render_baseline_markdown(ROOT) == (ROOT / BASELINE_RELATIVE_PATH).read_text("utf-8")
     assert render_human_review_packet() == (ROOT / HUMAN_PACKET_RELATIVE_PATH).read_text("utf-8")
 

@@ -107,8 +107,9 @@ def test_exact_profile_reservation_is_serialized(bound):
 
 
 def test_no_other_semantic_field_changes_and_no_count_authority():
-    old = serialize(wire(4096), profile(4096))
-    new = serialize()
+    request = wire()
+    old = serialize(replace(request, max_output_tokens=4096), profile(4096))
+    new = serialize(request)
     assert [key for key in old if old[key] != new[key]] == ["max_output_tokens"]
     assert new["reasoning"] == {"effort": "low"}
     assert new["model"] == "gpt-5.6-terra"
@@ -188,12 +189,14 @@ def test_serializer_is_only_for_prepare(fault):
         serialize(request, operation=operation)
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_successor_scope_and_working_index_and_history():
     assert_scope(ROOT)
     assert_git_state(ROOT)
 
 
 @pytest.mark.parametrize("path", PATHS)
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_each_successor_source_mutation_is_rejected(tmp_path, path):
     from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
     from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS

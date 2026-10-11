@@ -5,6 +5,7 @@ import pytest
 from tests.support import r5_worker_guard as guard
 
 ROOT = Path(__file__).resolve().parents[2]
+pytestmark = pytest.mark.usefixtures("historical_guard_sources")
 
 
 def test_worker_guard_closed_current_and_predecessor():

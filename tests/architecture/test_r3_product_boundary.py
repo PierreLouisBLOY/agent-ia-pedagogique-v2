@@ -2,6 +2,8 @@ import ast
 import hashlib
 from pathlib import Path
 
+import pytest
+
 from backend.adapters.inbound.api.routes import ROUTE_SPECS
 from backend.adapters.outbound.system.r3_job import UnapprovedR3Job
 from tests.architecture.test_local_browser_product_boundary import source_boundary_violations
@@ -21,6 +23,7 @@ from tests.support.r3_guard_oracle import (
 ROOT = Path(__file__).resolve().parents[2]
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_exact_closed_inventory_owners_and_protected_identities():
     from tests.support.r3_parse_observability_guard import active_source_matches
     from tests.support.r3_prepare_contract_alignment_guard import PRODUCERS

@@ -42,6 +42,10 @@ class LocalReferenceContentAdapter:
         if (fragment is None or fragment.source_ref != source
                 or fragment.version_or_checksum != version or not fragment.text.strip()):
             raise LocalReferenceRejected("REFERENCE_STALE_OR_MISSING")
+        supplied_status = item.get("source_status")
+        if supplied_status is not None and (
+                fragment.source_status is None or fragment.source_status.as_dict() != supplied_status):
+            raise LocalReferenceRejected("REFERENCE_STALE_OR_MISSING")
         if len(fragment.text) > 1000:
             raise LocalReferenceRejected("REFERENCE_TOO_LARGE")
         registry = self.connection.execute(
@@ -84,6 +88,8 @@ class LocalReferenceContentAdapter:
             "document_link_status": "LINKED_NOT_FULL_DOCUMENT" if documents else "NOT_ESTABLISHED",
             "external_file_opened": False, "official_authority_attested": False,
         }
+        if fragment.source_status is not None:
+            metadata["source_status"] = fragment.source_status.as_dict()
         return metadata
 
 
@@ -111,7 +117,8 @@ class SelectedLocalEvidenceSearch(SQLiteEvidenceSearchAdapter):
                     or row[5] != selected.get("object_kind")):
                 raise LocalReferenceRejected("REFERENCE_STALE_OR_MISSING")
             candidate = _candidate(SearchHit(str(row[0]), str(row[1]), str(row[2]), str(row[3]),
-                                            str(row[4]), float(rank), str(row[5])), channel, rank)
+                                            str(row[4]), float(rank), str(row[5]),
+                                            self._search.passage_source_status(str(row[2]))), channel, rank)
             if not self.is_admissible(candidate=candidate, query=query):
                 raise LocalReferenceRejected("REFERENCE_NOT_ADMISSIBLE")
             candidates.append(candidate)

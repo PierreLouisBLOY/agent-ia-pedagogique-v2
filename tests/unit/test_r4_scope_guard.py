@@ -1,8 +1,11 @@
 import shutil
 
+import pytest
+
 from tests.support import r4_scope_guard as guard
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_each_r4_source_mutation_is_rejected(tmp_path):
     from tests.support.r5_scope_guard import PATHS as R5_PATHS
     for path in set(guard.PATHS) | set(R5_PATHS):

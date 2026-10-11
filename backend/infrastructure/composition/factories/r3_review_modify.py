@@ -30,9 +30,9 @@ class R3AgentDispatcher:
 
     def __call__(self, request: R3JobRequest) -> Mapping[str, object]:
         if request.operation == "reviews" and request.bundle is not None:
-            return self.reviewer.review(request.bundle, request.dimensions)
+            return self.reviewer.review(request.bundle, request.dimensions, identity=request.identity)
         if request.revision is not None:
-            return self.generation.propose(request.revision)
+            return self.generation.propose(request.revision, identity=request.identity)
         raise ValueError("R3_JOB_REQUEST")
 
 

@@ -72,10 +72,39 @@ searchForm.addEventListener("submit", async (event) => {
       const row = document.createElement("li");
       appendSearchText(row, "h3", item.read15?.canonical_title || "Passage · " + item.object_kind);
       appendSearchText(row, "p", item.excerpt + (item.excerpt_truncated ? "…" : ""));
-      appendSearchText(row, "p", "Objet : " + item.object_ref + " · Passage : " + item.passage_ref +
+      if (item.source_status) {
+        const source = item.source_status;
+        if (source.contract_id !== "SEARCH-SOURCE-STATUS-1.0" ||
+            [source.identity_status, source.lifecycle_status, source.validation_status].some(value => typeof value !== "string" || !/^[A-Z][A-Z0-9_]{0,39}$/.test(value)))
+          throw new Error("INVALID_PUBLIC_SOURCE_STATUS");
+        appendSearchText(row, "p", "Identité : " + source.identity_status + " · Cycle de vie : " +
+          source.lifecycle_status + " · Validation : " + source.validation_status +
+          (source.status_basis === "EXACT_VERSION_REQUIRED" ? " · Version exacte à consulter." : "") +
+          " Ces statuts n'attestent pas l'autorité officielle.", "provenance");
+      }
+      const trace = document.createElement("details"); trace.className = "secondary";
+      appendSearchText(trace, "summary", "Provenance et version");
+      appendSearchText(trace, "p", "Objet : " + item.object_ref + " · Passage : " + item.passage_ref +
         " · Version : " + item.version_or_checksum, "provenance");
-      appendSearchText(row, "p", "LEXICAL · Admission F2A · Passage courant · Contenu non fiable. " +
+      appendSearchText(trace, "p", "LEXICAL · Admission F2A · Passage courant · Contenu non fiable. " +
         "Le rang ne constitue pas un score de qualité.", "provenance");
+      row.append(trace);
+      const selectButton = document.createElement("button");
+      selectButton.type = "button";
+      selectButton.textContent = "Utiliser ce passage pour ma production";
+      selectButton.addEventListener("click", () => {
+        p0Element("search-query").value = searchInput.value;
+        p0Element("notion-id").value = "";
+        p0Element("search-passage").value = item.passage_ref;
+        p0Element("search-query").closest("details").open = true;
+        p0Invalidate();
+        p0Element("status").textContent = "Passage sélectionné. Confirmez le contexte et préparez votre production.";
+        uxShow("prepare"); document.getElementById("preparation-parameters").open = true;
+        document.getElementById("drawer-sources").textContent = item.excerpt;
+        p0Element("heading").scrollIntoView({behavior: "smooth"});
+      });
+      if (["NOTION", "PEDAGOGICAL_CONTENT", "METHOD", "FRAMEWORK_ELEMENT", "OFFICIAL_OCCURRENCE"].includes(item.object_kind))
+        row.append(selectButton);
       if (item.open_status === "OPENABLE" && item.object_kind === "RESOURCE" &&
           item.read15?.resource_ref === item.object_ref) {
         const openButton = document.createElement("button");
@@ -241,14 +270,23 @@ function updateConversation(view) {
     "Précisez puis confirmez le contexte.";
 }
 
+async function localBoundedRequest(path, options, consume) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    return await consume(await fetch(path, {...options, signal: controller.signal}));
+  } finally { clearTimeout(timeout); }
+}
+
 async function conversationFetch(path, options = {}) {
-  const response = await fetch(path, {
+  return localBoundedRequest(path, {
     method: "GET", credentials: "omit", cache: "no-store", redirect: "error", ...options,
     headers: { "X-Local-Intent": "conversation-v1", ...options.headers }
+  }, async response => {
+    const value = await response.json();
+    if (value?.meta?.contract_id !== "CONVERSATION-HTTP-LOCAL-1.0") throw new Error("INVALID_PUBLIC_RESPONSE");
+    return { response, value };
   });
-  const value = await response.json();
-  if (value?.meta?.contract_id !== "CONVERSATION-HTTP-LOCAL-1.0") throw new Error("INVALID_PUBLIC_RESPONSE");
-  return { response, value };
 }
 
 async function refreshConversation() {
@@ -533,7 +571,7 @@ async function r4Fetch(path, body = null, binary = false) {
     options.headers["X-R2-Nonce"] = r4Nonce;
     options.body = JSON.stringify(body);
   }
-  const response = await fetch(path, options);
+  return localBoundedRequest(path, options, async response => {
   if (binary && response.ok) {
     if (response.headers.get("Content-Type") !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
       throw new Error("R4_INVALID_DOCUMENT");
@@ -543,6 +581,7 @@ async function r4Fetch(path, body = null, binary = false) {
   if (!response.ok || envelope?.meta?.contract_id !== "SAVE-REOPEN-WORD-HTTP-LOCAL-1.0")
     throw new Error(envelope?.error?.code || "R4_REFUSED");
   return envelope.data;
+  });
 }
 async function r4Refresh() {
   const data = await r4Fetch("/api/v2/conversation/saved");
@@ -552,7 +591,7 @@ async function r4Refresh() {
   for (const version of data.versions) {
     const option = document.createElement("option");
     option.value = version.production_ref + "/" + version.version_ref;
-    option.textContent = version.version_ref + " · " + version.origin;
+    option.textContent = "Version " + (r4Versions.options.length + 1) + (version.origin === "IMPORTED_DOCUMENTARY" ? " · document conservé" : " · préparation locale");
     option.selected = option.value === selected;
     r4Versions.append(option);
   }
@@ -574,14 +613,15 @@ async function r4Open() {
   appendSearchText(details, "h3", "Nouvelles actions R4 distinctes");
   appendSearchText(details, "pre", JSON.stringify(r4Record.new_actions, null, 2));
   document.getElementById("r4-preview-content").replaceChildren();
-  r4Status.textContent = "Version rouverte. Aucune revalidation automatique ; A16 reste visible.";
+  r4Status.textContent = "Version rouverte. Consultez les réserves dans Sources & contexte avant diffusion.";
+  uxSavedCard(r4Record);
   r4Controls();
 }
 async function r4Run(action, writes = false) {
   if (r4Busy || (writes && r4Uncertain)) return;
   r4Busy = true;
   r4Controls();
-  try { await action(); }
+  try { await action(); if (["loading", "generating", "validating", "saving"].includes(p0Element("status").dataset.state)) p0Element("status").dataset.state = "ready"; }
   catch (error) {
     if (writes) r4Uncertain = true;
     r4Status.textContent = "Opération refusée ou incertaine : " + error.message + ". Aucun rejeu automatique.";
@@ -596,12 +636,55 @@ document.getElementById("r4-save").addEventListener("click", () => r4Run(async (
   r4Versions.value = r3State.production_ref + "/" + r3State.version_ref;
   await r4Open();
 }, true));
+function classroomPreview(target, blocks) {
+  const inline = (parent, text) => {
+    const pattern = /\*\*([^*]+)\*\*|(?<!\w)\*([^*\n]*\S)\*(?!\w)|`([^`]+)`/g;
+    let cursor = 0;
+    for (const match of text.matchAll(pattern)) {
+      parent.append(document.createTextNode(text.slice(cursor, match.index)));
+      const run = document.createElement(match[1] ? "strong" : match[2] ? "em" : "span");
+      run.textContent = match[1] || match[2] || match[3]; parent.append(run);
+      cursor = match.index + match[0].length;
+    }
+    parent.append(document.createTextNode(text.slice(cursor)));
+  };
+  const canonical = value => value.replace(/^#+\s*/, "").trim().toLocaleLowerCase("fr");
+  for (let index = 0; index < blocks.length; index++) {
+    const block = blocks[index], next = blocks[index + 1]?.text || "";
+    if (block.style === "Note" && /^Version exacte : ver:[0-9a-f]{32}$/.test(block.text)) continue;
+    if (/^Heading/.test(block.style) && next.split("\n").some(line =>
+      /^#+\s/.test(line) && (canonical(line) === canonical(block.text) || canonical(line).startsWith(canonical(block.text) + " —")))) continue;
+    if (/^Q\d{2}$/.test(block.text) && next.startsWith("**" + Number(block.text.slice(1)) + ".")) continue;
+    const lines = block.text.split("\n");
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+      let line = lines[lineIndex]; if (!line.trim()) continue;
+      if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+        const table = document.createElement("table"); let rowIndex = 0;
+        while (lineIndex < lines.length && lines[lineIndex].trim().startsWith("|")) {
+          const cells = lines[lineIndex].trim().slice(1, -1).split("|").map(cell => cell.trim());
+          if (!cells.every(cell => /^:?-+:?$/.test(cell))) {
+            const row = document.createElement("tr");
+            for (const text of cells) { const cell = document.createElement(rowIndex === 0 ? "th" : "td"); inline(cell, text); row.append(cell); }
+            table.append(row); rowIndex++;
+          }
+          lineIndex++;
+        }
+        lineIndex--; target.append(table); continue;
+      }
+      const heading = line.match(/^(#{1,3})\s+(.+)$/);
+      const tag = heading ? "h4" : /^Heading/.test(block.style) ? "h4" : "p";
+      line = heading ? heading[2] : line.replace(/^Q(\d{2})(?=\s|$)/, (_, n) => "Question " + Number(n));
+      const paragraph = document.createElement(tag); inline(paragraph, line); target.append(paragraph);
+    }
+  }
+}
+
 document.getElementById("r4-preview").addEventListener("click", () => r4Run(async () => {
   const data = await r4Fetch(r4Base() + "/preview/" + document.getElementById("r4-kind").value);
   const target = document.getElementById("r4-preview-content");
   target.replaceChildren();
   appendSearchText(target, "h3", data.title);
-  for (const block of data.blocks) appendSearchText(target, block.style === "Heading1" ? "h4" : "p", block.text);
+  classroomPreview(target, data.blocks);
 }));
 document.getElementById("r4-download").addEventListener("click", () => r4Run(async () => {
   const kind = document.getElementById("r4-kind").value;
@@ -609,7 +692,7 @@ document.getElementById("r4-download").addEventListener("click", () => r4Run(asy
   const url = URL.createObjectURL(data);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = kind + "-" + r4Record.record.view.version_ref.slice(4) + ".docx";
+  anchor.download = kind + "-" + (r4Record.record.view.title || "preparation").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9-]/g, "-").replace(/-+/g, "-").slice(0, 80) + ".docx";
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }));
@@ -627,3 +710,522 @@ document.getElementById("r4-promote").addEventListener("click", () => r4Run(asyn
   await r4Open();
 }, true));
 r4Run(r4Refresh);
+
+// P0 companion: all families use the same Application lifecycle and exact versions.
+const p0 = {nonce: null, references: [], prepared: null, view: null, teacher: null,
+  busy: false, uncertain: false};
+const p0Element = id => document.getElementById("p0-" + id);
+function p0Controls() {
+  p0Element("prepare").disabled = p0.busy || p0.uncertain || !p0.nonce;
+  p0Element("generate").disabled = p0.busy || p0.uncertain || !p0.prepared || p0.liveBinding === "NONE" ||
+    p0.prepared?.context?.institutional_resolution?.status === "CONTENT_GAP";
+  for (const id of ["teacher", "revise", "validate", "save"])
+    p0Element(id).disabled = p0.busy || p0.uncertain || !p0.view;
+  for (const id of ["open", "modify", "check", "correction", "marking", "export"])
+    document.getElementById("card-" + id).disabled = p0.busy || p0.uncertain || !p0.view ||
+      (id === "correction" && !p0.view.questions.length && !p0.view.course_chapter) ||
+      (id === "marking" && p0.view.pedagogical_context.resource_type !== "ASSESSMENT");
+}
+async function p0Fetch(path, body = null) {
+  const options = {method: body ? "POST" : "GET", credentials: "omit", cache: "no-store",
+    redirect: "error", headers: {"X-Local-Intent": "conversation-v1"}};
+  if (body) {
+    options.headers["Content-Type"] = "application/json; charset=utf-8";
+    options.headers["X-R2-Nonce"] = p0.nonce;
+    options.body = JSON.stringify(body);
+  }
+  return localBoundedRequest(path, options, async response => {
+  const envelope = await response.json();
+  if (!response.ok || envelope?.meta?.contract_id !== "R6-P0-HTTP-LOCAL-1.0") {
+    const error = new Error(envelope?.error?.code || "P0_REFUSED");
+    error.confirmedRefusal = envelope?.meta?.contract_id === "R6-P0-HTTP-LOCAL-1.0" &&
+      envelope?.error?.code !== "P0_OUTCOME_UNKNOWN";
+    throw error;
+  }
+  return envelope.data;
+  });
+}
+async function p0Run(action, mutation = false, state = "loading") {
+  if (p0.busy || (mutation && p0.uncertain)) return;
+  p0.busy = true; p0Controls();
+  p0Element("status").dataset.state = state;
+  p0Element("status").textContent = "Action en cours…";
+  try { await action(); if (["loading", "generating", "validating", "saving"].includes(p0Element("status").dataset.state)) p0Element("status").dataset.state = "ready"; }
+  catch (error) {
+    if (mutation && !error.confirmedRefusal) p0.uncertain = true;
+    p0Element("status").dataset.state = "error";
+    p0Element("status").textContent = "Action non confirmée : " + error.message +
+      (p0.uncertain ? ". Aucun renvoi automatique ; vérifiez la version avant de reprendre." :
+        error.confirmedRefusal ? ". Refus confirmé ; corrigez la demande avant une nouvelle action explicite." : ". Réessayez la consultation explicitement.");
+  } finally { p0.busy = false; p0Controls(); uxMessage("assistant", p0Element("status").textContent); }
+}
+const p0Command = () => crypto.randomUUID().replaceAll("-", "");
+function p0Context() {
+  const family = p0Element("family").value;
+  const context = {contract_id: "R6-P0-CONTEXT-1.0",
+    resource_type: ["OPEN_QUESTIONS", "QCM", "QUIZ"].includes(family) ? "QUESTION_SET" : family,
+    question_mode: ["OPEN_QUESTIONS", "QCM", "QUIZ"].includes(family) ? family : null,
+    level: p0Element("level").value, discipline: p0Element("discipline").value.trim(),
+    topics: p0Element("topics").value.split("\n").map(t => t.trim()).filter(Boolean),
+    objectives: p0Element("objectives").value.split("\n").map(t => t.trim()).filter(Boolean),
+    difficulty: p0Element("difficulty").value, language: "fr",
+    duration_minutes: family === "ASSESSMENT" ? Number(p0Element("duration").value) : null,
+    total_points: family === "ASSESSMENT" ? Number(p0Element("points").value) : null};
+  if (context.level.endsWith("STMG")) {
+    const frame = p0InstitutionalFrame();
+    const question = frame?.questions.find(q => q.question_ref === p0Element("program-question").value);
+    if (!frame || !question || !p0Element("depth").value)
+      throw Object.assign(new Error("P0_INSTITUTIONAL_CONTEXT_REQUIRED"), {confirmedRefusal: true});
+    context.contract_id = "P0-CONTEXT-2.0";
+    context.discipline = frame.label;
+    context.institutional = {contract_id: "STMG-INSTITUTIONAL-CONTEXT-1.0", frame: frame.frame,
+      education_level: frame.education_level, series: "STMG", teaching_subject: frame.teaching_subject,
+      program_ref: frame.program_ref, program_version: frame.program_version,
+      program_component: frame.program_component, specific_track: frame.specific_track,
+      theme_ref: question.theme_ref ?? null, question_ref: question.question_ref,
+      capacity_refs: [...p0Element("capacities").selectedOptions].map(o => o.value),
+      notion_refs: [...p0Element("program-notions").selectedOptions].map(o => o.value), depth: p0Element("depth").value};
+    context.institutional_resolution = null;
+    context.local_progression = {chapter: p0Element("local-chapter").value.trim() || null,
+      sequence: p0Element("local-sequence").value.trim() || null, week: p0Element("local-week").value.trim() || null};
+  } else if (context.level.startsWith("BTS_")) {
+    const frame = p0InstitutionalFrame();
+    const activity = frame?.elements.find(e => e.id === p0Element("program-question").value);
+    let process = activity;
+    for (let i = 0; process && process.element_type !== "PROCESS" && i < frame.elements.length; i++)
+      process = frame.elements.find(e => e.id === process.parent_ref);
+    if (!activity || !process || process.element_type !== "PROCESS" || !p0Element("depth").value)
+      throw Object.assign(new Error("P0_INSTITUTIONAL_CONTEXT_REQUIRED"), {confirmedRefusal: true});
+    context.contract_id = "P0-CONTEXT-2.0";
+    context.discipline = "Comptabilité et gestion";
+    context.institutional = {contract_id: "BTS-INSTITUTIONAL-CONTEXT-1.0",
+      program_ref: frame.program_ref, program_version: frame.program_version, process_ref: process.id,
+      activity_ref: activity.id, competency_refs: [...p0Element("capacities").selectedOptions].map(o => o.value),
+      notion_refs: [...p0Element("program-notions").selectedOptions].map(o => o.value),
+      depth: p0Element("depth").value, local_year: context.level};
+    context.institutional_resolution = null;
+    context.local_progression = {chapter: p0Element("local-chapter").value.trim() || null,
+      sequence: p0Element("local-sequence").value.trim() || null, week: p0Element("local-week").value.trim() || null};
+  }
+  return context;
+}
+function p0InstitutionalFrame() {
+  if (p0Element("level").value.startsWith("BTS_"))
+    return (p0.institutionalCatalog?.bts_frameworks || []).find(f => f.program_version === p0Element("frame").value);
+  return (p0.institutionalCatalog?.frames || []).find(f => f.program_version === p0Element("frame").value && f.level === p0Element("level").value);
+}
+function p0InstitutionalOptions() {
+  const stmg = p0Element("level").value.endsWith("STMG");
+  const bts = p0Element("level").value.startsWith("BTS_");
+  p0Element("institutional").hidden = !(stmg || bts);
+  p0Element("discipline").readOnly = stmg || bts;
+  for (const id of ["frame", "program-question", "program-notions", "depth"]) p0Element(id).required = stmg || bts;
+  p0Element("element-label").textContent = bts ? "Processus et activité du référentiel" : "Question du programme";
+  p0Element("capacities-label").textContent = bts ? "Compétences de cette activité" : "Capacités rattachées à cette question";
+  const select = p0Element("frame"); select.replaceChildren();
+  const empty = document.createElement("option"); empty.value = ""; empty.textContent = "Choisir l’enseignement exact"; select.append(empty);
+  for (const frame of p0.institutionalCatalog?.frames || []) {
+    if (frame.level !== p0Element("level").value) continue;
+    const option = document.createElement("option"); option.value = frame.program_version;
+    option.textContent = frame.label + " · " + frame.version_label; select.append(option);
+  }
+  if (bts) for (const frame of p0.institutionalCatalog?.bts_frameworks || []) {
+    const option = document.createElement("option"); option.value = frame.program_version;
+    option.textContent = frame.label + " · " + frame.version_label; select.append(option);
+  }
+  p0InstitutionalQuestionOptions();
+  const notions = p0Element("program-notions"); notions.replaceChildren();
+  for (const notion of p0.institutionalCatalog?.notions || []) {
+    const option = document.createElement("option"); option.value = notion.notion_ref; option.textContent = notion.label; notions.append(option);
+  }
+}
+function p0InstitutionalQuestionOptions() {
+  const frame = p0InstitutionalFrame();
+  if (p0Element("level").value.endsWith("STMG")) p0Element("discipline").value = frame?.label || "";
+  const bts = p0Element("level").value.startsWith("BTS_");
+  if (bts) p0Element("discipline").value = "Comptabilité et gestion";
+  const select = p0Element("program-question"); select.replaceChildren();
+  const empty = document.createElement("option"); empty.value = ""; empty.textContent = bts ? "Choisir l’activité" : "Choisir la question"; select.append(empty);
+  for (const question of frame?.questions || []) {
+    const option = document.createElement("option"); option.value = question.question_ref;
+    option.textContent = question.label + (question.theme_ref ? "" : " · thème à renseigner"); select.append(option);
+  }
+  if (bts) for (const activity of frame?.elements || []) {
+    if (!["ACTIVITY", "SUB_ACTIVITY"].includes(activity.element_type)) continue;
+    const option = document.createElement("option"); option.value = activity.id;
+    option.textContent = activity.official_code + " · " + activity.official_label; select.append(option);
+  }
+  p0InstitutionalCapacityOptions();
+}
+function p0InstitutionalCapacityOptions() {
+  const frame = p0InstitutionalFrame();
+  const question = frame?.questions?.find(q => q.question_ref === p0Element("program-question").value);
+  const select = p0Element("capacities"); select.replaceChildren();
+  for (const capacity of frame?.capacities || []) {
+    if (![p0Element("program-question").value, question?.theme_ref].includes(capacity.question_ref)) continue;
+    const option = document.createElement("option"); option.value = capacity.capacity_ref; option.textContent = capacity.label; select.append(option);
+  }
+  if (p0Element("level").value.startsWith("BTS_")) {
+    const scope = new Set([p0Element("program-question").value]);
+    for (let i = 0; i < (frame?.elements.length || 0); i++) {
+      let changed = false;
+      for (const e of frame.elements) if (scope.has(e.parent_ref) && !scope.has(e.id)) {scope.add(e.id); changed = true;}
+      if (!changed) break;
+    }
+    for (const competency of frame?.elements || []) if (scope.has(competency.id) && competency.element_type === "COMPETENCY") {
+      const option = document.createElement("option"); option.value = competency.id; option.textContent = competency.official_label; select.append(option);
+    }
+  }
+  p0Element("program-status").textContent = (frame?.authority === "UNATTESTED" ?
+    "Snapshot local : provenance officielle à compléter. Aucune génération tant que les rattachements ne sont pas admis." :
+    "Les capacités et rattachements seront contrôlés dans ce programme exact.") +
+    (question && !question.theme_ref ? " Thème non renseigné dans la source : la question est sélectionnable, mais la génération reste bloquée." : "");
+  if (p0Element("level").value.startsWith("BTS_")) p0Element("program-status").textContent =
+    "Le processus, l’activité et les compétences seront vérifiés dans le référentiel exact. L’année BTS est une progression locale ; elle n’est pas prescrite par ce référentiel.";
+}
+p0Element("level").addEventListener("change", p0InstitutionalOptions);
+p0Element("frame").addEventListener("change", p0InstitutionalQuestionOptions);
+p0Element("program-question").addEventListener("change", p0InstitutionalCapacityOptions);
+p0Element("family").addEventListener("change", () => {
+  const assessment = p0Element("family").value === "ASSESSMENT";
+  p0Element("assessment").hidden = !assessment;
+  for (const id of ["duration", "points"]) p0Element(id).required = assessment;
+});
+function p0Invalidate() {
+  p0.prepared = null; p0Controls();
+}
+p0Element("form").addEventListener("input", p0Invalidate);
+p0Element("form").addEventListener("change", p0Invalidate);
+p0Element("form").addEventListener("submit", event => {
+  event.preventDefault();
+  p0Run(async () => {
+    const query = p0Element("search-query").value.trim();
+    const notion = p0Element("notion-id").value.trim();
+    const passage = p0Element("search-passage").value.trim();
+    const selected = p0.references[Number(p0Element("reference").value)];
+    if (Boolean(query || notion) !== Boolean(passage) || (query && notion))
+      throw Object.assign(new Error("P0_REFERENCE_INCOMPLETE"), {confirmedRefusal: true});
+    if ((!(query || notion) || !passage) && (!selected || p0Element("reference").value === ""))
+      throw Object.assign(new Error("P0_REFERENCE_REQUIRED"), {confirmedRefusal: true});
+    const reference = notion && passage ? {notion_id: notion, passage_ref: passage} : query && passage ? {query, passage_ref: passage} :
+      {resource_ref: selected.resource_ref, resource_version_ref: selected.resource_version_ref};
+    p0.prepared = await p0Fetch("/api/v2/p0/prepare", {command_id: p0Command(), context: p0Context(), reference});
+    p0Element("preparation").replaceChildren();
+    appendSearchText(p0Element("preparation"), "p", "Contexte et référence confirmés. Relisez ce choix avant de générer.");
+    const sourceDetails = document.createElement("details"); sourceDetails.className = "secondary";
+    appendSearchText(sourceDetails, "summary", "Contexte exact, sources et provenance");
+    appendSearchText(sourceDetails, "pre", JSON.stringify({context: p0.prepared.context,
+      references: p0.prepared.references}, null, 2));
+    p0Element("preparation").append(sourceDetails);
+    uxPreparation(p0.prepared);
+    p0Element("status").textContent = p0.prepared.context.institutional_resolution?.status === "CONTENT_GAP" ?
+      "Préparation enregistrée avec lacunes institutionnelles. Génération bloquée ; consultez Sources & contexte." :
+      "Préparation prête. Autorisation de génération requise ; aucun appel fournisseur effectué.";
+  }, true);
+});
+function p0Field(parent, id, label, value, multiline = true) {
+  const text = document.createElement("label"); text.htmlFor = id; text.textContent = label;
+  const input = document.createElement(multiline ? "textarea" : "input");
+  input.id = id; input.value = value; if (multiline) input.rows = 3;
+  parent.append(text, input); return input;
+}
+function p0Render(view, quality = null) {
+  p0.view = view; p0.teacher = null;
+  uxQuality(quality, view);
+  const region = p0Element("review"); region.replaceChildren();
+  p0Element("teacher-content").replaceChildren();
+  appendSearchText(region, "p", "Préparation à relire avant usage pédagogique.");
+  uxProductionCard(view);
+  p0Field(region, "p0-edit-title", "Titre", view.title, false);
+  view.sections.forEach((s, i) => {
+    p0Field(region, "p0-edit-heading-" + i, "Titre de section " + (i + 1), s.heading, false);
+    p0Field(region, "p0-edit-section-" + i, "Texte de section " + (i + 1), s.text);
+  });
+  view.questions.forEach((q, i) => {
+    p0Field(region, "p0-edit-question-" + i, "Question " + (i + 1), q.prompt);
+    if (q.options.length) p0Field(region, "p0-edit-options-" + i, "Options — une par ligne", q.options.join("\n"));
+  });
+}
+function p0Identity() {
+  return {production_ref: p0.view.production_ref, version_ref: p0.view.version_ref,
+    bundle_sha256: p0.view.bundle_sha256};
+}
+function p0DisplayedVersion(target) {
+  const region = document.getElementById("drawer-quality");
+  return p0.view?.production_ref === target.production_ref && p0.view?.version_ref === target.version_ref &&
+    p0.view?.bundle_sha256 === target.bundle_sha256 && region.dataset.productionRef === target.production_ref &&
+    region.dataset.versionRef === target.version_ref && region.dataset.bundleSha256 === target.bundle_sha256;
+}
+p0Element("generate").addEventListener("click", () => p0Run(async () => {
+  const result = await p0Fetch("/api/v2/p0/generate", {command_id: p0Command(),
+    preparation_ref: p0.prepared.preparation_ref, preparation_sha256: p0.prepared.preparation_sha256});
+  if (result.state === "CANDIDATE") {
+    p0Render(result.view, result.agentic?.quality); p0.prepared = null;
+    p0Element("status").textContent = "Candidate reçue. Relisez et modifiez la version exacte ; aucune promotion effectuée.";
+  } else { p0Element("status").dataset.state = "unavailable";
+    p0Element("status").textContent = "Génération indisponible : autorisation requise. Aucun transport fournisseur n’est lié à cette composition hors ligne."; }
+}, true, "generating"));
+p0Element("teacher").addEventListener("click", () => p0Run(async () => {
+  p0.teacher = await p0Fetch("/api/v2/p0/versions/" + p0.view.production_ref + "/" + p0.view.version_ref + "/teacher");
+  const region = p0Element("teacher-content"); region.replaceChildren();
+  appendSearchText(region, "h3", "Compagnons professeur — consultation séparée");
+  p0.teacher.corrections.forEach((c, i) => {
+    p0Field(region, "p0-edit-answer-" + i, "Réponse " + c.question_id, c.expected_answer);
+    p0Field(region, "p0-edit-rationale-" + i, "Explication " + c.question_id, c.rationale);
+  });
+  p0.teacher.marking.forEach((m, i) => {
+    p0Field(region, "p0-edit-points-" + i, "Points " + m.question_id, m.points, false);
+    p0Field(region, "p0-edit-criteria-" + i, "Critères — un par ligne", m.criteria.join("\n"));
+  });
+}));
+p0Element("revise").addEventListener("click", () => p0Run(async () => {
+  const edits = {title: document.getElementById("p0-edit-title").value,
+    sections: p0.view.sections.map((s, i) => ({...s, heading: document.getElementById("p0-edit-heading-" + i).value,
+      text: document.getElementById("p0-edit-section-" + i).value})),
+    questions: p0.view.questions.map((q, i) => ({...q, prompt: document.getElementById("p0-edit-question-" + i).value,
+      options: q.options.length ? document.getElementById("p0-edit-options-" + i).value.split("\n") : []}))};
+  if (p0.teacher) {
+    edits.corrections = p0.teacher.corrections.map((c, i) => ({...c,
+      expected_answer: document.getElementById("p0-edit-answer-" + i).value,
+      rationale: document.getElementById("p0-edit-rationale-" + i).value}));
+    edits.marking = p0.teacher.marking.map((m, i) => ({...m, points: document.getElementById("p0-edit-points-" + i).value,
+      criteria: document.getElementById("p0-edit-criteria-" + i).value.split("\n")}));
+  }
+  const parent = p0Identity();
+  const result = await p0Fetch("/api/v2/p0/revise", {command_id: p0Command(), ...parent, edits});
+  if (!p0DisplayedVersion(parent)) { p0Element("status").textContent = "Révision reçue pour une autre version consultée. Rouvrez sa version exacte."; return; }
+  p0Render(result.view, result.quality); p0Element("status").textContent = "Nouvelle version conservée ; la version parente est inchangée.";
+}, true));
+p0Element("validate").addEventListener("click", () => p0Run(async () => {
+  const target = p0Identity();
+  const report = await p0Fetch("/api/v2/p0/validate", {command_id: p0Command(), ...target});
+  if (!p0DisplayedVersion(target)) { p0Element("status").textContent = "Vérification conservée pour sa version exacte ; la version consultée a changé."; return; }
+  uxQuality(report.quality, target);
+  p0Element("status").textContent = "Vérification structurelle : " + report.status + ". Aucune validation pédagogique ni promotion.";
+}, true, "validating"));
+async function p0SaveVersion() {
+  const refs = {production_ref: p0.view.production_ref, version_ref: p0.view.version_ref};
+  await r4Fetch("/api/v2/conversation/saved", refs);
+  await r4Refresh(); r4Versions.value = refs.production_ref + "/" + refs.version_ref;
+  await r4Open(); p0Element("status").textContent = "Version sauvegardée et rouverte. Exports disponibles dans l’espace de conservation.";
+}
+p0Element("save").addEventListener("click", () => p0Run(p0SaveVersion, true, "saving"));
+async function p0Connect() {
+  const metadata = await p0Fetch("/api/v2/p0");
+  p0.nonce = metadata.transport_nonce; p0.references = metadata.references;
+  p0.institutionalCatalog = metadata.institutional_catalog;
+  p0InstitutionalOptions();
+  p0.liveBinding = metadata.live_binding;
+  p0Element("generate").textContent = metadata.live_binding === "NONE" ? "Génération indisponible dans cette composition" : "Demander la génération autorisée";
+  p0Element("reference").replaceChildren();
+  const empty = document.createElement("option"); empty.value = ""; empty.textContent = "Choisir une référence";
+  p0Element("reference").append(empty);
+  p0.references.forEach((ref, i) => {
+    const option = document.createElement("option"); option.value = String(i);
+    option.textContent = ref.title;
+    p0Element("reference").append(option);
+  });
+  p0Element("status").textContent = "Contexte prêt à renseigner. Aucune génération autorisée.";
+}
+p0Element("connect").addEventListener("click", () => p0Run(p0Connect));
+p0Run(p0Connect);
+
+// Conversational shell: proposals are deterministic and explicitly confirmed.
+// Business versions are saved through Application, never in browser storage.
+const uxRequests = [];
+const uxNames = {COURSE: "Cours", EXERCISE: "Exercice", OPEN_QUESTIONS: "Questions ouvertes", QCM: "QCM", QUIZ: "Quiz", ASSESSMENT: "Évaluation",
+  FIRST_STMG: "Première STMG", FINAL_STMG: "Terminale STMG", BTS_CG_YEAR_1: "BTS CG première année", BTS_CG_YEAR_2: "BTS CG deuxième année"};
+function uxShow(name) {
+  document.querySelectorAll("[data-panel]").forEach(panel => { panel.hidden = panel.dataset.panel !== name; });
+  document.querySelectorAll("[data-view]").forEach(button => { button.setAttribute("aria-current", button.dataset.view === name ? "page" : "false"); });
+  document.getElementById("workspace-title").textContent = {prepare: "Nouvelle préparation", conversations: "Conversations", productions: "Productions", library: "Bibliothèque", settings: "Réglages"}[name];
+}
+function uxMessage(role, text) {
+  const messages = document.getElementById("preparation-messages");
+  if (messages.lastElementChild?.textContent === text) return;
+  appendSearchText(messages, "li", text, "message-" + role);
+  while (messages.children.length > 64) messages.firstElementChild.remove();
+}
+function proposePreparation(text) {
+  const normalized = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const families = [["COURSE", /\bcours\b/], ["EXERCISE", /\bexercice[s]?\b/], ["OPEN_QUESTIONS", /\bquestions? ouvertes?\b/],
+    ["QCM", /\bqcm\b/], ["QUIZ", /\bquiz\b/], ["ASSESSMENT", /\b(evaluation|controle|epreuve)\b/]];
+  const levels = [["FIRST_STMG", /\b(premiere|1re|1ere) stmg\b/], ["FINAL_STMG", /\b(terminale|tle) stmg\b/],
+    ["BTS_CG_YEAR_1", /\bbts cg (?:1|premiere annee|annee 1)\b/], ["BTS_CG_YEAR_2", /\bbts cg (?:2|deuxieme annee|seconde annee|annee 2)\b/]];
+  const foundFamilies = families.filter(([, pattern]) => pattern.test(normalized)).map(([name]) => name);
+  const foundLevels = levels.filter(([, pattern]) => pattern.test(normalized)).map(([name]) => name);
+  const topic = text.match(/\bsur\s+(.+?)(?:[.!?]|,\s*(?:durée|noté|pour)|$)/i)?.[1]?.trim() || "";
+  const minutes = normalized.match(/\b(\d{1,3})\s*(?:minutes?|min)\b/);
+  const hours = normalized.match(/\b(\d)\s*(?:heures?|h)\b/);
+  const points = normalized.match(/(?:note\s*)?sur\s+(\d{1,3})\b/);
+  return {family: foundFamilies.length === 1 ? foundFamilies[0] : "", level: foundLevels.length === 1 ? foundLevels[0] : "", topic,
+    difficulty: /\b(approfondi|avance|difficile)\b/.test(normalized) ? "ADVANCED" : /\b(initiation|debutant)\b/.test(normalized) ? "INTRODUCTORY" : "STANDARD",
+    duration: minutes ? Number(minutes[1]) : hours ? Number(hours[1]) * 60 : null, points: points ? Number(points[1]) : null,
+    objective: text.length <= 500 ? text : "",
+    ambiguities: [...(foundFamilies.length === 1 ? [] : ["type de production"]), ...(foundLevels.length === 1 ? [] : ["niveau exact"]),
+      ...(topic ? [] : ["notions"]), ...(text.length <= 500 ? [] : ["objectif synthétique (500 caractères maximum)"])]};
+}
+function uxContext(context) {
+  const region = document.getElementById("drawer-context"); region.replaceChildren();
+  appendSearchText(region, "p", (uxNames[context.question_mode || context.resource_type] || "Type à préciser") + " · " + (uxNames[context.level] || "Niveau à préciser"));
+  appendSearchText(region, "p", context.discipline || "Discipline à préciser");
+  if (context.institutional) {
+    const selected = context.institutional, resolved = context.institutional_resolution;
+    const bts = selected.contract_id === "BTS-INSTITUTIONAL-CONTEXT-1.0";
+    const level = bts ? (selected.local_year === "BTS_CG_YEAR_1" ? "BTS CG première année (progression locale)" : "BTS CG deuxième année (progression locale)") : selected.education_level === "PREMIERE" ? "Première STMG" : "Terminale STMG";
+    appendSearchText(region, "p", "Niveau : " + level);
+    appendSearchText(region, "p", "Enseignement : " + context.discipline.split(" — ")[0]);
+    if (selected.program_component === "COMMON") appendSearchText(region, "p", "Partie : Enseignement commun");
+    if (selected.program_component === "SPECIFIC") appendSearchText(region, "p", "Enseignement spécifique : " + context.discipline.split(" — ").slice(1).join(" — "));
+    appendSearchText(region, "p", (bts ? "Référentiel : " : "Programme : ") + context.discipline + " — " + level + " · " + (resolved?.version_label || "version sélectionnée à vérifier"));
+    appendSearchText(region, "h4", "Cadre institutionnel");
+    if (bts) {
+      appendSearchText(region, "p", (resolved?.process?.official_label || "Processus à vérifier") + " · " + (resolved?.activity?.official_label || "Activité à vérifier"));
+      appendSearchText(region, "p", "Compétences : " + ((resolved?.competencies || []).map(c => c.official_label).join(" · ") || "rattachements à compléter"));
+      appendSearchText(region, "p", "Répartition annuelle locale, sans prescription officielle de BTS CG1 ou CG2.");
+    } else {
+      appendSearchText(region, "p", (resolved?.theme?.official_label || (/^theme:\d+$/.test(selected.theme_ref || "") ? "Thème " + selected.theme_ref.replace("theme:", "") : "Thème non renseigné")) + " · " + (resolved?.question?.official_label || "question sélectionnée à vérifier"));
+      appendSearchText(region, "p", "Capacités : " + ((resolved?.capacities || []).map(c => c.label).join(" · ") || "rattachements à compléter"));
+    }
+    appendSearchText(region, "p", "Notions : " + ((resolved?.notions || []).map(n => n.label).join(" · ") || "sélection à vérifier") + " · " +
+      ({DISCOVERY:"Découverte", APPLICATION:"Application", ANALYSIS:"Analyse"}[selected.depth] || "profondeur à préciser"));
+    if (resolved?.gaps?.length) appendSearchText(region, "p", "Lacunes institutionnelles : provenance, capacités ou liens encore non admis. Génération bloquée.");
+    appendSearchText(region, "p", "Profondeur proposée pour l’activité, distincte d’une exigence officielle.");
+    appendSearchText(region, "h4", "Construction pédagogique");
+    if (context.local_progression) {
+      appendSearchText(region, "p", "Progression locale : " + Object.values(context.local_progression).filter(Boolean).join(" · "));
+    }
+  }
+  appendSearchText(region, "p", (context.topics || []).join(" · "));
+  if (context.duration_minutes) appendSearchText(region, "p", context.duration_minutes + " minutes · /" + context.total_points);
+}
+function uxQuality(quality, view = p0.view) {
+  const labels = {SOURCES_OK: "Identité des sources contrôlée", SOURCES_INSUFFICISANTES: "Sources insuffisantes", CALCULS_VERIFIES: "Calculs vérifiés", ECHEC: "Preuve indépendante des calculs manquante", NON_APPLICABLE: "Aucun calcul requis par le travail qualitatif explicite", A_DETERMINER: "Applicabilité des calculs à déterminer", CONSIGNE_COUVERTE: "Couverture examinée", PARTIELLE: "Couverture à examiner", REVUE_OK: "Revue technique sans réserve", RESERVE: "Revue pédagogique en attente ou avec réserves", HUMAN_REVIEW_REQUIRED: "Relecture enseignante nécessaire"};
+  const region = document.getElementById("drawer-quality"); region.replaceChildren();
+  region.dataset.productionRef = view?.production_ref || "";
+  region.dataset.versionRef = view?.version_ref || "";
+  region.dataset.bundleSha256 = view?.bundle_sha256 || "";
+  if (!quality) { appendSearchText(region, "p", "Non vérifié pour cette version. Les rapports conservés couvrent uniquement leur version exacte. Relecture enseignante nécessaire."); return; }
+  for (const key of ["sources", "calculations", "instruction", "review", "human_review"]) appendSearchText(region, "p", labels[quality[key]] || "Non vérifié");
+}
+function uxPreparation(prepared) {
+  uxContext(prepared.context); uxQuality(prepared.agentic?.quality, null);
+  const region = document.getElementById("drawer-sources"); region.replaceChildren();
+  const passages = prepared.agentic?.evidence_pack?.passages || [];
+  appendSearchText(region, "h4", "Sources de contenu");
+  const pack = prepared.agentic?.evidence_pack;
+  if (pack?.content_authority_status) appendSearchText(region, "p", "Passages sélectionnés : leur catégorie d’autorité disciplinaire ou pédagogique reste à vérifier.");
+  for (const passage of passages) appendSearchText(region, "p", passage.text);
+  if (!passages.length) appendSearchText(region, "p", prepared.references.length + " référence(s) sélectionnée(s).");
+  document.getElementById("drawer-identities").textContent = JSON.stringify({preparation_ref: prepared.preparation_ref,
+    preparation_sha256: prepared.preparation_sha256, references: prepared.references, plan: prepared.agentic?.plan}, null, 2);
+}
+function uxProductionCard(view) {
+  const context = view.pedagogical_context;
+  document.getElementById("production-card").hidden = false;
+  document.getElementById("production-card-title").textContent = view.title;
+  document.getElementById("production-card-context").textContent = (uxNames[context.question_mode || context.resource_type] || "Préparation") + " · " + uxNames[context.level] +
+    (context.duration_minutes ? " · " + context.duration_minutes + " minutes · /" + context.total_points : "");
+  const preview = document.getElementById("production-card-preview"); preview.replaceChildren();
+  const teacherPreview = document.getElementById("production-card-teacher-preview");
+  teacherPreview.replaceChildren(); teacherPreview.hidden = true;
+  classroomPreview(preview, [...view.sections.flatMap(section => [{style: "Heading1", text: section.heading}, {style: "Normal", text: section.text}]),
+    ...view.questions.flatMap((question, i) => [{style: "Heading2", text: "Question " + (i + 1)}, {style: "Normal", text: question.prompt},
+      ...question.options.map(option => ({style: "Normal", text: option}))])]);
+  uxContext(context);
+  document.getElementById("drawer-identities").textContent = JSON.stringify({production_ref: view.production_ref, version_ref: view.version_ref, bundle_sha256: view.bundle_sha256, references: view.references}, null, 2);
+  document.getElementById("production-edit-panel").open = false;
+}
+async function uxTeacherCard(kind) {
+  await p0Run(async () => {
+    const teacher = await p0Fetch("/api/v2/p0/versions/" + p0.view.production_ref + "/" + p0.view.version_ref + "/teacher");
+    const region = document.getElementById("production-card-teacher-preview");
+    region.replaceChildren(); region.hidden = false;
+    appendSearchText(region, "h3", kind === "correction" ? "Correction — document professeur séparé" : "Barème — document professeur séparé");
+    if (kind === "correction" && teacher.course_chapter) teacher.course_chapter.teacher_answers.forEach((c, i) => {
+      appendSearchText(region, "h4", "Question " + (i + 1));
+      appendSearchText(region, "p", c.expected_answer); appendSearchText(region, "p", c.rationale);
+      appendSearchText(region, "p", "Point de vigilance : " + c.vigilance);
+      appendSearchText(region, "p", "Remédiation : " + c.remediation);
+    });
+    else if (kind === "correction") teacher.corrections.forEach((c, i) => {
+      appendSearchText(region, "h4", "Question " + (i + 1));
+      appendSearchText(region, "p", c.expected_answer); appendSearchText(region, "p", c.rationale);
+    });
+    else teacher.marking.forEach((m, i) => {
+      appendSearchText(region, "h4", "Question " + (i + 1) + " — " + m.points + " points");
+      m.criteria.forEach(criterion => appendSearchText(region, "p", criterion));
+    });
+    p0Element("status").textContent = "Document professeur consulté séparément. Le sujet élève est inchangé.";
+  });
+}
+function uxSavedCard(saved) {
+  const view = saved.record.view;
+  uxContext(view.context || view.pedagogical_context || {});
+  document.getElementById("drawer-identities").textContent = JSON.stringify({production_ref: view.production_ref, version_ref: view.version_ref,
+    record_sha256: saved.record_sha256, provenance: saved.record.provenance, reviews: saved.record.reviews, validations: saved.record.validations}, null, 2);
+  const region = document.getElementById("drawer-sources"); region.replaceChildren();
+  appendSearchText(region, "h4", "Sources de contenu");
+  appendSearchText(region, "p", (view.references || []).length + " référence(s) conservée(s). Leur identité ne vaut pas admission disciplinaire ou pédagogique.");
+  const context = view.context || view.pedagogical_context || {};
+  const resolved = context.institutional_resolution;
+  if (resolved?.document_provenance) {
+    appendSearchText(region, "p", "Source institutionnelle distincte : " + resolved.document_provenance.title);
+    appendSearchText(region, "p", "Admission du propriétaire sur la version exacte conservée ; la recette enseignante reste à réaliser.");
+  } else appendSearchText(region, "p", "Aucune autorité institutionnelle attestée dans cette version historique.");
+  uxQuality(null, view);
+}
+document.querySelectorAll("[data-view]").forEach(button => button.addEventListener("click", () => uxShow(button.dataset.view)));
+document.getElementById("new-preparation").addEventListener("click", () => {
+  uxShow("prepare"); document.getElementById("preparation-prompt").value = ""; document.getElementById("preparation-prompt").focus();
+});
+document.getElementById("sources-toggle").addEventListener("click", () => {
+  const drawer = document.getElementById("sources-drawer"); drawer.hidden = !drawer.hidden;
+  document.body.classList.toggle("drawer-closed", drawer.hidden);
+  document.getElementById("sources-toggle").setAttribute("aria-expanded", String(!drawer.hidden));
+});
+document.querySelectorAll("[data-family]").forEach(button => button.addEventListener("click", () => {
+  document.getElementById("preparation-prompt").value = "Prépare " + uxNames[button.dataset.family].toLocaleLowerCase("fr") + " ";
+  document.getElementById("preparation-prompt").focus();
+}));
+document.getElementById("preparation-composer").addEventListener("submit", event => {
+  event.preventDefault();
+  if (p0.busy || p0.uncertain) { uxMessage("assistant", "Terminez ou vérifiez l’action en attente avant une nouvelle préparation."); return; }
+  const text = document.getElementById("preparation-prompt").value.trim(); if (!text) return;
+  const proposed = proposePreparation(text);
+  uxMessage("user", text); uxRequests.push(text); if (uxRequests.length > 32) uxRequests.shift();
+  for (const id of ["recent-preparations", "session-conversations"]) {
+    const region = document.getElementById(id); region.replaceChildren();
+    [...uxRequests].reverse().forEach(request => { const item = document.createElement("li"), button = document.createElement("button");
+      button.type = "button"; button.textContent = request; button.addEventListener("click", () => { uxShow("prepare"); document.getElementById("preparation-prompt").value = request; }); item.append(button); region.append(item); });
+  }
+  // Replace the proposed context, but retain the explicitly selected source.
+  p0Element("family").value = proposed.family; p0Element("level").value = proposed.level;
+  p0Element("difficulty").value = proposed.difficulty; p0Element("topics").value = proposed.topic;
+  p0Element("objectives").value = proposed.objective;
+  p0Element("discipline").value = proposed.level.includes("BTS") ? "Comptabilité et gestion" : "";
+  p0InstitutionalOptions();
+  p0Element("duration").value = proposed.duration || ""; p0Element("points").value = proposed.points || "";
+  p0Element("family").dispatchEvent(new Event("change")); p0Invalidate();
+  document.getElementById("preparation-parameters").open = true;
+  if (proposed.level.includes("STMG")) uxMessage("assistant", "Choisissez l’enseignement exact et sa question : Management et SGN sont distincts ; en terminale, précisez le commun ou l’enseignement spécifique.");
+  else if (proposed.level.startsWith("BTS_")) uxMessage("assistant", "Choisissez le référentiel exact, son processus et son activité, les compétences, les notions et la profondeur avant de confirmer le contexte. L’année BTS relève de la progression locale.");
+  else uxContext(p0Context());
+  uxMessage("assistant", proposed.ambiguities.length ? "À préciser pour préparer : " + proposed.ambiguities.join(", ") + ". Complétez le contexte puis sélectionnez une source." :
+    "Le contexte proposé est prêt à confirmer. Relisez les paramètres, puis sélectionnez une référence ou un passage de la Bibliothèque.");
+  if (proposed.duration && proposed.family !== "ASSESSMENT") uxMessage("assistant", "La durée est actuellement enregistrable pour les évaluations uniquement. Votre demande reste visible ; aucune durée ne sera ajoutée au contrat de cette production.");
+  document.getElementById("preparation-prompt").value = "";
+});
+document.getElementById("card-open").addEventListener("click", () => {
+  document.getElementById("production-card-teacher-preview").hidden = true;
+  document.getElementById("production-card-preview").hidden = false;
+  document.getElementById("production-card-preview").scrollIntoView({behavior: "smooth"});
+});
+document.getElementById("card-modify").addEventListener("click", () => { document.getElementById("production-edit-panel").open = true; document.getElementById("p0-edit-title").focus(); });
+document.getElementById("card-check").addEventListener("click", () => p0Element("validate").click());
+document.getElementById("card-correction").addEventListener("click", () => uxTeacherCard("correction"));
+document.getElementById("card-marking").addEventListener("click", () => uxTeacherCard("marking"));
+document.getElementById("card-export").addEventListener("click", () => p0Run(async () => {
+  await p0SaveVersion(); uxShow("productions");
+}, true, "saving"));
+if (window.matchMedia("(max-width:1180px)").matches) document.getElementById("sources-toggle").click();

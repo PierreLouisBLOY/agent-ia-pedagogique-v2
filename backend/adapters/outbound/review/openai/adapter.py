@@ -195,11 +195,15 @@ def _map_response(
     _validate_review_coherence(structured_payload, findings, request.operation)
     if response.status is OpenAIResponseStatus.INCOMPLETE:
         warnings += ({"code": "OPENAI_RESPONSE_INCOMPLETE"},)
-    status = (
-        ReviewPortResultStatus.PARTIAL
-        if limitations or warnings or uncertainties
-        else ReviewPortResultStatus.SUCCEEDED
-    )
+    # Completeness of a semantic review is separate from its declared knowledge
+    # limits. Keep every limitation in the result; P0 quality remains reserved.
+    partial = bool(warnings or uncertainties)
+    if request.operation is ReviewOperation.SEMANTIC_REVIEW:
+        coverage = cast(tuple[str, ...], structured_payload["coverage"])
+        partial = partial or set(coverage) != {d.value for d in request.review_dimensions}
+    else:
+        partial = partial or bool(limitations)
+    status = ReviewPortResultStatus.PARTIAL if partial else ReviewPortResultStatus.SUCCEEDED
     try:
         return ReviewPortResult(
             source_step_id=request.source_step_id,

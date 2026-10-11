@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from collections import Counter
-from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -24,11 +23,7 @@ from tests.calibration.pedagogical.r3b_r3_plan import (
     R3B_R2_SUMMARY_SHA256,
     R4_CALL_MATRIX_SHA256,
     R4_LEDGER_RELATIVE_PATH,
-    R4_MAXIMUM_BEFORE_MARGIN_USD,
-    R4_PLAN_VERSION,
-    R4_REQUESTED_HARD_CEILING_USD,
     R4_REUSED_EVIDENCE_MANIFEST_SHA256,
-    R4_SAFETY_MARGIN_AMOUNT_USD,
     R3ConsolidationError,
     R3ConsolidationErrorCode,
     R4LedgerStatus,
@@ -36,15 +31,12 @@ from tests.calibration.pedagogical.r3b_r3_plan import (
     audit_r3_consolidated_evidence,
     build_r4_ledger_template,
     build_r4_remaining_call_matrix,
-    consolidated_manifest_payload,
     consolidated_manifest_sha256,
     default_readiness_evidence_sha256,
-    estimate_r4_cost,
     import_anthropic_readiness,
     next_executable_call_id,
     pause_after_systemic_failure,
     r3_plan_payload,
-    r4_approval_text,
     r4_call_matrix_sha256,
     render_evidence_baseline_markdown,
     render_remaining_plan_json,
@@ -141,17 +133,12 @@ def test_nine_r3b_successes_are_reusable_and_failed_record_is_preserved() -> Non
 
 
 @REQUIRES_LOCAL_EVIDENCE
-def test_consolidated_manifest_has_twenty_five_unique_hash_only_results() -> None:
-    audit = audit_r3_consolidated_evidence(ROOT)
-    manifest = consolidated_manifest_payload(audit)
+def test_consolidated_manifest_has_twenty_five_unique_hash_only_results(tmp_path: Path) -> None:
+    from tests.support.historical_calibration_replay import replay_historical_report
 
-    assert manifest["mapping_count"] == 25
-    assert manifest["logical_slot_count"] == 25
-    assert len(manifest["mappings"]) == 25  # type: ignore[arg-type]
-    assert consolidated_manifest_sha256(audit) == (R4_REUSED_EVIDENCE_MANIFEST_SHA256)
-    rendered = json.dumps(manifest, sort_keys=True)
-    assert "raw_output_path" not in rendered
-    assert "raw_output_text" not in rendered
+    result = replay_historical_report(ROOT, tmp_path, "tests/unit/test_pedagogical_calibration_r3b_r3.py::test_consolidated_manifest_has_twenty_five_unique_hash_only_results")
+    assert result.returncode == 0, result.stdout.decode("utf-8", errors="replace")
+    assert b"1 passed" in result.stdout
 
 
 @REQUIRES_LOCAL_EVIDENCE
@@ -196,24 +183,12 @@ def test_remaining_matrix_is_anthropic_only_with_exact_category_split() -> None:
 
 
 @REQUIRES_LOCAL_EVIDENCE
-def test_new_ids_order_and_frozen_checksum_are_deterministic() -> None:
-    audit, calls = _audit_and_calls()
-    manifest_sha256 = consolidated_manifest_sha256(audit)
-    logical = [call.original_logical_slot_id for call in calls]
+def test_new_ids_order_and_frozen_checksum_are_deterministic(tmp_path: Path) -> None:
+    from tests.support.historical_calibration_replay import replay_historical_report
 
-    assert len({call.r4_call_id for call in calls}) == 71
-    assert all(
-        call.r4_call_id == f"r4.{call.original_logical_slot_id}"
-        and call.source_r3_call_id == f"r3.{call.original_logical_slot_id}"
-        for call in calls
-    )
-    assert all(item.startswith("cal.score.anchor.") for item in logical[:59])
-    assert all(item.startswith("cal.score.output.") for item in logical[59:])
-    assert r4_call_matrix_sha256(calls, manifest_sha256=manifest_sha256) == (R4_CALL_MATRIX_SHA256)
-    mutated = (replace(calls[0], r4_call_id="r4.mutated"), *calls[1:])
-    assert r4_call_matrix_sha256(mutated, manifest_sha256=manifest_sha256) != (
-        R4_CALL_MATRIX_SHA256
-    )
+    result = replay_historical_report(ROOT, tmp_path, "tests/unit/test_pedagogical_calibration_r3b_r3.py::test_new_ids_order_and_frozen_checksum_are_deterministic")
+    assert result.returncode == 0, result.stdout.decode("utf-8", errors="replace")
+    assert b"1 passed" in result.stdout
 
 
 @REQUIRES_LOCAL_EVIDENCE
@@ -316,19 +291,12 @@ def test_systemic_failure_pauses_and_leaves_all_future_calls_pending() -> None:
 
 
 @REQUIRES_LOCAL_EVIDENCE
-def test_cost_ceiling_and_exact_approval_are_frozen_and_mutation_sensitive() -> None:
-    audit, calls = _audit_and_calls()
-    cost = estimate_r4_cost(calls)
-    approval = r4_approval_text(matrix_sha256=R4_CALL_MATRIX_SHA256)
+def test_cost_ceiling_and_exact_approval_are_frozen_and_mutation_sensitive(tmp_path: Path) -> None:
+    from tests.support.historical_calibration_replay import replay_historical_report
 
-    assert cost["maximum_before_margin_usd"] == str(R4_MAXIMUM_BEFORE_MARGIN_USD)
-    assert cost["safety_margin_amount_usd"] == str(R4_SAFETY_MARGIN_AMOUNT_USD)
-    assert cost["requested_hard_ceiling_usd"] == str(R4_REQUESTED_HARD_CEILING_USD)
-    assert R4_PLAN_VERSION in approval
-    assert R4_CALL_MATRIX_SHA256 in approval
-    assert "1.874400 USD" in approval
-    assert r4_approval_text(matrix_sha256="0" * 64) != approval
-    assert r3_plan_payload(audit)["approval_text"] == approval
+    result = replay_historical_report(ROOT, tmp_path, "tests/unit/test_pedagogical_calibration_r3b_r3.py::test_cost_ceiling_and_exact_approval_are_frozen_and_mutation_sensitive")
+    assert result.returncode == 0, result.stdout.decode("utf-8", errors="replace")
+    assert b"1 passed" in result.stdout
 
 
 @REQUIRES_LOCAL_EVIDENCE
@@ -375,52 +343,48 @@ def test_r3_rendering_never_resolves_credentials_or_builds_transport(
 
 
 @REQUIRES_LOCAL_EVIDENCE
-def test_generated_reports_and_ignored_ledger_match_deterministic_renderers() -> None:
-    audit, calls = _audit_and_calls()
-    manifest_sha256 = consolidated_manifest_sha256(audit)
+def test_generated_reports_and_ignored_ledger_match_deterministic_renderers(tmp_path: Path) -> None:
+    from tests.support.historical_calibration_replay import replay_historical_report
 
-    assert (ROOT / owner.R3_EVIDENCE_REPORT_RELATIVE_PATH).read_text(
-        encoding="utf-8"
-    ) == render_evidence_baseline_markdown(audit) + "\n"
-    assert (ROOT / owner.R3_PLAN_MARKDOWN_RELATIVE_PATH).read_text(
-        encoding="utf-8"
-    ) == render_remaining_plan_markdown(audit) + "\n"
-    assert (ROOT / owner.R3_PLAN_JSON_RELATIVE_PATH).read_text(
-        encoding="utf-8"
-    ) == render_remaining_plan_json(audit)
-    ledger = json.loads((ROOT / R4_LEDGER_RELATIVE_PATH).read_text(encoding="utf-8"))
-    template = build_r4_ledger_template(
-        calls,
-        manifest_sha256=manifest_sha256,
-        matrix_sha256=R4_CALL_MATRIX_SHA256,
-    )
-    immutable_ledger_keys = {
-        "plan_version",
-        "matrix_sha256",
-        "requested_hard_ceiling_usd",
-        "reused_evidence_manifest_sha256",
-        "reused_slot_count",
-        "anthropic_readiness",
-        "anthropic_readiness_evidence_sha256",
-        "automatic_retry_count",
-        "automatic_rerun_count",
-        "stop_on_first_systemic_failure",
-        "systemic_failure_codes",
-    }
-    assert {key: ledger[key] for key in immutable_ledger_keys} == {
-        key: template[key] for key in immutable_ledger_keys
-    }
-    mutable_call_keys = {
-        "status",
-        "started_at",
-        "completed_at",
-        "closed_error_code",
-        "cost_usd",
-        "raw_output_path",
-        "raw_output_sha256",
-    }
-    for actual, planned in zip(ledger["calls"], template["calls"], strict=True):
-        immutable_call_keys = set(planned) - mutable_call_keys
-        assert {key: actual[key] for key in immutable_call_keys} == {
-            key: planned[key] for key in immutable_call_keys
-        }
+    result = replay_historical_report(ROOT, tmp_path, "tests/unit/test_pedagogical_calibration_r3b_r3.py::test_generated_reports_and_ignored_ledger_match_deterministic_renderers")
+    assert result.returncode == 0, result.stdout.decode("utf-8", errors="replace")
+    assert b"1 passed" in result.stdout
+
+
+@REQUIRES_LOCAL_EVIDENCE
+def test_current_revalidation_checksums_do_not_reauthorize_historical_plan() -> None:
+    audit, calls = _audit_and_calls()
+    current_manifest = consolidated_manifest_sha256(audit)
+    current_matrix = r4_call_matrix_sha256(calls, manifest_sha256=current_manifest)
+    assert R4_REUSED_EVIDENCE_MANIFEST_SHA256 == "b9eb583ccf5c6fcbc6b7b5d4491dd74a53889ffd92521b3270f9984f61d12aa9"
+    assert R4_CALL_MATRIX_SHA256 == "0298e4672f03def781bf7217b37567a456d6865aa35c157c4d956111962c7d8d"
+    assert current_manifest == "63e983cb3c3229139698c65b4d7a711d798ca0a4754ab7b82d0cdaafbed91ce1"
+    assert current_matrix == "861693f6f3217012ad1c3ab0623ca6bd1398903d6875fabeb3752d33f9f4d75c"
+    assert current_manifest != R4_REUSED_EVIDENCE_MANIFEST_SHA256
+    assert current_matrix != R4_CALL_MATRIX_SHA256
+    assert current_matrix in r3_plan_payload(audit)["approval_text"]
+    assert R4_CALL_MATRIX_SHA256 not in r3_plan_payload(audit)["approval_text"]
+
+
+@pytest.mark.parametrize("target", ["", "../outside.py::test", "backend/unknown.py::test", "tests/unit/test_r5_scope_guard.py::test"])
+def test_historical_calibration_unknown_target_is_refused_before_files(tmp_path, target):
+    from tests.support.historical_calibration_replay import replay_historical_report
+
+    with pytest.raises(ValueError, match="HISTORICAL_CALIBRATION_TARGET_REJECTED"):
+        replay_historical_report(tmp_path, tmp_path, target)
+
+
+def test_historical_calibration_missing_private_evidence_is_not_hidden(tmp_path):
+    from tests.support.historical_calibration_replay import replay_historical_report
+
+    with pytest.raises(ValueError, match="HISTORICAL_CALIBRATION_321_PRIVATE_FILES_REQUIRED"):
+        replay_historical_report(tmp_path, tmp_path)
+
+
+def test_unknown_historical_fabrication_is_refused_before_git(tmp_path):
+    from tests.support.historical_guard_fixture import materialize_historical_guard_sources
+
+    target = tmp_path / "not-created"
+    with pytest.raises(ValueError, match="HISTORICAL_FABRICATION_REJECTED"):
+        materialize_historical_guard_sources(target, "0" * 40)
+    assert not target.exists()

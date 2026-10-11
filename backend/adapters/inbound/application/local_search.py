@@ -10,6 +10,7 @@ from backend.modules.resource_library.application.dto.input.search_local import 
 from backend.modules.resource_library.application.dto.output.local_search_view import (
     LocalSearchView,
 )
+from backend.modules.resource_library.contracts.dto.search_source_status import SearchSourceStatus
 from backend.modules.resource_library.domain.value_objects.search_text import (
     InvalidSearchTextError,
     SearchText,
@@ -17,6 +18,11 @@ from backend.modules.resource_library.domain.value_objects.search_text import (
 from backend.modules.resource_library.ports.inbound.local_search import LocalSearchInbound
 
 SEARCH_USE_CASE_ID = "application.search_local_passages"
+
+
+def validate_source_status_projection(value: object) -> dict[str, str]:
+    """Keep the closed native status contract behind the Application bridge."""
+    return SearchSourceStatus.from_mapping(value).as_dict()
 
 
 def search_data(view: LocalSearchView | None) -> dict[str, object] | None:
@@ -45,6 +51,7 @@ def search_data(view: LocalSearchView | None) -> dict[str, object] | None:
                 "availability_status": resource.availability_status,
             },
             "open_status": item.open_status.value,
+            **({"source_status": passage.source_status.as_dict()} if passage.source_status is not None else {}),
         })
     return {"items": items, "window_full": view.window_full,
             "more_admitted_in_window": view.more_admitted_in_window}

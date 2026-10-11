@@ -1,0 +1,45 @@
+{
+  "schema_version": "canonical-seed-reference-1.0",
+  "asset_id": "PROJET_V2_CANONICAL_PEDAGOGICAL_SEED_CP645",
+  "filename": "CP645_FINALISATION_628_SUR_628.sqlite",
+  "sha256": "9d64d15e9c246924edeff16e7bbb5fb7a53791fc2ddf217541824771b34053e1",
+  "size_bytes": 227557376,
+  "sqlite_inventory": {"tables": 121, "explicit_indexes": 23, "triggers": 7, "views": 11},
+  "content_status": {
+    "canonical_notions": 628,
+    "notion_rows_total": 637,
+    "merged_notions": 9,
+    "formula_rows_total": 210,
+    "formula_approved": 210,
+    "formula_owner_validation_events": 210,
+    "formula_v1_validation_events": 3,
+    "document_rows_total": 67
+  },
+  "provenance": {
+    "source_phase": "CP645 - revision pedagogique 628/628",
+    "handoff_archive_sha256": "8e3801878c3f7986aa081705327ddd1d8d19883adcfe90038fd3651cedf691bf",
+    "mandate_sha256": "7dff4910fbefca0f99b738e9c561508d47c94cc4a5dc582aedb1bb103fc3d0f0",
+    "implementation_base_commit": "015218ff7dcdfb32b873743a375c46bd4025d27d",
+    "local_readonly_audit_date": "2026-09-21",
+    "integrity_check": "ok",
+    "quick_check": "ok",
+    "foreign_key_violations": 0
+  },
+  "schema_comparison": {
+    "previous_seed_sha256": "38ca8b3fe5c4fd14e9a4cc60a252e7eb03b1f8a8b5fc26ef62251d2b73e35134",
+    "added_tables": 23,
+    "added_explicit_indexes": 3,
+    "added_views": 9,
+    "removed_objects": 0,
+    "modified_objects": 0
+  },
+  "policy": {
+    "canonical_identity_count": 1,
+    "seed_immutable": true,
+    "binary_in_git": false,
+    "runtime_is_distinct_derived_copy": true,
+    "allowlisted_migrations": ["001", "002"],
+    "method_approval_inferred_from_formula_approval": false,
+    "provider_calls_required": false
+  }
+}

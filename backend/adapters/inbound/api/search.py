@@ -7,6 +7,7 @@ import unicodedata
 from collections.abc import Callable, Mapping
 
 from backend.adapters.inbound.api.read15 import HttpProjection, public_error
+from backend.adapters.inbound.application.local_search import validate_source_status_projection
 from backend.agent_runtime.contracts import UseCaseResult
 
 MAX_SEARCH_RESPONSE_BYTES = 64 * 1_024
@@ -42,8 +43,12 @@ def _identifier(value: object, maximum: int) -> bool:
 
 
 def _item(data: object, position: int) -> dict[str, object]:
-    if not isinstance(data, Mapping) or set(data) != _FIELDS:
+    if not isinstance(data, Mapping) or set(data) not in (_FIELDS, _FIELDS | {"source_status"}):
         raise ValueError("INVALID_SEARCH_PROJECTION")
+    source_status = (
+        {"source_status": validate_source_status_projection(data["source_status"])}
+        if "source_status" in data else {}
+    )
     if type(data["position"]) is not int or data["position"] != position:
         raise ValueError("INVALID_SEARCH_POSITION")
     for field, maximum in (
@@ -78,7 +83,7 @@ def _item(data: object, position: int) -> dict[str, object]:
             raise ValueError("INVALID_SEARCH_OPENING")
     else:
         raise ValueError("INVALID_SEARCH_OPENING")
-    return {**dict(data), "provenance": dict(_PROVENANCE), "read15": resource}
+    return {**dict(data), "provenance": dict(_PROVENANCE), "read15": resource, **source_status}
 
 
 class SearchEndpoint:

@@ -234,6 +234,7 @@ def test_patch_inventory_closed_mutants(mutation):
 
 
 @pytest.mark.parametrize("path", PATCH_PATHS)
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_every_patch_source_mutation_is_rejected(tmp_path, path):
     from tests.support.r3_cap_a01_guard import PATHS as CAP_PATHS
     from tests.support.r3_d3_scope_guard import PATHS as D3_PATHS
@@ -253,6 +254,7 @@ def test_every_patch_source_mutation_is_rejected(tmp_path, path):
 
 
 @pytest.mark.parametrize("path", tuple(GUARD_SYMBOLS))
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_guard_extension_preserves_all_other_ast_nodes_and_exact_successor(path):
     assert_guard_extension(ROOT, path)
     before = subprocess.run(
@@ -263,6 +265,7 @@ def test_guard_extension_preserves_all_other_ast_nodes_and_exact_successor(path)
     assert old_names == new_names
 
 
+@pytest.mark.usefixtures("historical_guard_sources")
 def test_patch_worktree_index_and_historical_guards():
     assert_patch_git_state(ROOT)
 

@@ -58,6 +58,13 @@ Codex n’intervient pas dans chaque opération ordinaire. La clé, si requise,
 est saisie masquée dans le terminal du lanceur après réservation. Une fenêtre
 PowerShell affichant sa propre invite n’est pas l’invite de saisie de la clé.
 
+À la première création de la session, revenir au terminal laissé ouvert par le
+lanceur si l’invite « Credential OpenAI P0 » apparaît. Aucun caractère ne
+s’affiche pendant cette saisie masquée : coller la clé à cette invite, puis
+appuyer sur Entrée. Ne pas la saisir à l’invite PowerShell ni dans le navigateur.
+Elle reste en mémoire pour cette session ; arrêter le lanceur l’efface de ce
+cache de session. Une console sans saisie masquée utilisable est refusée.
+
 ## Contrôler et modifier
 
 Le panneau « Sources & contexte » distingue les références, les vérifications

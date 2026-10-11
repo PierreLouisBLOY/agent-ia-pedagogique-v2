@@ -1386,6 +1386,7 @@ function p0ConsentPreview(result, prepared) {
   for (const receipt of preview.source_receipts)
     appendSearchText(summary, "p", JSON.stringify(receipt));
   appendSearchText(summary, "p", "Une seule tentative, aucun renvoi automatique. Revue indépendante non exécutée ; relecture enseignante nécessaire.");
+  appendSearchText(summary, "p", "La première création de cette session peut demander la clé dans le terminal du lanceur. Aucun caractère ne s’affiche pendant la saisie : collez la clé à cette invite, puis appuyez sur Entrée. Ne la saisissez jamais dans le navigateur ni à l’invite PowerShell.");
   p0Element("consent-body").textContent = preview.request_body_utf8;
   p0Element("consent-identities").textContent = JSON.stringify({...preview, request_body_utf8:undefined}, null, 2);
 }
@@ -1420,6 +1421,7 @@ p0Element("consent-send").addEventListener("click", () => p0Run(async () => {
   if (!p0ConsentMatches(consent, prepared) || !p0Element("consent-transfer").checked || !p0Element("consent-cost").checked)
     throw Object.assign(new Error("P0_CONSENT_REQUIRED"), {confirmedRefusal:true});
   p0ClearConsent();
+  p0Element("status").textContent = "Création en cours. Si le terminal du lanceur demande la clé, saisissez-la à cette invite masquée, puis Entrée.";
   const result = await p0Fetch("/api/v2/p0/consent-generate", {command_id:p0Command(),
     preparation_ref:prepared.preparation_ref, preparation_sha256:prepared.preparation_sha256,
     preview_sha256:consent.preview_sha256, transfer_accepted:true, cost_bound_accepted:true});

@@ -19,13 +19,15 @@ class P0CreationEndpoint:
                  institutional_catalog: Callable[[], dict[str, object]] | None = None,
                  media_endpoint: ProductionMediaEndpoint | None = None,
                  consent_execute: Callable[[str, Mapping[str, object]], dict[str, object]] | None = None,
-                 exact_notion_reader: Callable[[str], Mapping[str, object]] | None = None) -> None:
+                 exact_notion_reader: Callable[[str], Mapping[str, object]] | None = None,
+                 local_reference_contexts: Callable[[], list[dict[str, object]]] | None = None) -> None:
         self.execute, self.read, self.metadata, self.nonce = execute, read, metadata, nonce
         self.generation_bound, self.review_bound = generation_bound, review_bound
         self.institutional_catalog = institutional_catalog
         self.media_endpoint = media_endpoint
         self.consent_execute = consent_execute
         self.exact_notion_reader = exact_notion_reader
+        self.local_reference_contexts = local_reference_contexts
 
     def respond(self, method: str, target: str, raw: bytes, correlation: str) -> tuple[int, str, bytes, str]:
         status, template = 200, "/{unmatched}"
@@ -44,6 +46,8 @@ class P0CreationEndpoint:
                 result["normal_consent_binding"] = "EXPLICIT_PRODUCT_PERMISSION" if self.consent_execute is not None else "NONE"
                 if self.institutional_catalog is not None:
                     result["institutional_catalog"] = self.institutional_catalog()
+                result["local_reference_contexts"] = [] if self.local_reference_contexts is None else self.local_reference_contexts()
+                result["local_reference_context_binding"] = "NONE" if self.local_reference_contexts is None else "EXPLICIT_OWNER_LOCAL_CONTEXT"
             elif operation == "media":
                 if self.media_endpoint is None:
                     raise ValueError("P0_MEDIA_NOT_ENABLED")

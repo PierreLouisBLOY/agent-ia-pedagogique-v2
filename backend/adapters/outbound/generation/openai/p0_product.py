@@ -43,10 +43,12 @@ class P0ProductGenerationAdapter:
     def __init__(self, *, permission: Mapping[str, object], permission_identities: Callable[[], Mapping[str, object]],
                  identity_source: IdentitySource, tariff: Mapping[str, object], tokenizer: TokenizerSource,
                  receipt_root: Path, resolver: ProviderSecretResolver, credential_ref: ProviderCredentialRef,
-                 transport: OpenAIResponsesTransportFactory, clock: Callable[[], datetime] = lambda: datetime.now(UTC)) -> None:
+                 transport: OpenAIResponsesTransportFactory, clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+                 local_context_adoption: Mapping[str, object] | None = None) -> None:
         self.permission = cast(dict[str, object], as_plain(permission))
         self.permission_identities, self.identity_source = permission_identities, identity_source
         self.tariff, self.tokenizer = cast(dict[str, object], as_plain(tariff)), tokenizer
+        self.local_context_adoption = None if local_context_adoption is None else cast(dict[str, object], as_plain(local_context_adoption))
         self.root, self.resolver, self.credential_ref, self.transport, self.clock = receipt_root, resolver, credential_ref, transport, clock
         self.ledger = P0ProductLedger(root=receipt_root, permission=self.permission)
         self.previews: dict[str, dict[str, object]] = {}
@@ -77,7 +79,7 @@ class P0ProductGenerationAdapter:
         validate_permission(self.permission, identities=self.permission_identities(), now=now, family=family, level=level)
         if utc(self.tariff["retrieved_at_utc"]) > utc(self.permission["issued_at_utc"]):
             raise ValueError("P0_PRODUCT_TARIFF_PERIOD")
-        validate_source_receipts(self.permission, receipts)
+        validate_source_receipts(self.permission, receipts, local_context_adoption=self.local_context_adoption)
         wire = build_p0_content_request(request)
         raw = NormalP0GenerationAdapter.body(wire)
         identities = dict(self.identity_source(request, raw))
@@ -148,7 +150,7 @@ class P0ProductGenerationAdapter:
                 grant = derive_grant(permission=self.permission, permission_identities=self.permission_identities(),
                     grant_identities=identities, preview=preview, consent=consent, nonce_sha256=nonce, family=family, level=level,
                     reserved=[money(slot["reserved_usd"]) for slot in slots], now=self.clock(), fresh_preflight=fresh,
-                    application_source_receipts=source_receipts)
+                    application_source_receipts=source_receipts, local_context_adoption=self.local_context_adoption)
                 # The precise pessimistic costs are read under the same lock.
                 from backend.adapters.outbound.generation.openai.p0_product_policy import (
                     check_budget,

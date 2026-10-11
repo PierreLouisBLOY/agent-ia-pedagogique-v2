@@ -84,9 +84,9 @@ if ($config.PSObject.Properties.Name -contains 'p0_normal_profile') {
 $url = "http://$hostAddress`:$($config.port)/"
 [Console]::WriteLine("Starting V2 at $url")
 if ($config.PSObject.Properties.Name -contains 'p0_normal_profile') {
-    [Console]::WriteLine('Normal P0: adopted profile, exact local consent and verified budget required. No automatic provider call at startup.')
+    [Console]::WriteLine('Creation configuree : confirmation du contenu et du cout requise avant chaque envoi.')
 } else {
-    [Console]::WriteLine('Local P0 mode: no provider composition enabled.')
+    [Console]::WriteLine('Mode local hors ligne.')
 }
 [Console]::WriteLine('The server runs in this terminal. Press Ctrl+C to stop; run this script again to restart.')
 Set-Location -LiteralPath $applicationRoot

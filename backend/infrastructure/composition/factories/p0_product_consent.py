@@ -1,5 +1,5 @@
 """Binds exact preparation and source admission through Application readers only."""
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING
 
 from backend.adapters.inbound.api.p0_creation import P0CreationEndpoint
@@ -8,6 +8,9 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     fingerprint,
     items,
     object_data,
+)
+from backend.modules.work_orchestration.application.queries.p0_local_reference_context import (
+    ReadP0LocalReferenceContext,
 )
 from backend.modules.work_orchestration.application.queries.p0_source_admission import (
     ReadP0SourceAdmission,
@@ -21,7 +24,8 @@ if TYPE_CHECKING:
 
 def bind_product_consent(service: P0CreationService, endpoint: P0CreationEndpoint, *,
                          target: "Read15RuntimeTarget", generation: P0ProductGenerationAdapter,
-                         admission: ReadP0SourceAdmission) -> None:
+                         admission: ReadP0SourceAdmission | ReadP0LocalReferenceContext,
+                         institutional_resolver: Callable[[Mapping[str, object], Mapping[str, object]], Mapping[str, object]] | None = None) -> None:
     if service.generation is not generation:
         raise ValueError("P0_PRODUCT_GENERATION_BINDING")
 
@@ -62,7 +66,8 @@ def bind_product_consent(service: P0CreationService, endpoint: P0CreationEndpoin
         attested = {"notion_id": passage["notion_ref"], **{key: passage[key] for key in (
             "object_ref", "object_kind", "passage_ref", "version_or_checksum")}}
         resolver = bts_alignment if selection.get("contract_id") == "BTS-INSTITUTIONAL-CONTEXT-1.0" else stmg_alignment
-        resolved = resolver(target, selection=selection, reference=attested)
+        resolved = (resolver(target, selection=selection, reference=attested) if institutional_resolver is None else
+            institutional_resolver(selection, {"notion_id": passage["notion_ref"], "passage_ref": passage["passage_ref"]}))
         return admission.execute(request=request, passages=matched, resolution=resolved)
 
     consent = P0ConsentService(prepared_reader=prepared, admission_reader=sources, permission=generation,

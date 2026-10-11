@@ -16,6 +16,8 @@ DESCRIPTORS = {"source_manifest", "package", "source_admission_manifest", "opera
 DECISION_FIELDS = {"schema", "status", "profile_sha256", "permission_policy_sha256", "source_admission_manifest_sha256",
     "operator_delegation_sha256", "tokenizer_manifest_sha256", "tariff_sha256", "excluded_oracles_and_private_evidence",
     "source_authority_unknown_preserved", "local_operator_delegation_accepted"}
+PROFILE_CONTEXT_FIELDS = PROFILE_FIELDS | {"local_reference_context_manifest"}
+DECISION_CONTEXT_FIELDS = DECISION_FIELDS | {"local_reference_context_manifest_sha256"}
 DELEGATION_FIELDS = {"schema", "windows_sid", "windows_profile", "credential_ref", "local_operator_delegation_accepted"}
 
 
@@ -47,13 +49,14 @@ def bind_profile(envelope: Mapping[str, object], *, permission: Mapping[str, obj
     profile = envelope["profile"]
     if not isinstance(profile, Mapping):
         raise ValueError("P0_NORMAL_PROFILE_REQUIRED")
-    closed(profile, PROFILE_FIELDS, "P0_NORMAL_PROFILE_FIELDS")
-    if profile["schema"] != "P0-NORMAL-PROFILE-1.0":
+    contextual = profile.get("schema") == "P0-NORMAL-PROFILE-2.0"
+    closed(profile, PROFILE_CONTEXT_FIELDS if contextual else PROFILE_FIELDS, "P0_NORMAL_PROFILE_FIELDS")
+    if profile["schema"] not in {"P0-NORMAL-PROFILE-1.0", "P0-NORMAL-PROFILE-2.0"}:
         raise ValueError("P0_NORMAL_PROFILE_SCHEMA")
     baseline = profile["baseline_commit"]
     if not isinstance(baseline, str) or len(baseline) != 40 or any(c not in "0123456789abcdef" for c in baseline):
         raise ValueError("P0_NORMAL_BASELINE_REQUIRED")
-    for key in DESCRIPTORS:
+    for key in DESCRIPTORS | ({"local_reference_context_manifest"} if contextual else set()):
         descriptor(profile[key])
     for key in ("saved_root", "receipt_root"):
         absolute(profile[key])
@@ -70,14 +73,16 @@ def bind_profile(envelope: Mapping[str, object], *, permission: Mapping[str, obj
     credential = profile["credential_ref"]
     if not isinstance(credential, str) or not credential or len(credential) > 128 or credential.startswith("sk-"):
         raise ValueError("P0_NORMAL_LOGICAL_CREDENTIAL_REQUIRED")
-    closed(decision, DECISION_FIELDS, "P0_NORMAL_DECISION_FIELDS")
-    if decision["schema"] != "P0-NORMAL-OWNER-DECISION-1.0" or decision["status"] != "ADOPTED":
+    closed(decision, DECISION_CONTEXT_FIELDS if contextual else DECISION_FIELDS, "P0_NORMAL_DECISION_FIELDS")
+    decision_schema = "P0-NORMAL-OWNER-DECISION-2.0" if contextual else "P0-NORMAL-OWNER-DECISION-1.0"
+    if decision["schema"] != decision_schema or decision["status"] != "ADOPTED":
         raise ValueError("P0_NORMAL_OWNER_DECISION_REQUIRED")
     for key in ("excluded_oracles_and_private_evidence", "source_authority_unknown_preserved", "local_operator_delegation_accepted"):
         if decision[key] is not True:
             raise ValueError("P0_NORMAL_OWNER_DISPOSITION_REQUIRED")
     expected: dict[str, object] = {"profile_sha256": sha(canonical(profile)), "permission_policy_sha256": sha(canonical({k:v for k,v in permission.items() if k != "owner_decision_sha256"}))}
-    for key in ("source_admission_manifest", "operator_delegation", "tokenizer_manifest", "tariff"):
+    components = ("source_admission_manifest", "operator_delegation", "tokenizer_manifest", "tariff")
+    for key in components + (("local_reference_context_manifest",) if contextual else ()):
         expected[key + "_sha256"] = descriptor(profile[key])["sha256"]
     if any(decision[k] != v for k,v in expected.items()) or permission.get("profile_sha256") != expected["profile_sha256"]:
         raise ValueError("P0_NORMAL_OWNER_BINDING_CHANGED")

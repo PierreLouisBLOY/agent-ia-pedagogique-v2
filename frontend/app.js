@@ -787,7 +787,8 @@ r4Run(r4Refresh);
 // P0 companion: all families use the same Application lifecycle and exact versions.
 const p0 = {nonce: null, references: [], prepared: null, view: null, teacher: null, consent: null,
   busy: false, uncertain: false, contextRevision: 0, editInputs: [], connected: false,
-  liveBinding: "NONE", normalConsentBinding: "NONE", mediaBinding: "NONE"};
+  liveBinding: "NONE", normalConsentBinding: "NONE", mediaBinding: "NONE",
+  localReferenceContextBinding: "NONE", localReferenceContexts: []};
 let p0ConnectionPromise = null;
 const p0Element = id => document.getElementById("p0-" + id);
 function p0Controls() {
@@ -996,6 +997,93 @@ function p0SourceNotionOptions() {
   if (selected.length===1) p0Element("source-notion").value=selected[0].value;
 }
 p0Element("program-notions").addEventListener("change",p0SourceNotionOptions);
+// UI eligibility is a projection; Application independently reauthenticates admission.
+function p0CanonicalJSON(value, depth = 0) {
+  if (depth > 8) throw new Error("P0_LOCAL_REFERENCE_METADATA_REJECTED");
+  if (value === null || typeof value === "boolean") return JSON.stringify(value);
+  if (typeof value === "string" && value.length <= 4096) return JSON.stringify(value);
+  if (typeof value === "number" && Number.isFinite(value)) return JSON.stringify(value);
+  if (Array.isArray(value) && value.length <= 256)
+    return "[" + value.map(item => p0CanonicalJSON(item, depth + 1)).join(",") + "]";
+  if (value && Object.prototype.toString.call(value) === "[object Object]") {
+    const keys = Object.keys(value).sort();
+    if (keys.length <= 64 && keys.every(key => /^[A-Za-z0-9_]+$/.test(key) && key !== "__proto__"))
+      return "{" + keys.map(key => JSON.stringify(key) + ":" + p0CanonicalJSON(value[key], depth + 1)).join(",") + "}";
+  }
+  throw new Error("P0_LOCAL_REFERENCE_METADATA_REJECTED");
+}
+function p0ClosedFields(value, fields) {
+  return value && !Array.isArray(value) && Object.prototype.toString.call(value) === "[object Object]" &&
+    Object.keys(value).sort().join("|") === [...fields].sort().join("|");
+}
+function p0LocalContextRows(value = []) {
+  const fields = ["schema", "selection", "selection_sha256", "notion_id", "object_ref", "object_kind",
+    "passage_ref", "version_or_checksum", "excerpt_sha256", "provenance", "source_status", "available_authority",
+    "authority_basis", "canonical_notion_reference", "source_entry_scope_sha256", "canonical_notion_entry_scope_sha256",
+    "canonical_institutional_resolution_sha256", "context_enrichment", "admission_basis", "manifest_sha256"];
+  const anchorFields = ["notion_id", "object_ref", "object_kind", "passage_ref", "version_or_checksum", "excerpt_sha256",
+    "provenance", "source_status", "available_authority", "authority_basis"];
+  const hash = value => typeof value === "string" && /^[0-9a-f]{64}$/.test(value);
+  const text = value => typeof value === "string" && value.length > 0 && value.length <= 512;
+  const selections = {
+    "STMG-INSTITUTIONAL-CONTEXT-1.0": ["contract_id", "frame", "education_level", "series", "teaching_subject",
+      "program_ref", "program_version", "program_component", "specific_track", "theme_ref", "question_ref",
+      "capacity_refs", "notion_refs", "depth"],
+    "BTS-INSTITUTIONAL-CONTEXT-1.0": ["contract_id", "program_ref", "program_version", "process_ref",
+      "activity_ref", "competency_refs", "notion_refs", "depth", "local_year"]};
+  const seen = new Set();
+  if (!Array.isArray(value) || value.length > 20000) throw new Error("P0_LOCAL_REFERENCE_METADATA_REJECTED");
+  for (const row of value) {
+    const anchor = row?.canonical_notion_reference;
+    if (!p0ClosedFields(row, fields) || row.schema !== "P0-LOCAL-REFERENCE-CONTEXT-ROW-1.0" ||
+        !p0ClosedFields(anchor, anchorFields) || row.context_enrichment !== false ||
+        row.admission_basis !== "OWNER_ADMITTED_EXACT_LOCAL_CONTEXT" ||
+        !["PEDAGOGICAL_CONTENT", "METHOD"].includes(row.object_kind) ||
+        row.available_authority !== "UNKNOWN" || anchor.available_authority !== "UNKNOWN" ||
+        row.authority_basis !== "NOT_ATTESTED_BY_APPLICATION" || anchor.authority_basis !== "NOT_ATTESTED_BY_APPLICATION" ||
+        anchor.object_kind !== "NOTION" || anchor.notion_id !== row.notion_id || anchor.object_ref !== row.notion_id ||
+        ![row.notion_id, row.object_ref, row.passage_ref, row.version_or_checksum, row.authority_basis,
+          anchor.passage_ref, anchor.version_or_checksum, anchor.authority_basis].every(text) ||
+        ![row.selection_sha256, row.excerpt_sha256, row.source_entry_scope_sha256,
+          row.canonical_notion_entry_scope_sha256, row.canonical_institutional_resolution_sha256,
+          row.manifest_sha256, anchor.excerpt_sha256].every(hash) ||
+        !row.selection || !p0ClosedFields(row.selection, selections[row.selection.contract_id] || []) ||
+        !selections[row.selection.contract_id] ||
+        !Array.isArray(row.selection.notion_refs) || row.selection.notion_refs.length !== 1 ||
+        row.selection.notion_refs[0] !== row.notion_id ||
+        ![row.provenance, row.source_status, anchor.provenance, anchor.source_status].every(v =>
+          v && !Array.isArray(v) && Object.prototype.toString.call(v) === "[object Object]"))
+      throw new Error("P0_LOCAL_REFERENCE_METADATA_REJECTED");
+    p0CanonicalJSON(row);
+    const key = p0CanonicalJSON([row.selection, row.notion_id, row.object_ref, row.object_kind, row.passage_ref, row.version_or_checksum]);
+    if (seen.has(key)) throw new Error("P0_LOCAL_REFERENCE_METADATA_REJECTED");
+    seen.add(key);
+  }
+  return value;
+}
+async function p0TextSHA256(text) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+}
+async function p0LocalReferenceEligible(item, data, selection) {
+  if (p0.localReferenceContextBinding !== "EXPLICIT_OWNER_LOCAL_CONTEXT" || !selection) return false;
+  const identity = (row, passage) => passage && passage.excerpt_truncated === false &&
+    row.notion_id === data.notion_id && passage.selection?.notion_id === row.notion_id &&
+    ["object_ref", "object_kind", "passage_ref", "version_or_checksum", "excerpt_sha256"].every(key => row[key] === passage[key]) &&
+    passage.selection.passage_ref === row.passage_ref && row.available_authority === data.available_authority &&
+    row.available_authority === passage.available_authority && row.authority_basis === passage.authority_basis &&
+    p0CanonicalJSON(row.provenance) === p0CanonicalJSON(passage.provenance) &&
+    p0CanonicalJSON(row.source_status) === p0CanonicalJSON(passage.source_status);
+  const selectedJSON = p0CanonicalJSON(selection);
+  const rows = (p0.localReferenceContexts || []).filter(row =>
+    p0CanonicalJSON(row.selection) === selectedJSON && identity(row, item));
+  if (rows.length !== 1 || data.items.filter(passage => identity(rows[0], passage)).length !== 1) return false;
+  const row = rows[0], anchors = data.items.filter(passage => identity(row.canonical_notion_reference, passage));
+  if (anchors.length !== 1) return false;
+  return row.selection_sha256 === await p0TextSHA256(selectedJSON) &&
+    row.excerpt_sha256 === await p0TextSHA256(item.excerpt) &&
+    row.canonical_notion_reference.excerpt_sha256 === await p0TextSHA256(anchors[0].excerpt);
+}
 p0Element("source-load").addEventListener("click",()=>p0Run(async()=>{
   const notion = p0Element("source-notion").value;
   const revision = p0.contextRevision;
@@ -1009,9 +1097,16 @@ p0Element("source-load").addEventListener("click",()=>p0Run(async()=>{
       typeof item.excerpt!=="string" || !item.excerpt || item.excerpt_truncated!==false ||
       !["NOTION", "PEDAGOGICAL_CONTENT", "METHOD"].includes(item.object_kind)))
     throw new Error("P0_NOTION_SOURCE_RESPONSE_BINDING");
+  let selection = null;
+  if (p0.localReferenceContextBinding === "EXPLICIT_OWNER_LOCAL_CONTEXT") {
+    try { selection = p0Context().institutional; } catch { /* Consultation remains available without a complete context. */ }
+  }
+  const eligibility = await Promise.all(data.items.map(item => p0LocalReferenceEligible(item, data, selection)));
+  if (revision !== p0.contextRevision || notion !== p0Element("source-notion").value)
+    throw new Error("P0_NOTION_SOURCE_RESPONSE_BINDING");
   const region=p0Element("source-choices");region.replaceChildren();
   appendSearchText(region,"p","Passages disponibles. Leur identité et leur présence ne valent pas admission comme source officielle.");
-  for (const item of data.items) {
+  for (const [index, item] of data.items.entries()) {
     const article=document.createElement("article");
     appendSearchText(article,"h4",item.object_kind==="NOTION" ? "Notion — "+p0Element("source-notion").selectedOptions[0].textContent :
       item.object_kind==="METHOD" ? "Méthode" : "Contenu pédagogique");
@@ -1022,9 +1117,12 @@ p0Element("source-load").addEventListener("click",()=>p0Run(async()=>{
       source_status:item.source_status,authority:data.available_authority},null,2));article.append(details);
     const button=document.createElement("button");button.type="button";button.textContent="Sélectionner ce passage exact";
     const bts = p0Element("level").value.startsWith("BTS_");
-    const selectable = !bts || (item.object_kind==="NOTION" && item.object_ref===notion);
+    const canonical = item.object_kind==="NOTION" && item.object_ref===notion;
+    const localContextMode = p0.localReferenceContextBinding === "EXPLICIT_OWNER_LOCAL_CONTEXT";
+    const selectable = localContextMode ? eligibility[index] : canonical || !bts;
     button.disabled = !selectable;
-    if (!selectable) appendSearchText(article,"p","Passage consultable ; son utilisation comme source de préparation n’est pas admise dans ce contexte BTS CG.");
+    if (!selectable) appendSearchText(article,"p","Passage consultable ; son utilisation comme source de préparation n’est pas admise dans ce contexte exact.");
+    if (eligibility[index]) appendSearchText(article,"p","Utilisation locale admise pour ce contexte exact. L’autorité du contenu reste non attestée ; ce passage n’est pas une source officielle.");
     button.addEventListener("click",()=>{
       if (!selectable || p0.busy || p0.uncertain || p0.contextRevision!==revision || p0Element("source-notion").value!==notion) return;
       p0Element("search-query").value="";p0Element("notion-id").value=item.selection.notion_id;
@@ -1380,6 +1478,7 @@ async function p0Connect() {
   if (p0ConnectionPromise) return p0ConnectionPromise;
   p0.connected = false; p0.nonce = null;
   p0.liveBinding = "NONE"; p0.normalConsentBinding = "NONE"; p0.mediaBinding = "NONE";
+  p0.localReferenceContextBinding = "NONE"; p0.localReferenceContexts = [];
   p0Element("generate").textContent = "Génération indisponible : connexion locale à établir";
   p0ConnectionPromise = (async () => {
     const metadata = await p0Fetch("/api/v2/p0");
@@ -1388,13 +1487,20 @@ async function p0Connect() {
         !Array.isArray(metadata.references) || !metadata.references.every(ref => ref && typeof ref.title === "string") ||
         !["NONE", "EXPLICIT_PORT"].includes(metadata.live_binding) ||
         !["NONE", "EXPLICIT_PRODUCT_PERMISSION"].includes(metadata.normal_consent_binding || "NONE") ||
-        !["NONE", "LOCAL_DIAGRAM_OR_NO_MEDIA"].includes(metadata.media_binding))
+        !["NONE", "LOCAL_DIAGRAM_OR_NO_MEDIA"].includes(metadata.media_binding) ||
+        !["NONE", "EXPLICIT_OWNER_LOCAL_CONTEXT"].includes(metadata.local_reference_context_binding || "NONE"))
       throw new Error("P0_LOCAL_METADATA_REJECTED");
+    const localContexts = p0LocalContextRows(metadata.local_reference_contexts);
+    const localBinding = metadata.local_reference_context_binding || "NONE";
+    if ((localBinding === "NONE" && localContexts.length) ||
+        (localBinding === "EXPLICIT_OWNER_LOCAL_CONTEXT" && metadata.normal_consent_binding !== "EXPLICIT_PRODUCT_PERMISSION"))
+      throw new Error("P0_LOCAL_REFERENCE_METADATA_REJECTED");
     p0.references = metadata.references; p0.institutionalCatalog = metadata.institutional_catalog;
     p0InstitutionalOptions();
     p0.liveBinding = metadata.live_binding;
     p0.normalConsentBinding = metadata.normal_consent_binding || "NONE";
     p0.mediaBinding = metadata.media_binding;
+    p0.localReferenceContextBinding = localBinding; p0.localReferenceContexts = localContexts;
     p0Element("generate").textContent = metadata.live_binding === "NONE" ? "Génération indisponible dans cette composition" :
       p0.normalConsentBinding === "EXPLICIT_PRODUCT_PERMISSION" ? "Examiner l’envoi et son coût" : "Demander la génération autorisée";
     p0Element("reference").replaceChildren();

@@ -38,6 +38,13 @@ du navigateur ne ferme pas le serveur.
    des données à transmettre, la destination, la borne de coût et les limites.
    Confirmer les deux consentements dans l’interface avant la création.
 
+Avec les admissions locales de passages complets, sélectionner le contenu ou
+la méthode proposé pour le contexte exact. Changer la question, l’activité,
+les capacités, la profondeur ou l’année locale peut rendre ce passage indisponible
+pour la préparation. Les libellés de notions servent alors au cadrage et restent
+consultables. « Utilisation locale admise » ne signifie ni source officielle,
+ni validation scientifique ou pédagogique du contenu.
+
 Le mode livré sans `p0_normal_profile` permet la consultation et les parcours
 locaux sur des productions conservées ; le bouton de génération indique son
 indisponibilité. Il ne fabrique pas de résultat de démonstration.

@@ -58,6 +58,11 @@ class ReadP0SourceAdmission:
         scope = object_data(resolution.get("reference_scope", {}))
         if scope.get("status") not in {"CANONICAL_NOTION_ONLY", "EXACT_CONTEXT_ADMITTED"}:
             raise ValueError("P0_SOURCE_CONTEXT_GAP")
+        return self._exact_source_receipts(request=request, passages=passages, resolution=resolution)
+
+    def _exact_source_receipts(self, *, request: Mapping[str, object], passages: Sequence[Mapping[str, object]],
+                               resolution: Mapping[str, object]) -> list[dict[str, object]]:
+        scope = object_data(resolution.get("reference_scope", {}))
         evidence = object_data(request["evidence"])
         result = []
         for ref in items(request["references"], 8):

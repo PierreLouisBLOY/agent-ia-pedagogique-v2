@@ -29,6 +29,107 @@ from tests.unit.test_p0_source_admission import admitted_fixture
 APPLICATION_ROOT = Path(__file__).resolve().parents[2]
 
 
+def local_context_profile_fixture(tmp_path, monkeypatch):
+    """Protected synthetic profile2, never an actual owner adoption or permission."""
+    from tests.unit.test_p0_local_reference_context import fixture
+    path, target, saved, code, envelope, built = complete_profile_fixture(tmp_path, monkeypatch, {"schema": "SYNTHETIC_TOKENIZER"})
+    local_manifest, sources, *_ = fixture()
+    profile = envelope["profile"]
+    profile["schema"] = "P0-NORMAL-PROFILE-2.0"
+    profile["source_admission_manifest"] = artifact(tmp_path, "synthetic-context-sources.json", canonical(sources.manifest))
+    local_manifest.update(source_admission_manifest_sha256=profile["source_admission_manifest"]["sha256"],
+        runtime_sha256=target.expected_sha256, institutional_catalogue_sha256=profile["institutional_catalog_sha256"])
+    profile["local_reference_context_manifest"] = artifact(tmp_path, "synthetic-local-contexts.json", canonical(local_manifest))
+    permission = json.loads(Path(envelope["permission"]["path"]).read_bytes())
+    permission["profile_sha256"] = sha(canonical(profile))
+    permission["source_admission_manifest_sha256"] = profile["source_admission_manifest"]["sha256"]
+    decision = json.loads(Path(envelope["decision"]["path"]).read_bytes())
+    decision.update(schema="P0-NORMAL-OWNER-DECISION-2.0", profile_sha256=permission["profile_sha256"],
+        source_admission_manifest_sha256=permission["source_admission_manifest_sha256"],
+        local_reference_context_manifest_sha256=profile["local_reference_context_manifest"]["sha256"],
+        permission_policy_sha256=sha(canonical({k: v for k, v in permission.items() if k != "owner_decision_sha256"})))
+    envelope["decision"] = artifact(tmp_path, "synthetic-local-owner-NOT-AN-ACCORD.json", canonical(decision))
+    permission["owner_decision_sha256"] = envelope["decision"]["sha256"]
+    envelope["permission"] = artifact(tmp_path, "synthetic-local-permission-NOT-LIVE.json", canonical(permission))
+    path.write_bytes(canonical(envelope))
+    return path, target, saved, code, envelope, built
+
+
+def test_profile2_protected_composition_emits_exact_local_witness_without_provider(tmp_path, monkeypatch):
+    path, target, saved, code, envelope, built = local_context_profile_fixture(tmp_path, monkeypatch)
+    composition = P0NormalProductComposition(path=path, target=target, saved_root=saved, application_root=code)
+    try:
+        assert composition.local_context is not None
+        assert composition.local_context.metadata()[0]["available_authority"] == "UNKNOWN"
+        witness = composition.generation.local_context_adoption
+        assert witness["profile_schema"] == "P0-NORMAL-PROFILE-2.0"
+        assert witness["owner_decision_schema"] == "P0-NORMAL-OWNER-DECISION-2.0"
+        assert witness["local_reference_context_manifest_sha256"] == envelope["profile"]["local_reference_context_manifest"]["sha256"]
+        assert witness["profile_sha256"] == composition.permission["profile_sha256"]
+        assert built == []
+    finally:
+        composition.close()
+
+
+@pytest.mark.parametrize("mutation", ["manifest_bytes", "decision_schema", "decision_manifest_hash", "legacy_profile"])
+def test_profile2_exact_local_binding_mutation_stops_before_secret_transport(tmp_path, monkeypatch, mutation):
+    path, target, saved, code, envelope, built = local_context_profile_fixture(tmp_path, monkeypatch)
+    if mutation == "manifest_bytes":
+        composition = P0NormalProductComposition(path=path, target=target, saved_root=saved, application_root=code)
+        try:
+            Path(envelope["profile"]["local_reference_context_manifest"]["path"]).write_bytes(b'{"changed":true}')
+            with pytest.raises(ValueError, match="ARTIFACT_CHANGED"):
+                composition.identities()
+        finally:
+            composition.close()
+    else:
+        if mutation == "legacy_profile":
+            envelope["profile"]["schema"] = "P0-NORMAL-PROFILE-1.0"
+        else:
+            decision = json.loads(Path(envelope["decision"]["path"]).read_bytes())
+            if mutation == "decision_schema":
+                decision["schema"] = "P0-NORMAL-OWNER-DECISION-1.0"
+            else:
+                decision["local_reference_context_manifest_sha256"] = "0" * 64
+            envelope["decision"] = artifact(tmp_path, "synthetic-altered-owner.json", canonical(decision))
+        path.write_bytes(canonical(envelope))
+        with pytest.raises(ValueError):
+            P0NormalProductComposition(path=path, target=target, saved_root=saved, application_root=code)
+    assert built == []
+
+
+@pytest.mark.parametrize("changed_after_prepare", [False, True])
+def test_profile2_bind_installs_same_protected_query_for_preparation_and_preflight(tmp_path, monkeypatch, changed_after_prepare):
+    from tests.integration.test_p0_local_reference_context_composition import composed, prepare
+    path, target, saved, code, envelope, built = local_context_profile_fixture(tmp_path, monkeypatch)
+    composition = P0NormalProductComposition(path=path, target=target, saved_root=saved, application_root=code)
+    try:
+        app, endpoint, mechanical_permission, selection, reference, *_ = composed(monkeypatch)
+        # Source gate only: no tokenizer/secret/dispatch. The loader witness is
+        # covered above; the broker's six wire contracts are covered separately.
+        composition.generation = mechanical_permission
+        composition.bind(app, endpoint)
+        prepared = prepare(app, selection, reference, "BTS_CG_YEAR_2")
+        assert prepared["context"]["institutional_resolution"]["reference_scope"]["manifest_sha256"] == envelope["profile"]["local_reference_context_manifest"]["sha256"]
+        if changed_after_prepare:
+            Path(envelope["profile"]["local_reference_context_manifest"]["path"]).write_bytes(b'{"substituted":true}')
+        command = {"command_id": "a" * 32, "preparation_ref": prepared["preparation_ref"], "preparation_sha256": prepared["preparation_sha256"]}
+        status, _, raw, _ = endpoint.respond("POST", "/api/v2/p0/consent-preview", json.dumps(command).encode(), "SYNTHETIC")
+        if changed_after_prepare:
+            assert status == 409 and mechanical_permission.previews == []
+        else:
+            assert status == 200, raw
+            receipt = json.loads(raw)["data"]["source_receipts"][0]
+            assert receipt["owner_admission_sha256"] == composition.permission["owner_decision_sha256"]
+            assert receipt["local_reference_context_manifest_sha256"] == envelope["profile"]["local_reference_context_manifest"]["sha256"]
+            assert receipt["available_authority"] == "UNKNOWN"
+            status, _, metadata, _ = endpoint.respond("GET", "/api/v2/p0", b"", "SYNTHETIC")
+            assert status == 200 and json.loads(metadata)["data"]["local_reference_context_binding"] == "EXPLICIT_OWNER_LOCAL_CONTEXT"
+        assert built == []
+    finally:
+        composition.close()
+
+
 def artifact(tmp_path, name, raw):
     path = tmp_path / name
     path.write_bytes(raw)

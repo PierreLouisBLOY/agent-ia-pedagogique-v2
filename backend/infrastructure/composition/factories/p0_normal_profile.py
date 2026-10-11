@@ -44,6 +44,9 @@ from backend.infrastructure.filesystem import (
     hash_file_nofollow,
     read_file_nofollow,
 )
+from backend.modules.work_orchestration.application.queries.p0_local_reference_context import (
+    ReadP0LocalReferenceContext,
+)
 from backend.modules.work_orchestration.application.queries.p0_source_admission import (
     ReadP0SourceAdmission,
 )
@@ -310,6 +313,18 @@ class P0NormalProductComposition:
         self.admission = ReadP0SourceAdmission(source_manifest,
             manifest_sha256=str(descriptor(self.profile["source_admission_manifest"])["sha256"]),
             adopted_manifest_sha256=str(self.decision["source_admission_manifest_sha256"]), owner_admission_sha256=str(self.permission["owner_decision_sha256"]))
+        self.local_context: ReadP0LocalReferenceContext | None = None
+        self.local_context_adoption: dict[str, object] | None = None
+        if self.profile["schema"] == "P0-NORMAL-PROFILE-2.0":
+            local_manifest = cast(dict[str, object], read_descriptor(self.profile["local_reference_context_manifest"]))
+            self.local_context = ReadP0LocalReferenceContext(local_manifest,
+                manifest_sha256=str(descriptor(self.profile["local_reference_context_manifest"])["sha256"]),
+                adopted_manifest_sha256=str(self.decision["local_reference_context_manifest_sha256"]),
+                owner_admission_sha256=str(self.permission["owner_decision_sha256"]), sources=self.admission,
+                runtime_sha256=self.target.expected_sha256, institutional_catalogue_sha256=str(self.profile["institutional_catalog_sha256"]))
+            self.local_context_adoption = {"profile_schema": self.profile["schema"], "owner_decision_schema": self.decision["schema"],
+                "profile_sha256": self.permission["profile_sha256"], "owner_decision_sha256": self.permission["owner_decision_sha256"],
+                "local_reference_context_manifest_sha256": self.local_context.manifest_sha256}
         self.resolver = MaskedLocalSecretResolver(ProviderCredentialRef(str(self.profile["credential_ref"])))
         self.tokenizer = LocalTokenizerHelper(self.tokenizer_manifest, str(self.permission["tokenizer_manifest_sha256"]), application_root=application_root)
         current = self.identities()
@@ -326,7 +341,8 @@ class P0NormalProductComposition:
         self.tokenizer(canonical({"model": "gpt-5.6-terra", "input": "P0 LOCAL TOKENIZER READINESS PROBE"}))
         self.generation = P0ProductGenerationAdapter(permission=self.permission, permission_identities=self.identities,
             identity_source=self.grant_identities, tariff=self.tariff, tokenizer=self.tokenizer, receipt_root=self.root,
-            resolver=self.resolver, credential_ref=self.resolver.ref, transport=OpenAISDKResponsesTransportFactory(r2_destination=True))
+            resolver=self.resolver, credential_ref=self.resolver.ref, transport=OpenAISDKResponsesTransportFactory(r2_destination=True),
+            local_context_adoption=self.local_context_adoption)
 
     def identities(self) -> Mapping[str, object]:
         from backend.infrastructure.composition.factories.conversation import (
@@ -351,6 +367,8 @@ class P0NormalProductComposition:
         verify_source_package(self.profile, application_root=self.application_root)
         for name in ("source_admission_manifest", "tokenizer_manifest", "tariff"):
             read_descriptor(self.profile[name], canonical_required=name != "source_admission_manifest")
+        if self.profile["schema"] == "P0-NORMAL-PROFILE-2.0":
+            read_descriptor(self.profile["local_reference_context_manifest"])
         if sha(cast(bytes, read_descriptor(self.profile["tariff_evidence"], json_document=False))) != self.tariff["evidence_sha256"]:
             raise ValueError("P0_NORMAL_TARIFF_EVIDENCE_CHANGED")
         # The exact current decision adopts the complete tariff artifact.
@@ -380,7 +398,21 @@ class P0NormalProductComposition:
             "output_schema_sha256": sha(canonical(wire.output_schema)), "namespace_sha256": str(self.permission["permission_namespace_sha256"])}
 
     def bind(self, service: P0CreationService, endpoint: P0CreationEndpoint) -> None:
-        bind_product_consent(service, endpoint, target=self.target, generation=self.generation, admission=self.admission)
+        if self.local_context is None:
+            bind_product_consent(service, endpoint, target=self.target, generation=self.generation, admission=self.admission)
+            return
+        from backend.infrastructure.composition.factories.p0_local_reference_context import (
+            build_local_reference_resolver,
+        )
+        resolver = build_local_reference_resolver(self.target, self.local_context, revalidate=self.identities)
+        service.institutional_resolver = resolver
+        def metadata() -> list[dict[str, object]]:
+            self.identities()
+            assert self.local_context is not None
+            return self.local_context.metadata()
+        endpoint.local_reference_contexts = metadata
+        bind_product_consent(service, endpoint, target=self.target, generation=self.generation, admission=self.local_context,
+            institutional_resolver=resolver)
 
     def close(self) -> None:
         self.resolver.close()

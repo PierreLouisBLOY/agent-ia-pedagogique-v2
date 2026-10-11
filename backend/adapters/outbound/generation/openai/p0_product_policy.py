@@ -41,6 +41,10 @@ PREVIEW_FIELDS = {"schema", "permission_sha256", "preparation_ref", "preparation
 SOURCE_FIELDS = {"schema", "reference", "available_authority", "provenance", "source_status",
                  "admission_manifest_sha256", "admission_scope_sha256", "owner_admission_sha256",
                  "institutional_resolution_sha256", "source_scope_status", "transmission_admission"}
+LOCAL_SOURCE_FIELDS = SOURCE_FIELDS | {"local_reference_context_manifest_sha256", "selection_sha256",
+    "canonical_notion_entry_scope_sha256", "canonical_institutional_resolution_sha256"}
+LOCAL_ADOPTION_FIELDS = {"profile_schema", "owner_decision_schema", "profile_sha256", "owner_decision_sha256",
+    "local_reference_context_manifest_sha256"}
 REFERENCE_FIELDS = {"evidence_id", "source_ref", "locator", "checksum_or_version", "excerpt_sha256", "provenance_label"}
 F1_FIELDS = {"schema", "request_sha256", "request_bytes", "tokenizer_sha256", "tariff_sha256", "local_text_tokens",
              "structural_reserve_tokens", "input_upper_tokens", "max_output_tokens", "cost_bound_usd", "ceiling_usd",
@@ -96,7 +100,8 @@ def derive_grant(*, permission: Mapping[str, object], permission_identities: Map
                  grant_identities: Mapping[str, object], preview: Mapping[str, object],
                  consent: Mapping[str, object], nonce_sha256: str, family: str, level: str,
                  reserved: Sequence[Decimal], now: datetime, fresh_preflight: Mapping[str, object],
-                 application_source_receipts: Sequence[Mapping[str, object]]) -> dict[str, object]:
+                 application_source_receipts: Sequence[Mapping[str, object]],
+                 local_context_adoption: Mapping[str, object] | None = None) -> dict[str, object]:
     validate_permission(permission, identities=permission_identities, now=now, family=family, level=level)
     closed(consent, CONSENT_FIELDS, "P1_CONSENT_FIELDS")
     closed(preview, PREVIEW_FIELDS, "P1_PREVIEW_FIELDS")
@@ -127,7 +132,7 @@ def derive_grant(*, permission: Mapping[str, object], permission_identities: Map
             or money(fresh_preflight["cost_bound_usd"]) != money(preview["cost_bound_usd"])
             or money(fresh_preflight["ceiling_usd"]) != money(permission["per_call_ceiling_usd"])):
         raise ValueError("P1_FRESH_PREFLIGHT_BINDING")
-    validate_source_receipts(permission, application_source_receipts)
+    validate_source_receipts(permission, application_source_receipts, local_context_adoption=local_context_adoption)
     if canonical(list(application_source_receipts)) != canonical(preview["source_receipts"]):
         raise ValueError("P1_SOURCE_RECEIPTS_CHANGED")
     if sha(canonical([receipt["reference"] for receipt in application_source_receipts])) != preview["reference_set_sha256"]:
@@ -156,21 +161,37 @@ def derive_grant(*, permission: Mapping[str, object], permission_identities: Map
     return grant
 
 
-def validate_source_receipts(permission: Mapping[str, object], receipts: Sequence[Mapping[str, object]]) -> None:
+def validate_source_receipts(permission: Mapping[str, object], receipts: Sequence[Mapping[str, object]], *,
+                             local_context_adoption: Mapping[str, object] | None = None) -> None:
     # Actual receipts must be emitted by the authenticated Application query.
     # This pure prototype validates their contract, not their SQL authenticity.
     if not receipts or len(receipts) > 8:
         raise ValueError("P1_SOURCE_RECEIPTS_REQUIRED")
     identities: set[str] = set()
     for receipt in receipts:
-        closed(receipt, SOURCE_FIELDS, "P1_SOURCE_RECEIPT_FIELDS")
+        is_local = receipt.get("schema") == "P0-SOURCE-ADMISSION-RECEIPT-2.0"
+        if local_context_adoption is not None and not is_local:
+            raise ValueError("P1_LOCAL_CONTEXT_RECEIPT_REQUIRED")
+        closed(receipt, LOCAL_SOURCE_FIELDS if is_local else SOURCE_FIELDS, "P1_SOURCE_RECEIPT_FIELDS")
+        if is_local:
+            if local_context_adoption is None:
+                raise ValueError("P1_LOCAL_CONTEXT_PROFILE_REQUIRED")
+            closed(local_context_adoption, LOCAL_ADOPTION_FIELDS, "P1_LOCAL_CONTEXT_ADOPTION_FIELDS")
+            if (local_context_adoption["profile_schema"] != "P0-NORMAL-PROFILE-2.0"
+                    or local_context_adoption["owner_decision_schema"] != "P0-NORMAL-OWNER-DECISION-2.0"
+                    or local_context_adoption["profile_sha256"] != permission["profile_sha256"]
+                    or local_context_adoption["owner_decision_sha256"] != permission["owner_decision_sha256"]
+                    or local_context_adoption["local_reference_context_manifest_sha256"] != receipt["local_reference_context_manifest_sha256"]
+                    or receipt["source_scope_status"] != "OWNER_ADMITTED_EXACT_LOCAL_CONTEXT"
+                    or any(not digest(receipt[key]) for key in LOCAL_SOURCE_FIELDS - SOURCE_FIELDS)):
+                raise ValueError("P1_LOCAL_CONTEXT_ADOPTION_BINDING")
         reference = receipt["reference"]
         if not isinstance(reference, Mapping):
             raise ValueError("P1_SOURCE_REFERENCE")
         closed(reference, REFERENCE_FIELDS, "P1_SOURCE_REFERENCE_FIELDS")
-        if (receipt["schema"] != "P0-SOURCE-ADMISSION-RECEIPT-1.0"
+        if (receipt["schema"] != ("P0-SOURCE-ADMISSION-RECEIPT-2.0" if is_local else "P0-SOURCE-ADMISSION-RECEIPT-1.0")
                 or receipt["transmission_admission"] != "OWNER_ADMITTED_LOCAL_CONTENT_ONLY"
-                or receipt["source_scope_status"] not in {"CANONICAL_NOTION_ONLY", "EXACT_CONTEXT_ADMITTED"}
+                or receipt["source_scope_status"] not in ({"OWNER_ADMITTED_EXACT_LOCAL_CONTEXT"} if is_local else {"CANONICAL_NOTION_ONLY", "EXACT_CONTEXT_ADMITTED"})
                 or receipt["admission_manifest_sha256"] != permission["source_admission_manifest_sha256"]
                 or receipt["owner_admission_sha256"] != permission["owner_decision_sha256"]
                 or not digest(receipt["admission_scope_sha256"])

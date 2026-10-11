@@ -125,6 +125,8 @@ class P0ProductGenerationAdapter:
             self.previews[key] = preview
             slots = self.ledger.slots()
             return {"state": "LOCAL_OPERATOR_CONSENT_REQUIRED", "preview": as_plain(preview), "preview_sha256": key,
+                "transfer_destination": {"provider": self.permission["provider"], "model": self.permission["model"],
+                    "endpoint": self.permission["endpoint"], "permission_sha256": preview["permission_sha256"]},
                 "remaining_calls": cast(int, self.permission["max_calls"]) - len(slots), "provider_attempts": 0,
                 "remaining_budget_usd": str(money(self.permission["cumulative_ceiling_usd"]) - sum((money(s["reserved_usd"]) for s in slots), Decimal(0))),
                 "review_state": "NOT_RUN", "source_status": "RESERVE", "consent_actor": "LOCAL_OPERATOR_DELEGATED"}

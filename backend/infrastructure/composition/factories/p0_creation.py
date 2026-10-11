@@ -9,6 +9,9 @@ from backend.adapters.inbound.api.production_media import ProductionMediaEndpoin
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import items, object_data
 from backend.modules.pedagogical_design.ports.outbound.p0_generation import P0GenerationPort
 from backend.modules.quality_evaluation.ports.outbound.p0_review import P0ReviewPort
+from backend.modules.work_orchestration.application.queries.propose_p0_intention import (
+    ProposeP0Intention,
+)
 from backend.modules.work_orchestration.application.services.p0_creation import P0CreationService
 from backend.modules.work_orchestration.application.services.production_media import (
     ProductionMediaService,
@@ -112,7 +115,8 @@ def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
     endpoint = P0CreationEndpoint(service.execute, service.read, metadata, nonce=nonce,
         generation_bound=generation is not None, review_bound=review is not None,
         institutional_catalog=lambda: {**stmg_alignment(target), **bts_alignment(target)},
-        media_endpoint=build_p0_media(service), exact_notion_reader=inspect_exact_notion)
+        media_endpoint=build_p0_media(service), exact_notion_reader=inspect_exact_notion,
+        intention_execute=ProposeP0Intention().execute)
     return service, endpoint
 
 

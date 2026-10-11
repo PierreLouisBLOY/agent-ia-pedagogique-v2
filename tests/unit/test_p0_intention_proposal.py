@@ -156,7 +156,8 @@ def test_companion_does_not_mutate_historical_registry_or_dispatch_creation():
     def forbidden(*args, **kwargs):
         raise AssertionError("Intention must not read, generate, review or persist.")
 
-    endpoint = P0CreationEndpoint(forbidden, forbidden, [], nonce="unit-no-secret")
+    endpoint = P0CreationEndpoint(forbidden, forbidden, [], nonce="unit-no-secret",
+        intention_execute=ProposeP0Intention().execute)
     payload = json.dumps({"command_id": "a" * 32,
                           "intention": "Un cours Première STMG sur les finalités."}).encode()
     status, _, raw, template = endpoint.respond("POST", "/api/v2/p0/intention", payload, "unit.intent")

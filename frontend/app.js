@@ -1334,6 +1334,23 @@ function p0ClearConsent() {
   p0Element("consent-transfer").checked = p0Element("consent-cost").checked = false;
   for (const id of ["consent-summary", "consent-body", "consent-identities"]) p0Element(id).replaceChildren();
 }
+function p0TransferDestination(result, preview) {
+  const destination = result?.transfer_destination;
+  if (!destination || typeof destination !== "object" || Array.isArray(destination) ||
+      Object.keys(destination).sort().join("|") !== "endpoint|model|permission_sha256|provider" ||
+      destination.provider !== "OPENAI" || destination.model !== "gpt-5.6-terra" ||
+      !/^[0-9a-f]{64}$/.test(destination.permission_sha256 || "") ||
+      destination.permission_sha256 !== preview?.permission_sha256 ||
+      typeof destination.endpoint !== "string" || destination.endpoint.length > 256 ||
+      destination.endpoint.includes("?") || destination.endpoint.includes("#")) return null;
+  try {
+    const parsed = new URL(destination.endpoint);
+    if (parsed.protocol !== "https:" || parsed.hostname !== "api.openai.com" ||
+        parsed.pathname !== "/v1/responses" || parsed.port || parsed.username || parsed.password ||
+        parsed.search || parsed.hash || parsed.href !== destination.endpoint) return null;
+  } catch { return null; }
+  return destination;
+}
 function p0ConsentMatches(result, prepared, now = Date.now()) {
   const preview = result?.preview;
   if (!prepared || result.state !== "LOCAL_OPERATOR_CONSENT_REQUIRED" ||
@@ -1344,6 +1361,7 @@ function p0ConsentMatches(result, prepared, now = Date.now()) {
       preview.preparation_ref !== prepared.preparation_ref || preview.preparation_sha256 !== prepared.preparation_sha256 ||
       typeof preview.request_body_utf8 !== "string" || preview.request_body_utf8.length > 512 * 1024 ||
       !/^[0-9a-f]{64}$/.test(preview.request_sha256 || "") ||
+      !p0TransferDestination(result, preview) ||
       !Array.isArray(preview.source_receipts) || !preview.source_receipts.length ||
       !/^0\.\d{1,6}$/.test(preview.cost_bound_usd || "") || Number(preview.cost_bound_usd) > 0.14 ||
       !Number.isFinite(Date.parse(preview.expires_at_utc)) || now >= Date.parse(preview.expires_at_utc))
@@ -1358,7 +1376,8 @@ function p0ConsentPreview(result, prepared) {
     throw new Error("P0_CONSENT_PROVIDER_PROFILE");
   p0ClearConsent(); p0.consent = result; p0Element("consent").hidden = false;
   const summary = p0Element("consent-summary");
-  appendSearchText(summary, "p", "OpenAI · gpt-5.6-terra · https://api.openai.com/v1/responses");
+  const destination = p0TransferDestination(result, preview);
+  appendSearchText(summary, "p", "OpenAI · " + destination.model + " · " + destination.endpoint);
   appendSearchText(summary, "p", "Coût maximal de cette création : " + preview.cost_bound_usd +
     " USD. Budget disponible : " + result.remaining_budget_usd + " USD · " + result.remaining_calls + " création(s) restante(s).");
   appendSearchText(summary, "p", "Contenu transmis : " + preview.request_bytes + " octets. Accord valable jusqu’au " +

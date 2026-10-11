@@ -6,9 +6,6 @@ from collections.abc import Callable, Mapping
 from backend.adapters.inbound.api.p0_notion_evidence import P0NotionEvidenceEndpoint
 from backend.adapters.inbound.api.production_media import ProductionMediaEndpoint
 from backend.adapters.inbound.api.routes import P0_NOTION_EVIDENCE_TEMPLATE, resolve_p0_route
-from backend.modules.work_orchestration.application.queries.propose_p0_intention import (
-    ProposeP0Intention,
-)
 
 P0_HTTP_CONTRACT = "R6-P0-HTTP-LOCAL-1.0"
 
@@ -20,7 +17,8 @@ class P0CreationEndpoint:
                  media_endpoint: ProductionMediaEndpoint | None = None,
                  consent_execute: Callable[[str, Mapping[str, object]], dict[str, object]] | None = None,
                  exact_notion_reader: Callable[[str], Mapping[str, object]] | None = None,
-                 local_reference_contexts: Callable[[], list[dict[str, object]]] | None = None) -> None:
+                 local_reference_contexts: Callable[[], list[dict[str, object]]] | None = None,
+                 intention_execute: Callable[[Mapping[str, object]], dict[str, object]] | None = None) -> None:
         self.execute, self.read, self.metadata, self.nonce = execute, read, metadata, nonce
         self.generation_bound, self.review_bound = generation_bound, review_bound
         self.institutional_catalog = institutional_catalog
@@ -28,6 +26,7 @@ class P0CreationEndpoint:
         self.consent_execute = consent_execute
         self.exact_notion_reader = exact_notion_reader
         self.local_reference_contexts = local_reference_contexts
+        self.intention_execute = intention_execute
 
     def respond(self, method: str, target: str, raw: bytes, correlation: str) -> tuple[int, str, bytes, str]:
         status, template = 200, "/{unmatched}"
@@ -66,7 +65,12 @@ class P0CreationEndpoint:
                         raise ValueError("P0_PRODUCT_PERMISSION_REQUIRED")
                     result = self.consent_execute(operation.replace("-", "_"), data)
                 else:
-                    result = ProposeP0Intention().execute(data) if operation == "intention" else self.execute(operation, data)
+                    if operation == "intention":
+                        if self.intention_execute is None:
+                            raise ValueError("P0_INTENTION_NOT_ENABLED")
+                        result = self.intention_execute(data)
+                    else:
+                        result = self.execute(operation, data)
             elif operation == "version":
                 result = self.read(production, version, teacher=teacher)
             else:

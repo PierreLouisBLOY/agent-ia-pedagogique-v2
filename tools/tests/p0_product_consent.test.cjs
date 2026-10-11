@@ -13,13 +13,15 @@ function harness() {
   const prepared = {preparation_ref:"prep:"+"a".repeat(32), preparation_sha256:"b".repeat(64)};
   const consent = {state:"LOCAL_OPERATOR_CONSENT_REQUIRED",provider_attempts:0,review_state:"NOT_RUN",
     source_status:"RESERVE",consent_actor:"LOCAL_OPERATOR_DELEGATED",preview_sha256:"c".repeat(64),
+    transfer_destination:{provider:"OPENAI",model:"gpt-5.6-terra",endpoint:"https://api.openai.com/v1/responses",
+      permission_sha256:"1".repeat(64)},
     remaining_calls:2,remaining_budget_usd:"0.28",preview:{schema:"P0-PRODUCT-CONSENT-PREVIEW-1.0",
-      ...prepared,request_sha256:"d".repeat(64),request_bytes:200,cost_bound_usd:"0.100000",
+      ...prepared,permission_sha256:"1".repeat(64),request_sha256:"d".repeat(64),request_bytes:200,cost_bound_usd:"0.100000",
       request_body_utf8:JSON.stringify({model:"gpt-5.6-terra",max_output_tokens:4096,store:false,stream:false,background:false}),
       source_receipts:[{reference:{source_ref:"synthetic:source"},authority:"UNKNOWN"}],
       expires_at_utc:new Date(Date.now()+600000).toISOString()}};
   const calls=[],mutations=[];
-  const context = {Date,JSON,Number,Array,Error,undefined,p0:{prepared,normalConsentBinding:"EXPLICIT_PRODUCT_PERMISSION",consent:null},
+  const context = {Date,JSON,Number,Array,Error,URL,undefined,p0:{prepared,normalConsentBinding:"EXPLICIT_PRODUCT_PERMISSION",consent:null},
     p0Element:node,p0Command:()=>"e".repeat(32),p0Controls:()=>{},p0Render:(view)=>{context.rendered=view;},
     appendSearchText:(parent,tag,text)=>parent.children.push({tag,text}),
     p0Run:async(action,mutation)=>{mutations.push(mutation);await action();},
@@ -68,4 +70,44 @@ test("cancel clears the exact body and consent without changing the preparation"
   assert.equal(h.context.p0.consent,null);assert.equal(h.node("consent").hidden,true);
   assert.equal(h.context.p0.prepared,h.prepared);assert.equal(h.calls.length,1);
   assert.equal(h.node("consent-summary").children.length,0);
+});
+
+test("destination is displayed exactly from the validated permission projection",async()=>{
+  const h=harness();await h.node("generate").click();
+  assert.equal(h.context.p0TransferDestination(h.consent,h.consent.preview),h.consent.transfer_destination);
+  assert.equal(h.node("consent-summary").children[0].text,
+    "OpenAI · gpt-5.6-terra · https://api.openai.com/v1/responses");
+  assert.equal(h.calls.length,1);assert.equal(h.calls[0].route,"/api/v2/p0/consent-preview");
+});
+const destinationMutants = [
+  ["missing",c=>delete c.transfer_destination],
+  ["null",c=>c.transfer_destination=null],
+  ["array",c=>c.transfer_destination=[]],
+  ["extra field",c=>c.transfer_destination.official=true],
+  ["missing field",c=>delete c.transfer_destination.model],
+  ["provider",c=>c.transfer_destination.provider="ANTHROPIC"],
+  ["model",c=>c.transfer_destination.model="other"],
+  ["hash",c=>c.transfer_destination.permission_sha256="2".repeat(64)],
+  ["preview permission",c=>c.preview.permission_sha256="2".repeat(64)],
+  ["missing preview permission",c=>delete c.preview.permission_sha256],
+  ["invalid permission",c=>c.transfer_destination.permission_sha256="bad"],
+  ["non-string endpoint",c=>c.transfer_destination.endpoint=1],
+  ...["http://api.openai.com/v1/responses","https://example.org/v1/responses",
+      "https://api.openai.com/v1/responses/input_tokens","https://api.openai.com:444/v1/responses",
+      "https://api.openai.com:443/v1/responses","https://user@api.openai.com/v1/responses",
+      "https://user:pass@api.openai.com/v1/responses","https://api.openai.com/v1/responses?x=1",
+      "https://api.openai.com/v1/responses?","https://api.openai.com/v1/responses#x",
+      "https://api.openai.com/v1/responses#","https://API.OPENAI.COM/v1/responses",
+      "https://api.openai.com/v1/responses/","not a url",""].map(endpoint=>[
+        "endpoint " + endpoint,c=>c.transfer_destination.endpoint=endpoint])
+];
+for (const [label,mutate] of destinationMutants) test("destination refuses " + label + " before dispatch",async()=>{
+  const h=harness();mutate(h.consent);
+  assert.equal(h.context.p0ConsentMatches(h.consent,h.prepared),false);
+  assert.throws(()=>h.context.p0ConsentPreview(h.consent,h.prepared),/P0_CONSENT_PREVIEW_BINDING/);
+  assert.equal(h.calls.length,0);
+  h.context.p0.consent=h.consent;
+  h.node("consent-transfer").checked=h.node("consent-cost").checked=true;
+  await assert.rejects(h.node("consent-send").click(),/P0_CONSENT_REQUIRED/);
+  assert.equal(h.calls.length,0);
 });

@@ -3,9 +3,11 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable, Mapping
+from dataclasses import replace
 from datetime import datetime
 from typing import cast
 
+from backend.adapters.outbound.evidence.p0_prepared_snapshot import prepared_evidence_items
 from backend.adapters.outbound.generation.openai.p0_content import CONTENT_FIELDS, bind_p0_content
 from backend.agent_runtime.agents.generation.generation_coordination_model import (
     GenerationPreparationRequest,
@@ -18,7 +20,7 @@ from backend.agent_runtime.agents.generation.generation_guard_model import (
     GenerationGuardRequest,
 )
 from backend.agent_runtime.agents.generation.generation_model import GenerationPortResult
-from backend.agent_runtime.contracts import EvidenceItem, LabeledEvidenceItem, ProductionRequest
+from backend.agent_runtime.contracts import ProductionRequest
 from backend.agent_runtime.contracts.common import (
     AGENT_CONTRACT_SCHEMA_V1_0,
     ActorKind,
@@ -26,21 +28,10 @@ from backend.agent_runtime.contracts.common import (
     ContractMeta,
 )
 from backend.agent_runtime.contracts.invocation import InvocationStatus
-from backend.agent_runtime.contracts.security import (
-    ContentOrigin,
-    ContentRole,
-    ContentSecurityDisposition,
-    ContentTrustClass,
-    ContentTrustLabel,
-    LabeledContent,
-    SecurityBoundary,
+from backend.agent_runtime.security.tool_application import (
+    label_untrusted_application_inputs,
+    label_untrusted_evidence_items,
 )
-from backend.agent_runtime.security.content_isolation import (
-    ContentIsolationContext,
-    InstructionDataBoundaryPolicy,
-    scan_content_threats,
-)
-from backend.agent_runtime.security.tool_application import assess_structured_boundary_content
 from backend.core_contracts.capability import CapabilityId
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import as_plain, object_data
 from backend.shared_kernel.correlation import CorrelationId
@@ -52,28 +43,14 @@ def agent_preparation(dispatch: Mapping[str, object], now: datetime) -> Generati
     context, lineage = object_data(data["context"]), object_data(data["lineage"])
     refs = cast(list[dict[str, object]], data["references"])
     evidence = object_data(data["evidence"])
-    labeled = []
-    for ref in refs:
-        identity, source = str(ref["evidence_id"]), str(ref["source_ref"])
-        text = cast(str, evidence[identity])
-        label = ContentTrustLabel(ContentOrigin.EVIDENCE, ContentRole.EVIDENCE, ContentTrustClass.UNTRUSTED, source)
-        content = LabeledContent(identity, text, label, identity)
-        assessment = InstructionDataBoundaryPolicy().assess(
-            content=content, context=ContentIsolationContext(SecurityBoundary.EVIDENCE),
-            signals=scan_content_threats(text, content_ref=identity, logical_location="p0_evidence"))
-        labeled.append(LabeledEvidenceItem(EvidenceItem(identity, source, "LOCAL_REFERENCE", str(ref["locator"]),
-            Instant(now), authority={"authority": "NONE"}, excerpt_or_summary=text,
-            checksum_or_version=str(ref["checksum_or_version"])), content, assessment))
-    app_label = ContentTrustLabel(ContentOrigin.APPLICATION_OUTPUT, ContentRole.RESULT,
-                                 ContentTrustClass.UNTRUSTED, "p0:prepared-context")
-    inputs, input_assessment = assess_structured_boundary_content(context, content_ref="p0:prepared-context",
-        label=app_label, boundary=SecurityBoundary.APPLICATION,
-        forbidden_keys={"credential", "permission_scope", "handler", "gate_decision"}, root_location="p0_context")
-    if input_assessment.disposition in {ContentSecurityDisposition.QUARANTINE, ContentSecurityDisposition.REJECT_CONTENT}:
-        raise ValueError("P0_NORMAL_INPUT_QUARANTINED")
     meta = ContractMeta(AGENT_CONTRACT_SCHEMA_V1_0, str(lineage["source_run_id"]), str(lineage["source_step_id"]),
                         None, CorrelationId(str(lineage["source_request_id"])), Instant(now),
                         ActorRef(ActorKind.AGENT, "AG-03"), InvocationStatus.PLANNED)
+    labeled = label_untrusted_evidence_items(prepared_evidence_items(data, now, replace(meta, actor=ActorRef(ActorKind.AGENT, "AG-02"))))
+    inputs, input_assessment = label_untrusted_application_inputs(context, content_ref="p0:prepared-context",
+        forbidden_keys={"credential", "permission_scope", "handler", "gate_decision"}, root_location="p0_context")
+    if input_assessment.disposition.value in {"QUARANTINE", "REJECT_CONTENT"}:
+        raise ValueError("P0_NORMAL_INPUT_QUARANTINED")
     canonical = ProductionRequest(meta, str(context["resource_type"]),
         "; ".join(cast(list[str], context["objectives"])), "P0_STRUCTURED_CONTENT",
         pedagogical_context=context, constraints={"context_sha256": data["context_sha256"],

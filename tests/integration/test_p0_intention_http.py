@@ -28,7 +28,8 @@ def running():
         port = probe.getsockname()[1]
     service = LocalRead15Service(LocalBrowserHttpConfiguration(port=port), Read15Endpoint(forbidden),
         RecordingObservability(), {"index.html": b"", "app.js": b"", "styles.css": b""},
-        p0_endpoint=P0CreationEndpoint(forbidden, forbidden, [], nonce="synthetic-intent-nonce"))
+        p0_endpoint=P0CreationEndpoint(forbidden, forbidden, [], nonce="synthetic-intent-nonce",
+            intention_execute=ProposeP0Intention().execute))
     server = LocalRead15Server(service)
     worker = threading.Thread(target=server.serve_forever, daemon=True)
     worker.start()

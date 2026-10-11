@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import unicodedata
 from collections.abc import Callable, Mapping
 
 from backend.adapters.inbound.api.routes import (
@@ -10,8 +11,7 @@ from backend.adapters.inbound.api.routes import (
     resolve_p0_notion_evidence,
 )
 from backend.adapters.inbound.api.search import MAX_SEARCH_RESPONSE_BYTES
-from backend.modules.resource_library.contracts.dto.search_source_status import SearchSourceStatus
-from backend.modules.resource_library.ports.outbound.local_search import AdmittedLocalPassage
+from backend.adapters.inbound.application.local_search import validate_source_status_projection
 
 P0_NOTION_EVIDENCE_CONTRACT = "P0-NOTION-EVIDENCE-HTTP-1.0"
 MAX_NOTION_EVIDENCE_ITEMS = 256
@@ -37,31 +37,43 @@ def project_notion_evidence(notion_id: str, native: Mapping[str, object]) -> dic
     for item in passages:
         if not isinstance(item, Mapping) or set(item) not in (_PASSAGE_FIELDS, _PASSAGE_FIELDS | {"source_status"}):
             raise ValueError("P0_REFERENCE_PROJECTION_REJECTED")
-        status = SearchSourceStatus.from_mapping(item["source_status"]) if "source_status" in item else None
-        source = AdmittedLocalPassage(item["object_ref"], item["object_kind"], item["passage_ref"],
-            item["version_or_checksum"], item["excerpt"], item["excerpt_truncated"], status)
+        status = validate_source_status_projection(item["source_status"]) if "source_status" in item else None
+        for field, maximum in (("object_ref", 256), ("object_kind", 64),
+                               ("passage_ref", 256), ("version_or_checksum", 128)):
+            value = item[field]
+            if type(value) is not str or not 1 <= len(value) <= maximum or any(
+                    unicodedata.category(char)[0] not in {"L", "N"} and char not in "._:-" for char in value):
+                raise ValueError("P0_REFERENCE_PROJECTION_REJECTED")
+        excerpt = item["excerpt"]
+        if (type(excerpt) is not str or len(excerpt) > 320 or any(
+                unicodedata.category(char) in {"Cc", "Cf", "Cs", "Zl", "Zp"} for char in excerpt)
+                or type(item["excerpt_truncated"]) is not bool):
+            raise ValueError("P0_REFERENCE_PROJECTION_REJECTED")
+        object_ref, object_kind, passage_ref, version_or_checksum = (
+            str(item[field]) for field in ("object_ref", "object_kind", "passage_ref", "version_or_checksum"))
+        excerpt_truncated = bool(item["excerpt_truncated"])
         if (not isinstance(item["provenance"], Mapping) or dict(item["provenance"]) != _PROVENANCE
                 or item["provenance"].get("authority_absolute") is not False):
             raise ValueError("P0_REFERENCE_PROJECTION_REJECTED")
-        if source.passage_ref in seen:
+        if passage_ref in seen:
             raise ValueError("P0_REFERENCE_PROJECTION_REJECTED")
-        seen.add(source.passage_ref)
-        projected: dict[str, object] = {"object_ref": source.object_ref, "object_kind": source.object_kind,
-            "passage_ref": source.passage_ref, "version_or_checksum": source.version_or_checksum,
-            "excerpt_truncated": source.excerpt_truncated, "source_status": status.as_dict() if status else None,
+        seen.add(passage_ref)
+        projected: dict[str, object] = {"object_ref": object_ref, "object_kind": object_kind,
+            "passage_ref": passage_ref, "version_or_checksum": version_or_checksum,
+            "excerpt_truncated": excerpt_truncated, "source_status": status,
             "provenance": dict(item["provenance"]), "available_authority": "UNKNOWN",
             "authority_basis": "NOT_ATTESTED_BY_APPLICATION"}
         reasons = []
-        if source.object_kind not in {"NOTION", "PEDAGOGICAL_CONTENT", "METHOD"}:
+        if object_kind not in {"NOTION", "PEDAGOGICAL_CONTENT", "METHOD"}:
             reasons.append("P0_TEACHER_SOURCE_FORBIDDEN")
-        if source.excerpt_truncated or not source.excerpt:
+        if excerpt_truncated or not excerpt:
             reasons.append("P0_REFERENCE_INCOMPLETE")
         if reasons:
             exclusions.append({**projected, "reasons": reasons})
         else:
-            candidates.append({**projected, "excerpt": source.excerpt,
-                "excerpt_sha256": hashlib.sha256(source.excerpt.encode("utf-8")).hexdigest(),
-                "selection": {"notion_id": notion_id, "passage_ref": source.passage_ref}})
+            candidates.append({**projected, "excerpt": excerpt,
+                "excerpt_sha256": hashlib.sha256(excerpt.encode("utf-8")).hexdigest(),
+                "selection": {"notion_id": notion_id, "passage_ref": passage_ref}})
     return {"notion_id": notion_id, "status": "CANONICAL", "retrieval_path": native["retrieval_path"],
             "available_authority": "UNKNOWN", "authority_basis": "NOT_ATTESTED_BY_APPLICATION",
             "items": candidates, "exclusions": exclusions}

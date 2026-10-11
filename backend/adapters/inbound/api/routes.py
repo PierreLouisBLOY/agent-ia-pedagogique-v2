@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from typing import Final
 from urllib.parse import unquote_to_bytes
-
-from backend.modules.resource_library.ports.outbound.local_search import require_logical_identifier
 
 READ15_TEMPLATE: Final = "/api/v2/resources/{resource_ref}"
 SEARCH_TEMPLATE: Final = "/api/v2/search"
@@ -100,7 +99,9 @@ def resolve_p0_notion_evidence(method: str, target: str) -> str:
                 or any(byte <= 32 or byte == 127 for byte in raw) or _BAD_ESCAPE.search(target)):
             raise ValueError
         notion_id = unquote_to_bytes(value).decode("utf-8")
-        require_logical_identifier(notion_id, 256)
+        if type(notion_id) is not str or not 1 <= len(notion_id) <= 256 or any(
+                unicodedata.category(char)[0] not in {"L", "N"} and char not in "._:-" for char in notion_id):
+            raise ValueError
         if not notion_id.startswith("notion:") or len(notion_id) <= len("notion:"):
             raise ValueError
         return notion_id

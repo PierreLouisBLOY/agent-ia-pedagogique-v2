@@ -1,7 +1,7 @@
 {
   "schema": "LU-PRODUCT-GUARD-REGISTRY-1.0",
   "status": "REVIEWED_EXACT_DELTA_PENDING_TARGETED_QUALIFICATION",
-  "timestamp_utc": "2026-10-11T21:09:48.654286+00:00",
+  "timestamp_utc": "2026-10-12T15:48:09.454677+00:00",
   "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
   "baseline_tree": "93bdaa387815f6a6654496120b40e6853629f082",
   "predecessor_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
@@ -25,6 +25,7 @@
     "backend/adapters/outbound/export/product_word.py",
     "backend/adapters/outbound/export/r6_readable_word.py",
     "backend/adapters/outbound/export/word.py",
+    "backend/adapters/outbound/generation/openai/p0_content.py",
     "backend/adapters/outbound/generation/openai/p0_normal.py",
     "backend/adapters/outbound/generation/openai/p0_normal_agents.py",
     "backend/adapters/outbound/generation/openai/p0_normal_policy.py",
@@ -72,6 +73,7 @@
     "docs/adr/ADR-LU-S5-media-local-revision-addendum.md",
     "docs/adr/ADR-LU-S5-production-media.md",
     "docs/development/ADR_LU_PRODUIT_01_ACTIVE_GUARD.md",
+    "docs/development/ADR_LU_PRODUIT_01_CANDIDATE_STATUS_BINDING.md",
     "docs/development/ADR_LU_PRODUIT_01_CONFIRMED_RECOVERY.md",
     "docs/development/ADR_LU_PRODUIT_01_COURSE_LOCAL_EDITS.md",
     "docs/development/ADR_LU_PRODUIT_01_INBOUND_DESTINATION_RESTORATION.md",
@@ -100,6 +102,7 @@
     "tests/unit/test_integrated_p0_agentic_controls.py",
     "tests/unit/test_integrated_saved_p0_resume.py",
     "tests/unit/test_lu_product_active_guard.py",
+    "tests/unit/test_p0_candidate_status_binding.py",
     "tests/unit/test_p0_confirmed_application_recovery.py",
     "tests/unit/test_p0_exact_notion_http.py",
     "tests/unit/test_p0_intention_proposal.py",
@@ -145,6 +148,7 @@
     "backend/adapters/outbound/export/product_word.py",
     "backend/adapters/outbound/export/r6_readable_word.py",
     "backend/adapters/outbound/export/word.py",
+    "backend/adapters/outbound/generation/openai/p0_content.py",
     "backend/adapters/outbound/generation/openai/p0_normal.py",
     "backend/adapters/outbound/generation/openai/p0_normal_agents.py",
     "backend/adapters/outbound/generation/openai/p0_normal_policy.py",
@@ -192,6 +196,7 @@
     "docs/adr/ADR-LU-S5-media-local-revision-addendum.md",
     "docs/adr/ADR-LU-S5-production-media.md",
     "docs/development/ADR_LU_PRODUIT_01_ACTIVE_GUARD.md",
+    "docs/development/ADR_LU_PRODUIT_01_CANDIDATE_STATUS_BINDING.md",
     "docs/development/ADR_LU_PRODUIT_01_CONFIRMED_RECOVERY.md",
     "docs/development/ADR_LU_PRODUIT_01_COURSE_LOCAL_EDITS.md",
     "docs/development/ADR_LU_PRODUIT_01_INBOUND_DESTINATION_RESTORATION.md",
@@ -217,6 +222,7 @@
     "tests/unit/test_integrated_p0_agentic_controls.py",
     "tests/unit/test_integrated_saved_p0_resume.py",
     "tests/unit/test_lu_product_active_guard.py",
+    "tests/unit/test_p0_candidate_status_binding.py",
     "tests/unit/test_p0_confirmed_application_recovery.py",
     "tests/unit/test_p0_exact_notion_http.py",
     "tests/unit/test_p0_intention_proposal.py",
@@ -249,93 +255,145 @@
     "tools/tests/pr4_lifecycle_regressions.test.cjs"
   ],
   "owner_sha256": {
-    "tests/integration/test_p0_product_consent_http.py": {
+    "backend/modules/work_orchestration/application/services/production_media.py": {
       "before": null,
-      "after": "7547adea76f059793104916c68eac0283f9b7fee1a332741bf8b529626575bea"
+      "after": "bbe71afc923ec9059242a469bfbfc4e65f6e2db3a5a504cfac36cb797498bf39"
     },
-    "backend/modules/materialization_export/contracts/dto/word_document.py": {
-      "before": "ebaeef1a94cf2bc4d9ce32f6873ddac0db2e68e3a041888a04be5f592cd37d2d",
-      "after": "3d8e01c80bcf4f4a972d1bd79d2a60fddd636314299d8e73657828e49d9089e7"
-    },
-    "docs/adr/ADR-LU-S5-media-local-revision-addendum.md": {
+    "backend/modules/work_orchestration/application/queries/p0_source_admission.py": {
       "before": null,
-      "after": "bd7fe35dee971018ca6d60df396e8b0a5b9606ba934fca19e47eed82a176cf60"
-    },
-    "backend/modules/knowledge_reference/application/queries/inspect_institutional_catalog.py": {
-      "before": "cff7b45755d3005fc814abdd1e947a1db084ed0d000b37afa2c6fda906e9f296",
-      "after": "989130e7788a9dff45130426e8931da5d8854633d92336bcf6f1e162de5d9bcf"
+      "after": "e25ef0ac0cc9c5ba7eec7836243ddaf8ccc252b6d895768fd712e1b129ef70bc"
     },
     "tests/unit/test_p0_normal_generation.py": {
       "before": null,
       "after": "b6500f134916c0e46cea817557f74026a8deb1799309a1d1c474d69093ba7f43"
     },
-    "backend/modules/pedagogical_design/application/commands/create_p0_candidate.py": {
-      "before": "5433bb0279bc931340481139cf77b9597e50c893863b07171d256a2e4e697932",
-      "after": "e12d57b638d66998a8898e836ee22a49c70cadcb2226c815dc9624fc7b0a4ef9"
-    },
-    "tools/p0-tokenize-local.py": {
+    "docs/development/P0_NORMAL_PROVIDER_CONTRACTS_1_0.md": {
       "before": null,
-      "after": "3c9a3607e487a724e32eede57a3a702baaefbe4fdc49f08796c4a82aa40a598a"
+      "after": "4f57dd375d2a9c41dba346bdef37cde2dce0bfe084d78fd310159d8256a4a8c2"
     },
-    "docs/development/INSTITUTIONAL_TREATMENT_REGISTER.md": {
+    "docs/adr/ADR-LU-P0-boundary-repair.md": {
       "before": null,
-      "after": "35dc756fcda41a51f65980438022ed5729910da84b2a850af4bd9231b3d559bd"
-    },
-    "backend/modules/materialization_export/application/commands/export_saved.py": {
-      "before": "25f0435c8a63e5c7b6358abdf571e40b5eb4a2004d4704b92a647d932523b1c6",
-      "after": "af44bf0044a85326058f4a89e34642a0e340757758725d741cf2972be13d72e7"
-    },
-    "tests/unit/test_integrated_p0_agentic_controls.py": {
-      "before": null,
-      "after": "6382868935795adc2d947d7032f12025259fb00ea4de2d29f24c4be015be7f78"
-    },
-    "tests/unit/test_p0_exact_notion_http.py": {
-      "before": null,
-      "after": "4bf1922b311add4077b1bdbf75b1ce826ce0d4beb93b73e6ca653489a6b56bad"
-    },
-    "docs/development/ADR_LU_PRODUIT_01_INBOUND_DESTINATION_RESTORATION.md": {
-      "before": null,
-      "after": "45c463e0941ac541878fff94f69ea403acfcf23f6cf4bcb263aa807ab7a971d9"
-    },
-    "backend/infrastructure/composition/factories/p0_product_consent.py": {
-      "before": null,
-      "after": "45f1d101af2d4930d65c07b82b014ccafd48506d6a93ba4f213c557856e8fb82"
-    },
-    "tests/unit/test_p0_wire_projection_boundary.py": {
-      "before": null,
-      "after": "9452c27f02bb6bbcc567a3cbc651ce2381848fb0934d8af61901607d62198e57"
-    },
-    "backend/adapters/outbound/generation/openai/p0_product_ledger.py": {
-      "before": null,
-      "after": "770d1de467b987944c83141302eaeb8f8f98ef018f08f847668581cd2f353020"
+      "after": "a3656fff63f2431490bf77ff3756ee581dcc16e93749b290dcd7e295b52d6995"
     },
     "docs/development/ADR_LU_PRODUIT_01_CONFIRMED_RECOVERY.md": {
       "before": null,
       "after": "0ed07a94306db5f47d626fc49e098e8938d7d4d69f279c047fd3c1f802942d60"
     },
-    "tests/unit/test_institutional_treatment.py": {
+    "docs/development/ADR_LU_PRODUIT_01_LOCAL_RESUME.md": {
       "before": null,
-      "after": "969fe948e1cf17e7806e30940f9bd4916c46e089469f8a09d2b2bb60a9563285"
+      "after": "df781a28812fd2dec802280253366c7cf114009da6fe399072c3882daa6bd007"
+    },
+    "backend/modules/pedagogical_design/application/commands/create_p0_candidate.py": {
+      "before": "5433bb0279bc931340481139cf77b9597e50c893863b07171d256a2e4e697932",
+      "after": "e12d57b638d66998a8898e836ee22a49c70cadcb2226c815dc9624fc7b0a4ef9"
+    },
+    "backend/infrastructure/composition/factories/p0_creation.py": {
+      "before": "b8e0710dc105a10be04ae7a48cdbb32c916a07b8e934b84d3dfff85fa1ea0ae6",
+      "after": "17caf0eb94f081c74c558403724c6157336f7c840cdfee1435a07dfb22862175"
+    },
+    "tests/unit/test_p0_intention_proposal.py": {
+      "before": null,
+      "after": "0b489fe54938a031c633b162eade63a92644307d6250f2efabf543be8c2e8ce4"
+    },
+    "backend/modules/work_orchestration/application/services/p0_consent.py": {
+      "before": null,
+      "after": "964f9f7911b3de952ec042f996bdea73795d2cb4d397c74274325e6b854f16c4"
+    },
+    "tests/unit/test_p0_confirmed_application_recovery.py": {
+      "before": null,
+      "after": "1712d97f32d72e51d600d84426a08fd0165d8d2446ca0d4e3f3427eabcd79ab1"
+    },
+    "backend/modules/pedagogical_design/contracts/dto/production_media.py": {
+      "before": null,
+      "after": "2b2e6d3294e5fbb9067e29478ebd10fcf76f574f06ca97d937c2fe2028017a39"
+    },
+    "backend/infrastructure/composition/factories/local_browser.py": {
+      "before": "c4a6889f448bd8fdbcbfb72aa71c8cb343e0085ea024da96dbce3f372dc6085a",
+      "after": "fe8eb73ef186477471ba62c27f834895a2a9ffb3fe6546091f9e3865ae6da4ea"
+    },
+    "docs/adr/ADR-LU-S5-media-export-errors-addendum.md": {
+      "before": null,
+      "after": "be70f14bde98d38655f2d9e6c504d982a97330bc0809befaf17977d2c9c3f598"
+    },
+    "frontend/index.html": {
+      "before": "54774234c07a50798680bec14f9997bb7127edd89a552c0581f5b15fe0921fbb",
+      "after": "847969294ec48069ad3d2b6655f05cd7a30132560158caea701adc0b37074641"
+    },
+    "frontend/styles.css": {
+      "before": "b7dd20537ef28f3653eb56ffe6d1b879bf1e82613ad1d54669cb29b124af7c9a",
+      "after": "bf295938537e18931d883a77621a725712f88a110208a84c7d469056a8e7551c"
     },
     "backend/adapters/inbound/api/saved_production.py": {
       "before": "04c4dcbd885862566ce652b8d4fce669c1017c49027427fe081f3d405dd42396",
       "after": "a6a6ace17fdfdcee62ec61d19bd378677b2ad5638296a7a197d68ced92d51296"
     },
-    "backend/agent_runtime/security/tool_application.py": {
-      "before": "2a87420492909cc11bc6816e78c3bfec2433fb19ff7cc9c805ce2af243d91d40",
-      "after": "e8445e1669cccfff625d373425143fda8f04e4baa3ae2edd743be54a5102b548"
-    },
-    "backend/adapters/inbound/application/lot2_saved_production.py": {
-      "before": "c48f2ce6620dfd4287f0740c86dd12f130d4b7f9dbc563ac427c8805f406243d",
-      "after": "e645cb14f0e2117e365297ab1b63db4800e8b3756d3f754b5c26fe7f9d4a831c"
-    },
-    "tests/unit/test_product_media.py": {
+    "backend/adapters/outbound/export/product_word.py": {
       "before": null,
-      "after": "49f435532f4c925685ec8c26c799e3bca616ceba000b5b834c4e25f08d6fc3e8"
+      "after": "156e8f9cbf9fc345b4f1b527b19fe845604cf1e1802aeafd57e60fa53bc7f552"
     },
-    "backend/infrastructure/composition/factories/institutional_catalog.py": {
-      "before": "6b4ca35c19ffdd927e72d5cde5ce516bab2ba4a7ce7dd3951834a381ad0c8eed",
-      "after": "4360243fd1601dd1571c7d13fdda582d9b00fd48aed0bffbf092be59f09ab520"
+    "backend/adapters/outbound/evidence/p0_prepared_snapshot.py": {
+      "before": null,
+      "after": "ecf86c045b42e14a5173b4495a90f0a3e84170f3047bfb30c864bd93b4b94c54"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROFILE.md": {
+      "before": null,
+      "after": "5c4bbb9515d21118f8d8071635a2ad10fc3cc21f6709ee7fb85f6c653a35cf32"
+    },
+    "backend/adapters/outbound/generation/openai/p0_normal_receipt.py": {
+      "before": null,
+      "after": "edf70ccd164cbf7cb6b53360b5d9355cf63db4737a686d53b307f2d52bd88218"
+    },
+    "tests/unit/test_institutional_treatment.py": {
+      "before": null,
+      "after": "969fe948e1cf17e7806e30940f9bd4916c46e089469f8a09d2b2bb60a9563285"
+    },
+    "tests/unit/test_product_media_http.py": {
+      "before": null,
+      "after": "2ad04c4d61ef24125f43a244b57a2275f6f1bd30463cb5fbfad23a68397c9bed"
+    },
+    "tests/unit/test_p0_local_reference_context.py": {
+      "before": null,
+      "after": "e6985b08d8a23e2134e19b8ddac97f1b59a9b2d816107649d65ec15298cf37af"
+    },
+    "docs/adr/ADR-LU-S5-media-local-revision-addendum.md": {
+      "before": null,
+      "after": "bd7fe35dee971018ca6d60df396e8b0a5b9606ba934fca19e47eed82a176cf60"
+    },
+    "tests/integration/test_p0_local_reference_context_composition.py": {
+      "before": null,
+      "after": "eabb79a08037a10a66cafa7e148e61fc57a444547e8e649f8803ab678c8144a9"
+    },
+    "tests/unit/test_p0_normal_policy.py": {
+      "before": null,
+      "after": "1d0ffe74e78c84c8b5186d64473629cc21a89d2f62a58abc037fc505a49c12e3"
+    },
+    "backend/modules/materialization_export/application/commands/export_saved.py": {
+      "before": "25f0435c8a63e5c7b6358abdf571e40b5eb4a2004d4704b92a647d932523b1c6",
+      "after": "af44bf0044a85326058f4a89e34642a0e340757758725d741cf2972be13d72e7"
+    },
+    "tests/unit/test_p0_wire_projection_boundary.py": {
+      "before": null,
+      "after": "9452c27f02bb6bbcc567a3cbc651ce2381848fb0934d8af61901607d62198e57"
+    },
+    "docs/development/INSTITUTIONAL_TREATMENT_REGISTER.md": {
+      "before": null,
+      "after": "35dc756fcda41a51f65980438022ed5729910da84b2a850af4bd9231b3d559bd"
+    },
+    "backend/modules/pedagogical_design/ports/outbound/p0_generation_controls.py": {
+      "before": null,
+      "after": "19c93474f4af7e230a8fc2291d473ad06ca8f8e6f393ac048b232b161739926b"
+    },
+    "tests/unit/test_integrated_saved_p0_resume.py": {
+      "before": null,
+      "after": "1999f18edd744376b09e8610a2b1c27135a2fc028c5485fb72b711bb61a48381"
+    },
+    "backend/adapters/inbound/api/routes.py": {
+      "before": "f8541ab9b354cc040202911622f4a20e0d666d85c4cab55b0f23e5dd7850486a",
+      "after": "1856e3c2980649d16c241bf1d7b54dc04c595c2175f8ea1e8568be4e322f8789"
+    },
+    "docs/adr/ADR-LU-S5-local-media-http-addendum.md": {
+      "before": null,
+      "after": "0a9318dd6b90528b5e6212c9ec1eac98da644b1d64ddc96d8a0764618cfbbc5b"
     },
     "tests/integration/test_p0_intention_http.py": {
       "before": null,
@@ -345,369 +403,329 @@
       "before": null,
       "after": "e631d256d77d60de7aef75b7369258f4468d58088df489cc232d52efbb614ff8"
     },
-    "backend/adapters/outbound/generation/openai/p0_normal_agents.py": {
-      "before": null,
-      "after": "e664f50c8fc4be3d407304e929145aeb3ff9cdda01dfb4764601f14036c7119f"
-    },
-    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROFILE.md": {
-      "before": null,
-      "after": "5c4bbb9515d21118f8d8071635a2ad10fc3cc21f6709ee7fb85f6c653a35cf32"
-    },
-    "backend/infrastructure/composition/factories/p0_local_reference_context.py": {
-      "before": null,
-      "after": "682ed1faa4548c877de0daf03750413d388518c31577237484783b717819ffc6"
-    },
-    "tests/integration/test_p0_local_reference_context_composition.py": {
-      "before": null,
-      "after": "eabb79a08037a10a66cafa7e148e61fc57a444547e8e649f8803ab678c8144a9"
-    },
-    "tests/unit/test_p0_source_admission.py": {
-      "before": null,
-      "after": "dbc6600d778210030be283918efe5455d184268880dae67af02d621d1d865e41"
-    },
-    "docs/development/P0_PRODUCT_PERMISSION_INTERFACES_1_0.md": {
-      "before": null,
-      "after": "5416311084ea322b67dd891abc0188bc9d971ea1ba83885bc606170dbe8d20dc"
-    },
-    "tests/unit/test_p0_normal_profile.py": {
-      "before": null,
-      "after": "e7c01fc29f0874d192ea9124e6c54e018faca4c2da1694b8ebadbb9d5cd847f8"
-    },
-    "tests/unit/test_p0_prepared_evidence_boundary.py": {
-      "before": null,
-      "after": "8b05b2bef50c35083392ba4dcbb946c0058a9ceb21417951f4ecb75e9509996a"
-    },
-    "docs/development/ADR_LU_PRODUIT_01_WINDOWS_SOURCE_COVERAGE.md": {
-      "before": null,
-      "after": "fa4faa64fcb23978cf84b81f519bea1c557e862b68bfb30951e64a566f901587"
-    },
-    "docs/development/ADR_LU_PRODUIT_01_ACTIVE_GUARD.md": {
-      "before": null,
-      "after": "424dc4fd45bd79243c15be2732f70c101b920ed8d9d59868346f7b58827e49ab"
-    },
-    "tests/unit/test_p0_normal_policy.py": {
-      "before": null,
-      "after": "1d0ffe74e78c84c8b5186d64473629cc21a89d2f62a58abc037fc505a49c12e3"
-    },
-    "backend/modules/work_orchestration/application/queries/p0_local_reference_context.py": {
-      "before": null,
-      "after": "1006fb361f77712b8e8da99e5d7ea9fdca169ab799d9ee8f928aaed6420ae9ed"
-    },
-    "backend/modules/work_orchestration/application/queries/p0_source_admission.py": {
-      "before": null,
-      "after": "e25ef0ac0cc9c5ba7eec7836243ddaf8ccc252b6d895768fd712e1b129ef70bc"
-    },
-    "frontend/index.html": {
-      "before": "54774234c07a50798680bec14f9997bb7127edd89a552c0581f5b15fe0921fbb",
-      "after": "847969294ec48069ad3d2b6655f05cd7a30132560158caea701adc0b37074641"
-    },
-    "backend/modules/work_orchestration/contracts/dto/saved_production.py": {
-      "before": "7652b2bf61878e5ce14acde8febb08a269fefb2ef186f964b98f1cca037c98ef",
-      "after": "5f96e7f31e9ee15ed93fee8e1d317b3ab07191d1bc03b9f37726a4ad8933295d"
-    },
-    "backend/adapters/inbound/application/production_media.py": {
-      "before": null,
-      "after": "cffb273a141b4e3a3056bb2920e83791f78f649d15ed8e11e8b46bc10b4e3aa9"
-    },
-    "backend/adapters/inbound/application/institutional_catalog.py": {
-      "before": "c06259164be9da6014559c6c9152844109602a4ec00dd906d9f8c5094fb74ab1",
-      "after": "04db1105030eb5939dc9a2609fce150280289abe8437f11140a3effa2eab0be5"
-    },
-    "tools/tests/p0_preparation_deadline.test.cjs": {
-      "before": null,
-      "after": "f0cf1e60c4211d44725b29715beb94b0cead7753a45f35c971009e929ffdd81b"
-    },
-    "backend/adapters/outbound/generation/openai/p0_product.py": {
-      "before": null,
-      "after": "6ac9aacc96b0b35bc2e5233ab1ae44db4c85bf1accb389014929455c3eed3ce7"
-    },
-    "docs/adr/ADR-LU-S5-production-media.md": {
-      "before": null,
-      "after": "b69bc1bad962a8ec6827b031ba5d1d5cbe94531ccacba6ca82ace9e8aef82b5a"
-    },
-    "docs/development/P0_EXACT_NOTION_HTTP.md": {
-      "before": null,
-      "after": "d6586dbd7e5acae2348aec3e6cb8854e4b73605311915c7b08e6ece95c5f42b9"
-    },
-    "frontend/app.js": {
-      "before": "5576c34c7de646954d3b08167ea55eb85a08d6204f572150824e6fbf05ba1ae2",
-      "after": "973f787d2e8da4300f34897e6b51daad76257680b878d2e1d715d6650421e338"
-    },
-    "backend/adapters/outbound/evidence/p0_prepared_snapshot.py": {
-      "before": null,
-      "after": "ecf86c045b42e14a5173b4495a90f0a3e84170f3047bfb30c864bd93b4b94c54"
-    },
-    "tests/unit/test_p0_local_source_policy.py": {
-      "before": null,
-      "after": "33dd03ae9ab982332db24971ebb0eed5e717e839dcbd7764c5695f377e571a22"
-    },
-    "tests/unit/test_p0_product_permission.py": {
-      "before": null,
-      "after": "bea1ed6d90e158c335a18a81b3b95eeef7412fed667643111419e4702bc0cd40"
-    },
-    "tools/tests/p0_ui_async_binding.test.cjs": {
-      "before": null,
-      "after": "1175ce61663b494660fa4777f42779c4b80d746bb5b8e10996d32f8a7fc0e3a4"
-    },
-    "tests/unit/test_product_media_http.py": {
-      "before": null,
-      "after": "2ad04c4d61ef24125f43a244b57a2275f6f1bd30463cb5fbfad23a68397c9bed"
-    },
-    "frontend/styles.css": {
-      "before": "b7dd20537ef28f3653eb56ffe6d1b879bf1e82613ad1d54669cb29b124af7c9a",
-      "after": "bf295938537e18931d883a77621a725712f88a110208a84c7d469056a8e7551c"
-    },
-    "tests/unit/test_p0_local_reference_context.py": {
-      "before": null,
-      "after": "e6985b08d8a23e2134e19b8ddac97f1b59a9b2d816107649d65ec15298cf37af"
-    },
-    "backend/adapters/outbound/generation/openai/p0_normal.py": {
-      "before": null,
-      "after": "1255705e83c03e07a425bad1a49f1fb61e01dbfa4f759a23eeacd8ec55b68595"
-    },
-    "backend/modules/knowledge_reference/application/queries/qualified_institutional_corpus.py": {
-      "before": "2b4971b03c51572b08d0b14716736a82b941d2885994ef608b914f572d79b3e1",
-      "after": "cb5f8101d353afbfe0cea50aae8ff734cb82058d0160c5006530060d4110ad20"
-    },
-    "tools/tests/p0_course_media_editor.test.cjs": {
-      "before": null,
-      "after": "a34730e0ab4e332ecbf1c55a3b1888822dca58d18458e20962c8c4b0d2b6e7b0"
-    },
-    "tools/tests/p0_conversation_shell.test.cjs": {
-      "before": "c271c8d8233d6dffc5c98f6a3e64735278c2f1a7cba99c1bbfd625da8953ba94",
-      "after": "07d94b3a4ab0ef4d8638171e28283ff0d438f1886bdbc4d92ce763fd344ca571"
-    },
-    "docs/development/ADR_LU_PRODUIT_01_INTENTION_PROPOSAL.md": {
-      "before": null,
-      "after": "a4b87330a60656ad35c9d017b764a6f84eb7dbd81fddcb0857fc6cb30ee7655f"
-    },
-    "tests/unit/test_p0_confirmed_application_recovery.py": {
-      "before": null,
-      "after": "1712d97f32d72e51d600d84426a08fd0165d8d2446ca0d4e3f3427eabcd79ab1"
-    },
-    "backend/infrastructure/composition/factories/p0_normal_profile_contract.py": {
-      "before": null,
-      "after": "db6c9695fc2098340d8816f97dd66447ff57a3f1c3dc970dea6ab1a06fe508cf"
-    },
-    "backend/adapters/inbound/api/p0_creation.py": {
-      "before": "b48da62775eb3137d86b8b407def1dc3fab0d1a42c9bce6b6dd9f57d1f561727",
-      "after": "a4010203f34eb597f8140f6bb99762274f2cc21601e91a622c595386716b0353"
-    },
-    "tools/tests/pr4_lifecycle_regressions.test.cjs": {
-      "before": "5904d2d89d13625fbb97b0824a3e5ab5611106d41deb70fe794c3a1c3116f72e",
-      "after": "3dfb8d8b329bfa8201b1dd570f24ec10d152eda9f99ac56097b427a120d46cbc"
-    },
     "backend/modules/pedagogical_design/application/commands/edit_saved_course.py": {
       "before": null,
       "after": "fc2c8bf838f3b8779edf4a6ab21c23b28499746407f53b2ff5ff8f986030dfd8"
-    },
-    "backend/modules/work_orchestration/application/services/p0_creation.py": {
-      "before": "6156d966f6d683c77318322d0feb9fb048e72464b2cf4ba83f5f2288db4f0526",
-      "after": "125c4c4def358a5db43c38feb86920221b0f74b5574631ece5fd1178f887e9f3"
-    },
-    "docs/adr/ADR-LU-S5-media-export-errors-addendum.md": {
-      "before": null,
-      "after": "be70f14bde98d38655f2d9e6c504d982a97330bc0809befaf17977d2c9c3f598"
-    },
-    "docs/adr/ADR-LU-P1-exact-local-source-context.md": {
-      "before": null,
-      "after": "28047befe97446a15507241ed5502c946af3f56ffaec25f5d44c68062b79720b"
-    },
-    "backend/adapters/outbound/generation/openai/p0_normal_receipt.py": {
-      "before": null,
-      "after": "edf70ccd164cbf7cb6b53360b5d9355cf63db4737a686d53b307f2d52bd88218"
-    },
-    "tests/unit/test_p0_normal_cli.py": {
-      "before": null,
-      "after": "0149ec8cabb65973477493b901c2324142fb719a8a43acf7a3f543484519b80d"
-    },
-    "backend/modules/pedagogical_design/ports/outbound/p0_confirmed_recovery.py": {
-      "before": null,
-      "after": "fcda7441fe38ed225599c5dd24b8297ea1be3b2c1f4cf7b4de9f39fe395920e8"
-    },
-    "tools/tests/p0_ui_request.test.cjs": {
-      "before": "6f8f04cab090d652dff9f8cb81de1d5a13654e0781224ab448dc245dae758b50",
-      "after": "d5cad04679bda12be077259492c97be2bc6e8f2eb2048229ad1a57d94715cf7b"
-    },
-    "backend/adapters/outbound/export/word.py": {
-      "before": "9e52dc031aa0751c01fdfb62899ef417bf4c2497156c4d6b8e3b7611757cf67d",
-      "after": "34bcece8879fbf022304bd3d6df8c3f99363554d2a9f63e53da6abb883db07da"
-    },
-    "tests/unit/test_lu_product_active_guard.py": {
-      "before": null,
-      "after": "99b7e26a9e9ade0b5eff78ffff6edb11eb56a005fde0bd6ea4b3bfb4492ac81f"
-    },
-    "tests/unit/test_p0_intention_proposal.py": {
-      "before": null,
-      "after": "0b489fe54938a031c633b162eade63a92644307d6250f2efabf543be8c2e8ce4"
-    },
-    "docs/development/ADR_LU_PRODUIT_01_LOCAL_RESUME.md": {
-      "before": null,
-      "after": "df781a28812fd2dec802280253366c7cf114009da6fe399072c3882daa6bd007"
-    },
-    "backend/modules/work_orchestration/application/services/p0_consent.py": {
-      "before": null,
-      "after": "964f9f7911b3de952ec042f996bdea73795d2cb4d397c74274325e6b854f16c4"
-    },
-    "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md": {
-      "before": null,
-      "after": "e1535827cd3665d672814451297c2441e54c1e55ca7060287adc59ec6c3df9a5"
-    },
-    "backend/infrastructure/composition/factories/course_media.py": {
-      "before": "01aa19d88a6d23ca756f4c603f09e04dd8c6f318f24616bb963a5e4df348a677",
-      "after": "c995863edd8c5e8557e32f1af43087bd88baeb518aef9ee6e6174fed0d0b2300"
-    },
-    "backend/modules/work_orchestration/application/services/saved_production.py": {
-      "before": "09ca3bf1ccd613dd564e959cac98202cf661e20948055c31a26198d0a8ec616e",
-      "after": "bf8171c0d0c3a7ab766e9a870cb2ee4715a027622244becbf73b007476168920"
-    },
-    "tests/unit/test_saved_course_local_edits.py": {
-      "before": null,
-      "after": "13cd2f908816517783614cf46979904cbf4180ea3a049b72fb8212670264a52f"
-    },
-    "tools/tests/p0_ui_local_reference_context.test.cjs": {
-      "before": null,
-      "after": "28e48df155971157df83c2d6a15923bbd7f812e31357274686178013884fb525"
-    },
-    "backend/modules/work_orchestration/application/services/production_media.py": {
-      "before": null,
-      "after": "bbe71afc923ec9059242a469bfbfc4e65f6e2db3a5a504cfac36cb797498bf39"
-    },
-    "docs/adr/ADR-LU-S5-local-media-http-addendum.md": {
-      "before": null,
-      "after": "0a9318dd6b90528b5e6212c9ec1eac98da644b1d64ddc96d8a0764618cfbbc5b"
-    },
-    "backend/infrastructure/composition/factories/p0_normal_profile.py": {
-      "before": null,
-      "after": "800a3a8255a75be2a661ff4ba20b017d78ec2b8fa0a4ec51bb67c9bdb577db81"
-    },
-    "tools/tests/p0_rich_course_preview.test.cjs": {
-      "before": null,
-      "after": "13da2ab8849bf71e68e819db5f656690ff055bcca312abf7d2c00754dd952424"
-    },
-    "tools/launch-local.ps1": {
-      "before": "4cdc708d6f9f4a2f3e026cb3cc0a3b6ac8af4c2dc4551096fd213493c7d5bfd6",
-      "after": "bc6946a99e32e18b6b611ec27fe6bdada495a0de11df99099426c866df1f7c9d"
-    },
-    "backend/adapters/inbound/api/routes.py": {
-      "before": "f8541ab9b354cc040202911622f4a20e0d666d85c4cab55b0f23e5dd7850486a",
-      "after": "1856e3c2980649d16c241bf1d7b54dc04c595c2175f8ea1e8568be4e322f8789"
-    },
-    "docs/development/P0_NORMAL_PROVIDER_CONTRACTS_1_0.md": {
-      "before": null,
-      "after": "4f57dd375d2a9c41dba346bdef37cde2dce0bfe084d78fd310159d8256a4a8c2"
-    },
-    "docs/development/ADR_LU_PRODUIT_01_COURSE_LOCAL_EDITS.md": {
-      "before": null,
-      "after": "931c2ea60f970a755b3333b36f628a3d85af89dbbbab0b52d16b57392183966f"
-    },
-    "tools/tests/p0_product_consent.test.cjs": {
-      "before": null,
-      "after": "f883098f0774479cd3e54f8244af572089fc59fdd8da49abf5c696c716aad923"
-    },
-    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROFILE_PACKAGE_BASELINE.md": {
-      "before": null,
-      "after": "85481931f106f7e38925e19cd5dff17b034c66ad86c338f5f3c2871a94a1152f"
-    },
-    "backend/modules/work_orchestration/application/services/p0_agentic.py": {
-      "before": "c6e5cb028eb90675deb51441b77dfcfdb3169707185c86f1dfb614a94e9ac31f",
-      "after": "f27b1d3f43342a5b598109306bfb16f29d29139f6c13a4fdff6c42150b2e4250"
-    },
-    "backend/adapters/outbound/generation/openai/p0_product_policy.py": {
-      "before": null,
-      "after": "ab01313c0963cfc197949ab1f33b74d6175256176c8aab3f49cd52d22dd6ef40"
-    },
-    "docs/adr/ADR-LU-P0-boundary-repair.md": {
-      "before": null,
-      "after": "a3656fff63f2431490bf77ff3756ee581dcc16e93749b290dcd7e295b52d6995"
-    },
-    "backend/infrastructure/composition/factories/p0_creation.py": {
-      "before": "b8e0710dc105a10be04ae7a48cdbb32c916a07b8e934b84d3dfff85fa1ea0ae6",
-      "after": "17caf0eb94f081c74c558403724c6157336f7c840cdfee1435a07dfb22862175"
-    },
-    "backend/modules/pedagogical_design/ports/outbound/p0_generation_controls.py": {
-      "before": null,
-      "after": "19c93474f4af7e230a8fc2291d473ad06ca8f8e6f393ac048b232b161739926b"
     },
     "backend/adapters/inbound/api/production_media.py": {
       "before": null,
       "after": "e544f83ce3269520ebb11acddb6bd2b5bee0e2378f2591efffa2e8152b0a95c2"
     },
-    "docs/user/INTEGRATED_PRODUCT_GUIDE.md": {
+    "docs/development/ADR_LU_PRODUIT_01_CANDIDATE_STATUS_BINDING.md": {
       "before": null,
-      "after": "efabd8142ecbd58135909afae57afa013bf3ecef3317dcdba069d78f3ca0e002"
+      "after": "ae068429a30c558ee132012f54603f08c71e3640bf97e01532b7fe02d9a2681f"
     },
-    "tests/unit/test_p0_product_destination.py": {
+    "tests/unit/test_product_media.py": {
       "before": null,
-      "after": "04c787ed194445128ff41038b784c2eb6a6dec3e512d63331d96f53cd76a99c5"
+      "after": "49f435532f4c925685ec8c26c799e3bca616ceba000b5b834c4e25f08d6fc3e8"
     },
-    "backend/adapters/inbound/api/p0_notion_evidence.py": {
+    "backend/adapters/outbound/export/word.py": {
+      "before": "9e52dc031aa0751c01fdfb62899ef417bf4c2497156c4d6b8e3b7611757cf67d",
+      "after": "34bcece8879fbf022304bd3d6df8c3f99363554d2a9f63e53da6abb883db07da"
+    },
+    "backend/infrastructure/composition/factories/p0_product_consent.py": {
       "before": null,
-      "after": "26a1193b278c0aa2660d3ca4cffe3de743e37f8df8ccf425a9f138fd8f57ef20"
+      "after": "45f1d101af2d4930d65c07b82b014ccafd48506d6a93ba4f213c557856e8fb82"
     },
-    "backend/modules/work_orchestration/contracts/dto/p0_production_read_view.py": {
-      "before": "4179d597a9a71e26f190ba61153c1f0837e482679d46505a2c008203333c3fc3",
-      "after": "6795f280df08e5e24602cbbce72654f7075ff90252c5b42c3613be76fa5c60e3"
-    },
-    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROVIDER_COMPOSITION.md": {
+    "tests/unit/test_p0_prepared_evidence_boundary.py": {
       "before": null,
-      "after": "9e807c704ae1357d8846013c019e6a342e22462e05ccb5d7a589b8b3d7915eb3"
+      "after": "8b05b2bef50c35083392ba4dcbb946c0058a9ceb21417951f4ecb75e9509996a"
+    },
+    "backend/modules/knowledge_reference/application/queries/inspect_institutional_catalog.py": {
+      "before": "cff7b45755d3005fc814abdd1e947a1db084ed0d000b37afa2c6fda906e9f296",
+      "after": "989130e7788a9dff45130426e8931da5d8854633d92336bcf6f1e162de5d9bcf"
+    },
+    "backend/modules/pedagogical_design/ports/outbound/p0_confirmed_recovery.py": {
+      "before": null,
+      "after": "fcda7441fe38ed225599c5dd24b8297ea1be3b2c1f4cf7b4de9f39fe395920e8"
     },
     "backend/modules/pedagogical_design/contracts/dto/p0_production.py": {
       "before": "61692b9855a75bf78b2f590a46b37d40a0f979d22a5f75e6160126213f67ddd3",
       "after": "5f5c2a2917394faa09acf139dc0e2a5bcc883cea04763e0e4c4d56c9a64fe890"
     },
-    "backend/modules/knowledge_reference/application/queries/stmg_alignment.py": {
-      "before": "ac14175c2e293927474a5cef603d74275547de402a04e1f4dc6ef7d66d864c7e",
-      "after": "235844fed694eb48942d1b481d0274017e3a81feed0ea4870ea7abc7809f4d29"
+    "backend/adapters/inbound/application/institutional_catalog.py": {
+      "before": "c06259164be9da6014559c6c9152844109602a4ec00dd906d9f8c5094fb74ab1",
+      "after": "04db1105030eb5939dc9a2609fce150280289abe8437f11140a3effa2eab0be5"
     },
-    "backend/adapters/outbound/export/product_word.py": {
+    "docs/adr/ADR-LU-P1-exact-local-source-context.md": {
       "before": null,
-      "after": "156e8f9cbf9fc345b4f1b527b19fe845604cf1e1802aeafd57e60fa53bc7f552"
+      "after": "28047befe97446a15507241ed5502c946af3f56ffaec25f5d44c68062b79720b"
     },
-    "tests/unit/test_product_media_review_routing.py": {
+    "tests/integration/test_p0_product_consent_http.py": {
       "before": null,
-      "after": "1dd4f95dff6e117dd3dc5e1d8a1ace1b820c2888b318333841d2b10ffba34c38"
+      "after": "7547adea76f059793104916c68eac0283f9b7fee1a332741bf8b529626575bea"
     },
-    "backend/adapters/outbound/export/r6_readable_word.py": {
-      "before": "bd9b97322063df2f6e4f78435d89e2176f198ba2c7db41d2768531481cf6ad69",
-      "after": "b263b22cf8251378d9057f41b5294269f19603218373b1ab7356606cc0e578b8"
-    },
-    "tests/unit/test_saved_p0_read_compatibility.py": {
+    "backend/adapters/inbound/application/production_media.py": {
       "before": null,
-      "after": "4e5ca44d50561ea5716664835f513995e96de946108afb23f1df955274ffa464"
+      "after": "cffb273a141b4e3a3056bb2920e83791f78f649d15ed8e11e8b46bc10b4e3aa9"
     },
-    "backend/modules/pedagogical_design/contracts/dto/production_media.py": {
+    "backend/infrastructure/composition/factories/p0_normal_profile_contract.py": {
       "before": null,
-      "after": "2b2e6d3294e5fbb9067e29478ebd10fcf76f574f06ca97d937c2fe2028017a39"
-    },
-    "backend/modules/work_orchestration/application/queries/propose_p0_intention.py": {
-      "before": null,
-      "after": "cead05a18b6542d959561acf0c5294bc26843360e80b02e6d7a91e39e68117c1"
-    },
-    "backend/modules/work_orchestration/application/queries/verify_saved_p0_lineage.py": {
-      "before": null,
-      "after": "c9b427faa9dc9f1a8c4a939c47cc25a4d10a95f151d9b9dbd0ccc919048c5116"
-    },
-    "backend/infrastructure/composition/factories/local_browser.py": {
-      "before": "c4a6889f448bd8fdbcbfb72aa71c8cb343e0085ea024da96dbce3f372dc6085a",
-      "after": "fe8eb73ef186477471ba62c27f834895a2a9ffb3fe6546091f9e3865ae6da4ea"
+      "after": "db6c9695fc2098340d8816f97dd66447ff57a3f1c3dc970dea6ab1a06fe508cf"
     },
     "backend/adapters/inbound/cli/local_browser.py": {
       "before": "e46d81e3d7e1530243a28d519044e0afc67c7604c4da7595176a4ba0e75975bf",
       "after": "af69368644c6a80b5e37a5bfbcc375b154395814f2e16242f3316f17680df56c"
     },
+    "backend/modules/work_orchestration/application/services/p0_creation.py": {
+      "before": "6156d966f6d683c77318322d0feb9fb048e72464b2cf4ba83f5f2288db4f0526",
+      "after": "125c4c4def358a5db43c38feb86920221b0f74b5574631ece5fd1178f887e9f3"
+    },
+    "frontend/app.js": {
+      "before": "5576c34c7de646954d3b08167ea55eb85a08d6204f572150824e6fbf05ba1ae2",
+      "after": "973f787d2e8da4300f34897e6b51daad76257680b878d2e1d715d6650421e338"
+    },
+    "tests/unit/test_product_media_review_routing.py": {
+      "before": null,
+      "after": "1dd4f95dff6e117dd3dc5e1d8a1ace1b820c2888b318333841d2b10ffba34c38"
+    },
+    "backend/adapters/outbound/generation/openai/p0_normal.py": {
+      "before": null,
+      "after": "1255705e83c03e07a425bad1a49f1fb61e01dbfa4f759a23eeacd8ec55b68595"
+    },
+    "backend/infrastructure/composition/factories/course_media.py": {
+      "before": "01aa19d88a6d23ca756f4c603f09e04dd8c6f318f24616bb963a5e4df348a677",
+      "after": "c995863edd8c5e8557e32f1af43087bd88baeb518aef9ee6e6174fed0d0b2300"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_INTENTION_PROPOSAL.md": {
+      "before": null,
+      "after": "a4b87330a60656ad35c9d017b764a6f84eb7dbd81fddcb0857fc6cb30ee7655f"
+    },
+    "docs/development/P0_EXACT_NOTION_HTTP.md": {
+      "before": null,
+      "after": "d6586dbd7e5acae2348aec3e6cb8854e4b73605311915c7b08e6ece95c5f42b9"
+    },
+    "backend/infrastructure/composition/factories/p0_normal_profile.py": {
+      "before": null,
+      "after": "800a3a8255a75be2a661ff4ba20b017d78ec2b8fa0a4ec51bb67c9bdb577db81"
+    },
+    "backend/modules/work_orchestration/contracts/dto/p0_production_read_view.py": {
+      "before": "4179d597a9a71e26f190ba61153c1f0837e482679d46505a2c008203333c3fc3",
+      "after": "6795f280df08e5e24602cbbce72654f7075ff90252c5b42c3613be76fa5c60e3"
+    },
+    "backend/adapters/inbound/application/lot2_saved_production.py": {
+      "before": "c48f2ce6620dfd4287f0740c86dd12f130d4b7f9dbc563ac427c8805f406243d",
+      "after": "e645cb14f0e2117e365297ab1b63db4800e8b3756d3f754b5c26fe7f9d4a831c"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROVIDER_COMPOSITION.md": {
+      "before": null,
+      "after": "9e807c704ae1357d8846013c019e6a342e22462e05ccb5d7a589b8b3d7915eb3"
+    },
+    "backend/adapters/outbound/generation/openai/p0_content.py": {
+      "before": "b520fd45f0bc4a656918aad4512bd47da62714c5171bf21ed974683681d0a333",
+      "after": "1957734072a00d2cb30ab2aeacf62225b67543f78ad06726cb0d3a8ab3690030"
+    },
+    "tools/tests/p0_ui_request.test.cjs": {
+      "before": "6f8f04cab090d652dff9f8cb81de1d5a13654e0781224ab448dc245dae758b50",
+      "after": "d5cad04679bda12be077259492c97be2bc6e8f2eb2048229ad1a57d94715cf7b"
+    },
+    "backend/modules/materialization_export/contracts/dto/word_document.py": {
+      "before": "ebaeef1a94cf2bc4d9ce32f6873ddac0db2e68e3a041888a04be5f592cd37d2d",
+      "after": "3d8e01c80bcf4f4a972d1bd79d2a60fddd636314299d8e73657828e49d9089e7"
+    },
+    "backend/adapters/outbound/export/r6_readable_word.py": {
+      "before": "bd9b97322063df2f6e4f78435d89e2176f198ba2c7db41d2768531481cf6ad69",
+      "after": "b263b22cf8251378d9057f41b5294269f19603218373b1ab7356606cc0e578b8"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_COURSE_LOCAL_EDITS.md": {
+      "before": null,
+      "after": "931c2ea60f970a755b3333b36f628a3d85af89dbbbab0b52d16b57392183966f"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_INBOUND_DESTINATION_RESTORATION.md": {
+      "before": null,
+      "after": "45c463e0941ac541878fff94f69ea403acfcf23f6cf4bcb263aa807ab7a971d9"
+    },
+    "tools/tests/p0_rich_course_preview.test.cjs": {
+      "before": null,
+      "after": "13da2ab8849bf71e68e819db5f656690ff055bcca312abf7d2c00754dd952424"
+    },
+    "tests/unit/test_p0_exact_notion_http.py": {
+      "before": null,
+      "after": "4bf1922b311add4077b1bdbf75b1ce826ce0d4beb93b73e6ca653489a6b56bad"
+    },
+    "backend/adapters/outbound/generation/openai/p0_normal_agents.py": {
+      "before": null,
+      "after": "e664f50c8fc4be3d407304e929145aeb3ff9cdda01dfb4764601f14036c7119f"
+    },
+    "tests/unit/test_p0_local_source_policy.py": {
+      "before": null,
+      "after": "33dd03ae9ab982332db24971ebb0eed5e717e839dcbd7764c5695f377e571a22"
+    },
+    "tools/tests/pr4_lifecycle_regressions.test.cjs": {
+      "before": "5904d2d89d13625fbb97b0824a3e5ab5611106d41deb70fe794c3a1c3116f72e",
+      "after": "3dfb8d8b329bfa8201b1dd570f24ec10d152eda9f99ac56097b427a120d46cbc"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_ledger.py": {
+      "before": null,
+      "after": "770d1de467b987944c83141302eaeb8f8f98ef018f08f847668581cd2f353020"
+    },
+    "tools/tests/p0_ui_async_binding.test.cjs": {
+      "before": null,
+      "after": "1175ce61663b494660fa4777f42779c4b80d746bb5b8e10996d32f8a7fc0e3a4"
+    },
     "backend/adapters/outbound/review/p0_review.py": {
       "before": "b5bc4255e172dbbb0f07f44bcff89ea02db41bbe5f6739857902dae277eaa809",
       "after": "97bd6ffb2a54a799ce2158b73819efae493fcba72c49a77c64f1285758ed18c2"
+    },
+    "backend/modules/work_orchestration/application/queries/p0_local_reference_context.py": {
+      "before": null,
+      "after": "1006fb361f77712b8e8da99e5d7ea9fdca169ab799d9ee8f928aaed6420ae9ed"
+    },
+    "tools/tests/p0_ui_local_reference_context.test.cjs": {
+      "before": null,
+      "after": "28e48df155971157df83c2d6a15923bbd7f812e31357274686178013884fb525"
+    },
+    "tools/tests/p0_product_consent.test.cjs": {
+      "before": null,
+      "after": "f883098f0774479cd3e54f8244af572089fc59fdd8da49abf5c696c716aad923"
+    },
+    "tests/unit/test_lu_product_active_guard.py": {
+      "before": null,
+      "after": "99b7e26a9e9ade0b5eff78ffff6edb11eb56a005fde0bd6ea4b3bfb4492ac81f"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_policy.py": {
+      "before": null,
+      "after": "ab01313c0963cfc197949ab1f33b74d6175256176c8aab3f49cd52d22dd6ef40"
+    },
+    "backend/modules/work_orchestration/application/queries/propose_p0_intention.py": {
+      "before": null,
+      "after": "cead05a18b6542d959561acf0c5294bc26843360e80b02e6d7a91e39e68117c1"
+    },
+    "tests/unit/test_p0_candidate_status_binding.py": {
+      "before": null,
+      "after": "117dc6c31c46030df49479ee181e3a2e522a827d7f5a1554ebbe469892bc6cbd"
+    },
+    "backend/modules/work_orchestration/application/services/saved_production.py": {
+      "before": "09ca3bf1ccd613dd564e959cac98202cf661e20948055c31a26198d0a8ec616e",
+      "after": "bf8171c0d0c3a7ab766e9a870cb2ee4715a027622244becbf73b007476168920"
+    },
+    "backend/infrastructure/composition/factories/p0_local_reference_context.py": {
+      "before": null,
+      "after": "682ed1faa4548c877de0daf03750413d388518c31577237484783b717819ffc6"
+    },
+    "tests/unit/test_p0_normal_cli.py": {
+      "before": null,
+      "after": "0149ec8cabb65973477493b901c2324142fb719a8a43acf7a3f543484519b80d"
+    },
+    "backend/adapters/inbound/api/p0_creation.py": {
+      "before": "b48da62775eb3137d86b8b407def1dc3fab0d1a42c9bce6b6dd9f57d1f561727",
+      "after": "a4010203f34eb597f8140f6bb99762274f2cc21601e91a622c595386716b0353"
+    },
+    "tools/launch-local.ps1": {
+      "before": "4cdc708d6f9f4a2f3e026cb3cc0a3b6ac8af4c2dc4551096fd213493c7d5bfd6",
+      "after": "bc6946a99e32e18b6b611ec27fe6bdada495a0de11df99099426c866df1f7c9d"
+    },
+    "tools/p0-tokenize-local.py": {
+      "before": null,
+      "after": "3c9a3607e487a724e32eede57a3a702baaefbe4fdc49f08796c4a82aa40a598a"
+    },
+    "tools/tests/p0_course_media_editor.test.cjs": {
+      "before": null,
+      "after": "a34730e0ab4e332ecbf1c55a3b1888822dca58d18458e20962c8c4b0d2b6e7b0"
+    },
+    "backend/agent_runtime/security/tool_application.py": {
+      "before": "2a87420492909cc11bc6816e78c3bfec2433fb19ff7cc9c805ce2af243d91d40",
+      "after": "e8445e1669cccfff625d373425143fda8f04e4baa3ae2edd743be54a5102b548"
+    },
+    "tests/unit/test_p0_product_destination.py": {
+      "before": null,
+      "after": "04c787ed194445128ff41038b784c2eb6a6dec3e512d63331d96f53cd76a99c5"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROFILE_PACKAGE_BASELINE.md": {
+      "before": null,
+      "after": "85481931f106f7e38925e19cd5dff17b034c66ad86c338f5f3c2871a94a1152f"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md": {
+      "before": null,
+      "after": "e1535827cd3665d672814451297c2441e54c1e55ca7060287adc59ec6c3df9a5"
+    },
+    "tests/unit/test_integrated_p0_agentic_controls.py": {
+      "before": null,
+      "after": "6382868935795adc2d947d7032f12025259fb00ea4de2d29f24c4be015be7f78"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_WINDOWS_SOURCE_COVERAGE.md": {
+      "before": null,
+      "after": "fa4faa64fcb23978cf84b81f519bea1c557e862b68bfb30951e64a566f901587"
+    },
+    "tests/unit/test_saved_p0_read_compatibility.py": {
+      "before": null,
+      "after": "4e5ca44d50561ea5716664835f513995e96de946108afb23f1df955274ffa464"
+    },
+    "backend/modules/work_orchestration/contracts/dto/saved_production.py": {
+      "before": "7652b2bf61878e5ce14acde8febb08a269fefb2ef186f964b98f1cca037c98ef",
+      "after": "5f96e7f31e9ee15ed93fee8e1d317b3ab07191d1bc03b9f37726a4ad8933295d"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_ACTIVE_GUARD.md": {
+      "before": null,
+      "after": "424dc4fd45bd79243c15be2732f70c101b920ed8d9d59868346f7b58827e49ab"
+    },
+    "backend/modules/work_orchestration/application/services/p0_agentic.py": {
+      "before": "c6e5cb028eb90675deb51441b77dfcfdb3169707185c86f1dfb614a94e9ac31f",
+      "after": "f27b1d3f43342a5b598109306bfb16f29d29139f6c13a4fdff6c42150b2e4250"
+    },
+    "docs/development/P0_PRODUCT_PERMISSION_INTERFACES_1_0.md": {
+      "before": null,
+      "after": "5416311084ea322b67dd891abc0188bc9d971ea1ba83885bc606170dbe8d20dc"
+    },
+    "docs/adr/ADR-LU-S5-production-media.md": {
+      "before": null,
+      "after": "b69bc1bad962a8ec6827b031ba5d1d5cbe94531ccacba6ca82ace9e8aef82b5a"
+    },
+    "backend/modules/work_orchestration/application/queries/verify_saved_p0_lineage.py": {
+      "before": null,
+      "after": "c9b427faa9dc9f1a8c4a939c47cc25a4d10a95f151d9b9dbd0ccc919048c5116"
+    },
+    "tests/unit/test_p0_source_admission.py": {
+      "before": null,
+      "after": "dbc6600d778210030be283918efe5455d184268880dae67af02d621d1d865e41"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product.py": {
+      "before": null,
+      "after": "6ac9aacc96b0b35bc2e5233ab1ae44db4c85bf1accb389014929455c3eed3ce7"
+    },
+    "backend/modules/knowledge_reference/application/queries/stmg_alignment.py": {
+      "before": "ac14175c2e293927474a5cef603d74275547de402a04e1f4dc6ef7d66d864c7e",
+      "after": "235844fed694eb48942d1b481d0274017e3a81feed0ea4870ea7abc7809f4d29"
+    },
+    "tests/unit/test_saved_course_local_edits.py": {
+      "before": null,
+      "after": "13cd2f908816517783614cf46979904cbf4180ea3a049b72fb8212670264a52f"
+    },
+    "tests/unit/test_p0_normal_profile.py": {
+      "before": null,
+      "after": "e7c01fc29f0874d192ea9124e6c54e018faca4c2da1694b8ebadbb9d5cd847f8"
     },
     "backend/modules/pedagogical_design/application/commands/prepare_production_media.py": {
       "before": null,
       "after": "f0361e62388410a8bcbb2528c7644243a28fdbe1d1abbdb67fb16585613a4a05"
     },
-    "tests/unit/test_integrated_saved_p0_resume.py": {
+    "backend/adapters/inbound/api/p0_notion_evidence.py": {
       "before": null,
-      "after": "1999f18edd744376b09e8610a2b1c27135a2fc028c5485fb72b711bb61a48381"
+      "after": "26a1193b278c0aa2660d3ca4cffe3de743e37f8df8ccf425a9f138fd8f57ef20"
+    },
+    "backend/infrastructure/composition/factories/institutional_catalog.py": {
+      "before": "6b4ca35c19ffdd927e72d5cde5ce516bab2ba4a7ce7dd3951834a381ad0c8eed",
+      "after": "4360243fd1601dd1571c7d13fdda582d9b00fd48aed0bffbf092be59f09ab520"
+    },
+    "backend/modules/knowledge_reference/application/queries/qualified_institutional_corpus.py": {
+      "before": "2b4971b03c51572b08d0b14716736a82b941d2885994ef608b914f572d79b3e1",
+      "after": "cb5f8101d353afbfe0cea50aae8ff734cb82058d0160c5006530060d4110ad20"
+    },
+    "tools/tests/p0_conversation_shell.test.cjs": {
+      "before": "c271c8d8233d6dffc5c98f6a3e64735278c2f1a7cba99c1bbfd625da8953ba94",
+      "after": "07d94b3a4ab0ef4d8638171e28283ff0d438f1886bdbc4d92ce763fd344ca571"
+    },
+    "tools/tests/p0_preparation_deadline.test.cjs": {
+      "before": null,
+      "after": "f0cf1e60c4211d44725b29715beb94b0cead7753a45f35c971009e929ffdd81b"
+    },
+    "docs/user/INTEGRATED_PRODUCT_GUIDE.md": {
+      "before": null,
+      "after": "efabd8142ecbd58135909afae57afa013bf3ecef3317dcdba069d78f3ca0e002"
+    },
+    "tests/unit/test_p0_product_permission.py": {
+      "before": null,
+      "after": "bea1ed6d90e158c335a18a81b3b95eeef7412fed667643111419e4702bc0cd40"
     }
   },
   "planned_control_paths": [
@@ -1216,25 +1234,27 @@
   "runtime_writes": 0,
   "historical_results": "UNCHANGED",
   "refresh_scope": {
-    "source_head": "7fe3ff36d32ced292b1076ca83aa1ae3bae0b78a",
-    "source_tree": "b94644a5b147d736f392ea0d5561ce074c91a1bd",
+    "source_head": "bd847eb2ce3be8d53c2c936e16725bcae40839e7",
+    "source_tree": "72b2324d9edecb5ec6cf01279451e8442d7dff98",
     "changed_since_source": [
-      "frontend/app.js",
-      "tools/tests/p0_product_consent.test.cjs"
+      "backend/adapters/outbound/generation/openai/p0_content.py",
+      "docs/development/ADR_LU_PRODUIT_01_CANDIDATE_STATUS_BINDING.md",
+      "tests/unit/test_p0_candidate_status_binding.py"
     ],
     "source_sha256": {
-      "frontend/app.js": "973f787d2e8da4300f34897e6b51daad76257680b878d2e1d715d6650421e338",
-      "tools/tests/p0_product_consent.test.cjs": "f883098f0774479cd3e54f8244af572089fc59fdd8da49abf5c696c716aad923"
+      "backend/adapters/outbound/generation/openai/p0_content.py": "1957734072a00d2cb30ab2aeacf62225b67543f78ad06726cb0d3a8ab3690030",
+      "docs/development/ADR_LU_PRODUIT_01_CANDIDATE_STATUS_BINDING.md": "ae068429a30c558ee132012f54603f08c71e3640bf97e01532b7fe02d9a2681f",
+      "tests/unit/test_p0_candidate_status_binding.py": "117dc6c31c46030df49479ee181e3a2e522a827d7f5a1554ebbe469892bc6cbd"
     },
     "unchanged_control_sha256": {
-      "tests/support/r6_scope_guard.py": "1a9fa7e11300700b7b89125b5d0a5f8e26f98e9b3a77897bf7b100bab328700c",
-      "tests/support/r6_scope_manifest.json": "f59d947f6c0d90168cec074ac541cf884992aaf2d9e3146f85ac248685f95549",
-      "tests/support/lu_product_guard_registry.json": "71b2dfd29fe7921c242f0ca1e374a3fd8cfaabb7da149c13fc656c4b08a518db"
+      "tests/support/lu_product_guard_registry.json": "1251b35aac202b58488a9d8e999063bed16acb6c3fac40dec5f76744d4e5852b",
+      "tests/support/r6_scope_guard.py": "38ce849ddcde796f2633b49bc214dac465e34e71ea936a2583c1c8b82c604433",
+      "tests/support/r6_scope_manifest.json": "7e3300f3fb8ba1a9c0b7cea21f667a2ec6faa6437dc8a79f6ac1b3206f42540a"
     },
     "previous_owner_count": 536,
     "private_exclusions_preserved": true,
     "predicates_changed": false
   },
-  "exact_delta_review_sha256": "0f2b0bbd21cceca1b410997e38971e91e340a2599494adea40039610ca30d67f",
+  "exact_delta_review_sha256": "33f126d1fb9054f37a70c50ebc50124ed0a140422aedd4cc1a2e4a6d924ac728",
   "exact_delta_reviewer": "/root/p1_preparation_review"
 }

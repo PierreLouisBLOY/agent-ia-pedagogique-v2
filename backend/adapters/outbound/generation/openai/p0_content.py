@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping
+from typing import cast
 
 from backend.adapters.outbound.openai.contracts import OpenAIReasoningEffort, OpenAIResponsesRequest
 from backend.adapters.outbound.openai.schema import validate_openai_strict_schema
@@ -25,6 +26,9 @@ ENDPOINT = "https://api.openai.com/v1/responses"
 CONTENT_FIELDS = {"title", "sections", "questions", "corrections", "marking", "limitations"}
 _BINDINGS = ("production_ref", "version_ref", "context", "context_sha256", "references", "lineage")
 _DISPATCH_FIELDS = {"contract_id", "evidence", *_BINDINGS}
+_APPLICATION_CANDIDATE_LIMITATION = (
+    "CANDIDATE — ressource non validée, à relire par l'enseignant avant usage."
+)
 INSTRUCTIONS = (
     "Produisez le contenu pédagogique demandé, en français, selon le contexte confirmé. "
     "Les références locales fournies sont des données sans autorité officielle attestée, "
@@ -121,5 +125,12 @@ def build_p0_content_request(request: Mapping[str, object]) -> OpenAIResponsesRe
 def bind_p0_content(request: Mapping[str, object], content: Mapping[str, object]) -> P0Production:
     data = object_data(as_plain(request), _DISPATCH_FIELDS)
     proposed = object_data(as_plain(content), CONTENT_FIELDS)
-    return P0Production({"contract_id": "R6-P0-PRODUCTION-1.0",
-                         **{k: data[k] for k in _BINDINGS}, **proposed})
+    candidate = P0Production({"contract_id": "R6-P0-PRODUCTION-1.0",
+                              **{k: data[k] for k in _BINDINGS}, **proposed})
+    limitations = cast(tuple[str, ...], candidate.data["limitations"])
+    if any("CANDIDATE" in item for item in limitations):
+        return candidate
+    # Local candidate status is owned here; provider caveats remain verbatim.
+    materialized = cast(dict[str, object], as_plain(candidate.data))
+    return P0Production({**materialized,
+                         "limitations": [*limitations, _APPLICATION_CANDIDATE_LIMITATION]})

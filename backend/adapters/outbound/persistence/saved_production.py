@@ -134,13 +134,22 @@ class LocalSavedProductionStore:
                 if SavedProduction(object_data(records[key])).sha256 != record.sha256:
                     raise ValueError("R4_IDENTITY_CONFLICT")
                 return False, False
-            # The versioned illustrated COURSE successor preserves its full local
-            # lineage (the inbound already bounds ancestry to 32). Historical
-            # records keep their original three-version ceiling.
+            # Existing MEDIA-2.0 behavior stays unchanged. The explicit plain
+            # LINEAGE-3.0 successor retains the same bounded local ancestry;
+            # historical plain chapters and generic records keep three versions.
             bundle = record.p0_bundle
             chapter = bundle.data.get("course_chapter") if bundle is not None else None
             illustrated = isinstance(chapter, Mapping) and chapter.get("contract_id") == "COURSE-CHAPTER-MEDIA-2.0"
-            if sum(k.startswith(record.production_ref + "/") for k in records) >= (32 if illustrated else 3):
+            local_lineage = (
+                record.data["origin"] == "LOCAL_APPLICATION"
+                and bundle is not None
+                and bundle.data["contract_id"] == "R6-P0-PRODUCTION-COURSE-2.0"
+                and isinstance(chapter, Mapping)
+                and chapter.get("contract_id") == "COURSE-CHAPTER-LINEAGE-3.0"
+            )
+            if sum(k.startswith(record.production_ref + "/") for k in records) >= (
+                32 if illustrated or local_lineage else 3
+            ):
                 raise ValueError("R4_VERSION_LIMIT")
             if len(records) >= 300:
                 raise ValueError("R4_STORE_FULL")

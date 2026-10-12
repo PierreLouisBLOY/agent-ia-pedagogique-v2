@@ -17,6 +17,7 @@ from backend.modules.pedagogical_design.contracts.dto.visual_brief import visual
 from backend.shared_kernel._safe_data import freeze_safe_mapping
 
 COURSE_CHAPTER_CONTRACT = "COURSE-CHAPTER-1.0"
+COURSE_LINEAGE_CONTRACT = "COURSE-CHAPTER-LINEAGE-3.0"
 COURSE_MEDIA_CONTRACT = "COURSE-CHAPTER-MEDIA-2.0"
 COURSE_PRODUCTION_CONTRACT = "R6-P0-PRODUCTION-COURSE-2.0"
 CHECK_NAMES = (
@@ -76,7 +77,9 @@ class CourseChapter:
     def __post_init__(self) -> None:
         illustrated = self.data.get("contract_id") == COURSE_MEDIA_CONTRACT
         data = object_data(self.data, _FIELDS | {"visual_briefs", "media_assets"} if illustrated else _FIELDS)
-        if data["contract_id"] not in {COURSE_CHAPTER_CONTRACT, COURSE_MEDIA_CONTRACT}:
+        if data["contract_id"] not in {
+            COURSE_CHAPTER_CONTRACT, COURSE_MEDIA_CONTRACT, COURSE_LINEAGE_CONTRACT
+        }:
             raise ValueError("COURSE_CHAPTER_CONTRACT")
         if type(data["chapter_number"]) is not int or not 1 <= data["chapter_number"] <= 99:
             raise ValueError("COURSE_CHAPTER_NUMBER")

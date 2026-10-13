@@ -8,7 +8,10 @@ from datetime import datetime
 from typing import cast
 
 from backend.adapters.outbound.evidence.p0_prepared_snapshot import prepared_evidence_items
-from backend.adapters.outbound.generation.openai.p0_content import CONTENT_FIELDS, bind_p0_content
+from backend.adapters.outbound.generation.openai.p0_content import (
+    bind_p0_content,
+    content_fields_for,
+)
 from backend.agent_runtime.agents.generation.generation_coordination_model import (
     GenerationPreparationRequest,
 )
@@ -57,11 +60,11 @@ def agent_preparation(dispatch: Mapping[str, object], now: datetime) -> Generati
                                                  "source_usage_declaration": "NOT_IN_OUTPUT_SCHEMA"},
         evidence_refs=tuple(str(ref["evidence_id"]) for ref in refs))
     return GenerationPreparationRequest(CapabilityId("CAP-G01"), canonical,
-        resolved_inputs={"evidence": evidence}, output_contract={"fields": sorted(CONTENT_FIELDS)},
+        resolved_inputs={"evidence": evidence}, output_contract={"fields": sorted(content_fields_for(data))},
         labeled_evidence=tuple(labeled), labeled_inputs=inputs, input_security_assessments=(input_assessment,))
 
 
-def parse_content(text: str) -> dict[str, object]:
+def parse_content(text: str, dispatch: Mapping[str, object] | None = None) -> dict[str, object]:
     def unique(pairs: list[tuple[str, object]]) -> dict[str, object]:
         if len(dict(pairs)) != len(pairs):
             raise ValueError("P0_NORMAL_OUTPUT_DUPLICATE_KEY")
@@ -70,7 +73,7 @@ def parse_content(text: str) -> dict[str, object]:
         raise ValueError("P0_NORMAL_OUTPUT_SIZE")
     result = json.loads(text, object_pairs_hook=unique,
                         parse_constant=lambda _: (_ for _ in ()).throw(ValueError("P0_NORMAL_OUTPUT_NONFINITE")))
-    return object_data(result, CONTENT_FIELDS)
+    return object_data(result, content_fields_for(dispatch))
 
 
 def guard_and_bind(dispatch: Mapping[str, object], coordinator: GenerationCoordinator,
@@ -78,13 +81,14 @@ def guard_and_bind(dispatch: Mapping[str, object], coordinator: GenerationCoordi
                    observer: Callable[[Mapping[str, object]], None] | None = None) -> dict[str, object]:
     # Preparing is effect-free; recovery reuses it without execute/generate.
     prepared = coordinator.prepare(request=preparation)
+    fields = tuple(sorted(content_fields_for(dispatch)))
     assessment = GenerationOutputGuard().assess(request=GenerationGuardRequest(prepared, result,
-        GenerationGuardPolicy(require_structured_payload=True, required_payload_keys=tuple(sorted(CONTENT_FIELDS)),
-                              allowed_payload_keys=tuple(sorted(CONTENT_FIELDS)))))
+        GenerationGuardPolicy(require_structured_payload=True, required_payload_keys=fields,
+                              allowed_payload_keys=fields)))
     if assessment.disposition not in {GenerationGuardDisposition.ALLOW, GenerationGuardDisposition.ALLOW_WITH_WARNINGS}:
         raise ValueError("P0_NORMAL_OUTPUT_GUARD_" + assessment.disposition.value)
-    # The six-field provider schema does not declare actual evidence use. Input
-    # references are attached truthfully; grounding/review are still reserves.
+    # Neither schema declares global evidence use. Rich document attribution is
+    # bounded provenance, not a global usage/grounding claim; review is a reserve.
     bound = bind_p0_content(dispatch, result.structured_payload)
     if observer is not None:
         observer({"contract_id": "P0-GENERATION-CONTROLS-1.0", "production_ref": bound.production_ref,

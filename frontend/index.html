@@ -45,6 +45,11 @@
         <div class="context-grid">
         <label for="p0-family">Production</label>
         <select id="p0-family" required><option value="">Choisir</option><option value="COURSE">Cours</option><option value="EXERCISE">Exercice</option><option value="OPEN_QUESTIONS">Questions ouvertes</option><option value="QCM">QCM</option><option value="QUIZ">Quiz</option><option value="ASSESSMENT">Évaluation</option></select>
+        <div id="p0-course-format-panel" hidden>
+          <label for="p0-course-format">Format du cours</label>
+          <select id="p0-course-format"><option value="CHAPTER">Chapitre riche — documents, activités et corrigé séparé</option><option value="EXPLAINED">Cours expliqué — notions, méthode et application guidée</option></select>
+          <p id="p0-course-format-note"></p>
+        </div>
         <label for="p0-level">Niveau</label>
         <select id="p0-level" required><option value="">Choisir</option><option value="FIRST_STMG">Première STMG</option><option value="FINAL_STMG">Terminale STMG</option><option value="BTS_CG_YEAR_1">BTS CG première année</option><option value="BTS_CG_YEAR_2">BTS CG deuxième année</option></select>
         <label for="p0-discipline">Discipline</label><input id="p0-discipline" required maxlength="100">
@@ -55,7 +60,7 @@
           <label for="p0-program-notions">Notions canoniques sélectionnées</label><select id="p0-program-notions" multiple></select>
           <label for="p0-depth">Profondeur attendue</label><select id="p0-depth"><option value="">Choisir</option><option value="DISCOVERY">Découverte</option><option value="APPLICATION">Application</option><option value="ANALYSIS">Analyse</option></select>
           <p id="p0-program-status">Les rattachements et leur provenance seront vérifiés avant toute génération.</p>
-          <label for="p0-local-chapter">Chapitre local — facultatif</label><input id="p0-local-chapter" maxlength="200">
+          <label for="p0-local-chapter" id="p0-local-chapter-label">Chapitre local — facultatif</label><input id="p0-local-chapter" maxlength="200">
           <label for="p0-local-sequence">Séquence locale — facultatif</label><input id="p0-local-sequence" maxlength="200">
           <label for="p0-local-week">Semaine locale — facultatif</label><input id="p0-local-week" maxlength="200">
         </fieldset>

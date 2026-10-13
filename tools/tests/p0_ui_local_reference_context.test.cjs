@@ -15,6 +15,7 @@ const sha = value => crypto.createHash("sha256").update(value, "utf8").digest("h
 function setup(level = "BTS_CG_YEAR_2", kind = "METHOD", family = "COURSE") {
   const h = base.harness(); h.ctx.crypto = {subtle:crypto.webcrypto.subtle}; h.ctx.TextEncoder = TextEncoder;
   h.ctx.p0.contextRevision = 0; h.pe("family").value = family; h.pe("level").value = level;
+  h.pe("course-format").value = "EXPLAINED";
   if (level.endsWith("STMG")) {
     h.ctx.p0.institutionalCatalog.frames = [{level, frame:"SYNTHETIC_FRAME", education_level:level === "FIRST_STMG" ? "PREMIERE":"TERMINALE",
       teaching_subject:"SYNTHETIC_SUBJECT", program_ref:"program:synthetic", program_version:"version:synthetic",

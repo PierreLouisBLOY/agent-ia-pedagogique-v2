@@ -50,6 +50,11 @@ class CreateP0Candidate:
             ("corrections", ("expected_answer", "rationale")))
             for row in items(candidate.data[field], 60) for key in keys)
         require_supported_claims(text, context.get("institutional_resolution"))
+        from backend.modules.pedagogical_design.contracts.dto.course_delivery import (
+            validate_course_delivery,
+        )
+
+        validate_course_delivery(candidate.context, candidate.data.get("course_chapter"), candidate.data["references"])
         if context.get("institutional") is not None and context["resource_type"] == "COURSE" and "course_chapter" not in candidate.data:
             from backend.modules.pedagogical_design.contracts.dto.course_policy import (
                 validate_course_structure,

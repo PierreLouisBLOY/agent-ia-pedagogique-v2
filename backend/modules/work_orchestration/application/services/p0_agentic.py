@@ -143,9 +143,11 @@ def effort_plan(context: P0Context, *, production: Mapping[str, object] | None =
         plan["institutional"] = data["institutional"]
         plan["institutional_resolution"] = data["institutional_resolution"]
         if data["resource_type"] == "COURSE":
-            from backend.modules.pedagogical_design.contracts.dto.course_policy import COURSE_POLICY
+            from backend.modules.pedagogical_design.contracts.dto.course_policy import (
+                course_policy_for,
+            )
 
-            plan["course_policy"] = COURSE_POLICY
+            plan["course_policy"] = course_policy_for(context)
         plan["institutional_validation"] = "EXACT_PROGRAMME_ALIGNMENT"
         plan["review_axes"] = alignment_axes(data["institutional_resolution"])
     return plan

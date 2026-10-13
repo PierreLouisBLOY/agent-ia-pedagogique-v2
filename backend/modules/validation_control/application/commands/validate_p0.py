@@ -13,6 +13,11 @@ class ValidateP0Command:
     def execute(
         self, bundle: P0Production, *, parent: P0Production | None = None
     ) -> dict[str, object]:
+        from backend.modules.pedagogical_design.contracts.dto.course_delivery import (
+            validate_course_delivery,
+        )
+
+        validate_course_delivery(bundle.context, bundle.data.get("course_chapter"), bundle.data["references"])
         lineage = object_data(bundle.data["lineage"])
         if parent is not None and (
             bundle.production_ref != parent.production_ref

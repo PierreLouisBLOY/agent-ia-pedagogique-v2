@@ -12,7 +12,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-from backend.adapters.outbound.generation.openai.p0_content import build_p0_content_request
+from backend.adapters.outbound.generation.openai.p0_content import (
+    build_p0_content_request,
+    content_fields_for,
+)
 from backend.adapters.outbound.generation.openai.p0_normal_agents import (
     agent_preparation,
     guard_and_bind,
@@ -29,6 +32,7 @@ from backend.adapters.outbound.generation.openai.p0_normal_receipt import (
     pinned_receipt_root,
 )
 from backend.adapters.outbound.openai.contracts import (
+    OpenAIIncompleteReason,
     OpenAIResponsesRequest,
     OpenAIResponseStatus,
     OpenAIResponsesTransportFactory,
@@ -45,6 +49,9 @@ from backend.infrastructure.composition.factories.conversation import r2_request
 from backend.infrastructure.config.secrets.provider import (
     ProviderCredentialRef,
     ProviderSecretResolver,
+)
+from backend.modules.pedagogical_design.application.mappers.course_provider_content import (
+    RICH_CONTENT_FIELDS,
 )
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import as_plain
 
@@ -94,7 +101,9 @@ class _TechnicalP0Port:
             owner.receipt.publish("UNKNOWN", owner.receipt.event("UNKNOWN", owner.grant, self.proof, provider_attempts=attempted))
             raise ValueError("P0_NORMAL_OUTCOME_UNKNOWN") from None
         if (response.status is not OpenAIResponseStatus.COMPLETED or response.service_tier not in {None, "default"}
-                or response.output_text is None):
+                or response.output_text is None
+                or (content_fields_for(self.dispatch) == RICH_CONTENT_FIELDS
+                    and response.incomplete_reason is not OpenAIIncompleteReason.NONE)):
             owner.receipt.publish("PARSING_REJECTED", owner.receipt.event("PARSING_REJECTED", owner.grant, self.proof))
             raise ValueError("P0_NORMAL_RESPONSE_REJECTED")
         owner.receipt.confirmed(owner.grant)
@@ -185,7 +194,7 @@ class NormalP0GenerationAdapter:
     def technical_result(request: Mapping[str, object], text: str) -> GenerationPortResult:
         lineage = cast(Mapping[str, object], request["lineage"])
         return GenerationPortResult(str(lineage["source_step_id"]), GenerationOperation.GENERATE,
-            GenerationPortResultStatus.SUCCEEDED, structured_payload=parse_content(text),
+            GenerationPortResultStatus.SUCCEEDED, structured_payload=parse_content(text, request),
             evidence_refs_used=(), execution_metadata={"source_usage_declaration": "NOT_IN_OUTPUT_SCHEMA", "retry": 0,
                                                         "fallback": "NONE", "review": "NOT_RUN"})
 

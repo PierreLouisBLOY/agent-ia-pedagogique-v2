@@ -913,7 +913,31 @@ function p0Context() {
     context.local_progression = {chapter: p0Element("local-chapter").value.trim() || null,
       sequence: p0Element("local-sequence").value.trim() || null, week: p0Element("local-week").value.trim() || null};
   }
+  if (family === "COURSE") {
+    const format = p0Element("course-format").value;
+    if (!["CHAPTER", "EXPLAINED"].includes(format))
+      throw Object.assign(new Error("P0_COURSE_FORMAT_REQUIRED"), {confirmedRefusal:true});
+    if (format === "CHAPTER" && !context.level.endsWith("STMG"))
+      throw Object.assign(new Error("P0_RICH_COURSE_LEVEL_UNSUPPORTED"), {confirmedRefusal:true});
+    if (format === "CHAPTER" && !/^[1-9][0-9]?$/.test(p0Element("local-chapter").value))
+      throw Object.assign(new Error("P0_RICH_COURSE_CHAPTER_NUMBER"), {confirmedRefusal:true});
+    context.contract_id = "P0-CONTEXT-COURSE-3.0";
+    context.course_format = format;
+  }
   return context;
+}
+function p0CourseFormatOptions() {
+  const course = p0Element("family").value === "COURSE";
+  const rich = course && p0Element("course-format").value === "CHAPTER";
+  p0Element("course-format-panel").hidden = !course;
+  p0Element("course-format").required = course;
+  p0Element("local-chapter").required = rich;
+  p0Element("local-chapter").pattern = rich ? "[1-9][0-9]?" : ".*";
+  p0Element("local-chapter").inputMode = rich ? "numeric" : "text";
+  p0Element("local-chapter-label").textContent = rich ? "Numéro du chapitre local — 1 à 99" : "Chapitre local — facultatif";
+  p0Element("course-format-note").textContent = p0Element("level").value.startsWith("BTS_") ?
+    "Le chapitre riche est actuellement disponible en STMG. Pour ce contexte BTS, choisissez le cours expliqué." :
+    "Le chapitre riche propose des documents, activités et espaces de réponse avec un corrigé séparé. Le cours expliqué expose les notions et leur application.";
 }
 function p0InstitutionalFrame() {
   if (p0Element("level").value.startsWith("BTS_"))
@@ -921,6 +945,7 @@ function p0InstitutionalFrame() {
   return (p0.institutionalCatalog?.frames || []).find(f => f.program_version === p0Element("frame").value && f.level === p0Element("level").value);
 }
 function p0InstitutionalOptions() {
+  p0CourseFormatOptions();
   const stmg = p0Element("level").value.endsWith("STMG");
   const bts = p0Element("level").value.startsWith("BTS_");
   p0Element("institutional").hidden = !(stmg || bts);
@@ -993,10 +1018,12 @@ p0Element("level").addEventListener("change", p0InstitutionalOptions);
 p0Element("frame").addEventListener("change", p0InstitutionalQuestionOptions);
 p0Element("program-question").addEventListener("change", p0InstitutionalCapacityOptions);
 p0Element("family").addEventListener("change", () => {
+  p0CourseFormatOptions();
   const assessment = p0Element("family").value === "ASSESSMENT";
   p0Element("assessment").hidden = !assessment;
   for (const id of ["duration", "points"]) p0Element(id).required = assessment;
 });
+p0Element("course-format").addEventListener("change", p0CourseFormatOptions);
 function p0Invalidate() {
   p0.contextRevision += 1;
   p0.prepared = null; p0ClearConsent(); p0Controls();
@@ -1593,6 +1620,8 @@ async function proposePreparation(text) {
 }
 function uxContext(context) {
   const region = document.getElementById("drawer-context"); region.replaceChildren();
+  if (context.course_format) appendSearchText(region, "p", "Format : " +
+    ({CHAPTER:"Chapitre riche", EXPLAINED:"Cours expliqué"}[context.course_format] || "Format à vérifier"));
   appendSearchText(region, "p", (uxNames[context.question_mode || context.resource_type] || "Type à préciser") + " · " + (uxNames[context.level] || "Niveau à préciser"));
   appendSearchText(region, "p", context.discipline || "Discipline à préciser");
   if (context.institutional) {

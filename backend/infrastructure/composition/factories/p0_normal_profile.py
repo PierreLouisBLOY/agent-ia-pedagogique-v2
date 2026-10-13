@@ -24,6 +24,11 @@ from backend.adapters.outbound.generation.openai.p0_normal_receipt import (
     pinned_receipt_root,
 )
 from backend.adapters.outbound.generation.openai.p0_product import P0ProductGenerationAdapter
+from backend.adapters.outbound.generation.openai.p0_product_continuity_contract import (
+    BoundChain,
+    OriginProof,
+    bind_chain,
+)
 from backend.adapters.outbound.generation.openai.p0_product_policy import (
     P1_HASHES,
     validate_permission,
@@ -290,6 +295,9 @@ class P0NormalProductComposition:
         delegation = cast(dict[str, object], read_descriptor(profile["operator_delegation"]))
         self.profile = dict(bind_profile(self.envelope, permission=self.permission, decision=self.decision,
             delegation=delegation, operator=windows_operator()))
+        self.continuity = self.profile["schema"] == "P0-NORMAL-PROFILE-3.0"
+        self.source_owner_sha256 = (str(descriptor(self.profile["source_admission_owner_decision"])["sha256"])
+            if self.continuity else str(self.permission["owner_decision_sha256"]))
         runtime = cast(Mapping[str, object], self.profile["runtime"])
         if (Path(str(runtime["path"])) != target.runtime_path or Path(str(runtime["data_root"])) != target.data_root
                 or runtime["sha256"] != target.expected_sha256 or Path(str(self.profile["saved_root"])) != saved_root):
@@ -312,19 +320,24 @@ class P0NormalProductComposition:
         source_manifest = cast(dict[str, object], read_descriptor(self.profile["source_admission_manifest"], canonical_required=False))
         self.admission = ReadP0SourceAdmission(source_manifest,
             manifest_sha256=str(descriptor(self.profile["source_admission_manifest"])["sha256"]),
-            adopted_manifest_sha256=str(self.decision["source_admission_manifest_sha256"]), owner_admission_sha256=str(self.permission["owner_decision_sha256"]))
+            adopted_manifest_sha256=str(self.decision["source_admission_manifest_sha256"]), owner_admission_sha256=self.source_owner_sha256)
         self.local_context: ReadP0LocalReferenceContext | None = None
         self.local_context_adoption: dict[str, object] | None = None
-        if self.profile["schema"] == "P0-NORMAL-PROFILE-2.0":
+        if self.profile["schema"] in {"P0-NORMAL-PROFILE-2.0", "P0-NORMAL-PROFILE-3.0"}:
             local_manifest = cast(dict[str, object], read_descriptor(self.profile["local_reference_context_manifest"]))
             self.local_context = ReadP0LocalReferenceContext(local_manifest,
                 manifest_sha256=str(descriptor(self.profile["local_reference_context_manifest"])["sha256"]),
                 adopted_manifest_sha256=str(self.decision["local_reference_context_manifest_sha256"]),
-                owner_admission_sha256=str(self.permission["owner_decision_sha256"]), sources=self.admission,
+                owner_admission_sha256=self.source_owner_sha256, sources=self.admission,
                 runtime_sha256=self.target.expected_sha256, institutional_catalogue_sha256=str(self.profile["institutional_catalog_sha256"]))
             self.local_context_adoption = {"profile_schema": self.profile["schema"], "owner_decision_schema": self.decision["schema"],
                 "profile_sha256": self.permission["profile_sha256"], "owner_decision_sha256": self.permission["owner_decision_sha256"],
                 "local_reference_context_manifest_sha256": self.local_context.manifest_sha256}
+            if self.continuity:
+                self.local_context_adoption.update(
+                    continuity_manifest_sha256=descriptor(self.profile["continuity_manifest"])["sha256"],
+                    continuity_anchor_sha256=descriptor(self.profile["continuity_anchor"])["sha256"],
+                    source_admission_owner_decision_sha256=self.source_owner_sha256)
         self.resolver = MaskedLocalSecretResolver(ProviderCredentialRef(str(self.profile["credential_ref"])))
         self.tokenizer = LocalTokenizerHelper(self.tokenizer_manifest, str(self.permission["tokenizer_manifest_sha256"]), application_root=application_root)
         current = self.identities()
@@ -335,6 +348,8 @@ class P0NormalProductComposition:
         # still be recovered without a new grant, secret, tokenizer or transport.
         validation_time = min(datetime.now(UTC), utc(self.permission["expires_at_utc"]) - timedelta(microseconds=1))
         validate_permission(self.permission, identities=current, now=validation_time, family=families[0], level=levels[0])
+        if self.continuity:
+            self._continuity_chain()
         # The helper source/package and every adopted identity are verified
         # before this fixed local probe; no subject/reference/grant, provider
         # COUNT or credential is involved in readiness.
@@ -342,7 +357,56 @@ class P0NormalProductComposition:
         self.generation = P0ProductGenerationAdapter(permission=self.permission, permission_identities=self.identities,
             identity_source=self.grant_identities, tariff=self.tariff, tokenizer=self.tokenizer, receipt_root=self.root,
             resolver=self.resolver, credential_ref=self.resolver.ref, transport=OpenAISDKResponsesTransportFactory(r2_destination=True),
-            local_context_adoption=self.local_context_adoption)
+            local_context_adoption=self.local_context_adoption,
+            continuity_chain=self._continuity_chain if self.continuity else None)
+
+    def _continuity_chain(self) -> BoundChain:
+        if not self.continuity:
+            raise ValueError("P0_CONTINUITY_PROFILE_REQUIRED")
+        # Exact protected descriptors supply all private campaign data. Nothing
+        # in a request/agent command supplies an anchor, permission or grant.
+        manifest = cast(dict[str, object], read_descriptor(self.profile["continuity_manifest"]))
+        anchor = cast(dict[str, object], read_descriptor(self.profile["continuity_anchor"]))
+        read_descriptor(anchor["implementation_decision"], canonical_required=False)
+        read_descriptor(anchor["conditions"], json_document=False)
+        for witness in cast(list[Mapping[str, object]], anchor["required_historical_reservations"]):
+            read_descriptor(witness["metadata_evidence"], canonical_required=False)
+        for witness in cast(list[Mapping[str, object]], manifest["historical_reservations"]):
+            read_descriptor(witness["metadata_evidence"], canonical_required=False)
+        source_owner = cast(dict[str, object], read_descriptor(self.profile["source_admission_owner_decision"]))
+        if sha(canonical(source_owner)) != self.source_owner_sha256:
+            raise ValueError("P0_CONTINUITY_SOURCE_OWNER_CHANGED")
+        origins: list[OriginProof] = []
+        prior_manifests: dict[str, Mapping[str, object]] = {}
+        for node in cast(list[Mapping[str, object]], manifest["ancestors"]):
+            envelope = cast(dict[str, object], read_descriptor(node["profile_envelope"]))
+            permission = cast(dict[str, object], read_descriptor(node["permission"]))
+            decision = cast(dict[str, object], read_descriptor(node["owner_decision"]))
+            profile = cast(Mapping[str, object], envelope["profile"])
+            delegation = cast(dict[str, object], read_descriptor(profile["operator_delegation"]))
+            bind_profile(envelope, permission=permission, decision=decision, delegation=delegation, operator=windows_operator())
+            # Historical bytes retain their own source/package identity; they
+            # are not checked against or installed into the current checkout.
+            for name in ("source_manifest", "source_admission_manifest", "operator_delegation", "tokenizer_manifest", "tariff"):
+                read_descriptor(profile[name], canonical_required=name != "source_admission_manifest")
+            for name in ("package", "tariff_evidence"):
+                read_descriptor(profile[name], json_document=False)
+            if profile["schema"] in {"P0-NORMAL-PROFILE-2.0", "P0-NORMAL-PROFILE-3.0"}:
+                read_descriptor(profile["local_reference_context_manifest"])
+            if profile["schema"] == "P0-NORMAL-PROFILE-3.0":
+                prior_manifests[sha(canonical(permission))] = cast(dict[str, object], read_descriptor(profile["continuity_manifest"]))
+                read_descriptor(profile["continuity_anchor"])
+                read_descriptor(profile["source_admission_owner_decision"])
+            saved = Path(str(profile["saved_root"]))
+            identity = capture_secure_path(saved, allowed_root=saved)
+            native = sha(canonical({"path": str(saved), "device": identity.device, "inode": identity.inode}))
+            origins.append(OriginProof(permission, envelope, decision, delegation, windows_operator(), native))
+        self.identities()
+        delegation = cast(dict[str, object], read_descriptor(self.profile["operator_delegation"]))
+        saved_identity = capture_secure_path(self.saved_root, allowed_root=self.saved_root)
+        native = sha(canonical({"path": str(self.saved_root), "device": saved_identity.device, "inode": saved_identity.inode}))
+        current = OriginProof(self.permission, self.envelope, self.decision, delegation, windows_operator(), native)
+        return bind_chain(manifest, origins, current, ancestor_manifests=prior_manifests, anchor=anchor)
 
     def identities(self) -> Mapping[str, object]:
         from backend.infrastructure.composition.factories.conversation import (
@@ -367,8 +431,11 @@ class P0NormalProductComposition:
         verify_source_package(self.profile, application_root=self.application_root)
         for name in ("source_admission_manifest", "tokenizer_manifest", "tariff"):
             read_descriptor(self.profile[name], canonical_required=name != "source_admission_manifest")
-        if self.profile["schema"] == "P0-NORMAL-PROFILE-2.0":
+        if self.profile["schema"] in {"P0-NORMAL-PROFILE-2.0", "P0-NORMAL-PROFILE-3.0"}:
             read_descriptor(self.profile["local_reference_context_manifest"])
+        if self.continuity:
+            for name in ("continuity_manifest", "continuity_anchor", "source_admission_owner_decision"):
+                read_descriptor(self.profile[name])
         if sha(cast(bytes, read_descriptor(self.profile["tariff_evidence"], json_document=False))) != self.tariff["evidence_sha256"]:
             raise ValueError("P0_NORMAL_TARIFF_EVIDENCE_CHANGED")
         # The exact current decision adopts the complete tariff artifact.
@@ -398,6 +465,10 @@ class P0NormalProductComposition:
             "output_schema_sha256": sha(canonical(wire.output_schema)), "namespace_sha256": str(self.permission["permission_namespace_sha256"])}
 
     def bind(self, service: P0CreationService, endpoint: P0CreationEndpoint) -> None:
+        if self.continuity:
+            # Available OFF as a read-only Application callback. The retained
+            # original LOCK and full lifecycle are checked on every snapshot.
+            endpoint.campaign_snapshot = self.generation.campaign_snapshot
         if self.local_context is None:
             bind_product_consent(service, endpoint, target=self.target, generation=self.generation, admission=self.admission)
             return
@@ -411,6 +482,11 @@ class P0NormalProductComposition:
             assert self.local_context is not None
             return self.local_context.metadata()
         endpoint.local_reference_contexts = metadata
+        if self.continuity and self.profile["continuity_enabled"] is not True:
+            service.generation = None
+            endpoint.generation_bound = False
+            endpoint.consent_execute = None
+            return
         bind_product_consent(service, endpoint, target=self.target, generation=self.generation, admission=self.local_context,
             institutional_resolver=resolver)
 

@@ -24,6 +24,15 @@ from backend.adapters.outbound.generation.openai.p0_normal_policy import (
     sha,
     utc,
 )
+from backend.adapters.outbound.generation.openai.p0_normal_receipt import P0NormalReceipt
+from backend.adapters.outbound.generation.openai.p0_product_continuity_contract import (
+    BoundChain,
+    OwnPending,
+    require_effect_enabled,
+)
+from backend.adapters.outbound.generation.openai.p0_product_continuity_ledger import (
+    P0ContinuityProductLedger,
+)
 from backend.adapters.outbound.generation.openai.p0_product_ledger import P0ProductLedger
 from backend.adapters.outbound.generation.openai.p0_product_policy import (
     P1_HASHES,
@@ -44,13 +53,18 @@ class P0ProductGenerationAdapter:
                  identity_source: IdentitySource, tariff: Mapping[str, object], tokenizer: TokenizerSource,
                  receipt_root: Path, resolver: ProviderSecretResolver, credential_ref: ProviderCredentialRef,
                  transport: OpenAIResponsesTransportFactory, clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+                 continuity_chain: Callable[[], BoundChain] | None = None,
                  local_context_adoption: Mapping[str, object] | None = None) -> None:
         self.permission = cast(dict[str, object], as_plain(permission))
         self.permission_identities, self.identity_source = permission_identities, identity_source
         self.tariff, self.tokenizer = cast(dict[str, object], as_plain(tariff)), tokenizer
         self.local_context_adoption = None if local_context_adoption is None else cast(dict[str, object], as_plain(local_context_adoption))
         self.root, self.resolver, self.credential_ref, self.transport, self.clock = receipt_root, resolver, credential_ref, transport, clock
-        self.ledger = P0ProductLedger(root=receipt_root, permission=self.permission)
+        self.continuity_chain = continuity_chain
+        self.ledger: P0ProductLedger = (P0ProductLedger(root=receipt_root, permission=self.permission) if continuity_chain is None
+            else P0ContinuityProductLedger(root=receipt_root, permission=self.permission,
+                chain_loader=continuity_chain, broker_identity=self, clock=clock))
+        self.pending_capabilities: dict[str, OwnPending] = {}
         self.previews: dict[str, dict[str, object]] = {}
         self.pending: dict[str, NormalP0GenerationAdapter] = {}
         self.adapters: dict[str, NormalP0GenerationAdapter] = {}
@@ -76,6 +90,8 @@ class P0ProductGenerationAdapter:
     def _snapshot(self, request: Mapping[str, object], receipts: Sequence[Mapping[str, object]]) -> tuple[bytes, dict[str, object], dict[str, object]]:
         family, level = self._family(request)
         now = self.clock()
+        if self.continuity_chain is not None:
+            require_effect_enabled(self.continuity_chain(), now=now, family=family, level=level)
         validate_permission(self.permission, identities=self.permission_identities(), now=now, family=family, level=level)
         if utc(self.tariff["retrieved_at_utc"]) > utc(self.permission["issued_at_utc"]):
             raise ValueError("P0_PRODUCT_TARIFF_PERIOD")
@@ -107,6 +123,16 @@ class P0ProductGenerationAdapter:
 
     def preview(self, *, request: Mapping[str, object], preparation_ref: str, preparation_sha256: str,
                 source_receipts: Sequence[Mapping[str, object]]) -> Mapping[str, object]:
+        if isinstance(self.ledger, P0ContinuityProductLedger):
+            with self.ledger.locked():
+                self.ledger.slots()
+                return self._preview(request=request, preparation_ref=preparation_ref,
+                    preparation_sha256=preparation_sha256, source_receipts=source_receipts)
+        return self._preview(request=request, preparation_ref=preparation_ref,
+            preparation_sha256=preparation_sha256, source_receipts=source_receipts)
+
+    def _preview(self, *, request: Mapping[str, object], preparation_ref: str, preparation_sha256: str,
+                 source_receipts: Sequence[Mapping[str, object]]) -> Mapping[str, object]:
         with self.lock:
             raw, identities, proof = self._snapshot(request, source_receipts)
             if identities["preparation_sha256"] != preparation_sha256:
@@ -163,6 +189,11 @@ class P0ProductGenerationAdapter:
                 adapter = self._adapter(grant)
                 dispatch_key = sha(canonical(as_plain(request)))
                 self.pending[dispatch_key] = adapter
+                if isinstance(self.ledger, P0ContinuityProductLedger):
+                    self.pending_capabilities[dispatch_key] = OwnPending(self, sha(canonical(self.permission)),
+                        str(consent["command_id"]), sha(canonical(grant)), str(grant["namespace_sha256"]),
+                        str(grant["request_sha256"]), sha(canonical(fresh)), dispatch_key,
+                        str(preview["expires_at_utc"]))
                 self.adapters[str(grant["namespace_sha256"])] = adapter
         finally:
             self.lock.release()
@@ -180,6 +211,17 @@ class P0ProductGenerationAdapter:
         # Independent preparations/processes cannot run overlapping requests.
         # A competing call refuses; its already reserved cost is never refunded.
         with self.ledger.locked():
+            if isinstance(self.ledger, P0ContinuityProductLedger):
+                capability = self.pending_capabilities.pop(key, None)
+                if capability is None:
+                    raise ValueError("P0_CONTINUITY_OWN_PENDING_REQUIRED")
+                family, level = self._family(request)
+                require_effect_enabled(self.ledger.chain(), now=self.clock(), family=family, level=level)
+                with self.ledger.own_transition(capability, dispatch_sha256=key):
+                    self.ledger.slots()
+                    result = adapter.generate(request=request)
+                    self._record_confirmation(request, result, adapter)
+                    return result
             result = adapter.generate(request=request)
             self._record_confirmation(request, result, adapter)
             return result
@@ -196,8 +238,16 @@ class P0ProductGenerationAdapter:
             self.confirmed_results.setdefault(key, set()).add(str(adapter.grant["namespace_sha256"]))
 
     def _historical_adapters(self) -> list[NormalP0GenerationAdapter]:
+        if isinstance(self.ledger, P0ContinuityProductLedger):
+            with self.ledger.locked():
+                return self._historical_adapters_from(self.ledger.slots())
+        return self._historical_adapters_from(self.ledger.slots())
+
+    def _historical_adapters_from(self, slots: Sequence[Mapping[str, object]]) -> list[NormalP0GenerationAdapter]:
         result = []
-        for slot in self.ledger.slots():
+        for slot in slots:
+            if self.continuity_chain is not None and slot["permission_sha256"] != sha(canonical(self.permission)):
+                continue
             adapter = self._adapter(cast(Mapping[str, object], slot["grant"]))
             if adapter.receipt.exists("RESERVED"):
                 capture = adapter.receipt.read("DISPATCH")
@@ -221,6 +271,15 @@ class P0ProductGenerationAdapter:
 
     def recover_confirmed(self, *, request: Mapping[str, object]) -> Mapping[str, object]:
         identity = sha(canonical(as_plain(request)))
+        if isinstance(self.ledger, P0ContinuityProductLedger):
+            with self.ledger.locked():
+                for slot in self.ledger.slots():
+                    if slot["permission_sha256"] == sha(canonical(self.permission)):
+                        continue
+                    receipt = P0NormalReceipt(self.root, str(slot["namespace_sha256"]))
+                    capture = receipt.read("DISPATCH")
+                    if capture["dispatch_sha256"] == identity:
+                        raise ValueError("P0_CONTINUITY_OLD_GRANT_CURRENT_RECOVERY_REFUSED")
         matches = []
         for adapter in self._historical_adapters():
             dispatch = adapter.confirmed_dispatch()
@@ -233,6 +292,11 @@ class P0ProductGenerationAdapter:
         self.adapters[str(adapter.grant["namespace_sha256"])] = adapter
         self._record_confirmation(request, result, adapter)
         return result
+
+    def campaign_snapshot(self) -> dict[str, object]:
+        if not isinstance(self.ledger, P0ContinuityProductLedger):
+            raise ValueError("P0_CONTINUITY_PROFILE_REQUIRED")
+        return self.ledger.snapshot()
 
     def control_evidence(self, *, request: Mapping[str, object], bundle_sha256: str) -> Mapping[str, object]:
         with self.lock:

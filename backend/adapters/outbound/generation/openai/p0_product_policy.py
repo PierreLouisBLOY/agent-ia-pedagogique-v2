@@ -45,6 +45,8 @@ LOCAL_SOURCE_FIELDS = SOURCE_FIELDS | {"local_reference_context_manifest_sha256"
     "canonical_notion_entry_scope_sha256", "canonical_institutional_resolution_sha256"}
 LOCAL_ADOPTION_FIELDS = {"profile_schema", "owner_decision_schema", "profile_sha256", "owner_decision_sha256",
     "local_reference_context_manifest_sha256"}
+CONTINUITY_ADOPTION_FIELDS = LOCAL_ADOPTION_FIELDS | {"continuity_manifest_sha256", "continuity_anchor_sha256",
+    "source_admission_owner_decision_sha256"}
 REFERENCE_FIELDS = {"evidence_id", "source_ref", "locator", "checksum_or_version", "excerpt_sha256", "provenance_label"}
 F1_FIELDS = {"schema", "request_sha256", "request_bytes", "tokenizer_sha256", "tariff_sha256", "local_text_tokens",
              "structural_reserve_tokens", "input_upper_tokens", "max_output_tokens", "cost_bound_usd", "ceiling_usd",
@@ -170,15 +172,21 @@ def validate_source_receipts(permission: Mapping[str, object], receipts: Sequenc
     identities: set[str] = set()
     for receipt in receipts:
         is_local = receipt.get("schema") == "P0-SOURCE-ADMISSION-RECEIPT-2.0"
+        source_owner = permission["owner_decision_sha256"]
         if local_context_adoption is not None and not is_local:
             raise ValueError("P1_LOCAL_CONTEXT_RECEIPT_REQUIRED")
         closed(receipt, LOCAL_SOURCE_FIELDS if is_local else SOURCE_FIELDS, "P1_SOURCE_RECEIPT_FIELDS")
         if is_local:
             if local_context_adoption is None:
                 raise ValueError("P1_LOCAL_CONTEXT_PROFILE_REQUIRED")
-            closed(local_context_adoption, LOCAL_ADOPTION_FIELDS, "P1_LOCAL_CONTEXT_ADOPTION_FIELDS")
-            if (local_context_adoption["profile_schema"] != "P0-NORMAL-PROFILE-2.0"
-                    or local_context_adoption["owner_decision_schema"] != "P0-NORMAL-OWNER-DECISION-2.0"
+            continuity = local_context_adoption.get("profile_schema") == "P0-NORMAL-PROFILE-3.0"
+            closed(local_context_adoption, CONTINUITY_ADOPTION_FIELDS if continuity else LOCAL_ADOPTION_FIELDS, "P1_LOCAL_CONTEXT_ADOPTION_FIELDS")
+            if continuity:
+                if any(not digest(local_context_adoption[k]) for k in CONTINUITY_ADOPTION_FIELDS - LOCAL_ADOPTION_FIELDS):
+                    raise ValueError("P1_CONTINUITY_ADOPTION_BINDING")
+                source_owner = local_context_adoption["source_admission_owner_decision_sha256"]
+            if (local_context_adoption["profile_schema"] != ("P0-NORMAL-PROFILE-3.0" if continuity else "P0-NORMAL-PROFILE-2.0")
+                    or local_context_adoption["owner_decision_schema"] != ("P0-NORMAL-OWNER-DECISION-3.0" if continuity else "P0-NORMAL-OWNER-DECISION-2.0")
                     or local_context_adoption["profile_sha256"] != permission["profile_sha256"]
                     or local_context_adoption["owner_decision_sha256"] != permission["owner_decision_sha256"]
                     or local_context_adoption["local_reference_context_manifest_sha256"] != receipt["local_reference_context_manifest_sha256"]
@@ -193,7 +201,7 @@ def validate_source_receipts(permission: Mapping[str, object], receipts: Sequenc
                 or receipt["transmission_admission"] != "OWNER_ADMITTED_LOCAL_CONTENT_ONLY"
                 or receipt["source_scope_status"] not in ({"OWNER_ADMITTED_EXACT_LOCAL_CONTEXT"} if is_local else {"CANONICAL_NOTION_ONLY", "EXACT_CONTEXT_ADMITTED"})
                 or receipt["admission_manifest_sha256"] != permission["source_admission_manifest_sha256"]
-                or receipt["owner_admission_sha256"] != permission["owner_decision_sha256"]
+                or receipt["owner_admission_sha256"] != source_owner
                 or not digest(receipt["admission_scope_sha256"])
                 or not digest(receipt["institutional_resolution_sha256"])
                 or not isinstance(receipt["available_authority"], str) or not receipt["available_authority"]

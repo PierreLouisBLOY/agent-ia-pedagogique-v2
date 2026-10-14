@@ -24,14 +24,15 @@ from backend.modules.resource_library.contracts.dto.local_contribution import (
 from backend.modules.resource_library.ports.outbound.local_contribution_store import (
     LocalContributionPersistenceError,
 )
-from tests.unit.test_local_contribution import fixture, read_request
+from tests.unit.test_local_contribution import fixture, fixture_v2, read_request
 
 pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="Native Windows overlay contract")
 
 
-def native_fixture(tmp_path):
+def native_fixture(tmp_path, *, provenance_v2=False):
     target = LocalContributionTarget.prepare(tmp_path / "new-overlay")
-    args, request, calls = fixture(target_sha=target.sha256, profile_sha=target.operator_profile_sha256)
+    make = fixture_v2 if provenance_v2 else fixture
+    args, request, calls = make(target_sha=target.sha256, profile_sha=target.operator_profile_sha256)
     store = LocalContributionFileStore(target, binding_sha256=args["authority"].sha256)
     args["store"] = store
     return args, request, calls, target, store
@@ -302,3 +303,31 @@ def test_effective_dacl_widened_on_new_synthetic_record_is_rejected(tmp_path):
         app.read(read)
     # Only a test-owned object changed; no repair, cleanup or permission reset.
     assert record_path.exists()
+
+
+def test_v2_real_append_reopen_and_duplicate_preserve_unknown_creation_and_original_recording(tmp_path, monkeypatch):
+    args, request, _, target, _ = native_fixture(tmp_path, provenance_v2=True)
+    original_raw = args["original_proposal_receipt_evidence"]
+    app = build_local_contribution_application(**args, enabled=True)
+    result = app.register(request, correlation="synthetic-v2-native")
+    assert result.success
+    record = result.data["record"]
+    provenance = record["provenance"]
+    assert provenance["contract_id"] == "LOCAL-CONTRIBUTION-PROVENANCE-2.0"
+    assert provenance["draft_created_at"] is None and provenance["draft_creation_status"] == "NOT_ESTABLISHED"
+    assert provenance["draft_recorded_at"] == "2001-01-01T01:02:03+00:00"
+    assert record["created_at"] != provenance["draft_recorded_at"]
+    before = files(target.root)
+    args["store"] = LocalContributionFileStore(LocalContributionTarget.prepare(target.root), binding_sha256=args["authority"].sha256)
+    reopened = build_local_contribution_application(**args, enabled=True)
+    read = {"contract_id": "LOCAL-CONTRIBUTION-READ-1.0", **{k: record[k] for k in ("object_ref", "version_ref", "passage_ref")},
+        "record_sha256": result.data["record_sha256"]}
+    projection = reopened.read(read)["source_snapshot"]
+    assert projection["excerpt"] == request["text"] and projection["provenance"]["origin"] == provenance
+    def forbidden():
+        raise AssertionError("NO_V2_DUPLICATE_ALLOCATION")
+    monkeypatch.setattr("backend.modules.resource_library.application.commands.register_local_contribution.uuid4", forbidden)
+    duplicate = reopened.register(request, correlation="synthetic-v2-native")
+    assert duplicate.success and duplicate.data["record_sha256"] == result.data["record_sha256"]
+    assert duplicate.side_effects[0]["new_effect"] is False
+    assert files(target.root) == before and args["original_proposal_receipt_evidence"] == original_raw

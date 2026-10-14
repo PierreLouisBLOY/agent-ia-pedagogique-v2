@@ -14,6 +14,8 @@ from backend.infrastructure.composition.factories.local_contribution import (
 )
 from backend.modules.documents_provenance.contracts.dto.local_contribution_provenance import (
     LocalContributionProvenance,
+    LocalContributionProvenanceV2,
+    parse_local_contribution_provenance,
 )
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import encoded
 from backend.modules.resource_library.contracts.dto.local_contribution import (
@@ -109,6 +111,37 @@ def fixture(*, target_sha="6" * 64, profile_sha="7" * 64):
 def read_request(record):
     return {"contract_id": "LOCAL-CONTRIBUTION-READ-1.0", **{k: record.data[k] for k in ("object_ref", "version_ref", "passage_ref")},
         "record_sha256": record.sha256}
+
+
+def fixture_v2(*, target_sha="6" * 64, profile_sha="7" * 64):
+    args, request, calls = fixture(target_sha=target_sha, profile_sha=profile_sha)
+    original = encoded({"schema": "LU-M02-LOCAL-COMPLEMENT-PROPOSAL-NON-ADOPTE-1.0", "status": "NON_ADOPTE",
+        "contribution_kind": "LOCAL_PEDAGOGICAL_DRAFT", "author": "SUBAGENT_SYNTHETIC",
+        "timestamp_utc": "2001-01-01T01:02:03+00:00", "authority": "UNKNOWN", "official_reference": False,
+        "transmission_admission": "NOT_ADOPTED", "proposed_local_text": request["text"],
+        "proposed_local_text_utf8_bytes": request["utf8_bytes"], "proposed_local_text_sha256": request["text_sha256"]})
+    authority, provenance = dict(args["authority"].data), args["provenance"].as_dict()
+    provenance.update(contract_id="LOCAL-CONTRIBUTION-PROVENANCE-2.0", author="SUBAGENT_SYNTHETIC", author_kind="SUBAGENT",
+        draft_created_at=None, draft_creation_status="NOT_ESTABLISHED", draft_recorded_at="2001-01-01T01:02:03+00:00",
+        recording_basis="ORIGINAL_PROPOSAL_RECEIPT", original_proposal_receipt_ref="local-draft-record:SYNTHETIC_PROPOSAL")
+    args.update(original_proposal_receipt_evidence=original)
+    rebind_synthetic_v2(args, authority, provenance, original)
+    return args, request, calls
+
+
+def rebind_synthetic_v2(args, authority, provenance, original):
+    # Test-only trusted composition. Never models a caller changing an operation grant.
+    original_sha = hashlib.sha256(original).hexdigest()
+    authority["draft_origin_sha256"] = provenance["draft_origin_sha256"] = provenance["original_proposal_receipt_sha256"] = original_sha
+    scope = contribution_adoption_scope(authority, provenance)
+    proof = encoded({"schema": "LOCAL-CONTRIBUTION-OWNER-OPERATION-PROOF-1.0", "approved": True,
+        "scope_sha256": scope, "candidate_commit": "a" * 40, "package_sha256": "b" * 64,
+        "plan_sha256": "c" * 64, "prior_review_sha256": "d" * 64})
+    authority["operation_authorization_sha256"] = provenance["operation_authorization_sha256"] = hashlib.sha256(proof).hexdigest()
+    typed = LocalContributionAuthority(authority)
+    args.update(authority=typed, provenance=LocalContributionProvenanceV2(provenance), store=SyntheticStore(typed),
+        owner_operation_evidence=proof, expected_scope_sha256=scope, original_proposal_receipt_evidence=original,
+        expected_original_proposal_receipt_sha256=original_sha)
 
 
 def test_default_off_has_zero_boundary_calls_and_no_allocation(monkeypatch):
@@ -309,3 +342,99 @@ def test_mutated_local_provenance_cannot_replay_or_read_under_same_authority():
         app.read(read_request(args["store"].record))
     with pytest.raises(ValueError, match="RECONCILE_REQUIRED"):
         app.register(request, correlation="synthetic")
+
+
+def test_v2_unknown_creation_original_recording_and_application_creation_are_distinct():
+    args, request, calls = fixture_v2()
+    off = build_local_contribution_application(**args)
+    with pytest.raises(ValueError, match="DISABLED"):
+        off.register(request, correlation="synthetic")
+    assert args["store"].calls == calls == []
+    app = build_local_contribution_application(**args, enabled=True)
+    assert app.register(request, correlation="synthetic").success
+    record = args["store"].record
+    projection = app.read(read_request(record))["source_snapshot"]
+    origin = projection["provenance"]["origin"]
+    assert origin["draft_created_at"] is None and origin["draft_creation_status"] == "NOT_ESTABLISHED"
+    assert origin["draft_recorded_at"] == "2001-01-01T01:02:03+00:00"
+    assert record.data["created_at"] != origin["draft_recorded_at"] and record.data["created_at"] is not None
+    assert origin["author_kind"] == "SUBAGENT" and origin["author"] == "SUBAGENT_SYNTHETIC"
+    assert origin["recording_basis"] == "ORIGINAL_PROPOSAL_RECEIPT"
+    assert origin["original_proposal_receipt_sha256"] == hashlib.sha256(args["original_proposal_receipt_evidence"]).hexdigest()
+    assert args["original_proposal_receipt_evidence"].decode() not in str(projection)
+
+
+def test_v1_stays_strict_and_is_not_implicitly_migrated_to_v2():
+    args, _, _ = fixture()
+    assert type(parse_local_contribution_provenance(args["provenance"].as_dict())) is LocalContributionProvenance
+    raw = args["provenance"].as_dict()
+    raw["draft_created_at"] = None
+    with pytest.raises(ValueError, match="DATE"):
+        LocalContributionProvenance(raw)
+    v2, _, _ = fixture_v2()
+    with pytest.raises(ValueError):
+        LocalContributionProvenance(v2["provenance"].as_dict())
+    assert type(parse_local_contribution_provenance(v2["provenance"].as_dict())) is LocalContributionProvenanceV2
+    raw = args["provenance"].as_dict()
+    raw["draft_recorded_at"] = "2001-01-01T01:02:03+00:00"
+    with pytest.raises(ValueError):
+        LocalContributionProvenance(raw)
+
+
+@pytest.mark.parametrize("field,value", [("draft_created_at", "2001-01-01T01:02:03+00:00"),
+    ("draft_created_at", ""), ("draft_creation_status", "ESTABLISHED"), ("draft_recorded_at", "2001-01-01"),
+    ("recording_basis", "FILE_MTIME"), ("author_kind", "HUMAN"), ("author", "Synthetic teacher"),
+    ("original_proposal_receipt_ref", "../file"), ("original_proposal_receipt_sha256", "f" * 64),
+    ("authority", "OFFICIAL"), ("teacher_acceptance", "ACCEPTED"), ("additional_field", True)])
+def test_v2_does_not_invent_creation_authority_or_recording_basis(field, value):
+    args, _, _ = fixture_v2()
+    raw = args["provenance"].as_dict()
+    raw[field] = value
+    with pytest.raises(ValueError):
+        LocalContributionProvenanceV2(raw)
+
+
+@pytest.mark.parametrize("field,value", [("original_proposal_receipt_evidence", None),
+    ("expected_original_proposal_receipt_sha256", None), ("expected_original_proposal_receipt_sha256", "f" * 64),
+    ("original_proposal_receipt_evidence", b"FORGED"), ("original_proposal_receipt_evidence", "not-bytes")])
+def test_v2_factory_requires_the_exact_trusted_original_bytes_and_hash(field, value):
+    args, _, calls = fixture_v2()
+    args[field] = value
+    with pytest.raises(ValueError, match="ORIGINAL_PROPOSAL"):
+        build_local_contribution_application(**args, enabled=True)
+    assert args["store"].calls == calls == []
+
+
+@pytest.mark.parametrize("field,value", [("author", "SUBAGENT_OTHER"), ("timestamp_utc", "2001-01-02T01:02:03+00:00"),
+    ("schema", "OTHER_RECEIPT"), ("status", "ADOPTED"), ("contribution_kind", "OFFICIAL"),
+    ("authority", "OFFICIAL"), ("official_reference", True), ("transmission_admission", "ADOPTED"),
+    ("proposed_local_text", "CHANGED"), ("proposed_local_text_utf8_bytes", True), ("proposed_local_text_sha256", "f" * 64)])
+def test_v2_original_fields_are_checked_even_when_a_synthetic_scope_is_self_consistent(field, value):
+    import json
+    args, _, calls = fixture_v2()
+    original = json.loads(args["original_proposal_receipt_evidence"])
+    original[field] = value
+    raw = encoded(original)
+    rebind_synthetic_v2(args, dict(args["authority"].data), args["provenance"].as_dict(), raw)
+    with pytest.raises(ValueError):
+        build_local_contribution_application(**args, enabled=True)
+    assert args["store"].calls == calls == []
+
+
+@pytest.mark.parametrize("raw", [b'{"schema":"x","schema":"x"}', b'{"schema":NaN}', b'[]', b'{}', b'not-json', b'\xff'])
+def test_v2_original_json_is_utf8_and_unambiguous(raw):
+    args, _, calls = fixture_v2()
+    rebind_synthetic_v2(args, dict(args["authority"].data), args["provenance"].as_dict(), raw)
+    with pytest.raises(ValueError):
+        build_local_contribution_application(**args)
+    assert args["store"].calls == calls == []
+
+
+@pytest.mark.parametrize("field,value", [("original_proposal_receipt_evidence", b"SYNTHETIC_UNUSED"),
+    ("expected_original_proposal_receipt_sha256", "f" * 64)])
+def test_v1_refuses_original_receipt_inputs_instead_of_ignoring_them(field, value):
+    args, _, calls = fixture()
+    args[field] = value
+    with pytest.raises(ValueError, match="UNUSED_ORIGINAL_PROPOSAL"):
+        build_local_contribution_application(**args)
+    assert args["store"].calls == calls == []

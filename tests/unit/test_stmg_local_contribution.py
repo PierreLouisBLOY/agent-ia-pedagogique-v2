@@ -16,13 +16,14 @@ from backend.modules.pedagogical_context.contracts.dto.stmg_local_activity impor
     LocalActivityChoice,
 )
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import encoded, fingerprint
-from tests.unit.test_local_contribution import fixture, read_request
+from tests.unit.test_local_contribution import fixture, fixture_v2, read_request
 from tests.unit.test_stmg_local_activity_qualification import fixture as stmg_fixture
 from tests.unit.test_stmg_local_activity_qualification import scope_for
 
 
-def companion_fixture(*, insufficient=False):
-    args, request, _ = fixture()
+def companion_fixture(*, insufficient=False, provenance_v2=False):
+    make = fixture_v2 if provenance_v2 else fixture
+    args, request, _ = make()
     contribution_app = build_local_contribution_application(**args, enabled=True)
     outcome = contribution_app.register(request, correlation="synthetic")
     assert outcome.success
@@ -129,3 +130,19 @@ def test_overlay_wrapper_does_not_expose_dispatch_or_native_resolver():
     args, _, _, _ = companion_fixture()
     app = build_stmg_local_contribution_application(**args)
     assert not {"generate", "dispatch", "reserve", "resolve_institutional_context", "promote"} & set(dir(app))
+
+
+def test_v2_companion_keeps_unknown_creation_recording_basis_and_native_gap():
+    args, choice, store, _ = companion_fixture(provenance_v2=True)
+    app = build_stmg_local_contribution_application(**args, enabled=True)
+    result = app.prepare(choice_sha256=LocalActivityChoice(choice).sha256)
+    origin = result["source_provenance"]["origin"]
+    assert result["state"] == "LOCAL_CONTEXT_SUPPORTED_FOR_PREPARATION"
+    assert origin["draft_created_at"] is None and origin["draft_creation_status"] == "NOT_ESTABLISHED"
+    assert origin["draft_recorded_at"] == "2001-01-01T01:02:03+00:00"
+    assert origin["author_kind"] == "SUBAGENT" and origin["recording_basis"] == "ORIGINAL_PROPOSAL_RECEIPT"
+    assert store.record.data["created_at"] != origin["draft_recorded_at"]
+    assert result["source_provenance"]["reference_snapshot"]["native_scope_status"] == "CONTENT_GAP"
+    assert result["source_authority"] == "UNKNOWN" and result["provider_dispatch_allowed"] is False
+    assert result["native_relationship_status"] == "NOT_ADMITTED_FOR_POSITIONING"
+    assert result["transmission_admission"] == "NOT_ADOPTED" and result["teacher_acceptance"] == "NOT_PERFORMED"

@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from backend.modules.documents_provenance.contracts.dto.local_contribution_provenance import (
-    LocalContributionProvenance,
     digest,
+    parse_local_contribution_provenance,
 )
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     as_plain,
@@ -114,7 +114,7 @@ class LocalContributionRecord:
         for key in ("operation_key", "binding_sha256", "target_binding_sha256"):
             digest(data[key])
         text_identity(data["text"], data["utf8_bytes"], data["text_sha256"])
-        provenance = LocalContributionProvenance(object_data(data["provenance"]))
+        provenance = parse_local_contribution_provenance(object_data(data["provenance"]))
         reference_snapshot(data["reference_snapshot"], data["notion_ref"], provenance.data["local_context_sha256"])
         try:
             if type(data["created_at"]) is not str or datetime.fromisoformat(data["created_at"]).tzinfo is None:

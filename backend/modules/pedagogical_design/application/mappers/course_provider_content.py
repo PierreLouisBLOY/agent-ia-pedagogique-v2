@@ -10,7 +10,11 @@ import re
 from collections.abc import Mapping
 from typing import cast
 
-from backend.modules.pedagogical_context.contracts.dto.p0_context import P0Context
+from backend.modules.pedagogical_context.contracts.dto.course_notions import course_notion_rows
+from backend.modules.pedagogical_context.contracts.dto.p0_context import (
+    P0_NOTION_COURSE_CONTEXT_CONTRACT,
+    P0Context,
+)
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     as_plain,
     items,
@@ -19,6 +23,8 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
 )
 from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
     COURSE_LINEAGE_CONTRACT,
+    COURSE_NOTION_LINEAGE_CONTRACT,
+    COURSE_NOTION_PRODUCTION_CONTRACT,
     COURSE_PRODUCTION_CONTRACT,
     CourseChapter,
 )
@@ -132,12 +138,30 @@ def bind_course_provider_content(request: Mapping[str, object],
         else:
             raise ValueError("P0_RICH_COURSE_DOCUMENT_PROVENANCE")
         documents.append({**document, "provenance": {"kind": provenance["kind"], "source_ref": source_ref}})
+    notion_course = context.data["contract_id"] == P0_NOTION_COURSE_CONTEXT_CONTRACT
     topics = cast(tuple[str, ...], context.data["topics"])
-    if any(row["notion"] not in topics for row in items(chapter_content["concepts"], 30)):
+    notions = list(topics)
+    if notion_course:
+        aliases = {row["id"]: row["label"] for row in course_notion_rows(context)}
+        concepts: list[dict[str, object]] = []
+        used: set[str] = set()
+        for row in items(chapter_content["concepts"], 30):
+            concept = object_data(row, {"id", "notion_id", "definition", "explanation", "example"})
+            alias = concept["notion_id"]
+            if not isinstance(alias, str) or alias not in aliases:
+                raise ValueError("P0_RICH_COURSE_NOTION_ALIAS_UNKNOWN")
+            used.add(alias)
+            concepts.append({key: value for key, value in concept.items() if key != "notion_id"}
+                            | {"notion": aliases[alias]})
+        if used != set(aliases):
+            raise ValueError("P0_RICH_COURSE_NOTION_COVERAGE")
+        notions = list(aliases.values())
+        chapter_content["concepts"] = concepts
+    elif any(row["notion"] not in topics for row in items(chapter_content["concepts"], 30)):
         raise ValueError("P0_RICH_COURSE_NOTION_UNKNOWN")
-    chapter = CourseChapter({"contract_id": COURSE_LINEAGE_CONTRACT,
+    chapter = CourseChapter({"contract_id": COURSE_NOTION_LINEAGE_CONTRACT if notion_course else COURSE_LINEAGE_CONTRACT,
         "chapter_number": int(chapter_number), "title": proposed["title"],
-        "program_header": _header(context), "capabilities": capabilities, "notions": list(topics),
+        "program_header": _header(context), "capabilities": capabilities, "notions": notions,
         **chapter_content, "documents": documents})
     chapter.bind_context(context)
     from backend.modules.pedagogical_design.contracts.dto.course_delivery import (
@@ -153,7 +177,7 @@ def bind_course_provider_content(request: Mapping[str, object],
     bound_limits = list(limitations)
     if not any("CANDIDATE" in str(limit) for limit in bound_limits):
         bound_limits.append(CANDIDATE_LIMITATION)
-    return P0Production({"contract_id": COURSE_PRODUCTION_CONTRACT,
+    return P0Production({"contract_id": COURSE_NOTION_PRODUCTION_CONTRACT if notion_course else COURSE_PRODUCTION_CONTRACT,
         **{key: data[key] for key in _BINDINGS}, "title": chapter.data["title"],
         "sections": chapter.sections(), "questions": [], "corrections": [], "marking": [],
         "course_chapter": as_plain(chapter.data), "limitations": bound_limits})

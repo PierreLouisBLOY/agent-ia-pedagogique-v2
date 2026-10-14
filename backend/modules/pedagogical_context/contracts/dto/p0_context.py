@@ -16,6 +16,7 @@ from backend.shared_kernel._safe_data import freeze_safe_mapping
 P0_CONTEXT_CONTRACT = "R6-P0-CONTEXT-1.0"
 P0_INSTITUTIONAL_CONTEXT_CONTRACT = "P0-CONTEXT-2.0"
 P0_COURSE_CONTEXT_CONTRACT = "P0-CONTEXT-COURSE-3.0"
+P0_NOTION_COURSE_CONTEXT_CONTRACT = "P0-CONTEXT-COURSE-4.0"
 P0_RESOURCE_TYPES = frozenset({"COURSE", "EXERCISE", "QUESTION_SET", "ASSESSMENT"})
 P0_QUESTION_MODES = frozenset({"OPEN_QUESTIONS", "QCM", "QUIZ"})
 P0_LEVELS = frozenset({"FIRST_STMG", "FINAL_STMG", "BTS_CG_YEAR_1", "BTS_CG_YEAR_2"})
@@ -56,11 +57,11 @@ class P0Context:
     data: Mapping[str, object]
 
     def __post_init__(self) -> None:
-        course_choice = self.data.get("contract_id") == P0_COURSE_CONTEXT_CONTRACT
-        institutional = self.data.get("contract_id") in {P0_INSTITUTIONAL_CONTEXT_CONTRACT, P0_COURSE_CONTEXT_CONTRACT}
+        course_choice = self.data.get("contract_id") in {P0_COURSE_CONTEXT_CONTRACT, P0_NOTION_COURSE_CONTEXT_CONTRACT}
+        institutional = self.data.get("contract_id") in {P0_INSTITUTIONAL_CONTEXT_CONTRACT, P0_COURSE_CONTEXT_CONTRACT, P0_NOTION_COURSE_CONTEXT_CONTRACT}
         fields = _FIELDS | ({"institutional", "institutional_resolution", "local_progression"} if institutional else set())
         data = object_data(self.data, fields | ({"course_format"} if course_choice else set()))
-        if data["contract_id"] not in {P0_CONTEXT_CONTRACT, P0_INSTITUTIONAL_CONTEXT_CONTRACT, P0_COURSE_CONTEXT_CONTRACT}:
+        if data["contract_id"] not in {P0_CONTEXT_CONTRACT, P0_INSTITUTIONAL_CONTEXT_CONTRACT, P0_COURSE_CONTEXT_CONTRACT, P0_NOTION_COURSE_CONTEXT_CONTRACT}:
             raise ValueError("P0_CONTEXT_CONTRACT")
         if data["resource_type"] not in P0_RESOURCE_TYPES:
             raise ValueError("P0_RESOURCE_TYPE")
@@ -73,6 +74,8 @@ class P0Context:
         if data["level"] not in P0_LEVELS:
             raise ValueError("P0_LEVEL")
         if course_choice:
+            if data["contract_id"] == P0_NOTION_COURSE_CONTEXT_CONTRACT and data["course_format"] != "CHAPTER":
+                raise ValueError("P0_NOTION_COURSE_FORMAT")
             if data["resource_type"] != "COURSE" or data["course_format"] not in {"CHAPTER", "EXPLAINED"}:
                 raise ValueError("P0_COURSE_FORMAT")
             if data["course_format"] == "CHAPTER" and not str(data["level"]).endswith("STMG"):

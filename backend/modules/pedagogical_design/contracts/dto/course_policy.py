@@ -32,8 +32,9 @@ def course_policy_for(context: object) -> dict[str, object]:
         raise ValueError("P0_COURSE_CONTEXT_REQUIRED")
     if context.course_format != "CHAPTER":
         return COURSE_POLICY
-    return {"contract_id": "COURSE-CHAPTER-LINEAGE-3.0",
-            "provider_content_contract": "P0-COURSE-RICH-CONTENT-1.0",
+    notion_course = context.data["contract_id"] == "P0-CONTEXT-COURSE-4.0"
+    return {"contract_id": "COURSE-CHAPTER-LINEAGE-4.0" if notion_course else "COURSE-CHAPTER-LINEAGE-3.0",
+            "provider_content_contract": "P0-COURSE-RICH-CONTENT-2.0" if notion_course else "P0-COURSE-RICH-CONTENT-1.0",
             "depth": "CONFIRMED_CONTEXT", "page_limit": None,
             "student_and_teacher": "SEPARATE_PROJECTIONS",
             "content_completion": "PROVIDER_REQUIRED_NO_LOCAL_REPAIR",

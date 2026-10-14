@@ -6,6 +6,8 @@ import threading
 import zipfile
 from secrets import token_hex
 
+import pytest
+
 from backend.adapters.inbound.api.p0_creation import P0CreationEndpoint
 from backend.adapters.inbound.api.read15 import Read15Endpoint
 from backend.adapters.inbound.api.saved_production import SavedProductionEndpoint
@@ -17,6 +19,7 @@ from backend.infrastructure.composition.factories.local_browser import (
 from backend.infrastructure.config.schemas.http import LocalBrowserHttpConfiguration
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import as_plain
 from tests.integration.test_r4_local_http import available_port, request
+from tests.unit.test_course_notion_contract import notion_content, notion_synthetic_configuration
 from tests.unit.test_integrated_saved_p0_resume import resume_with
 from tests.unit.test_local_browser_http_contract import RecordingObservability
 from tests.unit.test_p0_agentic_routing import identity
@@ -33,9 +36,11 @@ def xml_parts(raw):
         return b"\n".join(parts)
 
 
-def test_rich_normal_receive_save_restart_export_and_local_revision(tmp_path):
-    _, service, prepared, dispatch, resolver, transport = rich_synthetic_configuration(tmp_path)
-    supplied_content = rich_content(dispatch)
+@pytest.mark.parametrize("configuration,content_factory", [(rich_synthetic_configuration, rich_content),
+                                                         (notion_synthetic_configuration, notion_content)])
+def test_rich_normal_receive_save_restart_export_and_local_revision(tmp_path, configuration, content_factory):
+    _, service, prepared, dispatch, resolver, transport = configuration(tmp_path)
+    supplied_content = content_factory(dispatch)
     library_root = tmp_path / "synthetic-course-library"
     library = build_saved_application(
         library_root, create=True, source=service.saved_source, word_profile="product-v7"
@@ -57,8 +62,11 @@ def test_rich_normal_receive_save_restart_export_and_local_revision(tmp_path):
     parent = service.saved_source(view["production_ref"], view["version_ref"])
     chapter = as_plain(parent.p0_bundle.data["course_chapter"])
     for field, value in supplied_content["course_chapter"].items():
-        if field != "documents":
+        if field not in {"documents", "concepts"}:
             assert chapter[field] == value
+    for provided, received in zip(supplied_content["course_chapter"]["concepts"], chapter["concepts"], strict=True):
+        assert {k: v for k, v in provided.items() if k not in {"notion_id", "notion"}} == {
+            k: v for k, v in received.items() if k != "notion"}
     assert chapter["chapter_number"] == 7
     assert parent.p0_bundle.data["questions"] == parent.p0_bundle.data["corrections"] == ()
     assert parent.p0_bundle.data["context"]["course_format"] == "CHAPTER"
@@ -127,8 +135,9 @@ def test_rich_normal_receive_save_restart_export_and_local_revision(tmp_path):
     assert transport.calls == resolver.calls == 1
 
 
-def test_rich_http_generate_save_fresh_server_open_and_export(tmp_path):
-    _, application, prepared, _, resolver, transport = rich_synthetic_configuration(tmp_path)
+@pytest.mark.parametrize("configuration", [rich_synthetic_configuration, notion_synthetic_configuration])
+def test_rich_http_generate_save_fresh_server_open_and_export(tmp_path, configuration):
+    _, application, prepared, _, resolver, transport = configuration(tmp_path)
     root = tmp_path / "rich-http-library"
     library = build_saved_application(
         root, create=True, source=application.saved_source, word_profile="product-v7"

@@ -35,13 +35,17 @@ class ReframeCourseCommand:
             data["references"] = [dict(reference_override)]
         if course_chapter is not None:
             from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
+                COURSE_NOTION_LINEAGE_CONTRACT,
+                COURSE_NOTION_PRODUCTION_CONTRACT,
                 COURSE_PRODUCTION_CONTRACT,
                 CourseChapter,
             )
 
             chapter = CourseChapter(course_chapter)
             chapter.bind_context(context)
-            data.update({"contract_id": COURSE_PRODUCTION_CONTRACT, "course_chapter": as_plain(chapter.data)})
+            production_contract = (COURSE_NOTION_PRODUCTION_CONTRACT if chapter.data["contract_id"] == COURSE_NOTION_LINEAGE_CONTRACT
+                                   else COURSE_PRODUCTION_CONTRACT)
+            data.update({"contract_id": production_contract, "course_chapter": as_plain(chapter.data)})
             sections = chapter.sections()
         data.update({"version_ref": "ver:" + token_hex(16), "title": title, "sections": sections,
                      "context": context.as_dict(), "context_sha256": context.sha256})

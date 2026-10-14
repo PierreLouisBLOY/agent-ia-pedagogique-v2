@@ -12,7 +12,11 @@ from typing import cast
 
 from backend.adapters.outbound.openai.contracts import OpenAIReasoningEffort, OpenAIResponsesRequest
 from backend.adapters.outbound.openai.schema import validate_openai_strict_schema
-from backend.modules.pedagogical_context.contracts.dto.p0_context import P0Context
+from backend.modules.pedagogical_context.contracts.dto.course_notions import course_notion_rows
+from backend.modules.pedagogical_context.contracts.dto.p0_context import (
+    P0_NOTION_COURSE_CONTEXT_CONTRACT,
+    P0Context,
+)
 from backend.modules.pedagogical_design.application.mappers.course_provider_content import (
     RICH_CONTENT_FIELDS,
     bind_course_provider_content,
@@ -71,6 +75,20 @@ RICH_COURSE_INSTRUCTIONS = (
 )
 
 
+RICH_NOTION_COURSE_INSTRUCTIONS = RICH_COURSE_INSTRUCTIONS.replace(
+    "Une notion de concept appartient aux topics confirmés. ",
+    "Le thème libre topics ne définit pas les notions sélectionnées. Chaque concept utilise notion_id, "
+    "un alias N1... exact de course_notions ; couvrez toutes ces notions. "
+    "Ces libellés sont des repères de cadrage, pas des sources disciplinaires ni une certification. "
+) + (
+    " Affectez chaque question une seule fois à observation, analysis, reinvestment, knowledge_check ou transfer. "
+    "Ces groupes requis sont non vides ; une partie requiert donc trois questions distinctes, "
+    "auxquelles s'ajoutent celles de knowledge_check et transfer. Choisissez le nombre de parties pour "
+    "livrer le chapitre complet dans la sortie disponible. Numérotez de 1 à la dernière question sans rupture ; "
+    "teacher_answers reprend exactement ces identités dans le même ordre."
+)
+
+
 def content_fields_for(request: Mapping[str, object] | None = None) -> set[str]:
     """Historical callers keep six fields; a confirmed rich dispatch selects three."""
     if request is not None:
@@ -118,11 +136,16 @@ def build_p0_content_request(request: Mapping[str, object]) -> OpenAIResponsesRe
     payload = {"contract_id": "R6-P0-CONTENT-INPUT-1.0", "context": context.as_dict(),
                "references": as_plain(references), "evidence": evidence}
     rich = context.course_format == "CHAPTER"
-    instructions = RICH_COURSE_INSTRUCTIONS if rich else INSTRUCTIONS
+    notion_course = context.data["contract_id"] == P0_NOTION_COURSE_CONTEXT_CONTRACT
+    instructions = RICH_NOTION_COURSE_INSTRUCTIONS if notion_course else RICH_COURSE_INSTRUCTIONS if rich else INSTRUCTIONS
     if rich:
         payload["contract_id"] = "R6-P0-COURSE-CONTENT-INPUT-2.0"
         payload["course_capabilities"] = [{"id": row["id"], "label": row["label"]}
                                           for row in course_capability_rows(context)]
+        if notion_course:
+            payload["contract_id"] = "R6-P0-COURSE-CONTENT-INPUT-3.0"
+            payload["course_notions"] = [{"id": row["id"], "label": row["label"]}
+                                         for row in course_notion_rows(context)]
     if context.institutional is not None:
         context.require_institutional_dispatch()
         instructions += (" Appliquez uniquement le programme, la version, la composante, la question et les capacités confirmés. "
@@ -164,9 +187,10 @@ def build_p0_content_request(request: Mapping[str, object]) -> OpenAIResponsesRe
     if rich:
         from backend.adapters.outbound.generation.openai.p0_course_content_schema import (
             rich_course_content_schema,
+            rich_course_notion_content_schema,
         )
 
-        schema = rich_course_content_schema()
+        schema = rich_course_notion_content_schema() if notion_course else rich_course_content_schema()
     else:
         schema = content_schema()
     return OpenAIResponsesRequest(MODEL, instructions, text, schema, MAX_OUTPUT_TOKENS,

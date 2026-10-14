@@ -182,20 +182,24 @@ class P0Production:
 
     def __post_init__(self) -> None:
         from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
+            COURSE_NOTION_LINEAGE_CONTRACT,
+            COURSE_NOTION_PRODUCTION_CONTRACT,
             COURSE_PRODUCTION_CONTRACT,
             CourseChapter,
         )
 
-        is_chapter = self.data.get("contract_id") == COURSE_PRODUCTION_CONTRACT
+        is_chapter = self.data.get("contract_id") in {COURSE_PRODUCTION_CONTRACT, COURSE_NOTION_PRODUCTION_CONTRACT}
         is_media = self.data.get("contract_id") == MEDIA_PRODUCTION_CONTRACT
         fields = _FIELDS | ({"course_chapter"} if is_chapter else {"media_plan"} if is_media else set())
         data = object_data(self.data, fields)
-        if data["contract_id"] not in {P0_PRODUCTION_CONTRACT, COURSE_PRODUCTION_CONTRACT, MEDIA_PRODUCTION_CONTRACT}:
+        if data["contract_id"] not in {P0_PRODUCTION_CONTRACT, COURSE_PRODUCTION_CONTRACT, COURSE_NOTION_PRODUCTION_CONTRACT, MEDIA_PRODUCTION_CONTRACT}:
             raise ValueError("P0_PRODUCTION_CONTRACT")
         identifier(data["production_ref"], "prod")
         identifier(data["version_ref"], "ver")
         nonempty(data["title"], 300)
         context = P0Context(object_data(data["context"]))
+        if (data["contract_id"] == COURSE_NOTION_PRODUCTION_CONTRACT) != (context.data["contract_id"] == "P0-CONTEXT-COURSE-4.0"):
+            raise ValueError("P0_NOTION_COURSE_PRODUCTION_BINDING")
         if data["context_sha256"] != context.sha256:
             raise ValueError("P0_CONTEXT_HASH")
         _validated_sections(data["sections"])
@@ -208,6 +212,8 @@ class P0Production:
             ProductionMediaPlan(object_data(data["media_plan"])).bind(data)
         if is_chapter:
             chapter = CourseChapter(object_data(data["course_chapter"]))
+            if (data["contract_id"] == COURSE_NOTION_PRODUCTION_CONTRACT) != (chapter.data["contract_id"] == COURSE_NOTION_LINEAGE_CONTRACT):
+                raise ValueError("P0_NOTION_COURSE_PRODUCTION_BINDING")
             chapter.bind_production(str(data["production_ref"]))
             chapter.bind_context(context)
             if as_plain(data["sections"]) != chapter.sections() or data["title"] != chapter.data["title"]:

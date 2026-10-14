@@ -921,7 +921,7 @@ function p0Context() {
       throw Object.assign(new Error("P0_RICH_COURSE_LEVEL_UNSUPPORTED"), {confirmedRefusal:true});
     if (format === "CHAPTER" && !/^[1-9][0-9]?$/.test(p0Element("local-chapter").value))
       throw Object.assign(new Error("P0_RICH_COURSE_CHAPTER_NUMBER"), {confirmedRefusal:true});
-    context.contract_id = "P0-CONTEXT-COURSE-3.0";
+    context.contract_id = format === "CHAPTER" ? "P0-CONTEXT-COURSE-4.0" : "P0-CONTEXT-COURSE-3.0";
     context.course_format = format;
   }
   return context;

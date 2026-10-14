@@ -143,9 +143,11 @@ class LocalSavedProductionStore:
             local_lineage = (
                 record.data["origin"] == "LOCAL_APPLICATION"
                 and bundle is not None
-                and bundle.data["contract_id"] == "R6-P0-PRODUCTION-COURSE-2.0"
                 and isinstance(chapter, Mapping)
-                and chapter.get("contract_id") == "COURSE-CHAPTER-LINEAGE-3.0"
+                and (bundle.data["contract_id"], chapter.get("contract_id")) in {
+                    ("R6-P0-PRODUCTION-COURSE-2.0", "COURSE-CHAPTER-LINEAGE-3.0"),
+                    ("R6-P0-PRODUCTION-COURSE-3.0", "COURSE-CHAPTER-LINEAGE-4.0"),
+                }
             )
             if sum(k.startswith(record.production_ref + "/") for k in records) >= (
                 32 if illustrated or local_lineage else 3

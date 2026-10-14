@@ -248,9 +248,10 @@ def test_missing_theme_label_does_not_display_an_internal_identifier(theme_ref, 
     assert "opaque-internal-id" not in chapter.visible_text()
 
 
-def rich_synthetic_configuration(tmp_path):
+def rich_synthetic_configuration(tmp_path, *, preparation_factory=rich_preparation,
+                                 content_factory=rich_content):
     config, _, _, _, identities, tokens, resolver, transport = synthetic_configuration(tmp_path)
-    service, prepared, dispatch = rich_preparation()
+    service, prepared, dispatch = preparation_factory()
     wire = build_p0_content_request(dispatch)
     body = NormalP0GenerationAdapter.body(wire)
     updates = {"request_sha256": sha(body), "request_bytes": len(body),
@@ -260,7 +261,7 @@ def rich_synthetic_configuration(tmp_path):
     config["grant"].update(updates)
     identities.update({key: config["grant"][key] for key in HASH_FIELDS | {"baseline_commit", "request_bytes"}})
     tokens["request_sha256"] = sha(body)
-    transport.response = replace(transport.response, output_text=canonical(rich_content(dispatch)).decode())
+    transport.response = replace(transport.response, output_text=canonical(content_factory(dispatch)).decode())
     service.generation = NormalP0GenerationAdapter(**config)
     return config, service, prepared, dispatch, resolver, transport
 

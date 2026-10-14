@@ -16,7 +16,7 @@ def _array(item: dict[str, object], maximum: int = 30,
     return {"type": "array", "items": item, "minItems": minimum, "maxItems": maximum}
 
 
-def rich_course_content_schema() -> dict[str, object]:
+def _rich_course_content_schema(*, notion_alias: bool) -> dict[str, object]:
     """Instance allowlists are checked by Application, not embedded in the SHA."""
     identifier: dict[str, object] = {"type": "string", "pattern": "^[A-Z][A-Z0-9_-]{0,39}$"}
     ids = _array(identifier)
@@ -47,7 +47,10 @@ def rich_course_content_schema() -> dict[str, object]:
                 "lines": {"type": "integer", "minimum": 1, "maximum": 8},
                 "table": nullable_table})}), 60),
         "concepts": _array(_object({
-            "id": identifier, "notion": _string(3000), "definition": _string(3000),
+            "id": identifier,
+            ("notion_id" if notion_alias else "notion"): (
+                {"type": "string", "pattern": "^N(?:[1-9]|1[0-6])$"} if notion_alias else _string(3000)),
+            "definition": _string(3000),
             "explanation": _string(3000), "example": _string(3000)})),
         "knowledge_check": ids,
         "transfer": _object({"title": _string(200), "document_ids": ids, "question_ids": ids}),
@@ -60,3 +63,13 @@ def rich_course_content_schema() -> dict[str, object]:
                       "limitations": _array(_string(500), 15, 0)})
     validate_openai_strict_schema(schema)
     return schema
+
+
+def rich_course_content_schema() -> dict[str, object]:
+    """Historical schema remains byte-identical."""
+    return _rich_course_content_schema(notion_alias=False)
+
+
+def rich_course_notion_content_schema() -> dict[str, object]:
+    """P0-COURSE-RICH-CONTENT-2.0; aliases are bound against the exact selection."""
+    return _rich_course_content_schema(notion_alias=True)

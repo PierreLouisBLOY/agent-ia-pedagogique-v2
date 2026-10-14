@@ -211,6 +211,11 @@ class CourseChapter:
             raise ValueError("COURSE_PROGRAM_BINDING")
         if notion_chapter and {str(row["notion"]) for row in items(self.data["concepts"])} != set(expected_notions):
             raise ValueError("COURSE_NOTION_CONCEPT_COVERAGE")
+        if notion_chapter:
+            linked = {str(ref) for part in items(self.data["parts"])
+                      for ref in _strings(part["concept_ids"])}
+            if linked != {str(row["id"]) for row in items(self.data["concepts"])}:
+                raise ValueError("COURSE_NOTION_CONCEPT_DELIVERY_COVERAGE")
         level_labels = {"FIRST_STMG": "Première STMG", "FINAL_STMG": "Terminale STMG"}
         if header["level_label"] != level_labels.get(str(context.data["level"])):
             raise ValueError("COURSE_PROGRAM_BINDING")

@@ -82,6 +82,7 @@ RICH_NOTION_COURSE_INSTRUCTIONS = RICH_COURSE_INSTRUCTIONS.replace(
     "Ces libellés sont des repères de cadrage, pas des sources disciplinaires ni une certification. "
 ) + (
     " Affectez chaque question une seule fois à observation, analysis, reinvestment, knowledge_check ou transfer. "
+    "Chaque concept doit être lié par concept_ids à au moins une partie pour figurer dans la livraison. "
     "Ces groupes requis sont non vides ; une partie requiert donc trois questions distinctes, "
     "auxquelles s'ajoutent celles de knowledge_check et transfer. Choisissez le nombre de parties pour "
     "livrer le chapitre complet dans la sortie disponible. Numérotez de 1 à la dernière question sans rupture ; "

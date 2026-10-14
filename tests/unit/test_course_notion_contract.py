@@ -129,6 +129,20 @@ def test_multiple_aliases_follow_selection_order_and_cover_every_selected_notion
     assert bound.data["course_chapter"]["notions"] == ("Action collective", "Organisation")
 
 
+@pytest.mark.parametrize("multiple", [False, True])
+def test_all_concepts_must_reach_a_part_and_the_normal_export_projection(multiple):
+    _, _, dispatch = notion_preparation(multiple=multiple)
+    content = notion_content(dispatch)
+    content["course_chapter"]["concepts"].append({
+        **content["course_chapter"]["concepts"][0], "id": "CONCEPT2",
+        "notion_id": "N2" if multiple else "N1", "definition": "Définition synthétique supplémentaire."})
+    with pytest.raises(ValueError, match="CONCEPT_DELIVERY_COVERAGE"):
+        bind_p0_content(dispatch, content)
+    content["course_chapter"]["parts"][0]["concept_ids"].append("CONCEPT2")
+    bound = bind_p0_content(dispatch, content)
+    assert "Définition synthétique supplémentaire." in bound.data["sections"][2]["text"]
+
+
 @pytest.mark.parametrize("mutation", ["missing", "extra", "duplicate_ref", "empty_label", "ambiguous_label", "hash", "gap"])
 def test_resolution_gaps_substitution_or_ambiguity_are_refused(mutation):
     _, _, dispatch = notion_preparation(multiple=True)

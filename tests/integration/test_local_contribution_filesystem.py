@@ -83,7 +83,8 @@ def test_second_command_refuses_without_new_files_or_allocation(tmp_path, monkey
         raise AssertionError("NO_SECOND_ALLOCATION")
     monkeypatch.setattr("backend.modules.resource_library.application.commands.register_local_contribution.uuid4", forbidden)
     result = app.register(changed, correlation="synthetic")
-    assert result.success is False and result.outcome_status == OutcomeStatus.FAILED
+    assert result.success is False and result.outcome_status == OutcomeStatus.INDETERMINATE
+    assert result.side_effects[0]["reconciliation_required"] is True
     assert files(target.root) == before
 
 
@@ -135,8 +136,15 @@ def test_commit_failure_preserves_intent_version_and_stages_then_stops(tmp_path,
     before = files(target.root)
     assert app.inspect_operation(LocalContributionRequest(request).sha256)["state"] == "UNKNOWN"
     monkeypatch.setattr(store, "_fresh", original)
+    def forbidden():
+        raise AssertionError("NO_REALLOCATION_AFTER_HISTORICAL_UNKNOWN")
+    monkeypatch.setattr("backend.modules.resource_library.application.commands.register_local_contribution.uuid4", forbidden)
     again = app.register(request, correlation="synthetic")
-    assert not again.success and files(target.root) == before
+    assert not again.success and again.outcome_status == OutcomeStatus.INDETERMINATE
+    assert again.application_failure.message_key == "LOCAL_CONTRIBUTION_RECONCILE_REQUIRED"
+    assert again.side_effects[0]["effect_state"] == "UNKNOWN"
+    assert again.side_effects[0]["reconciliation_required"] is True
+    assert files(target.root) == before
 
 
 def test_failure_after_stage_before_intent_publish_never_restores_absent(tmp_path, monkeypatch):
@@ -153,6 +161,17 @@ def test_failure_after_stage_before_intent_publish_never_restores_absent(tmp_pat
     assert len(tuple((target.root / "staging").iterdir())) == 2
     assert not tuple((target.root / "intents").iterdir())
     assert app.inspect_operation(LocalContributionRequest(request).sha256)["state"] == "UNKNOWN"
+    before = files(target.root)
+    def forbidden(*_a, **_kw):
+        raise AssertionError("NO_REALLOCATION_OR_PUBLICATION_AFTER_HISTORICAL_UNKNOWN")
+    monkeypatch.setattr("backend.modules.resource_library.application.commands.register_local_contribution.uuid4", forbidden)
+    monkeypatch.setattr(os, "link", forbidden)
+    again = app.register(request, correlation="synthetic")
+    assert not again.success and again.outcome_status == OutcomeStatus.INDETERMINATE
+    assert again.application_failure.message_key == "LOCAL_CONTRIBUTION_RECONCILE_REQUIRED"
+    assert again.side_effects[0]["effect_state"] == "UNKNOWN"
+    assert again.side_effects[0]["reconciliation_required"] is True
+    assert files(target.root) == before
 
 
 def test_flush_failure_keeps_created_objects_and_reports_unknown(tmp_path, monkeypatch):

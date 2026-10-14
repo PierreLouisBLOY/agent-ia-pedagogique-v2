@@ -76,7 +76,8 @@ class RegisterLocalContribution:
                 raise ValueError("LOCAL_CONTRIBUTION_RECONCILE_REQUIRED")
             return self._success(record, correlation, replay=True)
         if prior["state"] != "ABSENT":
-            raise ValueError("LOCAL_CONTRIBUTION_RECONCILE_REQUIRED")
+            # No new contribution is allocated, but the historical graph is uncertain.
+            raise LocalContributionPersistenceError("LOCAL_CONTRIBUTION_RECONCILE_REQUIRED", uncertain=True)
         ids = {key: prefix + ":" + uuid4().hex for key, prefix in (("object_ref", "local-content"),
             ("version_ref", "local-version"), ("passage_ref", "local-passage"), ("provenance_ref", "local-provenance"))}
         record = LocalContributionRecord({"contract_id": "LOCAL-CONTRIBUTION-RECORD-1.0", **ids,

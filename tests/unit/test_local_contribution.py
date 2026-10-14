@@ -252,8 +252,11 @@ def test_incomplete_operation_refuses_allocation_and_never_retries(monkeypatch):
     def forbidden():
         raise AssertionError("NO_ALLOCATION_AFTER_UNKNOWN")
     monkeypatch.setattr("backend.modules.resource_library.application.commands.register_local_contribution.uuid4", forbidden)
-    with pytest.raises(ValueError, match="RECONCILE_REQUIRED"):
-        build_local_contribution_application(**args, enabled=True).register(request, correlation="synthetic")
+    result = build_local_contribution_application(**args, enabled=True).register(request, correlation="synthetic")
+    assert result.outcome_status == OutcomeStatus.INDETERMINATE and result.success is False
+    assert result.application_failure.message_key == "LOCAL_CONTRIBUTION_RECONCILE_REQUIRED"
+    assert result.side_effects[0]["effect_state"] == "UNKNOWN"
+    assert result.side_effects[0]["reconciliation_required"] is True
     assert "append" not in args["store"].calls
 
 

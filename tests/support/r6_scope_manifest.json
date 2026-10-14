@@ -629,7 +629,7 @@
     "backend/adapters/outbound/generation/openai/harden_materialization.py": "2ed6e6c336ba7061c7da445eacb782d20ac7c4a3796dbec65307bbaa06f7b2e1",
     "backend/adapters/outbound/generation/openai/locator_materialization.py": "baa06ce9538b8bb493c3e8a25945f2b099d2dfcb2393249ca21abc6818d01595",
     "backend/adapters/outbound/generation/openai/mapping.py": "c76176325a814aeac97924eb26caa6391f738ace86e890071757d9be554079eb",
-    "backend/adapters/outbound/generation/openai/p0_content.py": "cc420f0a8004a740a7c00fcd732b035dd91d62328c0c1e7e72181db91cb35a1d",
+    "backend/adapters/outbound/generation/openai/p0_content.py": "677d60ab8aeac22ea9a6c4aa069c5a9d3a93f952e484e032b40da4f04be9413c",
     "backend/adapters/outbound/generation/openai/prepare_contract.py": "a5df681dd26c0205fc644fc18eaf507b83deb29dd899454159e81e42b68c3b5f",
     "backend/adapters/outbound/generation/openai/r5_contract.py": "7f356578700542b553e13c811b386e63821b451e3e48433e3ba47dd30d966bac",
     "backend/adapters/outbound/generation/parse_diagnostic.py": "4032684e9c609f14d0a8a1e0ecd11c617a9cfd08e291979776587d9db4d0023a",
@@ -709,7 +709,7 @@
     "backend/modules/pedagogical_design/contracts/dto/assessment_bundle.py": "2a985e4bbf30f0a427029a4c2d60cb7ba6a47f5eab3b85696bdbe16295aa62ec",
     "backend/modules/pedagogical_design/contracts/dto/assessment_revision.py": "9044270869537cf76415d492a41bb12cb45800a264583474de2f6d191639ba88",
     "backend/modules/pedagogical_design/contracts/dto/conversation_draft.py": "74b20e758e6f75b620d895d8a40b658364727adafcf306d5e2a4b4786898e9d0",
-    "backend/modules/pedagogical_design/contracts/dto/course_chapter.py": "14bb4809158745742bc3d251e31108703e11b2e42bc9490fe07d763ad3ec3695",
+    "backend/modules/pedagogical_design/contracts/dto/course_chapter.py": "3ac4fdbb92cb97f0165341704d452b6c7e901fa676b1a605f665a56f8d049508",
     "backend/modules/pedagogical_design/contracts/dto/course_policy.py": "5d7072774a80d0e954948aad293399d92cde0fd274116a8a17f899424fb77c9d",
     "backend/modules/pedagogical_design/contracts/dto/p0_production.py": "c812670454ba9385dc38e2018fbd910fe9fd10fa78d44c33caef39d97c02b8a6",
     "backend/modules/pedagogical_design/contracts/dto/program_authority.py": "8c28dd368e3c2ccd4d06b4f7f3bce9f705cff0fdcf3425c90ff9c616dd03cd07",
@@ -1100,7 +1100,7 @@
     "tests/integration/test_p0_product_consent_http.py": "7547adea76f059793104916c68eac0283f9b7fee1a332741bf8b529626575bea",
     "tests/integration/test_p0_product_continuity_native.py": "4f5f805b45bac3900c912847453f923800be521b049796e31b5f9bca06fc1a69",
     "tests/integration/test_rich_course_normal_application.py": "86f12d8406c62362a0b262e37fb4a096307cd9ef7fa7a2accc59446e2b05d27b",
-    "tests/unit/test_course_notion_contract.py": "121c53c6417454572d8cfc16f807523a47424559ea38f99535c8f2c942b4c72e",
+    "tests/unit/test_course_notion_contract.py": "bc36d042a14ef55da9d6d3dc572430e361b69d88ce103957a5132228ed24ac39",
     "tests/unit/test_course_plain_lineage.py": "31c2ecde83c22b679e94a372df2302adca42db138933999afeaa72deda570f62",
     "tests/unit/test_institutional_treatment.py": "969fe948e1cf17e7806e30940f9bd4916c46e089469f8a09d2b2bb60a9563285",
     "tests/unit/test_integrated_p0_agentic_controls.py": "6382868935795adc2d947d7032f12025259fb00ea4de2d29f24c4be015be7f78",
@@ -1138,7 +1138,7 @@
     "tools/tests/p0_rich_course_preview.test.cjs": "13da2ab8849bf71e68e819db5f656690ff055bcca312abf7d2c00754dd952424",
     "tools/tests/p0_ui_async_binding.test.cjs": "1175ce61663b494660fa4777f42779c4b80d746bb5b8e10996d32f8a7fc0e3a4",
     "tools/tests/p0_ui_local_reference_context.test.cjs": "ea04482a9a69fe64efe2cea08f75263fa662f3a120846c4225e1a8ad8b93691c",
-    "tests/support/lu_product_guard_registry.json": "28721d54d48004bdc73115c52b93664bc45d26ba63e17af554d0d700b4cc8416"
+    "tests/support/lu_product_guard_registry.json": "0983080073574f1c408dda6b9ab8ebd48c5f3fce33ff9457432aa95aeba6742b"
   },
   "active_delta_paths": [
     ".gitignore",
@@ -3190,7 +3190,7 @@
       "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
       "parent_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
       "registry_path": "tests/support/lu_product_guard_registry.json",
-      "registry_sha256": "28721d54d48004bdc73115c52b93664bc45d26ba63e17af554d0d700b4cc8416",
+      "registry_sha256": "0983080073574f1c408dda6b9ab8ebd48c5f3fce33ff9457432aa95aeba6742b",
       "changed_owners": [
         "backend/adapters/inbound/api/p0_creation.py",
         "backend/adapters/inbound/api/p0_notion_evidence.py",
@@ -3402,7 +3402,7 @@
         },
         "backend/adapters/outbound/generation/openai/p0_content.py": {
           "before": "b520fd45f0bc4a656918aad4512bd47da62714c5171bf21ed974683681d0a333",
-          "after": "cc420f0a8004a740a7c00fcd732b035dd91d62328c0c1e7e72181db91cb35a1d"
+          "after": "677d60ab8aeac22ea9a6c4aa069c5a9d3a93f952e484e032b40da4f04be9413c"
         },
         "backend/adapters/outbound/generation/openai/p0_course_content_schema.py": {
           "before": null,
@@ -3546,7 +3546,7 @@
         },
         "backend/modules/pedagogical_design/contracts/dto/course_chapter.py": {
           "before": "2ccb7a6067d237d65dc02d89fd9f94de8197b8bc762b53c7c396ecd5841bcaf8",
-          "after": "14bb4809158745742bc3d251e31108703e11b2e42bc9490fe07d763ad3ec3695"
+          "after": "3ac4fdbb92cb97f0165341704d452b6c7e901fa676b1a605f665a56f8d049508"
         },
         "backend/modules/pedagogical_design/contracts/dto/course_delivery.py": {
           "before": null,
@@ -3774,7 +3774,7 @@
         },
         "tests/unit/test_course_notion_contract.py": {
           "before": null,
-          "after": "121c53c6417454572d8cfc16f807523a47424559ea38f99535c8f2c942b4c72e"
+          "after": "bc36d042a14ef55da9d6d3dc572430e361b69d88ce103957a5132228ed24ac39"
         },
         "tests/unit/test_course_plain_lineage.py": {
           "before": null,
@@ -3949,7 +3949,7 @@
       "original_owners_preserved": 452,
       "private_exclusions_preserved": 27,
       "guard_functions": "UNCHANGED",
-      "exact_delta_review_sha256": "063b20380999f4726e035d0dc37bc92ef30b90e54f3c6ef21367ea60fcb74da6",
+      "exact_delta_review_sha256": "1365d3a52f5409fb017931e15d5a10d4db2ff2d7e5d02995e40c62c24cef7df4",
       "structural_review_sha256": "1f63930c472e21b6e4a1db4127ebc1de87aba1e469dc33dc9201f6e51c86ae82",
       "live_gates": "CLOSED",
       "provider_calls": 0,

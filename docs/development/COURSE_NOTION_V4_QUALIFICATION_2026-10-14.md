@@ -20,6 +20,7 @@ Les validators contrôlent également la méthode, les liens, la couverture uniq
 - Ruff conforme après correction des imports ; le premier contrôle Ruff en erreur reste dans le dossier technique.
 - Mypy : aucun problème sur 923 fichiers backend ; compilation backend réussie.
 - Syntaxe JavaScript et exécution pure du constructeur de contexte UI sur fixtures DOM synthétiques : CHAPTER4, EXPLAINED3 et refus de numéro invalide vérifiés. Ce contrôle n'est pas une inspection visuelle du navigateur.
+- Après le constat de revue sur le consommateur public UI : attente CHAPTER actualisée vers COURSE4, témoin EXPLAINED conservé en COURSE3 ; les trois tests de `tools/tests/p0_rich_course_context.test.cjs` ont été exécutés, 3 PASS, zéro FAIL/SKIP.
 
 Fixtures synthétiques uniquement pour ces contrôles. Aucun appel fournisseur réel, ancienne réponse pédagogique, base originale, ledger P1 ou pièce privée ne constitue une fixture. Aucun global n'est relancé. Les reçus exacts et la revue distincte du successeur restent externes au dépôt.
 

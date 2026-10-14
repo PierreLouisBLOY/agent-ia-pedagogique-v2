@@ -18,13 +18,14 @@ function select(level="FIRST_STMG"){
 test("rich COURSE is selected visibly, hashes its format, and requires a local number",()=>{
  select();h.node("course-format").value="CHAPTER";h.node("local-chapter").value="1";
  h.sandbox.p0CourseFormatOptions();const rich=h.sandbox.p0Context();
- assert.equal(rich.contract_id,"P0-CONTEXT-COURSE-3.0");assert.equal(rich.course_format,"CHAPTER");
+ assert.equal(rich.contract_id,"P0-CONTEXT-COURSE-4.0");assert.equal(rich.course_format,"CHAPTER");
  assert.equal(rich.local_progression.chapter,"1");assert.equal(h.node("local-chapter").required,true);
  for(const invalid of ["","01","0","100","Chapitre II"," 1"]) {
   h.node("local-chapter").value=invalid;assert.throws(()=>h.sandbox.p0Context(),/CHAPTER_NUMBER/);
  }
  h.node("course-format").value="EXPLAINED";h.node("local-chapter").value="Chapitre local II";h.sandbox.p0CourseFormatOptions();
  assert.equal(h.node("local-chapter").required,false);assert.equal(h.sandbox.p0Context().course_format,"EXPLAINED");
+ assert.equal(h.sandbox.p0Context().contract_id,"P0-CONTEXT-COURSE-3.0");
 });
 test("other families retain the old institution context and receive no course format",()=>{
  h.node("family").value="QUIZ";select();h.sandbox.p0CourseFormatOptions();

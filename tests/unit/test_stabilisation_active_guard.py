@@ -56,7 +56,9 @@ def active_clone(tmp_path_factory):
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes((ROOT / path).read_bytes())
     git(root, "init", "--quiet")
-    git(root, "add", "--", *guard.PATHS, guard.SELF, guard.MANIFEST)
+    paths = (*guard.PATHS, guard.SELF, guard.MANIFEST)
+    git(root, "add", "--pathspec-from-file=-", "--pathspec-file-nul",
+        input_bytes=b"\0".join(path.encode("utf-8") for path in paths) + b"\0")
     assert guard.violations(root) == []
     return root
 
@@ -128,7 +130,8 @@ def test_portable_active_public_inventory_at_each_real_git_state(tmp_path, stage
         destination.write_bytes((ROOT / path).read_bytes())
     git(root, "init", "--quiet")
     if stage != "untracked":
-        git(root, "add", "--", *sorted(public))
+        git(root, "add", "--pathspec-from-file=-", "--pathspec-file-nul",
+            input_bytes=b"\0".join(path.encode("utf-8") for path in sorted(public)) + b"\0")
     if stage == "committed":
         git(root, "-c", "commit.gpgsign=false", "-c", "user.name=Portable synthetic fixture", "-c",
             "user.email=portable-fixture@example.invalid", "commit", "--quiet",

@@ -1,7 +1,7 @@
 {
   "schema": "LU-PRODUCT-GUARD-REGISTRY-1.0",
   "status": "REVIEWED_EXACT_DELTA_PENDING_TARGETED_QUALIFICATION",
-  "timestamp_utc": "2026-10-15T22:08:04.430798+00:00",
+  "timestamp_utc": "2026-10-15T23:38:22.623812+00:00",
   "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
   "baseline_tree": "93bdaa387815f6a6654496120b40e6853629f082",
   "predecessor_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
@@ -45,6 +45,8 @@
     "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_contract.py",
     "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_ledger.py",
     "backend/adapters/outbound/generation/openai/p0_product_rejected_policy.py",
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_off_contract.py",
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_off_reader.py",
     "backend/adapters/outbound/persistence/saved_production.py",
     "backend/adapters/outbound/resource_library/local_contribution_store.py",
     "backend/adapters/outbound/review/p0_review.py",
@@ -61,6 +63,7 @@
     "backend/infrastructure/composition/factories/p0_rejected_profile.py",
     "backend/infrastructure/composition/factories/p0_rejected_profile_contract.py",
     "backend/infrastructure/composition/factories/p0_rejected_readset.py",
+    "backend/infrastructure/composition/factories/p0_unknown_off.py",
     "backend/infrastructure/composition/factories/stmg_local_activity.py",
     "backend/infrastructure/composition/factories/stmg_local_contribution.py",
     "backend/modules/documents_provenance/contracts/dto/local_contribution_provenance.py",
@@ -102,6 +105,7 @@
     "backend/modules/work_orchestration/application/services/saved_production.py",
     "backend/modules/work_orchestration/contracts/dto/p0_production_read_view.py",
     "backend/modules/work_orchestration/contracts/dto/p1_campaign_inspection.py",
+    "backend/modules/work_orchestration/contracts/dto/p1_unknown_off_inspection.py",
     "backend/modules/work_orchestration/contracts/dto/saved_production.py",
     "docs/adr/ADR-LU-P0-boundary-repair.md",
     "docs/adr/ADR-LU-P1-exact-local-source-context.md",
@@ -128,6 +132,7 @@
     "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md",
     "docs/development/ADR_LU_PRODUIT_01_WINDOWS_SOURCE_COVERAGE.md",
     "docs/development/ADR_P0_NORMAL_FAILURE_DIAGNOSTIC_2026-10-15.md",
+    "docs/development/ADR_P1_UNKNOWN_LOCAL_OFF_2026-10-16.md",
     "docs/development/COURSE_NOTION_V4_QUALIFICATION_2026-10-14.md",
     "docs/development/INSTITUTIONAL_TREATMENT_REGISTER.md",
     "docs/development/P0_EXACT_NOTION_HTTP.md",
@@ -143,6 +148,7 @@
     "tests/integration/test_p0_product_consent_http.py",
     "tests/integration/test_p0_product_continuity_native.py",
     "tests/integration/test_p0_product_rejected_continuity_native.py",
+    "tests/integration/test_p0_product_unknown_off_native.py",
     "tests/integration/test_rich_course_normal_application.py",
     "tests/support/lu_product_guard_registry.json",
     "tests/support/r6_scope_guard.py",
@@ -170,6 +176,7 @@
     "tests/unit/test_p0_product_destination.py",
     "tests/unit/test_p0_product_permission.py",
     "tests/unit/test_p0_product_rejected_continuity.py",
+    "tests/unit/test_p0_product_unknown_off.py",
     "tests/unit/test_p0_rejected_launch_dispatch.py",
     "tests/unit/test_p0_rich_course_content.py",
     "tests/unit/test_p0_source_admission.py",
@@ -232,6 +239,8 @@
     "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_contract.py",
     "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_ledger.py",
     "backend/adapters/outbound/generation/openai/p0_product_rejected_policy.py",
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_off_contract.py",
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_off_reader.py",
     "backend/adapters/outbound/persistence/saved_production.py",
     "backend/adapters/outbound/resource_library/local_contribution_store.py",
     "backend/adapters/outbound/review/p0_review.py",
@@ -248,6 +257,7 @@
     "backend/infrastructure/composition/factories/p0_rejected_profile.py",
     "backend/infrastructure/composition/factories/p0_rejected_profile_contract.py",
     "backend/infrastructure/composition/factories/p0_rejected_readset.py",
+    "backend/infrastructure/composition/factories/p0_unknown_off.py",
     "backend/infrastructure/composition/factories/stmg_local_activity.py",
     "backend/infrastructure/composition/factories/stmg_local_contribution.py",
     "backend/modules/documents_provenance/contracts/dto/local_contribution_provenance.py",
@@ -289,6 +299,7 @@
     "backend/modules/work_orchestration/application/services/saved_production.py",
     "backend/modules/work_orchestration/contracts/dto/p0_production_read_view.py",
     "backend/modules/work_orchestration/contracts/dto/p1_campaign_inspection.py",
+    "backend/modules/work_orchestration/contracts/dto/p1_unknown_off_inspection.py",
     "backend/modules/work_orchestration/contracts/dto/saved_production.py",
     "docs/adr/ADR-LU-P0-boundary-repair.md",
     "docs/adr/ADR-LU-P1-exact-local-source-context.md",
@@ -315,6 +326,7 @@
     "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md",
     "docs/development/ADR_LU_PRODUIT_01_WINDOWS_SOURCE_COVERAGE.md",
     "docs/development/ADR_P0_NORMAL_FAILURE_DIAGNOSTIC_2026-10-15.md",
+    "docs/development/ADR_P1_UNKNOWN_LOCAL_OFF_2026-10-16.md",
     "docs/development/COURSE_NOTION_V4_QUALIFICATION_2026-10-14.md",
     "docs/development/INSTITUTIONAL_TREATMENT_REGISTER.md",
     "docs/development/P0_EXACT_NOTION_HTTP.md",
@@ -330,6 +342,7 @@
     "tests/integration/test_p0_product_consent_http.py",
     "tests/integration/test_p0_product_continuity_native.py",
     "tests/integration/test_p0_product_rejected_continuity_native.py",
+    "tests/integration/test_p0_product_unknown_off_native.py",
     "tests/integration/test_rich_course_normal_application.py",
     "tests/unit/test_course_notion_contract.py",
     "tests/unit/test_course_plain_lineage.py",
@@ -354,6 +367,7 @@
     "tests/unit/test_p0_product_destination.py",
     "tests/unit/test_p0_product_permission.py",
     "tests/unit/test_p0_product_rejected_continuity.py",
+    "tests/unit/test_p0_product_unknown_off.py",
     "tests/unit/test_p0_rejected_launch_dispatch.py",
     "tests/unit/test_p0_rich_course_content.py",
     "tests/unit/test_p0_source_admission.py",
@@ -515,6 +529,14 @@
       "before": null,
       "after": "66978fbab5b875b57e53927ca5bb3b48b11d54c9e71bb09f39e6accc0a333ef8"
     },
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_off_contract.py": {
+      "before": null,
+      "after": "ac41296454891960fddfce3214b795dec64e912a0e14b7bdcf2f79613bc66fe8"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_off_reader.py": {
+      "before": null,
+      "after": "cd1c425e0d3d82747fbf765433d18fd10ee95e33b35d1272c6710d2c784cf2c2"
+    },
     "backend/adapters/outbound/persistence/saved_production.py": {
       "before": "2f1615c4781c0a3502ba0b2ce0276c9378823e7980ac71cf75b6db4f804fb086",
       "after": "3347a49aaa438bf20d6af768102dcce6f918b5b6f03bafeb3b69ea01766070e0"
@@ -578,6 +600,10 @@
     "backend/infrastructure/composition/factories/p0_rejected_readset.py": {
       "before": null,
       "after": "40f1fb705084a74040b858605ea424b917a66c741f14d3bc7501d51f6ed54a9a"
+    },
+    "backend/infrastructure/composition/factories/p0_unknown_off.py": {
+      "before": null,
+      "after": "5b2efe297a5ea4b3a49315e599594bdaa3def49bd830afc168aa9712e9a646e3"
     },
     "backend/infrastructure/composition/factories/stmg_local_activity.py": {
       "before": null,
@@ -741,7 +767,11 @@
     },
     "backend/modules/work_orchestration/contracts/dto/p1_campaign_inspection.py": {
       "before": null,
-      "after": "93158cdcc4e629456804b3bf9fa53f37466dd03adbdacc0b8487ad9025060aa9"
+      "after": "6c400015af1e9f7890b9a1604b9f995df618119110db33ab33fafcd2a43a4239"
+    },
+    "backend/modules/work_orchestration/contracts/dto/p1_unknown_off_inspection.py": {
+      "before": null,
+      "after": "e75d2cef097501ff170a09f2dd4ca3ad1366406b22c4d97b16ba53b353730e25"
     },
     "backend/modules/work_orchestration/contracts/dto/saved_production.py": {
       "before": "7652b2bf61878e5ce14acde8febb08a269fefb2ef186f964b98f1cca037c98ef",
@@ -847,6 +877,10 @@
       "before": null,
       "after": "432a158c3c497d1ffd015b119778f1b98f8d3b3f7bcddc5cb6ed28d4c4455698"
     },
+    "docs/development/ADR_P1_UNKNOWN_LOCAL_OFF_2026-10-16.md": {
+      "before": null,
+      "after": "d05e0fc4995bc7ec46ca8ed18698e3f88b9d344509dc88534f99e6430263acb6"
+    },
     "docs/development/COURSE_NOTION_V4_QUALIFICATION_2026-10-14.md": {
       "before": null,
       "after": "00ce7f343cd33b5701ba5180631f7b50b9d4d73eb0d61b1ee47e26130a657b75"
@@ -906,6 +940,10 @@
     "tests/integration/test_p0_product_rejected_continuity_native.py": {
       "before": null,
       "after": "967d0a46fb6540787dca3c72118926b6ac5ef7a45380f994da4aebae4ccd322c"
+    },
+    "tests/integration/test_p0_product_unknown_off_native.py": {
+      "before": null,
+      "after": "e2a7e40f5a08e134491b1c2c7b18d5feb0845e336d495d66a7b5b7f4e3c51e70"
     },
     "tests/integration/test_rich_course_normal_application.py": {
       "before": null,
@@ -1002,6 +1040,10 @@
     "tests/unit/test_p0_product_rejected_continuity.py": {
       "before": null,
       "after": "4c3a36ca683074f0c295940ba87501b45749a74ba9c96ac047f16bbf29f32aee"
+    },
+    "tests/unit/test_p0_product_unknown_off.py": {
+      "before": null,
+      "after": "885db5566b583ce03ed6e3c4a41080deb494df4365685c263dcae4cf3b98007c"
     },
     "tests/unit/test_p0_rejected_launch_dispatch.py": {
       "before": null,
@@ -1618,8 +1660,8 @@
   "runtime_writes": 0,
   "historical_results": "UNCHANGED",
   "refresh_scope": {
-    "source_head": "efe4c8a6a6f1f54e25116974dc5caaad1f7cd023",
-    "source_tree": "09eeeb0fc8d5ad0f5f3bcb55899e45b6aa2dfbad",
+    "source_head": "fe68a86182c1d7f9e884f2ef6b62f6a17af44d8e",
+    "source_tree": "5af92edc5470619f2065cd15cdd07728627803a9",
     "changed_since_source": [
       "architecture/adr/ADR-M02-local-contribution-overlay.md",
       "backend/adapters/inbound/application/local_contribution.py",
@@ -1634,12 +1676,15 @@
       "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_contract.py",
       "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_ledger.py",
       "backend/adapters/outbound/generation/openai/p0_product_rejected_policy.py",
+      "backend/adapters/outbound/generation/openai/p0_product_unknown_off_contract.py",
+      "backend/adapters/outbound/generation/openai/p0_product_unknown_off_reader.py",
       "backend/adapters/outbound/persistence/saved_production.py",
       "backend/adapters/outbound/resource_library/local_contribution_store.py",
       "backend/infrastructure/composition/factories/local_contribution.py",
       "backend/infrastructure/composition/factories/p0_rejected_profile.py",
       "backend/infrastructure/composition/factories/p0_rejected_profile_contract.py",
       "backend/infrastructure/composition/factories/p0_rejected_readset.py",
+      "backend/infrastructure/composition/factories/p0_unknown_off.py",
       "backend/infrastructure/composition/factories/stmg_local_contribution.py",
       "backend/modules/documents_provenance/contracts/dto/local_contribution_provenance.py",
       "backend/modules/pedagogical_context/contracts/dto/course_notions.py",
@@ -1656,13 +1701,16 @@
       "backend/modules/resource_library/ports/outbound/local_contribution_store.py",
       "backend/modules/work_orchestration/application/queries/inspect_p1_campaign.py",
       "backend/modules/work_orchestration/contracts/dto/p1_campaign_inspection.py",
+      "backend/modules/work_orchestration/contracts/dto/p1_unknown_off_inspection.py",
       "docs/development/ADR_COURSE_NOTION_BINDING_V4_2026-10-14.md",
       "docs/development/ADR_LU_PRODUIT_01_P1_KNOWN_REJECTED_CONTINUITY_V2_2026-10-14.md",
       "docs/development/ADR_P0_NORMAL_FAILURE_DIAGNOSTIC_2026-10-15.md",
+      "docs/development/ADR_P1_UNKNOWN_LOCAL_OFF_2026-10-16.md",
       "docs/development/COURSE_NOTION_V4_QUALIFICATION_2026-10-14.md",
       "frontend/app.js",
       "tests/integration/test_local_contribution_filesystem.py",
       "tests/integration/test_p0_product_rejected_continuity_native.py",
+      "tests/integration/test_p0_product_unknown_off_native.py",
       "tests/integration/test_rich_course_normal_application.py",
       "tests/support/lu_product_guard_registry.json",
       "tests/support/r6_scope_guard.py",
@@ -1671,6 +1719,7 @@
       "tests/unit/test_local_contribution.py",
       "tests/unit/test_p0_normal_failure_diagnostic.py",
       "tests/unit/test_p0_product_rejected_continuity.py",
+      "tests/unit/test_p0_product_unknown_off.py",
       "tests/unit/test_p0_rejected_launch_dispatch.py",
       "tests/unit/test_p0_rich_course_content.py",
       "tests/unit/test_p1_campaign_inspection.py",
@@ -1683,6 +1732,6 @@
     "private_exclusions_preserved": true,
     "predicates_changed": false
   },
-  "exact_delta_review_sha256": "2d174f4e946a69cc62ffd724988caeb5d6a04cc8e6802ccfbcc665907bd3a0d5",
+  "exact_delta_review_sha256": "28e412aa43a790e4676de3584d47e23405d0dd58b87ae4f9888c7ad153e7b827",
   "exact_delta_reviewer": "/root/p1_preparation_review"
 }

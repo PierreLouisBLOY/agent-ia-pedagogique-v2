@@ -1,7 +1,7 @@
 {
   "schema": "LU-PRODUCT-GUARD-REGISTRY-1.0",
   "status": "REVIEWED_EXACT_DELTA_PENDING_TARGETED_QUALIFICATION",
-  "timestamp_utc": "2026-10-14T14:48:12.069803+00:00",
+  "timestamp_utc": "2026-10-15T15:27:28.908172+00:00",
   "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
   "baseline_tree": "93bdaa387815f6a6654496120b40e6853629f082",
   "predecessor_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
@@ -12,13 +12,16 @@
   "qualification_status": "NOT_PERFORMED",
   "guard_functions": "UNCHANGED",
   "delta_paths": [
+    "architecture/adr/ADR-M02-local-contribution-overlay.md",
     "backend/adapters/inbound/api/p0_creation.py",
     "backend/adapters/inbound/api/p0_notion_evidence.py",
     "backend/adapters/inbound/api/production_media.py",
     "backend/adapters/inbound/api/routes.py",
     "backend/adapters/inbound/api/saved_production.py",
     "backend/adapters/inbound/application/institutional_catalog.py",
+    "backend/adapters/inbound/application/local_contribution.py",
     "backend/adapters/inbound/application/lot2_saved_production.py",
+    "backend/adapters/inbound/application/p1_campaign_inspection.py",
     "backend/adapters/inbound/application/production_media.py",
     "backend/adapters/inbound/application/stmg_local_activity.py",
     "backend/adapters/inbound/cli/local_browser.py",
@@ -37,18 +40,29 @@
     "backend/adapters/outbound/generation/openai/p0_product_continuity_ledger.py",
     "backend/adapters/outbound/generation/openai/p0_product_ledger.py",
     "backend/adapters/outbound/generation/openai/p0_product_policy.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_contract.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_ledger.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_policy.py",
     "backend/adapters/outbound/persistence/saved_production.py",
+    "backend/adapters/outbound/resource_library/local_contribution_store.py",
     "backend/adapters/outbound/review/p0_review.py",
     "backend/agent_runtime/security/tool_application.py",
     "backend/infrastructure/composition/factories/course_media.py",
     "backend/infrastructure/composition/factories/institutional_catalog.py",
     "backend/infrastructure/composition/factories/local_browser.py",
+    "backend/infrastructure/composition/factories/local_contribution.py",
     "backend/infrastructure/composition/factories/p0_creation.py",
     "backend/infrastructure/composition/factories/p0_local_reference_context.py",
     "backend/infrastructure/composition/factories/p0_normal_profile.py",
     "backend/infrastructure/composition/factories/p0_normal_profile_contract.py",
     "backend/infrastructure/composition/factories/p0_product_consent.py",
+    "backend/infrastructure/composition/factories/p0_rejected_profile.py",
+    "backend/infrastructure/composition/factories/p0_rejected_profile_contract.py",
+    "backend/infrastructure/composition/factories/p0_rejected_readset.py",
     "backend/infrastructure/composition/factories/stmg_local_activity.py",
+    "backend/infrastructure/composition/factories/stmg_local_contribution.py",
+    "backend/modules/documents_provenance/contracts/dto/local_contribution_provenance.py",
     "backend/modules/knowledge_reference/application/queries/inspect_institutional_catalog.py",
     "backend/modules/knowledge_reference/application/queries/qualified_institutional_corpus.py",
     "backend/modules/knowledge_reference/application/queries/stmg_alignment.py",
@@ -69,7 +83,12 @@
     "backend/modules/pedagogical_design/contracts/dto/production_media.py",
     "backend/modules/pedagogical_design/ports/outbound/p0_confirmed_recovery.py",
     "backend/modules/pedagogical_design/ports/outbound/p0_generation_controls.py",
+    "backend/modules/resource_library/application/commands/register_local_contribution.py",
+    "backend/modules/resource_library/application/queries/read_local_contribution.py",
+    "backend/modules/resource_library/contracts/dto/local_contribution.py",
+    "backend/modules/resource_library/ports/outbound/local_contribution_store.py",
     "backend/modules/validation_control/application/commands/validate_p0.py",
+    "backend/modules/work_orchestration/application/queries/inspect_p1_campaign.py",
     "backend/modules/work_orchestration/application/queries/p0_local_reference_context.py",
     "backend/modules/work_orchestration/application/queries/p0_source_admission.py",
     "backend/modules/work_orchestration/application/queries/propose_p0_intention.py",
@@ -81,6 +100,7 @@
     "backend/modules/work_orchestration/application/services/production_media.py",
     "backend/modules/work_orchestration/application/services/saved_production.py",
     "backend/modules/work_orchestration/contracts/dto/p0_production_read_view.py",
+    "backend/modules/work_orchestration/contracts/dto/p1_campaign_inspection.py",
     "backend/modules/work_orchestration/contracts/dto/saved_production.py",
     "docs/adr/ADR-LU-P0-boundary-repair.md",
     "docs/adr/ADR-LU-P1-exact-local-source-context.md",
@@ -103,6 +123,7 @@
     "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROFILE_PACKAGE_BASELINE.md",
     "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROVIDER_COMPOSITION.md",
     "docs/development/ADR_LU_PRODUIT_01_P1_CONTINUITY_2026-10-13.md",
+    "docs/development/ADR_LU_PRODUIT_01_P1_KNOWN_REJECTED_CONTINUITY_V2_2026-10-14.md",
     "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md",
     "docs/development/ADR_LU_PRODUIT_01_WINDOWS_SOURCE_COVERAGE.md",
     "docs/development/COURSE_NOTION_V4_QUALIFICATION_2026-10-14.md",
@@ -114,10 +135,12 @@
     "frontend/app.js",
     "frontend/index.html",
     "frontend/styles.css",
+    "tests/integration/test_local_contribution_filesystem.py",
     "tests/integration/test_p0_intention_http.py",
     "tests/integration/test_p0_local_reference_context_composition.py",
     "tests/integration/test_p0_product_consent_http.py",
     "tests/integration/test_p0_product_continuity_native.py",
+    "tests/integration/test_p0_product_rejected_continuity_native.py",
     "tests/integration/test_rich_course_normal_application.py",
     "tests/support/lu_product_guard_registry.json",
     "tests/support/r6_scope_guard.py",
@@ -127,6 +150,7 @@
     "tests/unit/test_institutional_treatment.py",
     "tests/unit/test_integrated_p0_agentic_controls.py",
     "tests/unit/test_integrated_saved_p0_resume.py",
+    "tests/unit/test_local_contribution.py",
     "tests/unit/test_lu_product_active_guard.py",
     "tests/unit/test_p0_candidate_status_binding.py",
     "tests/unit/test_p0_confirmed_application_recovery.py",
@@ -142,9 +166,12 @@
     "tests/unit/test_p0_product_continuity.py",
     "tests/unit/test_p0_product_destination.py",
     "tests/unit/test_p0_product_permission.py",
+    "tests/unit/test_p0_product_rejected_continuity.py",
+    "tests/unit/test_p0_rejected_launch_dispatch.py",
     "tests/unit/test_p0_rich_course_content.py",
     "tests/unit/test_p0_source_admission.py",
     "tests/unit/test_p0_wire_projection_boundary.py",
+    "tests/unit/test_p1_campaign_inspection.py",
     "tests/unit/test_product_media.py",
     "tests/unit/test_product_media_http.py",
     "tests/unit/test_product_media_review_routing.py",
@@ -152,6 +179,7 @@
     "tests/unit/test_saved_course_local_edits.py",
     "tests/unit/test_saved_p0_read_compatibility.py",
     "tests/unit/test_stmg_local_activity_qualification.py",
+    "tests/unit/test_stmg_local_contribution.py",
     "tools/launch-local.ps1",
     "tools/p0-tokenize-local.py",
     "tools/tests/p0_conversation_shell.test.cjs",
@@ -167,13 +195,16 @@
     "tools/tests/stmg_context.test.cjs"
   ],
   "changed_owners": [
+    "architecture/adr/ADR-M02-local-contribution-overlay.md",
     "backend/adapters/inbound/api/p0_creation.py",
     "backend/adapters/inbound/api/p0_notion_evidence.py",
     "backend/adapters/inbound/api/production_media.py",
     "backend/adapters/inbound/api/routes.py",
     "backend/adapters/inbound/api/saved_production.py",
     "backend/adapters/inbound/application/institutional_catalog.py",
+    "backend/adapters/inbound/application/local_contribution.py",
     "backend/adapters/inbound/application/lot2_saved_production.py",
+    "backend/adapters/inbound/application/p1_campaign_inspection.py",
     "backend/adapters/inbound/application/production_media.py",
     "backend/adapters/inbound/application/stmg_local_activity.py",
     "backend/adapters/inbound/cli/local_browser.py",
@@ -192,18 +223,29 @@
     "backend/adapters/outbound/generation/openai/p0_product_continuity_ledger.py",
     "backend/adapters/outbound/generation/openai/p0_product_ledger.py",
     "backend/adapters/outbound/generation/openai/p0_product_policy.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_contract.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_ledger.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_policy.py",
     "backend/adapters/outbound/persistence/saved_production.py",
+    "backend/adapters/outbound/resource_library/local_contribution_store.py",
     "backend/adapters/outbound/review/p0_review.py",
     "backend/agent_runtime/security/tool_application.py",
     "backend/infrastructure/composition/factories/course_media.py",
     "backend/infrastructure/composition/factories/institutional_catalog.py",
     "backend/infrastructure/composition/factories/local_browser.py",
+    "backend/infrastructure/composition/factories/local_contribution.py",
     "backend/infrastructure/composition/factories/p0_creation.py",
     "backend/infrastructure/composition/factories/p0_local_reference_context.py",
     "backend/infrastructure/composition/factories/p0_normal_profile.py",
     "backend/infrastructure/composition/factories/p0_normal_profile_contract.py",
     "backend/infrastructure/composition/factories/p0_product_consent.py",
+    "backend/infrastructure/composition/factories/p0_rejected_profile.py",
+    "backend/infrastructure/composition/factories/p0_rejected_profile_contract.py",
+    "backend/infrastructure/composition/factories/p0_rejected_readset.py",
     "backend/infrastructure/composition/factories/stmg_local_activity.py",
+    "backend/infrastructure/composition/factories/stmg_local_contribution.py",
+    "backend/modules/documents_provenance/contracts/dto/local_contribution_provenance.py",
     "backend/modules/knowledge_reference/application/queries/inspect_institutional_catalog.py",
     "backend/modules/knowledge_reference/application/queries/qualified_institutional_corpus.py",
     "backend/modules/knowledge_reference/application/queries/stmg_alignment.py",
@@ -224,7 +266,12 @@
     "backend/modules/pedagogical_design/contracts/dto/production_media.py",
     "backend/modules/pedagogical_design/ports/outbound/p0_confirmed_recovery.py",
     "backend/modules/pedagogical_design/ports/outbound/p0_generation_controls.py",
+    "backend/modules/resource_library/application/commands/register_local_contribution.py",
+    "backend/modules/resource_library/application/queries/read_local_contribution.py",
+    "backend/modules/resource_library/contracts/dto/local_contribution.py",
+    "backend/modules/resource_library/ports/outbound/local_contribution_store.py",
     "backend/modules/validation_control/application/commands/validate_p0.py",
+    "backend/modules/work_orchestration/application/queries/inspect_p1_campaign.py",
     "backend/modules/work_orchestration/application/queries/p0_local_reference_context.py",
     "backend/modules/work_orchestration/application/queries/p0_source_admission.py",
     "backend/modules/work_orchestration/application/queries/propose_p0_intention.py",
@@ -236,6 +283,7 @@
     "backend/modules/work_orchestration/application/services/production_media.py",
     "backend/modules/work_orchestration/application/services/saved_production.py",
     "backend/modules/work_orchestration/contracts/dto/p0_production_read_view.py",
+    "backend/modules/work_orchestration/contracts/dto/p1_campaign_inspection.py",
     "backend/modules/work_orchestration/contracts/dto/saved_production.py",
     "docs/adr/ADR-LU-P0-boundary-repair.md",
     "docs/adr/ADR-LU-P1-exact-local-source-context.md",
@@ -258,6 +306,7 @@
     "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROFILE_PACKAGE_BASELINE.md",
     "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROVIDER_COMPOSITION.md",
     "docs/development/ADR_LU_PRODUIT_01_P1_CONTINUITY_2026-10-13.md",
+    "docs/development/ADR_LU_PRODUIT_01_P1_KNOWN_REJECTED_CONTINUITY_V2_2026-10-14.md",
     "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md",
     "docs/development/ADR_LU_PRODUIT_01_WINDOWS_SOURCE_COVERAGE.md",
     "docs/development/COURSE_NOTION_V4_QUALIFICATION_2026-10-14.md",
@@ -269,16 +318,19 @@
     "frontend/app.js",
     "frontend/index.html",
     "frontend/styles.css",
+    "tests/integration/test_local_contribution_filesystem.py",
     "tests/integration/test_p0_intention_http.py",
     "tests/integration/test_p0_local_reference_context_composition.py",
     "tests/integration/test_p0_product_consent_http.py",
     "tests/integration/test_p0_product_continuity_native.py",
+    "tests/integration/test_p0_product_rejected_continuity_native.py",
     "tests/integration/test_rich_course_normal_application.py",
     "tests/unit/test_course_notion_contract.py",
     "tests/unit/test_course_plain_lineage.py",
     "tests/unit/test_institutional_treatment.py",
     "tests/unit/test_integrated_p0_agentic_controls.py",
     "tests/unit/test_integrated_saved_p0_resume.py",
+    "tests/unit/test_local_contribution.py",
     "tests/unit/test_lu_product_active_guard.py",
     "tests/unit/test_p0_candidate_status_binding.py",
     "tests/unit/test_p0_confirmed_application_recovery.py",
@@ -294,9 +346,12 @@
     "tests/unit/test_p0_product_continuity.py",
     "tests/unit/test_p0_product_destination.py",
     "tests/unit/test_p0_product_permission.py",
+    "tests/unit/test_p0_product_rejected_continuity.py",
+    "tests/unit/test_p0_rejected_launch_dispatch.py",
     "tests/unit/test_p0_rich_course_content.py",
     "tests/unit/test_p0_source_admission.py",
     "tests/unit/test_p0_wire_projection_boundary.py",
+    "tests/unit/test_p1_campaign_inspection.py",
     "tests/unit/test_product_media.py",
     "tests/unit/test_product_media_http.py",
     "tests/unit/test_product_media_review_routing.py",
@@ -304,6 +359,7 @@
     "tests/unit/test_saved_course_local_edits.py",
     "tests/unit/test_saved_p0_read_compatibility.py",
     "tests/unit/test_stmg_local_activity_qualification.py",
+    "tests/unit/test_stmg_local_contribution.py",
     "tools/launch-local.ps1",
     "tools/p0-tokenize-local.py",
     "tools/tests/p0_conversation_shell.test.cjs",
@@ -319,6 +375,10 @@
     "tools/tests/stmg_context.test.cjs"
   ],
   "owner_sha256": {
+    "architecture/adr/ADR-M02-local-contribution-overlay.md": {
+      "before": null,
+      "after": "18adc5d603eb627b7631e7eeea9deeb188b7921be612de5e175e2930066d917b"
+    },
     "backend/adapters/inbound/api/p0_creation.py": {
       "before": "b48da62775eb3137d86b8b407def1dc3fab0d1a42c9bce6b6dd9f57d1f561727",
       "after": "176ca414cf749d59ceacbfa72ded1bb5e2b0fd3a4b6f5f8c3a296f2f83e4a4cc"
@@ -343,9 +403,17 @@
       "before": "c06259164be9da6014559c6c9152844109602a4ec00dd906d9f8c5094fb74ab1",
       "after": "04db1105030eb5939dc9a2609fce150280289abe8437f11140a3effa2eab0be5"
     },
+    "backend/adapters/inbound/application/local_contribution.py": {
+      "before": null,
+      "after": "1026931e5318609b43811b24f4e6357d188f6dac01574ec1d86132c9992331b2"
+    },
     "backend/adapters/inbound/application/lot2_saved_production.py": {
       "before": "c48f2ce6620dfd4287f0740c86dd12f130d4b7f9dbc563ac427c8805f406243d",
       "after": "e645cb14f0e2117e365297ab1b63db4800e8b3756d3f754b5c26fe7f9d4a831c"
+    },
+    "backend/adapters/inbound/application/p1_campaign_inspection.py": {
+      "before": null,
+      "after": "e300402cb1f5ba15d1ff96494a1c5dde604c58baa2b963a8a53c8ddda84489a4"
     },
     "backend/adapters/inbound/application/production_media.py": {
       "before": null,
@@ -357,7 +425,7 @@
     },
     "backend/adapters/inbound/cli/local_browser.py": {
       "before": "e46d81e3d7e1530243a28d519044e0afc67c7604c4da7595176a4ba0e75975bf",
-      "after": "af69368644c6a80b5e37a5bfbcc375b154395814f2e16242f3316f17680df56c"
+      "after": "3c42917f129276e5cf0fc65701b0857439466eadd3fdd8eca5cf47a26fc699a2"
     },
     "backend/adapters/outbound/evidence/p0_prepared_snapshot.py": {
       "before": null,
@@ -419,9 +487,29 @@
       "before": null,
       "after": "44eb407f91e3b55b8a4762df9ebe5fa5340f5fa266777693635477119a8aa232"
     },
+    "backend/adapters/outbound/generation/openai/p0_product_rejected.py": {
+      "before": null,
+      "after": "a60ecc829dfffd6612202dacff4b2bda540d5df823bc7ba60dc51649894019bc"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_contract.py": {
+      "before": null,
+      "after": "7a47eea79a0f609189cc31e9a6f76268d90d41a74b50177d982761fa84ee6383"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_ledger.py": {
+      "before": null,
+      "after": "7ebe1be8259c60085f37d20322ff3de53ec6387245b5be08b78d97850f7c21d8"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_policy.py": {
+      "before": null,
+      "after": "66978fbab5b875b57e53927ca5bb3b48b11d54c9e71bb09f39e6accc0a333ef8"
+    },
     "backend/adapters/outbound/persistence/saved_production.py": {
       "before": "2f1615c4781c0a3502ba0b2ce0276c9378823e7980ac71cf75b6db4f804fb086",
       "after": "3347a49aaa438bf20d6af768102dcce6f918b5b6f03bafeb3b69ea01766070e0"
+    },
+    "backend/adapters/outbound/resource_library/local_contribution_store.py": {
+      "before": null,
+      "after": "9da9c9fb29a2d7548489033713c4513f21b0a9b4f49a8299c68c4da3f2581280"
     },
     "backend/adapters/outbound/review/p0_review.py": {
       "before": "b5bc4255e172dbbb0f07f44bcff89ea02db41bbe5f6739857902dae277eaa809",
@@ -443,6 +531,10 @@
       "before": "c4a6889f448bd8fdbcbfb72aa71c8cb343e0085ea024da96dbce3f372dc6085a",
       "after": "fe8eb73ef186477471ba62c27f834895a2a9ffb3fe6546091f9e3865ae6da4ea"
     },
+    "backend/infrastructure/composition/factories/local_contribution.py": {
+      "before": null,
+      "after": "57c2d5fc8a308e102193022f69c07b8073a5f161bc04ce325340d8e409a7c6d9"
+    },
     "backend/infrastructure/composition/factories/p0_creation.py": {
       "before": "b8e0710dc105a10be04ae7a48cdbb32c916a07b8e934b84d3dfff85fa1ea0ae6",
       "after": "17caf0eb94f081c74c558403724c6157336f7c840cdfee1435a07dfb22862175"
@@ -463,9 +555,29 @@
       "before": null,
       "after": "45f1d101af2d4930d65c07b82b014ccafd48506d6a93ba4f213c557856e8fb82"
     },
+    "backend/infrastructure/composition/factories/p0_rejected_profile.py": {
+      "before": null,
+      "after": "f2a1b8e6c5641e7e4927001dbde0492272b66e283437d3796f14854040625a5c"
+    },
+    "backend/infrastructure/composition/factories/p0_rejected_profile_contract.py": {
+      "before": null,
+      "after": "5e8b4ca283856ad2dfb7eb4b3733aefafd5a10e4a4752baa31bb8a13527569cd"
+    },
+    "backend/infrastructure/composition/factories/p0_rejected_readset.py": {
+      "before": null,
+      "after": "40f1fb705084a74040b858605ea424b917a66c741f14d3bc7501d51f6ed54a9a"
+    },
     "backend/infrastructure/composition/factories/stmg_local_activity.py": {
       "before": null,
       "after": "285594f14a9164ec64c84dde9004ffcab9572df5dba1452ef55a17dc6001daf8"
+    },
+    "backend/infrastructure/composition/factories/stmg_local_contribution.py": {
+      "before": null,
+      "after": "78cefd3ef5326162ed37b8142fc5746fb357840d4aa84fd41bafa1b6ec6f7b72"
+    },
+    "backend/modules/documents_provenance/contracts/dto/local_contribution_provenance.py": {
+      "before": null,
+      "after": "b491eca65bf79934c87628c5cc2cf779e9fd09f20591a53357f9dc2908f9a247"
     },
     "backend/modules/knowledge_reference/application/queries/inspect_institutional_catalog.py": {
       "before": "cff7b45755d3005fc814abdd1e947a1db084ed0d000b37afa2c6fda906e9f296",
@@ -547,9 +659,29 @@
       "before": null,
       "after": "19c93474f4af7e230a8fc2291d473ad06ca8f8e6f393ac048b232b161739926b"
     },
+    "backend/modules/resource_library/application/commands/register_local_contribution.py": {
+      "before": null,
+      "after": "9fd73aaebf42bb42717d92f60ea51ed4b85b229c4fcc33c60e9c3df76dbfa0bf"
+    },
+    "backend/modules/resource_library/application/queries/read_local_contribution.py": {
+      "before": null,
+      "after": "14713ec160af885382f019252a5e39e7888c0b0f6f85cfcaa6b25cc6524f09e1"
+    },
+    "backend/modules/resource_library/contracts/dto/local_contribution.py": {
+      "before": null,
+      "after": "f1f9bf7fa0c605ffdac649b205c063166a5a022eada3026b37e4f5530af22b83"
+    },
+    "backend/modules/resource_library/ports/outbound/local_contribution_store.py": {
+      "before": null,
+      "after": "03944ea56d8c84ca0faf64353c7f1ae9d1b7652db220ab6b05d94b46a4db7656"
+    },
     "backend/modules/validation_control/application/commands/validate_p0.py": {
       "before": "5ebeda4e61eb71593734ea0ff6273cc28e9ff29fbaef56e9a81fccc520333c27",
       "after": "51ba6b879d90bd322923ae8cbce958fbb333f85f2ea1a800ee577be198efe65f"
+    },
+    "backend/modules/work_orchestration/application/queries/inspect_p1_campaign.py": {
+      "before": null,
+      "after": "0bea83a96b60bb34c01adae0c9151a9a5cc5a3199ba77f4882a4b24d2a00f5db"
     },
     "backend/modules/work_orchestration/application/queries/p0_local_reference_context.py": {
       "before": null,
@@ -594,6 +726,10 @@
     "backend/modules/work_orchestration/contracts/dto/p0_production_read_view.py": {
       "before": "4179d597a9a71e26f190ba61153c1f0837e482679d46505a2c008203333c3fc3",
       "after": "6795f280df08e5e24602cbbce72654f7075ff90252c5b42c3613be76fa5c60e3"
+    },
+    "backend/modules/work_orchestration/contracts/dto/p1_campaign_inspection.py": {
+      "before": null,
+      "after": "93158cdcc4e629456804b3bf9fa53f37466dd03adbdacc0b8487ad9025060aa9"
     },
     "backend/modules/work_orchestration/contracts/dto/saved_production.py": {
       "before": "7652b2bf61878e5ce14acde8febb08a269fefb2ef186f964b98f1cca037c98ef",
@@ -683,6 +819,10 @@
       "before": null,
       "after": "e6e41572f0f3b39294a70ad0c6c5d3a1920c378762a86d48293edb2a89e11f74"
     },
+    "docs/development/ADR_LU_PRODUIT_01_P1_KNOWN_REJECTED_CONTINUITY_V2_2026-10-14.md": {
+      "before": null,
+      "after": "1b04bd0eb332850369dbbc350c5d69d7960a3758773b67067e5af31911cf62a5"
+    },
     "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md": {
       "before": null,
       "after": "e1535827cd3665d672814451297c2441e54c1e55ca7060287adc59ec6c3df9a5"
@@ -727,6 +867,10 @@
       "before": "b7dd20537ef28f3653eb56ffe6d1b879bf1e82613ad1d54669cb29b124af7c9a",
       "after": "bf295938537e18931d883a77621a725712f88a110208a84c7d469056a8e7551c"
     },
+    "tests/integration/test_local_contribution_filesystem.py": {
+      "before": null,
+      "after": "acf3eca741f4acb9103a8ae638213ebe27cd74745e9920214edb98f2fe733284"
+    },
     "tests/integration/test_p0_intention_http.py": {
       "before": null,
       "after": "315d947fe7a776d44e6f49753e32cd0041392aff525e8585cebd62889077e301"
@@ -742,6 +886,10 @@
     "tests/integration/test_p0_product_continuity_native.py": {
       "before": null,
       "after": "4f5f805b45bac3900c912847453f923800be521b049796e31b5f9bca06fc1a69"
+    },
+    "tests/integration/test_p0_product_rejected_continuity_native.py": {
+      "before": null,
+      "after": "967d0a46fb6540787dca3c72118926b6ac5ef7a45380f994da4aebae4ccd322c"
     },
     "tests/integration/test_rich_course_normal_application.py": {
       "before": null,
@@ -766,6 +914,10 @@
     "tests/unit/test_integrated_saved_p0_resume.py": {
       "before": null,
       "after": "1999f18edd744376b09e8610a2b1c27135a2fc028c5485fb72b711bb61a48381"
+    },
+    "tests/unit/test_local_contribution.py": {
+      "before": null,
+      "after": "a7229c711bbd5d04708337361d1116b453e5a16523433cfa5a6e66f16c06740d"
     },
     "tests/unit/test_lu_product_active_guard.py": {
       "before": null,
@@ -827,6 +979,14 @@
       "before": null,
       "after": "bea1ed6d90e158c335a18a81b3b95eeef7412fed667643111419e4702bc0cd40"
     },
+    "tests/unit/test_p0_product_rejected_continuity.py": {
+      "before": null,
+      "after": "4c3a36ca683074f0c295940ba87501b45749a74ba9c96ac047f16bbf29f32aee"
+    },
+    "tests/unit/test_p0_rejected_launch_dispatch.py": {
+      "before": null,
+      "after": "15520993905b9000b576fe69ed0690705a9b2ef5773ae3e92130169df59b45fe"
+    },
     "tests/unit/test_p0_rich_course_content.py": {
       "before": null,
       "after": "1488711c50e29d677b2aa9e39aa4c6c0c45fa97ffb72121abf50c953ce3fdbb6"
@@ -838,6 +998,10 @@
     "tests/unit/test_p0_wire_projection_boundary.py": {
       "before": null,
       "after": "9452c27f02bb6bbcc567a3cbc651ce2381848fb0934d8af61901607d62198e57"
+    },
+    "tests/unit/test_p1_campaign_inspection.py": {
+      "before": null,
+      "after": "60c2756cfcfe644f0c67739822fbaa38ab44f019e8b0514fecc715c97461c412"
     },
     "tests/unit/test_product_media.py": {
       "before": null,
@@ -867,9 +1031,13 @@
       "before": null,
       "after": "37b09cfe6b602b0d7b9410fdc80515c939cc6c3b90b4d20d04ca2155a60bbdca"
     },
+    "tests/unit/test_stmg_local_contribution.py": {
+      "before": null,
+      "after": "8f5701a58804583d15e4afcb38ca4876264b796c03cce1278382d8f299c5a79a"
+    },
     "tools/launch-local.ps1": {
       "before": "4cdc708d6f9f4a2f3e026cb3cc0a3b6ac8af4c2dc4551096fd213493c7d5bfd6",
-      "after": "bc6946a99e32e18b6b611ec27fe6bdada495a0de11df99099426c866df1f7c9d"
+      "after": "ab567e045375d331f98c816f70c33e3280dc0d7a94ee2ce9be3f2fd5814c095c"
     },
     "tools/p0-tokenize-local.py": {
       "before": null,
@@ -1426,12 +1594,27 @@
   "runtime_writes": 0,
   "historical_results": "UNCHANGED",
   "refresh_scope": {
-    "source_head": "2f2a5e775573936ad88c3195612138b7b7c125a5",
-    "source_tree": "9735f6542a96a203f7279ca9060ff4e8e2a58617",
+    "source_head": "8851735abfe982846635c11c26a182527fb716b4",
+    "source_tree": "7465c5be38f35fbd980f88233d2ac50163dd10e0",
     "changed_since_source": [
+      "architecture/adr/ADR-M02-local-contribution-overlay.md",
+      "backend/adapters/inbound/application/local_contribution.py",
+      "backend/adapters/inbound/application/p1_campaign_inspection.py",
+      "backend/adapters/inbound/cli/local_browser.py",
       "backend/adapters/outbound/generation/openai/p0_content.py",
       "backend/adapters/outbound/generation/openai/p0_course_content_schema.py",
+      "backend/adapters/outbound/generation/openai/p0_product_rejected.py",
+      "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_contract.py",
+      "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_ledger.py",
+      "backend/adapters/outbound/generation/openai/p0_product_rejected_policy.py",
       "backend/adapters/outbound/persistence/saved_production.py",
+      "backend/adapters/outbound/resource_library/local_contribution_store.py",
+      "backend/infrastructure/composition/factories/local_contribution.py",
+      "backend/infrastructure/composition/factories/p0_rejected_profile.py",
+      "backend/infrastructure/composition/factories/p0_rejected_profile_contract.py",
+      "backend/infrastructure/composition/factories/p0_rejected_readset.py",
+      "backend/infrastructure/composition/factories/stmg_local_contribution.py",
+      "backend/modules/documents_provenance/contracts/dto/local_contribution_provenance.py",
       "backend/modules/pedagogical_context/contracts/dto/course_notions.py",
       "backend/modules/pedagogical_context/contracts/dto/p0_context.py",
       "backend/modules/pedagogical_design/application/commands/reframe_course.py",
@@ -1440,21 +1623,36 @@
       "backend/modules/pedagogical_design/contracts/dto/course_delivery.py",
       "backend/modules/pedagogical_design/contracts/dto/course_policy.py",
       "backend/modules/pedagogical_design/contracts/dto/p0_production.py",
+      "backend/modules/resource_library/application/commands/register_local_contribution.py",
+      "backend/modules/resource_library/application/queries/read_local_contribution.py",
+      "backend/modules/resource_library/contracts/dto/local_contribution.py",
+      "backend/modules/resource_library/ports/outbound/local_contribution_store.py",
+      "backend/modules/work_orchestration/application/queries/inspect_p1_campaign.py",
+      "backend/modules/work_orchestration/contracts/dto/p1_campaign_inspection.py",
       "docs/development/ADR_COURSE_NOTION_BINDING_V4_2026-10-14.md",
+      "docs/development/ADR_LU_PRODUIT_01_P1_KNOWN_REJECTED_CONTINUITY_V2_2026-10-14.md",
       "docs/development/COURSE_NOTION_V4_QUALIFICATION_2026-10-14.md",
       "frontend/app.js",
+      "tests/integration/test_local_contribution_filesystem.py",
+      "tests/integration/test_p0_product_rejected_continuity_native.py",
       "tests/integration/test_rich_course_normal_application.py",
       "tests/support/lu_product_guard_registry.json",
       "tests/support/r6_scope_guard.py",
       "tests/support/r6_scope_manifest.json",
       "tests/unit/test_course_notion_contract.py",
+      "tests/unit/test_local_contribution.py",
+      "tests/unit/test_p0_product_rejected_continuity.py",
+      "tests/unit/test_p0_rejected_launch_dispatch.py",
       "tests/unit/test_p0_rich_course_content.py",
+      "tests/unit/test_p1_campaign_inspection.py",
+      "tests/unit/test_stmg_local_contribution.py",
+      "tools/launch-local.ps1",
       "tools/tests/p0_rich_course_context.test.cjs"
     ],
-    "differential_scope": "VERSIONED_COURSE_NOTION_ALIAS_NORMAL_PATH",
+    "differential_scope": "COURSE_V4_P1_REJECTED_V2_M02_LOCAL_OVERLAY",
     "private_exclusions_preserved": true,
     "predicates_changed": false
   },
-  "exact_delta_review_sha256": "1365d3a52f5409fb017931e15d5a10d4db2ff2d7e5d02995e40c62c24cef7df4",
+  "exact_delta_review_sha256": "e2216bd312a2ffe64b2cd41cf8042f7548f8e6a704fb1ef3dd31c6f257e1aacd",
   "exact_delta_reviewer": "/root/p1_preparation_review"
 }

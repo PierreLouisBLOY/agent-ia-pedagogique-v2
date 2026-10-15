@@ -208,7 +208,13 @@ class P1CampaignInspectionView:
     def __post_init__(self) -> None:
         data = object_data(self.data)
         schema = data.get("schema")
-        result = _observation(data) if schema == "P0-PRODUCT-REJECTED-OBSERVATION-1.0" else _snapshot(data)
+        if schema == "P0-PRODUCT-UNKNOWN-OFF-OBSERVATION-1.0":
+            from backend.modules.work_orchestration.contracts.dto.p1_unknown_off_inspection import (
+                unknown_off_projection,
+            )
+            result = unknown_off_projection(data)
+        else:
+            result = _observation(data) if schema == "P0-PRODUCT-REJECTED-OBSERVATION-1.0" else _snapshot(data)
         require_safe_structured_value(result, root_location="p1_inspection_view")
         object.__setattr__(self, "data", freeze_safe_mapping(result))
 

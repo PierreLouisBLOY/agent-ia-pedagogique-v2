@@ -89,6 +89,7 @@
     "backend/adapters/outbound/generation/openai/p0_course_content_schema.py",
     "backend/adapters/outbound/generation/openai/p0_normal.py",
     "backend/adapters/outbound/generation/openai/p0_normal_agents.py",
+    "backend/adapters/outbound/generation/openai/p0_normal_diagnostic.py",
     "backend/adapters/outbound/generation/openai/p0_normal_policy.py",
     "backend/adapters/outbound/generation/openai/p0_normal_receipt.py",
     "backend/adapters/outbound/generation/openai/p0_product.py",
@@ -322,6 +323,7 @@
     "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md",
     "docs/development/ADR_LU_PRODUIT_01_WINDOWS_SOURCE_COVERAGE.md",
     "docs/development/ADR_M01_VISUAL_ENRICHMENT_2026-10-07.md",
+    "docs/development/ADR_P0_NORMAL_FAILURE_DIAGNOSTIC_2026-10-15.md",
     "docs/development/ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.md",
     "docs/development/ADR_STABILISATION_HISTORICAL_ACTIVE_GUARDS_2026-10-07.md",
     "docs/development/ADR_STABILISATION_R2_CALIBRATION_REPLAY_2026-10-07.md",
@@ -500,6 +502,7 @@
     "tests/unit/test_p0_local_reference_context.py",
     "tests/unit/test_p0_local_source_policy.py",
     "tests/unit/test_p0_normal_cli.py",
+    "tests/unit/test_p0_normal_failure_diagnostic.py",
     "tests/unit/test_p0_normal_generation.py",
     "tests/unit/test_p0_normal_policy.py",
     "tests/unit/test_p0_normal_profile.py",
@@ -1066,10 +1069,11 @@
     "backend/adapters/outbound/evidence/p0_prepared_snapshot.py": "ecf86c045b42e14a5173b4495a90f0a3e84170f3047bfb30c864bd93b4b94c54",
     "backend/adapters/outbound/export/product_word.py": "156e8f9cbf9fc345b4f1b527b19fe845604cf1e1802aeafd57e60fa53bc7f552",
     "backend/adapters/outbound/generation/openai/p0_course_content_schema.py": "2cadf601d7d07369f3a31cdbf0cd9153c1d15df00539261fc2e65d53ddc8acce",
-    "backend/adapters/outbound/generation/openai/p0_normal.py": "df936f3a774bfd152edff773bb4587cf91f02c6099f08eb670a22113f76784f3",
+    "backend/adapters/outbound/generation/openai/p0_normal.py": "c2dcdedba2a1ab176dc8a43da808dd03d55257d149edf3b50a12b1a008f0b3ff",
     "backend/adapters/outbound/generation/openai/p0_normal_agents.py": "57117d9251ce3319888e23cf0859277d200fdb490bcbc5d395ddd254bd5bd14d",
+    "backend/adapters/outbound/generation/openai/p0_normal_diagnostic.py": "84ec8a32c346bd46e7aa29bc16621407eec06f02fa8e2ee86f0b69f3e5efcd51",
     "backend/adapters/outbound/generation/openai/p0_normal_policy.py": "e631d256d77d60de7aef75b7369258f4468d58088df489cc232d52efbb614ff8",
-    "backend/adapters/outbound/generation/openai/p0_normal_receipt.py": "edf70ccd164cbf7cb6b53360b5d9355cf63db4737a686d53b307f2d52bd88218",
+    "backend/adapters/outbound/generation/openai/p0_normal_receipt.py": "8fcbfab8d9c5d9331c0b943c8f8516829cc3658e99fcefc836bac63c70937595",
     "backend/adapters/outbound/generation/openai/p0_product.py": "df94053a545fa32b727ea9b545a53f156dc99b7a05946700b00e591b458a3912",
     "backend/adapters/outbound/generation/openai/p0_product_continuity_contract.py": "fb2250fa1fb583c734fffa4f9d86c87b560a957e9e75b3fa89298bb5d7294a69",
     "backend/adapters/outbound/generation/openai/p0_product_continuity_ledger.py": "9732b36c78032c1effabafd7e6fd2089b4628219115feb604225d07c9e11b2a5",
@@ -1138,6 +1142,7 @@
     "docs/development/ADR_LU_PRODUIT_01_P1_KNOWN_REJECTED_CONTINUITY_V2_2026-10-14.md": "1b04bd0eb332850369dbbc350c5d69d7960a3758773b67067e5af31911cf62a5",
     "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md": "e1535827cd3665d672814451297c2441e54c1e55ca7060287adc59ec6c3df9a5",
     "docs/development/ADR_LU_PRODUIT_01_WINDOWS_SOURCE_COVERAGE.md": "fa4faa64fcb23978cf84b81f519bea1c557e862b68bfb30951e64a566f901587",
+    "docs/development/ADR_P0_NORMAL_FAILURE_DIAGNOSTIC_2026-10-15.md": "432a158c3c497d1ffd015b119778f1b98f8d3b3f7bcddc5cb6ed28d4c4455698",
     "docs/development/COURSE_NOTION_V4_QUALIFICATION_2026-10-14.md": "00ce7f343cd33b5701ba5180631f7b50b9d4d73eb0d61b1ee47e26130a657b75",
     "docs/development/INSTITUTIONAL_TREATMENT_REGISTER.md": "35dc756fcda41a51f65980438022ed5729910da84b2a850af4bd9231b3d559bd",
     "docs/development/P0_EXACT_NOTION_HTTP.md": "d6586dbd7e5acae2348aec3e6cb8854e4b73605311915c7b08e6ece95c5f42b9",
@@ -1165,6 +1170,7 @@
     "tests/unit/test_p0_local_reference_context.py": "e6985b08d8a23e2134e19b8ddac97f1b59a9b2d816107649d65ec15298cf37af",
     "tests/unit/test_p0_local_source_policy.py": "33dd03ae9ab982332db24971ebb0eed5e717e839dcbd7764c5695f377e571a22",
     "tests/unit/test_p0_normal_cli.py": "0149ec8cabb65973477493b901c2324142fb719a8a43acf7a3f543484519b80d",
+    "tests/unit/test_p0_normal_failure_diagnostic.py": "34baf6e84ed3f6ed8600e6b38e956e000a822ee50ea9fffaedbfa6e80fbd15a7",
     "tests/unit/test_p0_normal_generation.py": "b6500f134916c0e46cea817557f74026a8deb1799309a1d1c474d69093ba7f43",
     "tests/unit/test_p0_normal_policy.py": "1d0ffe74e78c84c8b5186d64473629cc21a89d2f62a58abc037fc505a49c12e3",
     "tests/unit/test_p0_normal_profile.py": "e7c01fc29f0874d192ea9124e6c54e018faca4c2da1694b8ebadbb9d5cd847f8",
@@ -1194,7 +1200,7 @@
     "tools/tests/p0_rich_course_preview.test.cjs": "13da2ab8849bf71e68e819db5f656690ff055bcca312abf7d2c00754dd952424",
     "tools/tests/p0_ui_async_binding.test.cjs": "1175ce61663b494660fa4777f42779c4b80d746bb5b8e10996d32f8a7fc0e3a4",
     "tools/tests/p0_ui_local_reference_context.test.cjs": "ea04482a9a69fe64efe2cea08f75263fa662f3a120846c4225e1a8ad8b93691c",
-    "tests/support/lu_product_guard_registry.json": "966f5249128b241232d9e12856b1c30c5b099cb9d1e0de5d26761bde0ca7deda"
+    "tests/support/lu_product_guard_registry.json": "6c5bab440c45a931d099ca06bd579181f4307e5480779deb7780b0ff2a12cc30"
   },
   "active_delta_paths": [
     ".gitignore",
@@ -1248,6 +1254,7 @@
     "backend/adapters/outbound/generation/openai/p0_course_content_schema.py",
     "backend/adapters/outbound/generation/openai/p0_normal.py",
     "backend/adapters/outbound/generation/openai/p0_normal_agents.py",
+    "backend/adapters/outbound/generation/openai/p0_normal_diagnostic.py",
     "backend/adapters/outbound/generation/openai/p0_normal_policy.py",
     "backend/adapters/outbound/generation/openai/p0_normal_receipt.py",
     "backend/adapters/outbound/generation/openai/p0_product.py",
@@ -1427,6 +1434,7 @@
     "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md",
     "docs/development/ADR_LU_PRODUIT_01_WINDOWS_SOURCE_COVERAGE.md",
     "docs/development/ADR_M01_VISUAL_ENRICHMENT_2026-10-07.md",
+    "docs/development/ADR_P0_NORMAL_FAILURE_DIAGNOSTIC_2026-10-15.md",
     "docs/development/ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.md",
     "docs/development/ADR_STABILISATION_HISTORICAL_ACTIVE_GUARDS_2026-10-07.md",
     "docs/development/ADR_STABILISATION_R2_CALIBRATION_REPLAY_2026-10-07.md",
@@ -1566,6 +1574,7 @@
     "tests/unit/test_p0_local_reference_context.py",
     "tests/unit/test_p0_local_source_policy.py",
     "tests/unit/test_p0_normal_cli.py",
+    "tests/unit/test_p0_normal_failure_diagnostic.py",
     "tests/unit/test_p0_normal_generation.py",
     "tests/unit/test_p0_normal_policy.py",
     "tests/unit/test_p0_normal_profile.py",
@@ -3274,7 +3283,7 @@
       "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
       "parent_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
       "registry_path": "tests/support/lu_product_guard_registry.json",
-      "registry_sha256": "966f5249128b241232d9e12856b1c30c5b099cb9d1e0de5d26761bde0ca7deda",
+      "registry_sha256": "6c5bab440c45a931d099ca06bd579181f4307e5480779deb7780b0ff2a12cc30",
       "changed_owners": [
         "architecture/adr/ADR-M02-local-contribution-overlay.md",
         "backend/adapters/inbound/api/p0_creation.py",
@@ -3297,6 +3306,7 @@
         "backend/adapters/outbound/generation/openai/p0_course_content_schema.py",
         "backend/adapters/outbound/generation/openai/p0_normal.py",
         "backend/adapters/outbound/generation/openai/p0_normal_agents.py",
+        "backend/adapters/outbound/generation/openai/p0_normal_diagnostic.py",
         "backend/adapters/outbound/generation/openai/p0_normal_policy.py",
         "backend/adapters/outbound/generation/openai/p0_normal_receipt.py",
         "backend/adapters/outbound/generation/openai/p0_product.py",
@@ -3390,6 +3400,7 @@
         "docs/development/ADR_LU_PRODUIT_01_P1_KNOWN_REJECTED_CONTINUITY_V2_2026-10-14.md",
         "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md",
         "docs/development/ADR_LU_PRODUIT_01_WINDOWS_SOURCE_COVERAGE.md",
+        "docs/development/ADR_P0_NORMAL_FAILURE_DIAGNOSTIC_2026-10-15.md",
         "docs/development/COURSE_NOTION_V4_QUALIFICATION_2026-10-14.md",
         "docs/development/INSTITUTIONAL_TREATMENT_REGISTER.md",
         "docs/development/P0_EXACT_NOTION_HTTP.md",
@@ -3420,6 +3431,7 @@
         "tests/unit/test_p0_local_reference_context.py",
         "tests/unit/test_p0_local_source_policy.py",
         "tests/unit/test_p0_normal_cli.py",
+        "tests/unit/test_p0_normal_failure_diagnostic.py",
         "tests/unit/test_p0_normal_generation.py",
         "tests/unit/test_p0_normal_policy.py",
         "tests/unit/test_p0_normal_profile.py",
@@ -3535,11 +3547,15 @@
         },
         "backend/adapters/outbound/generation/openai/p0_normal.py": {
           "before": null,
-          "after": "df936f3a774bfd152edff773bb4587cf91f02c6099f08eb670a22113f76784f3"
+          "after": "c2dcdedba2a1ab176dc8a43da808dd03d55257d149edf3b50a12b1a008f0b3ff"
         },
         "backend/adapters/outbound/generation/openai/p0_normal_agents.py": {
           "before": null,
           "after": "57117d9251ce3319888e23cf0859277d200fdb490bcbc5d395ddd254bd5bd14d"
+        },
+        "backend/adapters/outbound/generation/openai/p0_normal_diagnostic.py": {
+          "before": null,
+          "after": "84ec8a32c346bd46e7aa29bc16621407eec06f02fa8e2ee86f0b69f3e5efcd51"
         },
         "backend/adapters/outbound/generation/openai/p0_normal_policy.py": {
           "before": null,
@@ -3547,7 +3563,7 @@
         },
         "backend/adapters/outbound/generation/openai/p0_normal_receipt.py": {
           "before": null,
-          "after": "edf70ccd164cbf7cb6b53360b5d9355cf63db4737a686d53b307f2d52bd88218"
+          "after": "8fcbfab8d9c5d9331c0b943c8f8516829cc3658e99fcefc836bac63c70937595"
         },
         "backend/adapters/outbound/generation/openai/p0_product.py": {
           "before": null,
@@ -3913,6 +3929,10 @@
           "before": null,
           "after": "fa4faa64fcb23978cf84b81f519bea1c557e862b68bfb30951e64a566f901587"
         },
+        "docs/development/ADR_P0_NORMAL_FAILURE_DIAGNOSTIC_2026-10-15.md": {
+          "before": null,
+          "after": "432a158c3c497d1ffd015b119778f1b98f8d3b3f7bcddc5cb6ed28d4c4455698"
+        },
         "docs/development/COURSE_NOTION_V4_QUALIFICATION_2026-10-14.md": {
           "before": null,
           "after": "00ce7f343cd33b5701ba5180631f7b50b9d4d73eb0d61b1ee47e26130a657b75"
@@ -4032,6 +4052,10 @@
         "tests/unit/test_p0_normal_cli.py": {
           "before": null,
           "after": "0149ec8cabb65973477493b901c2324142fb719a8a43acf7a3f543484519b80d"
+        },
+        "tests/unit/test_p0_normal_failure_diagnostic.py": {
+          "before": null,
+          "after": "34baf6e84ed3f6ed8600e6b38e956e000a822ee50ea9fffaedbfa6e80fbd15a7"
         },
         "tests/unit/test_p0_normal_generation.py": {
           "before": null,
@@ -4174,11 +4198,11 @@
           "after": "25119c483895d2e7bc4e295659d11e307fda43cb919b1bd74e1222e48e147123"
         }
       },
-      "current_owners": 591,
+      "current_owners": 594,
       "original_owners_preserved": 452,
       "private_exclusions_preserved": 27,
       "guard_functions": "UNCHANGED",
-      "exact_delta_review_sha256": "7c013fd6474a436c74c367ed835cc9be2f92fba790f21f088849e2d69cc120fc",
+      "exact_delta_review_sha256": "2d174f4e946a69cc62ffd724988caeb5d6a04cc8e6802ccfbcc665907bd3a0d5",
       "structural_review_sha256": "1f63930c472e21b6e4a1db4127ebc1de87aba1e469dc33dc9201f6e51c86ae82",
       "live_gates": "CLOSED",
       "provider_calls": 0,

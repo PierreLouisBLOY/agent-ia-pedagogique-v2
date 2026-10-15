@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import argparse
 import getpass
+import re
 import sys
 import tempfile
 import warnings
 from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING, Protocol
 
 from backend.infrastructure.composition.factories.conversation import (
     build_r2_process_job,
@@ -21,6 +23,25 @@ from backend.infrastructure.composition.factories.local_browser import (
     build_local_saved,
 )
 from backend.infrastructure.config.schemas.http import LocalBrowserHttpConfiguration
+from backend.modules.pedagogical_design.ports.outbound.p0_generation import P0GenerationPort
+
+if TYPE_CHECKING:
+    from backend.adapters.inbound.api.p0_creation import P0CreationEndpoint
+    from backend.modules.work_orchestration.application.services.p0_creation import (
+        P0CreationService,
+    )
+
+
+class _ProductComposition(Protocol):
+    @property
+    def generation(self) -> P0GenerationPort | None: ...
+
+    def bind(self, service: P0CreationService, endpoint: P0CreationEndpoint) -> None: ...
+    def close(self) -> None: ...
+
+
+def _drive_literal(value: Path | None) -> bool:
+    return value is not None and re.fullmatch(r"[A-Za-z]:[\\/][^%$\x00]+", str(value)) is not None
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -46,7 +67,46 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--r5-authorization", type=Path, help="Accord R5 distinct ; aucun accord live implicite")
     parser.add_argument("--p0-normal-profile", type=Path,
         help="Profil P1 fermé explicitement adopté ; consentement local exact et budget requis")
+    parser.add_argument("--p0-rejected-profile", type=Path)
+    parser.add_argument("--p0-rejected-inspection-plan", type=Path)
+    parser.add_argument("--p0-rejected-adoption", type=Path)
+    parser.add_argument("--p0-rejected-mode", choices=("inspect-only", "off", "on"))
     args = parser.parse_args(argv)
+    rejected = any(
+        value is not None
+        for value in (
+            args.p0_rejected_profile,
+            args.p0_rejected_inspection_plan,
+            args.p0_rejected_adoption,
+            args.p0_rejected_mode,
+        )
+    )
+    if rejected and (
+        bool(args.p0_rejected_profile) == bool(args.p0_rejected_inspection_plan)
+        or not _drive_literal(args.p0_rejected_adoption)
+        or not _drive_literal(args.p0_rejected_profile or args.p0_rejected_inspection_plan)
+        or args.p0_normal_profile is not None
+        or args.saved_root is None
+        or args.word_profile != "product-v7"
+        or any(
+            (
+                args.saved_only,
+                args.create_saved,
+                args.enable_conversation,
+                args.enable_review_modify,
+                args.live_authorization,
+                args.r5_scope,
+                args.r5_authorization,
+            )
+        )
+        or any(value is None for value in (args.runtime, args.data_root, args.runtime_sha256))
+        or (
+            args.p0_rejected_inspection_plan is not None and args.p0_rejected_mode != "inspect-only"
+        )
+        or (args.p0_rejected_profile is not None and args.p0_rejected_mode == "inspect-only")
+    ):
+        print("P0_REJECTED_EXPLICIT_SELECTION_REQUIRED")
+        return 1
     if args.p0_normal_profile is not None and (args.saved_root is None or args.word_profile != "product-v7"
             or args.create_saved or any((args.saved_only, args.enable_conversation, args.enable_review_modify,
                 args.live_authorization, args.r5_scope, args.r5_authorization))):
@@ -85,7 +145,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     jobs = None
     secret_value = ""
-    normal = None
+    normal: _ProductComposition | None = None
     if args.r5_scope is not None:
         try:
             from backend.infrastructure.composition.factories.r5_generation import (
@@ -138,6 +198,32 @@ def main(argv: Sequence[str] | None = None) -> int:
                 target=Read15RuntimeTarget(args.runtime, args.data_root, args.runtime_sha256), saved_root=args.saved_root)
         except Exception:
             print("P0_NORMAL_PROFILE_NOT_ADOPTED_OR_INVALID")
+            return 1
+    if rejected:
+        try:
+            from backend.infrastructure.composition.factories.p0_rejected_profile import (
+                P0RejectedInspectionComposition,
+                P0RejectedProductComposition,
+            )
+
+            target = Read15RuntimeTarget(args.runtime, args.data_root, args.runtime_sha256)
+            if args.p0_rejected_inspection_plan is not None:
+                normal = P0RejectedInspectionComposition(
+                    plan_path=args.p0_rejected_inspection_plan,
+                    adoption_path=args.p0_rejected_adoption,
+                    target=target,
+                    saved_root=args.saved_root,
+                )
+            else:
+                normal = P0RejectedProductComposition(
+                    path=args.p0_rejected_profile,
+                    adoption_path=args.p0_rejected_adoption,
+                    target=target,
+                    saved_root=args.saved_root,
+                    mode=args.p0_rejected_mode or "off",
+                )
+        except Exception:
+            print("P0_REJECTED_COMPOSITION_NOT_ADOPTED_OR_INVALID")
             return 1
     try:
         composition = build_local_read15(

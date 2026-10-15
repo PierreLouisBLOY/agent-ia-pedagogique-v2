@@ -21,6 +21,10 @@ from backend.adapters.outbound.generation.openai.p0_normal_agents import (
     guard_and_bind,
     parse_content,
 )
+from backend.adapters.outbound.generation.openai.p0_normal_diagnostic import (
+    FailureStage,
+    failure_code,
+)
 from backend.adapters.outbound.generation.openai.p0_normal_policy import (
     canonical,
     preflight,
@@ -63,6 +67,9 @@ class _TechnicalP0Port:
     def __init__(self, owner: NormalP0GenerationAdapter, dispatch: Mapping[str, object],
                  wire: OpenAIResponsesRequest, proof: Mapping[str, object], now: datetime) -> None:
         self.owner, self.dispatch, self.wire, self.proof, self.now = owner, dispatch, wire, proof, now
+        self.reserved = False
+        self.attempted = 0
+        self.failure_handled = False
 
     def generate(self, *, request: GenerationPortRequest) -> GenerationPortResult:
         # Keep the physical receipt root retained across resolution and network
@@ -78,36 +85,62 @@ class _TechnicalP0Port:
             raise ValueError("P0_NORMAL_CANONICAL_BINDING")
         owner = self.owner
         owner.receipt.reserve(grant=owner.grant, dispatch=self.dispatch, body=owner.body(self.wire), preflight=self.proof)
+        self.reserved = True
         # A consumed namespace cannot be reopened if any later step fails.
-        attempted = 0
+        stage = FailureStage.CREDENTIAL_RESOLVE
         try:
             secret = owner.resolver.resolve(owner.credential_ref)
+            stage = FailureStage.IDENTITY_RECHECK
             owner._check(self.dispatch, require_unused=False)
+            stage = FailureStage.TRANSPORT_BUILD
             transport = owner.transport.build(secret=secret, timeout_seconds=owner.timeout)
+            stage = FailureStage.PREFLIGHT_RECHECK
             _, latest, _ = owner._check(self.dispatch, require_unused=False)
             if latest != self.proof:
                 raise ValueError("P0_NORMAL_PREFLIGHT_CHANGED")
+            stage = FailureStage.ATTEMPT_PUBLISH
             owner.receipt.publish("PROVIDER_ATTEMPTED", owner.receipt.event("PROVIDER_ATTEMPTED", owner.grant, self.proof))
-            attempted = 1
+            self.attempted = 1
+            stage = FailureStage.TRANSPORT_CREATE
             response = transport.create(request=self.wire)
+            stage = FailureStage.RESPONSE_METADATA
             usage = asdict(response.usage)
             artifact = {"schema": "P0-NORMAL-CONFIRMED-RESULT-1.0", "grant_sha256": sha(canonical(owner.grant)),
                 "request_sha256": owner.grant["request_sha256"], "dispatch_sha256": sha(canonical(as_plain(self.dispatch))),
                 "response_status": response.status.value, "output_text": response.output_text, "usage": usage}
+            stage = FailureStage.RESULT_PUBLISH
             artifact_sha = owner.receipt.publish("RESULT", artifact)
+            stage = FailureStage.RESPONSE_CAPTURE_PUBLISH
             owner.receipt.publish("RESPONSE_CAPTURED", owner.receipt.event("RESPONSE_CAPTURED", owner.grant,
                 self.proof, artifact=artifact_sha, status=response.status.value, usage=usage))
-        except Exception:
-            owner.receipt.publish("UNKNOWN", owner.receipt.event("UNKNOWN", owner.grant, self.proof, provider_attempts=attempted))
+        except Exception as error:
+            # First failure wins, even if either secondary write fails.
+            self.failure_handled = True
+            recorded = False
+            try:
+                owner.receipt.publish("UNKNOWN", owner.receipt.event("UNKNOWN", owner.grant,
+                    self.proof, provider_attempts=self.attempted))
+                recorded = True
+            except Exception:
+                pass
+            owner._record_failure(error, stage, self.proof, self.attempted, "UNKNOWN", recorded)
             raise ValueError("P0_NORMAL_OUTCOME_UNKNOWN") from None
-        if (response.status is not OpenAIResponseStatus.COMPLETED or response.service_tier not in {None, "default"}
-                or response.output_text is None
-                or (content_fields_for(self.dispatch) == RICH_CONTENT_FIELDS
-                    and response.incomplete_reason is not OpenAIIncompleteReason.NONE)):
-            owner.receipt.publish("PARSING_REJECTED", owner.receipt.event("PARSING_REJECTED", owner.grant, self.proof))
-            raise ValueError("P0_NORMAL_RESPONSE_REJECTED")
-        owner.receipt.confirmed(owner.grant)
-        return owner.technical_result(self.dispatch, response.output_text)
+        stage = FailureStage.RESPONSE_VALIDATE
+        try:
+            if (response.status is not OpenAIResponseStatus.COMPLETED or response.service_tier not in {None, "default"}
+                    or response.output_text is None
+                    or (content_fields_for(self.dispatch) == RICH_CONTENT_FIELDS
+                        and response.incomplete_reason is not OpenAIIncompleteReason.NONE)):
+                raise ValueError("P0_NORMAL_RESPONSE_REJECTED")
+            stage = FailureStage.CAPTURE_CONFIRM
+            owner.receipt.confirmed(owner.grant)
+            stage = FailureStage.CONTENT_PARSE
+            return owner.technical_result(self.dispatch, response.output_text)
+        except Exception as error:
+            self.failure_handled = True
+            recorded = owner._mark_rejected(self.proof)
+            owner._record_failure(error, stage, self.proof, self.attempted, "PARSING_REJECTED", recorded)
+            raise
 
 
 class NormalP0GenerationAdapter:
@@ -177,18 +210,51 @@ class NormalP0GenerationAdapter:
             technical = _TechnicalP0Port(self, request, wire, proof, now)
             coordinator = GenerationCoordinator(technical)
             preparation = agent_preparation(request, now)
+            stage = FailureStage.GUARD_AND_BIND
             try:
                 _, result = GeneratorAgent(coordinator).generate_production(request=preparation)
                 output = guard_and_bind(request, coordinator, preparation, result, observer=self._observe_controls)
-            except Exception:
-                if self.receipt.exists("RESPONSE_CAPTURED") and not self.receipt.exists("PARSING_REJECTED"):
-                    self.receipt.publish("PARSING_REJECTED", self.receipt.event("PARSING_REJECTED", self.grant, proof))
+                stage = FailureStage.PARSED_PUBLISH
+                self.receipt.publish("PARSED", self.receipt.event("PARSED", self.grant, proof))
+                stage = FailureStage.CONSUMED_PUBLISH
+                self.receipt.publish("CONSUMED", self.receipt.event("CONSUMED", self.grant, proof))
+            except Exception as error:
+                if technical.reserved and not technical.failure_handled:
+                    technical.failure_handled = True
+                    marker = "PARSING_REJECTED" if stage is FailureStage.GUARD_AND_BIND else "UNCONFIRMED"
+                    recorded = self._mark_rejected(proof) if marker == "PARSING_REJECTED" else False
+                    self._record_failure(error, stage, proof, technical.attempted, marker, recorded)
                 raise
-            self.receipt.publish("PARSED", self.receipt.event("PARSED", self.grant, proof))
-            self.receipt.publish("CONSUMED", self.receipt.event("CONSUMED", self.grant, proof))
             return output
         finally:
             self._lock.release()
+
+    def _mark_rejected(self, proof: Mapping[str, object]) -> bool:
+        try:
+            if self.receipt.exists("PARSING_REJECTED"):
+                return True
+            if self.receipt.exists("RESPONSE_CAPTURED"):
+                self.receipt.publish("PARSING_REJECTED", self.receipt.event("PARSING_REJECTED", self.grant, proof))
+                return True
+        except Exception:
+            pass
+        return False
+
+    def _record_failure(self, error: Exception, stage: FailureStage, proof: Mapping[str, object],
+                        attempted: int, marker: str, recorded: bool) -> None:
+        # Never format, log, retain or serialize the exception object or its context.
+        try:
+            source, code = failure_code(error)
+            self.receipt.publish_failure_diagnostic({
+                "schema": "P0-NORMAL-FAILURE-DIAGNOSTIC-1.0",
+                "timestamp_utc": datetime.now(UTC).isoformat(),
+                "namespace_sha256": self.receipt.namespace, "grant_sha256": sha(canonical(self.grant)),
+                "request_sha256": self.grant["request_sha256"], "preflight_sha256": sha(canonical(dict(proof))),
+                "provider_attempts": attempted, "stage": stage.value, "code_source": source,
+                "technical_code": code, "outcome_marker": marker, "marker_recorded": recorded,
+            })
+        except Exception:
+            pass
 
     @staticmethod
     def technical_result(request: Mapping[str, object], text: str) -> GenerationPortResult:

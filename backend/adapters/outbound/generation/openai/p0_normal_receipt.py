@@ -9,6 +9,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
+from backend.adapters.outbound.generation.openai.p0_normal_diagnostic import (
+    MAX_FAILURE_DIAGNOSTIC_BYTES,
+    validate_failure_document,
+)
 from backend.adapters.outbound.generation.openai.p0_normal_policy import (
     canonical,
     closed,
@@ -114,13 +118,15 @@ class P0NormalReceipt:
             return capture_secure_path(self._path(name), allowed_root=self.root).exists
 
     def publish(self, name: str, data: Mapping[str, object]) -> str:
+        return self._publish_document(self._path(name), data)
+
+    def _publish_document(self, path: Path, data: Mapping[str, object]) -> str:
         self._root_unchanged()
         raw = canonical(dict(data))
         if len(raw) > 256000:
             raise ValueError("P0_RECEIPT_SIZE")
         with pinned_receipt_root(self.root):
             self._root_unchanged()
-            path = self._path(name)
             if capture_secure_path(path, allowed_root=self.root).exists:
                 raise ValueError("P0_RECEIPT_ALREADY_USED")
             temporary = private_temporary_file(self.root, allowed_root=self.root, prefix="p0-effect-", suffix=".tmp")
@@ -131,6 +137,35 @@ class P0NormalReceipt:
             atomic_publish_fresh(temporary, path, allowed_root=self.root)
             self._root_unchanged()
         return sha(raw)
+
+    def publish_failure_diagnostic(self, data: Mapping[str, object]) -> str:
+        """Independent evidence, never a lifecycle event or a replacement receipt."""
+        validate_failure_document(data, namespace=self.namespace)
+        if len(canonical(dict(data))) > MAX_FAILURE_DIAGNOSTIC_BYTES:
+            raise ValueError("P0_FAILURE_DIAGNOSTIC_SIZE")
+        return self._publish_document(self.root / f"p0-diagnostic.{self.namespace}.json", data)
+
+    def read_failure_diagnostic(self, *, grant: Mapping[str, object],
+                                preflight: Mapping[str, object]) -> dict[str, object] | None:
+        if (grant.get("namespace_sha256") != self.namespace
+                or preflight.get("request_sha256") != grant.get("request_sha256")
+                or preflight.get("request_bytes") != grant.get("request_bytes")):
+            raise ValueError("P0_FAILURE_DIAGNOSTIC_BINDING")
+        self._root_unchanged()
+        path = self.root / f"p0-diagnostic.{self.namespace}.json"
+        with pinned_receipt_root(self.root):
+            if not capture_secure_path(path, allowed_root=self.root).exists:
+                return None
+            raw = read_file_nofollow(path, allowed_root=self.root,
+                                     maximum_bytes=MAX_FAILURE_DIAGNOSTIC_BYTES)
+            self._root_unchanged()
+        value = decode(raw)
+        validate_failure_document(value, namespace=self.namespace)
+        if (value["grant_sha256"] != sha(canonical(dict(grant)))
+                or value["request_sha256"] != grant.get("request_sha256")
+                or value["preflight_sha256"] != sha(canonical(dict(preflight)))):
+            raise ValueError("P0_FAILURE_DIAGNOSTIC_BINDING")
+        return value
 
     def read(self, name: str) -> dict[str, object]:
         self._root_unchanged()

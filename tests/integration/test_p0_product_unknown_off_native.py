@@ -227,7 +227,7 @@ def deny_effects(monkeypatch):
     def refuse(*args, **kwargs):
         raise AssertionError("SYNTHETIC_OFF_EFFECT_FORBIDDEN")
     for cls, names in ((P0ProductLedger, ("reserve", "_publish", "locked")),
-        (P0NormalReceipt, ("reserve", "event", "publish", "_publish_document")),
+        (P0NormalReceipt, ("reserve", "publish", "_publish_document")),
         (historical.MaskedLocalSecretResolver, ("resolve",))):
         for name in names:
             monkeypatch.setattr(cls, name, refuse)

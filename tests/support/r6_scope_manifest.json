@@ -963,7 +963,7 @@
     "tests/unit/test_r6_saved_p0_documentary.py": "5c63237b844a30c0c778e0ff4175c1cf1ae14949f7ec363557b5f56e81cfadba",
     "tests/unit/test_r6_u1_exact_source.py": "8655c96535c91e3153c283903666fa77a2b32f98b1cd1e2d748fc3d4638792a6",
     "tests/unit/test_review_metadata_successor.py": "ebffcbd1ed2a98bb1afb409cb4cac957594fb96955b0fc587290971170110210",
-    "tests/unit/test_stabilisation_active_guard.py": "0aad38dc9bb6bdb010ec45743c878da39d152506258345f65571b82c6a5b49ab",
+    "tests/unit/test_stabilisation_active_guard.py": "46bed71cc1cf9962ffcf20055db9456c423bf24b0201e7f78daeca7adc179871",
     "tests/unit/test_stabilisation_private_source_exclusions.py": "f16fd42b346a608e051476812a7f7b4205381b243199c06c505a8ae203a7ebb5",
     "tests/unit/test_stabilisation_r2_harden_identity.py": "023d125ca6ed3bc8c4d0be0629f3ec1d2c55bba47fa7ced4935c48aff0a7c071",
     "tests/unit/test_stabilisation_r2_operation_identity.py": "690578101b1acb0cd56a421f36f39deeb026a19576e47b1529b9e526d5c02f27",
@@ -1194,7 +1194,7 @@
     "tools/tests/p0_rich_course_preview.test.cjs": "13da2ab8849bf71e68e819db5f656690ff055bcca312abf7d2c00754dd952424",
     "tools/tests/p0_ui_async_binding.test.cjs": "1175ce61663b494660fa4777f42779c4b80d746bb5b8e10996d32f8a7fc0e3a4",
     "tools/tests/p0_ui_local_reference_context.test.cjs": "ea04482a9a69fe64efe2cea08f75263fa662f3a120846c4225e1a8ad8b93691c",
-    "tests/support/lu_product_guard_registry.json": "322a35946daf0c6a68d0c063cbe6283a6188489ec8ab1b19e3fb60348476e58c"
+    "tests/support/lu_product_guard_registry.json": "966f5249128b241232d9e12856b1c30c5b099cb9d1e0de5d26761bde0ca7deda"
   },
   "active_delta_paths": [
     ".gitignore",
@@ -3274,7 +3274,7 @@
       "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
       "parent_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
       "registry_path": "tests/support/lu_product_guard_registry.json",
-      "registry_sha256": "322a35946daf0c6a68d0c063cbe6283a6188489ec8ab1b19e3fb60348476e58c",
+      "registry_sha256": "966f5249128b241232d9e12856b1c30c5b099cb9d1e0de5d26761bde0ca7deda",
       "changed_owners": [
         "architecture/adr/ADR-M02-local-contribution-overlay.md",
         "backend/adapters/inbound/api/p0_creation.py",
@@ -3439,6 +3439,7 @@
         "tests/unit/test_rich_course_context_delivery.py",
         "tests/unit/test_saved_course_local_edits.py",
         "tests/unit/test_saved_p0_read_compatibility.py",
+        "tests/unit/test_stabilisation_active_guard.py",
         "tests/unit/test_stmg_local_activity_qualification.py",
         "tests/unit/test_stmg_local_contribution.py",
         "tools/launch-local.ps1",
@@ -4108,6 +4109,10 @@
           "before": null,
           "after": "4e5ca44d50561ea5716664835f513995e96de946108afb23f1df955274ffa464"
         },
+        "tests/unit/test_stabilisation_active_guard.py": {
+          "before": "0aad38dc9bb6bdb010ec45743c878da39d152506258345f65571b82c6a5b49ab",
+          "after": "46bed71cc1cf9962ffcf20055db9456c423bf24b0201e7f78daeca7adc179871"
+        },
         "tests/unit/test_stmg_local_activity_qualification.py": {
           "before": null,
           "after": "37b09cfe6b602b0d7b9410fdc80515c939cc6c3b90b4d20d04ca2155a60bbdca"
@@ -4173,7 +4178,7 @@
       "original_owners_preserved": 452,
       "private_exclusions_preserved": 27,
       "guard_functions": "UNCHANGED",
-      "exact_delta_review_sha256": "e2216bd312a2ffe64b2cd41cf8042f7548f8e6a704fb1ef3dd31c6f257e1aacd",
+      "exact_delta_review_sha256": "7c013fd6474a436c74c367ed835cc9be2f92fba790f21f088849e2d69cc120fc",
       "structural_review_sha256": "1f63930c472e21b6e4a1db4127ebc1de87aba1e469dc33dc9201f6e51c86ae82",
       "live_gates": "CLOSED",
       "provider_calls": 0,

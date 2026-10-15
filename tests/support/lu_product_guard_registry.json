@@ -1,7 +1,7 @@
 {
   "schema": "LU-PRODUCT-GUARD-REGISTRY-1.0",
   "status": "REVIEWED_EXACT_DELTA_PENDING_TARGETED_QUALIFICATION",
-  "timestamp_utc": "2026-10-15T15:27:28.908172+00:00",
+  "timestamp_utc": "2026-10-15T15:44:40.140547+00:00",
   "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
   "baseline_tree": "93bdaa387815f6a6654496120b40e6853629f082",
   "predecessor_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
@@ -178,6 +178,7 @@
     "tests/unit/test_rich_course_context_delivery.py",
     "tests/unit/test_saved_course_local_edits.py",
     "tests/unit/test_saved_p0_read_compatibility.py",
+    "tests/unit/test_stabilisation_active_guard.py",
     "tests/unit/test_stmg_local_activity_qualification.py",
     "tests/unit/test_stmg_local_contribution.py",
     "tools/launch-local.ps1",
@@ -358,6 +359,7 @@
     "tests/unit/test_rich_course_context_delivery.py",
     "tests/unit/test_saved_course_local_edits.py",
     "tests/unit/test_saved_p0_read_compatibility.py",
+    "tests/unit/test_stabilisation_active_guard.py",
     "tests/unit/test_stmg_local_activity_qualification.py",
     "tests/unit/test_stmg_local_contribution.py",
     "tools/launch-local.ps1",
@@ -1027,6 +1029,10 @@
       "before": null,
       "after": "4e5ca44d50561ea5716664835f513995e96de946108afb23f1df955274ffa464"
     },
+    "tests/unit/test_stabilisation_active_guard.py": {
+      "before": "0aad38dc9bb6bdb010ec45743c878da39d152506258345f65571b82c6a5b49ab",
+      "after": "46bed71cc1cf9962ffcf20055db9456c423bf24b0201e7f78daeca7adc179871"
+    },
     "tests/unit/test_stmg_local_activity_qualification.py": {
       "before": null,
       "after": "37b09cfe6b602b0d7b9410fdc80515c939cc6c3b90b4d20d04ca2155a60bbdca"
@@ -1594,8 +1600,8 @@
   "runtime_writes": 0,
   "historical_results": "UNCHANGED",
   "refresh_scope": {
-    "source_head": "8851735abfe982846635c11c26a182527fb716b4",
-    "source_tree": "7465c5be38f35fbd980f88233d2ac50163dd10e0",
+    "source_head": "15906dc13df1551861dae75bc31127d367bdc535",
+    "source_tree": "c63a28d622571291cbf36d6cbcf5207c9d34ffe8",
     "changed_since_source": [
       "architecture/adr/ADR-M02-local-contribution-overlay.md",
       "backend/adapters/inbound/application/local_contribution.py",
@@ -1645,6 +1651,7 @@
       "tests/unit/test_p0_rejected_launch_dispatch.py",
       "tests/unit/test_p0_rich_course_content.py",
       "tests/unit/test_p1_campaign_inspection.py",
+      "tests/unit/test_stabilisation_active_guard.py",
       "tests/unit/test_stmg_local_contribution.py",
       "tools/launch-local.ps1",
       "tools/tests/p0_rich_course_context.test.cjs"
@@ -1653,6 +1660,6 @@
     "private_exclusions_preserved": true,
     "predicates_changed": false
   },
-  "exact_delta_review_sha256": "e2216bd312a2ffe64b2cd41cf8042f7548f8e6a704fb1ef3dd31c6f257e1aacd",
+  "exact_delta_review_sha256": "7c013fd6474a436c74c367ed835cc9be2f92fba790f21f088849e2d69cc120fc",
   "exact_delta_reviewer": "/root/p1_preparation_review"
 }

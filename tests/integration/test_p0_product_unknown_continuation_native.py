@@ -265,6 +265,16 @@ def test_native_distinct_creation_preserves_history_and_counts_one_added_slot(ca
         assert all(origin.permission["max_calls"] == 14 and Decimal(origin.permission["cumulative_ceiling_usd"]) == Decimal("1.96")
             for origin in data["comp"].chain.origins)
         assert all(facts(case[0]["root"])[name] == value for name, value in before.items())
+        with pytest.raises(ValueError, match="PREPARATION_CHANGED"):
+            preview_and_send(data)
+        # The normal Application consumes a preparation after generation.
+        # A fresh preparation must also fail on the exhausted one-addition
+        # authority, rather than relying only on that earlier consumed guard.
+        fresh_context = copy.deepcopy(data["request"]["context"])
+        fresh_context["institutional_resolution"] = None
+        data["prepared"] = data["app"].execute("prepare", {"command_id": token_hex(16),
+            "context": fresh_context, "reference": {"notion_id": data["reference"]["notion_id"],
+                "passage_ref": data["reference"]["passage_ref"]}})
         with pytest.raises(ValueError, match="ALREADY_RESERVED"):
             preview_and_send(data)
         assert data["transport"].calls == 1

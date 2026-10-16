@@ -1,7 +1,7 @@
 {
   "schema": "LU-PRODUCT-GUARD-REGISTRY-1.0",
   "status": "REVIEWED_EXACT_DELTA_PENDING_TARGETED_QUALIFICATION",
-  "timestamp_utc": "2026-10-16T15:44:07.807160+00:00",
+  "timestamp_utc": "2026-10-16T15:56:09.761469+00:00",
   "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
   "baseline_tree": "93bdaa387815f6a6654496120b40e6853629f082",
   "predecessor_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
@@ -995,7 +995,7 @@
     },
     "tests/integration/test_p0_product_unknown_continuation_native.py": {
       "before": null,
-      "after": "e6ae0ab430747cab5259391f66e1982682d72c26dca18115b7b91bdd315dcfbf"
+      "after": "3808086defc8fa47c8c296795f843fae96aafd9541f67ca11d818342eaf0d96d"
     },
     "tests/integration/test_p0_product_unknown_off_native.py": {
       "before": null,
@@ -1742,6 +1742,6 @@
     "guard_functions": "UNCHANGED",
     "no_effect_authority": true
   },
-  "exact_delta_review_sha256": "6ea42fac2560e254d237d24607453820ae335ca9a76b4a5524136704f1a9d55e",
+  "exact_delta_review_sha256": "f0be3fef0587ff650db2fd6d0ea8a2cd0f7c6e9ce4c184d2c56b20db8c98ef16",
   "exact_delta_reviewer": "/root/operational_prior_review"
 }

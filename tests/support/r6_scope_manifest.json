@@ -1185,7 +1185,7 @@
     "tests/integration/test_p0_product_rejected_continuity_native.py": "967d0a46fb6540787dca3c72118926b6ac5ef7a45380f994da4aebae4ccd322c",
     "tests/integration/test_p0_product_unknown_continuation_authority.py": "c91ad873d8f836480900d6b8fa9b1f6141e05fc2085782d7bf23535fdda8e9d8",
     "tests/integration/test_p0_product_unknown_continuation_faults.py": "833a108ed18ae279179b8b48c74f17323f9c7258d65c0b761be31c58c95b38a4",
-    "tests/integration/test_p0_product_unknown_continuation_native.py": "e6ae0ab430747cab5259391f66e1982682d72c26dca18115b7b91bdd315dcfbf",
+    "tests/integration/test_p0_product_unknown_continuation_native.py": "3808086defc8fa47c8c296795f843fae96aafd9541f67ca11d818342eaf0d96d",
     "tests/integration/test_p0_product_unknown_off_native.py": "e2a7e40f5a08e134491b1c2c7b18d5feb0845e336d495d66a7b5b7f4e3c51e70",
     "tests/integration/test_rich_course_normal_application.py": "86f12d8406c62362a0b262e37fb4a096307cd9ef7fa7a2accc59446e2b05d27b",
     "tests/unit/test_course_notion_contract.py": "bc36d042a14ef55da9d6d3dc572430e361b69d88ce103957a5132228ed24ac39",
@@ -1234,7 +1234,7 @@
     "tools/tests/p0_rich_course_preview.test.cjs": "13da2ab8849bf71e68e819db5f656690ff055bcca312abf7d2c00754dd952424",
     "tools/tests/p0_ui_async_binding.test.cjs": "1175ce61663b494660fa4777f42779c4b80d746bb5b8e10996d32f8a7fc0e3a4",
     "tools/tests/p0_ui_local_reference_context.test.cjs": "ea04482a9a69fe64efe2cea08f75263fa662f3a120846c4225e1a8ad8b93691c",
-    "tests/support/lu_product_guard_registry.json": "feb37d659e78a99e2feb3c5295e2e99cad4dc37272817ac4443fbac7bb24326d"
+    "tests/support/lu_product_guard_registry.json": "34473b1a96696a5839049ba4a58786645243158357e8f16aa625196a090e0b8a"
   },
   "active_delta_paths": [
     ".gitignore",
@@ -3334,7 +3334,7 @@
       "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
       "parent_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
       "registry_path": "tests/support/lu_product_guard_registry.json",
-      "registry_sha256": "feb37d659e78a99e2feb3c5295e2e99cad4dc37272817ac4443fbac7bb24326d",
+      "registry_sha256": "34473b1a96696a5839049ba4a58786645243158357e8f16aa625196a090e0b8a",
       "changed_owners": [
         "architecture/adr/ADR-M02-local-contribution-overlay.md",
         "backend/adapters/inbound/api/p0_creation.py",
@@ -4115,7 +4115,7 @@
         },
         "tests/integration/test_p0_product_unknown_continuation_native.py": {
           "before": null,
-          "after": "e6ae0ab430747cab5259391f66e1982682d72c26dca18115b7b91bdd315dcfbf"
+          "after": "3808086defc8fa47c8c296795f843fae96aafd9541f67ca11d818342eaf0d96d"
         },
         "tests/integration/test_p0_product_unknown_off_native.py": {
           "before": null,
@@ -4338,7 +4338,7 @@
       "original_owners_preserved": 452,
       "private_exclusions_preserved": 27,
       "guard_functions": "UNCHANGED",
-      "exact_delta_review_sha256": "6ea42fac2560e254d237d24607453820ae335ca9a76b4a5524136704f1a9d55e",
+      "exact_delta_review_sha256": "f0be3fef0587ff650db2fd6d0ea8a2cd0f7c6e9ce4c184d2c56b20db8c98ef16",
       "structural_review_sha256": "1f63930c472e21b6e4a1db4127ebc1de87aba1e469dc33dc9201f6e51c86ae82",
       "live_gates": "CLOSED",
       "provider_calls": 0,

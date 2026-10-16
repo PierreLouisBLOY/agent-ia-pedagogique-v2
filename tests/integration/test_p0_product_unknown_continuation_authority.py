@@ -66,8 +66,11 @@ def test_native_reserved_slot_does_not_restore_capacity_or_transfer_live_pending
     generation = data["comp"].generation
     before = facts(case[0]["root"])
     try:
-        command, shown = preview(data)
-        generation.accept(request=data["request"], consent=command, source_receipts=shown["source_receipts"])
+        command, _ = preview(data)
+        # Use the exact Application reader bound by composition. Source
+        # admission receipts are deliberately absent from the UI preview.
+        sources = data["endpoint"].consent_execute.__self__.admission_reader(data["request"])
+        generation.accept(request=data["request"], consent=command, source_receipts=sources)
         capability_key = next(iter(generation.pending_capabilities))
         if fault == "absent":
             generation.pending_capabilities.pop(capability_key)
@@ -78,7 +81,9 @@ def test_native_reserved_slot_does_not_restore_capacity_or_transfer_live_pending
             generation.pending_capabilities[capability_key] = changed
         else:
             generation.clock = lambda: datetime.now(UTC) + timedelta(days=7)
-        with pytest.raises(ValueError):
+        expected = {"absent": "OWN_PENDING_REQUIRED", "substituted": "OUTCOME_RECONCILIATION_REQUIRED",
+            "expired": "TIME|EXPIRED|WINDOW"}[fault]
+        with pytest.raises(ValueError, match=expected):
             generation.generate(request=data["request"])
         preserved = facts(case[0]["root"])
         assert len(preserved) == len(before) + 1

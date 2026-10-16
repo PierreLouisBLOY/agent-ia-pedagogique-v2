@@ -1,7 +1,7 @@
 {
   "schema": "LU-PRODUCT-GUARD-REGISTRY-1.0",
   "status": "REVIEWED_EXACT_DELTA_PENDING_TARGETED_QUALIFICATION",
-  "timestamp_utc": "2026-10-16T15:20:59.590001+00:00",
+  "timestamp_utc": "2026-10-16T15:44:07.807160+00:00",
   "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
   "baseline_tree": "93bdaa387815f6a6654496120b40e6853629f082",
   "predecessor_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
@@ -987,7 +987,7 @@
     },
     "tests/integration/test_p0_product_unknown_continuation_authority.py": {
       "before": null,
-      "after": "38b052e1650dc24725963049fceaf22a8d16622bfe593d083cc7d73bb131b532"
+      "after": "c91ad873d8f836480900d6b8fa9b1f6141e05fc2085782d7bf23535fdda8e9d8"
     },
     "tests/integration/test_p0_product_unknown_continuation_faults.py": {
       "before": null,
@@ -995,7 +995,7 @@
     },
     "tests/integration/test_p0_product_unknown_continuation_native.py": {
       "before": null,
-      "after": "e6bbeff426b7a3b61867f9760a98b3e987a0a24ecd5cc3c440cc7ca255a13d68"
+      "after": "e6ae0ab430747cab5259391f66e1982682d72c26dca18115b7b91bdd315dcfbf"
     },
     "tests/integration/test_p0_product_unknown_off_native.py": {
       "before": null,
@@ -1734,11 +1734,14 @@
       "tests/integration/test_p0_product_unknown_continuation_authority.py",
       "tests/integration/test_p0_product_unknown_continuation_faults.py",
       "tests/integration/test_p0_product_unknown_continuation_native.py",
+      "tests/support/lu_product_guard_registry.json",
+      "tests/support/r6_scope_guard.py",
+      "tests/support/r6_scope_manifest.json",
       "tests/unit/test_p0_product_unknown_continuation.py"
     ],
     "guard_functions": "UNCHANGED",
     "no_effect_authority": true
   },
-  "exact_delta_review_sha256": "3ff4801fd5a2471d25346508f21cbb27eb02c289f78eb241dd75aea40476408c",
+  "exact_delta_review_sha256": "6ea42fac2560e254d237d24607453820ae335ca9a76b4a5524136704f1a9d55e",
   "exact_delta_reviewer": "/root/operational_prior_review"
 }

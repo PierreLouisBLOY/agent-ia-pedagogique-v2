@@ -3,6 +3,7 @@ import copy
 import json
 import sys
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 from secrets import token_hex
 
@@ -61,6 +62,17 @@ def baseline(tmp_path_factory, request):
     patch = pytest.MonkeyPatch()
     from backend.adapters.outbound import openai
     from backend.infrastructure.composition.factories import p0_normal_profile, p0_rejected_profile
+    from tests.unit import test_p0_normal_profile as profile_fixture
+    original_configuration = profile_fixture.configured_product
+
+    def initial_campaign_configuration(*args, **kwargs):
+        values = original_configuration(*args, **kwargs)
+        # A fresh declared campaign starts with these root limits. Never edit
+        # an existing permission, LOCK, event, slot or historical test fixture.
+        values[0]["permission"].update(max_calls=14, cumulative_ceiling_usd="1.960000")
+        return values
+
+    patch.setattr(profile_fixture, "configured_product", initial_campaign_configuration)
     patch.setattr(p0_normal_profile, "MaskedLocalSecretResolver", DeclaredConstructionResolver)
     patch.setattr(p0_rejected_profile, "MaskedLocalSecretResolver", DeclaredConstructionResolver)
     patch.setattr(openai, "OpenAISDKResponsesTransportFactory", lambda **kwargs: SyntheticTransport(None))
@@ -249,6 +261,9 @@ def test_native_distinct_creation_preserves_history_and_counts_one_added_slot(ca
         assert data["transport"].calls == 1
         observed = data["comp"]._ledger().snapshot()
         assert observed["slots_reserved"] == 4 and observed["consumed_count"] == 2 and observed["unknown_count"] == 1
+        assert Decimal(observed["reserved_budget_usd"]) == case[0]["total"] + Decimal(data["proof"]["cost_bound_usd"])
+        assert all(origin.permission["max_calls"] == 14 and Decimal(origin.permission["cumulative_ceiling_usd"]) == Decimal("1.96")
+            for origin in data["comp"].chain.origins)
         assert all(facts(case[0]["root"])[name] == value for name, value in before.items())
         with pytest.raises(ValueError, match="ALREADY_RESERVED"):
             preview_and_send(data)

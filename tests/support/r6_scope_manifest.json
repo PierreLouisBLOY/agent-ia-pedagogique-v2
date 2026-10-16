@@ -1183,9 +1183,9 @@
     "tests/integration/test_p0_product_consent_http.py": "7547adea76f059793104916c68eac0283f9b7fee1a332741bf8b529626575bea",
     "tests/integration/test_p0_product_continuity_native.py": "4f5f805b45bac3900c912847453f923800be521b049796e31b5f9bca06fc1a69",
     "tests/integration/test_p0_product_rejected_continuity_native.py": "967d0a46fb6540787dca3c72118926b6ac5ef7a45380f994da4aebae4ccd322c",
-    "tests/integration/test_p0_product_unknown_continuation_authority.py": "38b052e1650dc24725963049fceaf22a8d16622bfe593d083cc7d73bb131b532",
+    "tests/integration/test_p0_product_unknown_continuation_authority.py": "c91ad873d8f836480900d6b8fa9b1f6141e05fc2085782d7bf23535fdda8e9d8",
     "tests/integration/test_p0_product_unknown_continuation_faults.py": "833a108ed18ae279179b8b48c74f17323f9c7258d65c0b761be31c58c95b38a4",
-    "tests/integration/test_p0_product_unknown_continuation_native.py": "e6bbeff426b7a3b61867f9760a98b3e987a0a24ecd5cc3c440cc7ca255a13d68",
+    "tests/integration/test_p0_product_unknown_continuation_native.py": "e6ae0ab430747cab5259391f66e1982682d72c26dca18115b7b91bdd315dcfbf",
     "tests/integration/test_p0_product_unknown_off_native.py": "e2a7e40f5a08e134491b1c2c7b18d5feb0845e336d495d66a7b5b7f4e3c51e70",
     "tests/integration/test_rich_course_normal_application.py": "86f12d8406c62362a0b262e37fb4a096307cd9ef7fa7a2accc59446e2b05d27b",
     "tests/unit/test_course_notion_contract.py": "bc36d042a14ef55da9d6d3dc572430e361b69d88ce103957a5132228ed24ac39",
@@ -1234,7 +1234,7 @@
     "tools/tests/p0_rich_course_preview.test.cjs": "13da2ab8849bf71e68e819db5f656690ff055bcca312abf7d2c00754dd952424",
     "tools/tests/p0_ui_async_binding.test.cjs": "1175ce61663b494660fa4777f42779c4b80d746bb5b8e10996d32f8a7fc0e3a4",
     "tools/tests/p0_ui_local_reference_context.test.cjs": "ea04482a9a69fe64efe2cea08f75263fa662f3a120846c4225e1a8ad8b93691c",
-    "tests/support/lu_product_guard_registry.json": "44682f77df9fcd829d02e4400d24b6a19c10263a5ca3c37c5b46cc78ff52a1d1"
+    "tests/support/lu_product_guard_registry.json": "feb37d659e78a99e2feb3c5295e2e99cad4dc37272817ac4443fbac7bb24326d"
   },
   "active_delta_paths": [
     ".gitignore",
@@ -3334,7 +3334,7 @@
       "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
       "parent_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
       "registry_path": "tests/support/lu_product_guard_registry.json",
-      "registry_sha256": "44682f77df9fcd829d02e4400d24b6a19c10263a5ca3c37c5b46cc78ff52a1d1",
+      "registry_sha256": "feb37d659e78a99e2feb3c5295e2e99cad4dc37272817ac4443fbac7bb24326d",
       "changed_owners": [
         "architecture/adr/ADR-M02-local-contribution-overlay.md",
         "backend/adapters/inbound/api/p0_creation.py",
@@ -4107,7 +4107,7 @@
         },
         "tests/integration/test_p0_product_unknown_continuation_authority.py": {
           "before": null,
-          "after": "38b052e1650dc24725963049fceaf22a8d16622bfe593d083cc7d73bb131b532"
+          "after": "c91ad873d8f836480900d6b8fa9b1f6141e05fc2085782d7bf23535fdda8e9d8"
         },
         "tests/integration/test_p0_product_unknown_continuation_faults.py": {
           "before": null,
@@ -4115,7 +4115,7 @@
         },
         "tests/integration/test_p0_product_unknown_continuation_native.py": {
           "before": null,
-          "after": "e6bbeff426b7a3b61867f9760a98b3e987a0a24ecd5cc3c440cc7ca255a13d68"
+          "after": "e6ae0ab430747cab5259391f66e1982682d72c26dca18115b7b91bdd315dcfbf"
         },
         "tests/integration/test_p0_product_unknown_off_native.py": {
           "before": null,
@@ -4338,7 +4338,7 @@
       "original_owners_preserved": 452,
       "private_exclusions_preserved": 27,
       "guard_functions": "UNCHANGED",
-      "exact_delta_review_sha256": "3ff4801fd5a2471d25346508f21cbb27eb02c289f78eb241dd75aea40476408c",
+      "exact_delta_review_sha256": "6ea42fac2560e254d237d24607453820ae335ca9a76b4a5524136704f1a9d55e",
       "structural_review_sha256": "1f63930c472e21b6e4a1db4127ebc1de87aba1e469dc33dc9201f6e51c86ae82",
       "live_gates": "CLOSED",
       "provider_calls": 0,

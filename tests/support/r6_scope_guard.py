@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SELF = "tests/support/r6_scope_guard.py"
 MANIFEST = "tests/support/r6_scope_manifest.json"
 SELF_SHA256 = "bb813b672cb5ad9f79239735394625721a44b072820c81883b50dd7ee51115d3"
-MANIFEST_SHA256 = "d62b12f3f585f547d9b4aa7f291116ed5d0657ee721117fdfd9ece313367c340"
+MANIFEST_SHA256 = "48c705b6ee96ff89a563402972b6969f6b8e2fb259dffb316afb5264328556b0"
 
 # Populated by the bounded private-source successor; never an open deletion list.
 PRIVATE_PREPARATION_PATHS: frozenset[str] = frozenset((

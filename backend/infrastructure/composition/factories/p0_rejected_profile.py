@@ -499,7 +499,7 @@ class P0RejectedProductComposition(_ReadOnlyBinding):
             dict(self.chain.current.decision),
         )
         self.tariff = cast(Mapping[str, object], read_descriptor(self.profile["tariff"]))
-        self._bound_ledger = P0RejectedContinuityLedger(
+        self._bound_ledger = self._make_ledger(
             root=self.root,
             permission=self.chain.current.permission,
             chain_loader=self._chain,
@@ -974,7 +974,7 @@ class P0RejectedProductComposition(_ReadOnlyBinding):
         self.resolver = MaskedLocalSecretResolver(
             ProviderCredentialRef(str(self.profile["credential_ref"]))
         )
-        self.generation = P0RejectedProductGenerationAdapter(
+        self.generation = self._make_broker(
             read_phase=cast(NativeP0RejectedReadPhases, self.read_phases),
             rejected_chain=self._chain,
             permission=self.permission,
@@ -990,6 +990,12 @@ class P0RejectedProductComposition(_ReadOnlyBinding):
         )
         # No preview/consent/grant is created by construction. Current metadata
         # must pass before the normal generation binder becomes available.
+
+    def _make_ledger(self, **kwargs: object) -> P0RejectedContinuityLedger:
+        return P0RejectedContinuityLedger(**kwargs)  # type: ignore[arg-type]
+
+    def _make_broker(self, **kwargs: object) -> P0RejectedProductGenerationAdapter:
+        return P0RejectedProductGenerationAdapter(**kwargs)  # type: ignore[arg-type]
 
     def bind(self, service: P0CreationService, endpoint: P0CreationEndpoint) -> None:
         self._bind_inspection(

@@ -208,7 +208,12 @@ class P1CampaignInspectionView:
     def __post_init__(self) -> None:
         data = object_data(self.data)
         schema = data.get("schema")
-        if schema == "P0-PRODUCT-UNKNOWN-OFF-OBSERVATION-1.0":
+        if schema == "P0-UNKNOWN-CONTINUITY-SNAPSHOT-1.0":
+            from backend.modules.work_orchestration.contracts.dto.p1_unknown_continuation_snapshot import (
+                operational_projection,
+            )
+            result = operational_projection(data)
+        elif schema == "P0-PRODUCT-UNKNOWN-OFF-OBSERVATION-1.0":
             from backend.modules.work_orchestration.contracts.dto.p1_unknown_off_inspection import (
                 unknown_off_projection,
             )

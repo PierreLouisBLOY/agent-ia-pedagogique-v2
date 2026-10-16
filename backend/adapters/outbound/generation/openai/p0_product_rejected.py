@@ -61,7 +61,11 @@ class P0RejectedProductGenerationAdapter(P0ProductGenerationAdapter):
         super().__init__(continuity_chain=rejected_chain, **kwargs)  # type: ignore[arg-type]
         self.read_phase = read_phase
         chain = rejected_chain()
-        self.ledger = P0RejectedContinuityLedger(
+        self.ledger = self._make_ledger(chain, rejected_chain)
+
+    def _make_ledger(self, chain: BoundChainV2,
+        rejected_chain: Callable[[], BoundChainV2]) -> P0RejectedContinuityLedger:
+        return P0RejectedContinuityLedger(
             root=self.root,
             permission=self.permission,
             chain_loader=rejected_chain,

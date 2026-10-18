@@ -853,10 +853,10 @@ function p0Workflow() {
   } else {
     const refs = Array.isArray(p0.view.references) ? p0.view.references.length : 0;
     set("context", "done", "Contexte et " + refs + " référence(s) liés à cette version ; leur présence ne vaut pas admission.");
-    set("review", p0.dirty ? "attention" : auditPass ? "done" : "current",
+    set("review", p0.dirty ? "attention" : "current",
       p0.dirty ? "Modifications en cours ; conservez-les dans une nouvelle version." :
-        auditPass ? "Version relue ; aucun affinage supplémentaire n’est requis par le contrôle technique." :
-          audited ? "Des réserves techniques sont affichées ; affinez si nécessaire dans une nouvelle version." :
+        auditPass ? "L’audit technique est terminé ; relisez le support et affinez si un écart le justifie." :
+          audited ? "Des réserves techniques sont affichées ; relisez et affinez si nécessaire dans une nouvelle version." :
             "Relisez le support et affinez seulement si un écart le justifie.");
     set("audit", audited ? (auditPass ? "done" : "attention") : "current",
       p0.dirty ? "Après une modification, créez une nouvelle version avant de la vérifier." :

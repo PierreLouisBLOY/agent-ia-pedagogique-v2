@@ -56,12 +56,16 @@ for (const family of ['COURSE', 'EXERCISE', 'ASSESSMENT', 'QCM', 'QUIZ', 'OPEN_Q
     h.ctx.p0.workflowAudit = {key:key(selected), status:'PASS'};
     h.ctx.p0Workflow();
     assert.equal(h.nodes.get('p0-step-audit').dataset.state, 'done');
+    assert.equal(h.nodes.get('p0-step-review').dataset.state, 'current');
+    assert.doesNotMatch(h.nodes.get('p0-step-review-status').textContent, /Version relue/i);
+    assert.match(h.nodes.get('p0-step-review-status').textContent, /audit technique est terminé/);
     assert.equal(h.nodes.get('p0-step-save').dataset.state, 'current');
     assert.match(h.nodes.get('p0-step-audit-status').textContent, /pas une validation pédagogique/);
 
     h.ctx.p0.workflowSaved = key(selected);
     h.ctx.p0Workflow();
     assert.equal(h.nodes.get('p0-step-save').dataset.state, 'done');
+    assert.equal(h.nodes.get('p0-step-review').dataset.state, 'current');
     assert.equal(h.nodes.get('p0-step-export').dataset.state, 'current');
   });
 }

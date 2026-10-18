@@ -40,7 +40,7 @@
     <section id="prepare-view" class="workspace conversation-main" aria-labelledby="p0-heading" data-panel="prepare" hidden>
       <div class="welcome"><p class="eyebrow">Une idée, une préparation</p><h2 id="p0-heading">Que préparez-vous aujourd’hui ?</h2><p>Un cours, un exercice, des questions ou une évaluation : décrivez votre besoin, puis confirmez le contexte et vos sources.</p></div>
       <ol id="preparation-messages" aria-label="Votre conversation" aria-live="polite"></ol>
-      <details id="preparation-parameters" class="secondary"><summary>Contexte à confirmer · paramètres de préparation</summary>
+      <details id="preparation-parameters" class="secondary"><summary>1. Confirmer le contexte et les références</summary>
       <form id="p0-form">
         <div class="context-grid">
         <label for="p0-family">Production</label>
@@ -82,7 +82,7 @@
         <label for="p0-notion-id">Notion canonique exacte — facultatif, à la place de la recherche</label><input id="p0-notion-id" maxlength="256">
         <label for="p0-search-passage">Identifiant du passage sélectionné — facultatif</label><input id="p0-search-passage" maxlength="500">
         <p>La recherche ci-dessous permet de sélectionner le passage ; ses références restent consultables.</p></details>
-        <button id="p0-prepare" type="submit" disabled>Confirmer et préparer</button>
+        <button id="p0-prepare" type="submit" disabled>Confirmer le contexte et préparer</button>
       </form></details>
       <p id="p0-status" role="status" aria-live="polite">Connexion en cours.</p>
       <details class="secondary"><summary>Connexion et limites</summary><p>Sans autorisation fournisseur distincte, la génération est indisponible. Une vérification de structure ne constitue pas une validation pédagogique.</p><button id="p0-connect" type="button">Vérifier la connexion au service</button></details>
@@ -100,7 +100,18 @@
       </section>
       <article id="production-card" class="production-card" hidden>
       <p class="eyebrow">Votre production · à relire</p><h2 id="production-card-title"></h2><p id="production-card-context"></p>
-      <div class="card-actions"><button id="card-open" type="button">Ouvrir</button><button id="card-modify" type="button">Modifier</button><button id="card-check" type="button">Vérifier</button><button id="card-correction" type="button">Correction</button><button id="card-marking" type="button">Barème</button><button id="card-export" type="button">Exporter</button></div>
+      <section id="p0-workflow" class="production-workflow" aria-label="Parcours de cette version">
+        <h3>Étapes pour cette version</h3>
+        <ol>
+          <li id="p0-step-context" data-state="pending"><strong>Contexte et références</strong><span id="p0-step-context-status">À confirmer dans la préparation.</span></li>
+          <li id="p0-step-review" data-state="pending"><strong>Relire et affiner</strong><span id="p0-step-review-status">Affinez seulement si un écart le justifie.</span></li>
+          <li id="p0-step-audit" data-state="pending"><strong>Vérifier la structure et la traçabilité</strong><span id="p0-step-audit-status">Contrôle technique à lancer sur cette version exacte.</span></li>
+          <li id="p0-step-save" data-state="pending"><strong>Sauvegarder et rouvrir</strong><span id="p0-step-save-status">Conservez cette version exacte avant l’export.</span></li>
+          <li id="p0-step-export" data-state="pending"><strong>Prévisualiser et exporter</strong><span id="p0-step-export-status">Choisissez ensuite les documents disponibles pour cette famille.</span></li>
+        </ol>
+        <p>Ces étapes n’établissent pas l’acceptation pédagogique. La recette enseignante reste distincte.</p>
+      </section>
+      <div class="card-actions"><button id="card-open" type="button">Ouvrir</button><button id="card-modify" type="button">Modifier</button><button id="card-check" type="button">Vérifier</button><button id="card-correction" type="button">Correction</button><button id="card-marking" type="button">Barème</button><button id="card-export" type="button">Sauvegarder et ouvrir les exports</button></div>
       <div id="production-card-preview"></div>
       <section id="production-card-teacher-preview" aria-label="Document professeur séparé" hidden></section>
       <details id="production-edit-panel" class="secondary"><summary>Modifier le contenu de cette version</summary><div id="p0-review"></div></details>
@@ -127,7 +138,7 @@
       <button id="p0-validate" type="button" disabled>Vérifier la structure et la traçabilité</button>
       <button id="p0-save" type="button" disabled>Sauvegarder et rouvrir cette version</button>
       </div>
-      <p>Après sauvegarde, retrouvez les exports applicables dans Productions. La vérification de structure ne vaut pas validation pédagogique.</p></article>
+      <p>Après sauvegarde, ouvrez les exports applicables dans Productions. La vérification de structure ne vaut pas validation pédagogique.</p></article>
       <form id="preparation-composer" class="composer">
         <label for="preparation-prompt">Votre demande</label><textarea id="preparation-prompt" required rows="2" maxlength="1500" placeholder="Prépare un exercice BTS CG deuxième année sur le seuil de rentabilité…"></textarea>
         <div class="composer-bottom"><div class="context-chips"><button type="button" data-family="COURSE">Cours</button><button type="button" data-family="EXERCISE">Exercice</button><button type="button" data-family="OPEN_QUESTIONS">Questions ouvertes</button><button type="button" data-family="QCM">QCM</button><button type="button" data-family="QUIZ">Quiz</button><button type="button" data-family="ASSESSMENT">Évaluation</button></div><button id="preparation-send" type="submit" aria-label="Envoyer votre demande">Envoyer ↑</button></div>
@@ -135,7 +146,7 @@
     </section>
     <section id="productions-view" class="workspace" aria-labelledby="r4-heading" data-panel="productions" hidden>
       <p class="eyebrow">Mes documents</p>
-      <h2 id="r4-heading">Sauvegarder, rouvrir, exporter</h2>
+      <h2 id="r4-heading">Version conservée et exports</h2>
       <p>Sauvegarder n’est pas promouvoir. Les imports historiques sont documentaires et non modifiables.</p>
       <details class="secondary"><summary>Sauvegarde du parcours conversationnel antérieur</summary><button id="r4-save" type="button">Sauvegarder la version R3 consultée</button></details>
       <button id="r4-refresh" type="button">Retrouver les versions sauvegardées</button>

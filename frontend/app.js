@@ -659,7 +659,7 @@ async function r4Open() {
   appendSearchText(details, "h3", "Nouvelles actions R4 distinctes");
   appendSearchText(details, "pre", JSON.stringify(r4Record.new_actions, null, 2));
   document.getElementById("r4-preview-content").replaceChildren();
-  r4Status.textContent = "Version rouverte. Consultez les réserves dans Sources & contexte avant diffusion.";
+  r4Status.textContent = "Version exacte rouverte. Consultez ses réserves dans Sources & contexte, choisissez le document disponible, prévisualisez-le puis téléchargez le DOCX.";
   uxSavedCard(r4Record);
   uxHomeVersions(r4SavedVersions);
   r4Controls();
@@ -795,7 +795,7 @@ r4Run(r4Refresh);
 const p0 = {nonce: null, references: [], prepared: null, view: null, teacher: null, consent: null,
   busy: false, uncertain: false, contextRevision: 0, editInputs: [], connected: false,
   liveBinding: "NONE", normalConsentBinding: "NONE", mediaBinding: "NONE",
-  localReferenceContextBinding: "NONE", localReferenceContexts: []};
+  localReferenceContextBinding: "NONE", localReferenceContexts: [], workflowAudit: null, workflowSaved: null};
 let p0ConnectionPromise = null;
 const p0Element = id => document.getElementById("p0-" + id);
 function p0Controls() {
@@ -817,6 +817,61 @@ function p0Controls() {
       (id === "correction" && !p0.view.questions.length && !p0.view.course_chapter) ||
       (id === "marking" && p0.view.pedagogical_context.resource_type !== "ASSESSMENT") ||
       (["export", "check"].includes(id) && !!p0.dirty);
+  p0Workflow();
+}
+function p0WorkflowKey(view = p0.view) {
+  if (!view?.production_ref || !view?.version_ref || !view?.bundle_sha256) return null;
+  return [view.production_ref, view.version_ref, view.bundle_sha256].join("/");
+}
+function p0Workflow() {
+  const stages = ["context", "review", "audit", "save", "export"];
+  const viewKey = p0WorkflowKey();
+  const audited = !!viewKey && !p0.dirty && p0.workflowAudit?.key === viewKey;
+  const auditPass = audited && p0.workflowAudit.status === "PASS";
+  const saved = !!viewKey && !p0.dirty && p0.workflowSaved === viewKey;
+  const set = (name, state, message) => {
+    const node = document.getElementById("p0-step-" + name);
+    if (!node) return;
+    node.dataset ||= {};
+    node.dataset.state = state;
+    node.removeAttribute?.("aria-current");
+    const status = document.getElementById("p0-step-" + name + "-status");
+    if (status) status.textContent = message;
+  };
+  const active = !viewKey ? "context" : p0.dirty || (audited && !auditPass) ? "review" :
+    !audited ? "audit" : !saved ? "save" : "export";
+  for (const stage of stages) {
+    const node = document.getElementById("p0-step-" + stage);
+    node?.removeAttribute?.("aria-current");
+  }
+  if (!viewKey) {
+    set("context", "current", "Confirmez le niveau, les objectifs et les références avant de préparer.");
+    set("review", "pending", "La production apparaîtra ici après la préparation.");
+    set("audit", "pending", "Vérification technique non exécutée.");
+    set("save", "pending", "Conservez la version exacte après sa relecture.");
+    set("export", "pending", "Les projections disponibles dépendent de la famille de document.");
+  } else {
+    const refs = Array.isArray(p0.view.references) ? p0.view.references.length : 0;
+    set("context", "done", "Contexte et " + refs + " référence(s) liés à cette version ; leur présence ne vaut pas admission.");
+    set("review", p0.dirty ? "attention" : auditPass ? "done" : "current",
+      p0.dirty ? "Modifications en cours ; conservez-les dans une nouvelle version." :
+        auditPass ? "Version relue ; aucun affinage supplémentaire n’est requis par le contrôle technique." :
+          audited ? "Des réserves techniques sont affichées ; affinez si nécessaire dans une nouvelle version." :
+            "Relisez le support et affinez seulement si un écart le justifie.");
+    set("audit", audited ? (auditPass ? "done" : "attention") : "current",
+      p0.dirty ? "Après une modification, créez une nouvelle version avant de la vérifier." :
+        audited ? "Contrôle " + p0.workflowAudit.status + " pour cette version exacte ; ce n’est pas une validation pédagogique." :
+          "Contrôle technique à lancer sur cette version exacte.");
+    set("save", saved ? "done" : "current",
+      p0.dirty ? "Conservez d’abord les modifications dans une nouvelle version." :
+        saved ? "Cette version exacte a été sauvegardée puis rouverte." : "Sauvegardez et rouvrez cette version exacte.");
+    set("export", saved ? "current" : "pending",
+      saved && auditPass ? "Dans Productions, prévisualisez puis téléchargez les documents disponibles pour cette famille." :
+        saved ? "Export disponible dans Productions ; le contrôle technique ou ses réserves restent distincts de l’export." :
+          "Choix des exports disponible après sauvegarde et réouverture.");
+  }
+  const current = document.getElementById("p0-step-" + active);
+  current?.setAttribute?.("aria-current", "step");
 }
 async function p0Fetch(path, body = null, contract = "R6-P0-HTTP-LOCAL-1.0") {
   const options = {method: body ? "POST" : "GET", credentials: "omit", cache: "no-store",
@@ -1345,6 +1400,8 @@ function p0Render(view, quality = null) {
   p0.view = view; p0.teacher = null;
   p0.editInputs = [];
   p0.dirty = false;
+  p0.workflowAudit = null;
+  p0.workflowSaved = null;
   uxQuality(quality, view);
   const region = p0Element("review"); region.replaceChildren();
   p0Element("teacher-content").replaceChildren();
@@ -1519,6 +1576,7 @@ p0Element("validate").addEventListener("click", () => p0Run(async () => {
   const target = p0Identity();
   const report = await p0Fetch("/api/v2/p0/validate", {command_id: p0Command(), ...target});
   if (!p0DisplayedVersion(target)) { p0Element("status").textContent = "Vérification conservée pour sa version exacte ; la version consultée a changé."; return; }
+  p0.workflowAudit = {key: p0WorkflowKey(), status: report.status};
   uxQuality(report.quality, target);
   p0Element("status").textContent = "Vérification structurelle : " + report.status + ". Aucune validation pédagogique ni promotion.";
 }, true, "validating"));
@@ -1527,7 +1585,8 @@ async function p0SaveVersion() {
   const refs = {production_ref: p0.view.production_ref, version_ref: p0.view.version_ref};
   await r4Fetch("/api/v2/conversation/saved", refs);
   await r4Refresh(); r4Versions.value = refs.production_ref + "/" + refs.version_ref;
-  await r4Open(); p0Element("status").textContent = "Version sauvegardée et rouverte. Exports disponibles dans l’espace de conservation.";
+  await r4Open(); p0.workflowSaved = p0WorkflowKey(); p0Workflow();
+  p0Element("status").textContent = "Version exacte sauvegardée et rouverte. Choisissez son export dans Productions.";
 }
 p0Element("save").addEventListener("click", () => p0Run(p0SaveVersion, true, "saving"));
 function p0ConnectionReady() {
@@ -1969,6 +2028,8 @@ async function p0ResumeSaved() {
       if (r4Record !== saved || view.production_ref !== selected.production_ref || view.version_ref !== selected.version_ref ||
           view.bundle_sha256 !== selected.bundle_sha256) throw new Error("P0_SAVED_VERSION_CHANGED");
       p0Render(view, {sources:"RESERVE", human_review:"HUMAN_REVIEW_REQUIRED"});
+      p0.workflowSaved = p0WorkflowKey(view);
+      p0Workflow();
       uxShow("prepare"); document.getElementById("production-edit-panel").open = false;
       p0Element("status").textContent = "Version exacte reprise pour édition locale. Références historiques non revalidées ; aucun droit fournisseur restauré.";
     });

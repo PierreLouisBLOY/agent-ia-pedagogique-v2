@@ -1,12 +1,14 @@
 """Project existing identities; contextual links never become official admissions."""
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Mapping
 
 from backend.modules.knowledge_reference.application.queries.qualified_institutional_corpus import (
     QualifiedInstitutionalCorpus,
 )
+from backend.modules.knowledge_reference.contracts.dto.exact_passage_context import selection_sha256
 from backend.modules.knowledge_reference.contracts.dto.stmg_frames import STMG_FRAMES
 from backend.modules.knowledge_reference.ports.outbound.institutional_catalog import (
     InstitutionalSchemaPort,
@@ -82,7 +84,10 @@ class ReadSTMGAlignment:
                             for n in _rows(data, "notion") if n["identity_status"] == "CANONICAL"],
                 "automatic_interprogramme_enrichment": False}
 
-    def resolve(self, selection: Mapping[str, object], reference_selection: Mapping[str, object]) -> dict[str, object]:
+    def resolve(self, selection: Mapping[str, object], reference_selection: Mapping[str, object], *,
+                mode: str = "LEGACY") -> dict[str, object]:
+        if mode not in {"LEGACY", "PASSAGE_EXACT_V2"}:
+            raise ValueError("EXACT_PASSAGE_MODE")
         data = self.catalog.read_institutional_catalog()
         snapshot = self._snapshot(data)
         corpus = QualifiedInstitutionalCorpus(data)
@@ -178,7 +183,7 @@ class ReadSTMGAlignment:
                 "theme": elements.get(str(selection["theme_ref"])),
                 "depth_authority": "LOCAL_PEDAGOGICAL_PROPOSAL", "official_depth": None,
                 "capacity_scope": "SELECTED_THEME_OR_QUESTION_NO_NARROWER_CLAIM"})
-        source_scope = self._reference_scope(selection, reference_selection, question, elements)
+        source_scope = self._reference_scope(selection, reference_selection, question, elements, mode=mode)
         result["reference_scope"] = source_scope
         if source_scope["status"] == "CONTENT_GAP":
             gaps.append("SELECTED_PASSAGE_CONTEXT_NOT_ADMITTED")
@@ -186,9 +191,63 @@ class ReadSTMGAlignment:
         return result
 
     def _reference_scope(self, selection: Mapping[str, object], reference: Mapping[str, object],
-                         question: Mapping[str, object], elements: Mapping[str, dict[str, object]]) -> dict[str, object]:
+                         question: Mapping[str, object], elements: Mapping[str, dict[str, object]], *,
+                         mode: str) -> dict[str, object]:
         identity = {key: reference.get(key) for key in ("object_ref", "object_kind", "passage_ref", "version_or_checksum")}
         verified = all(isinstance(identity[key], str) and identity[key] for key in identity)
+        if mode == "PASSAGE_EXACT_V2":
+            relationships: list[dict[str, object]] = []
+            excerpt = reference.get("excerpt_sha256")
+            provenance = reference.get("provenance_sha256")
+            context_ref = reference.get("context_ref")
+            notions = selection.get("notion_refs")
+            capacities = selection.get("capacity_refs")
+            if (verified and identity["object_kind"] == "PEDAGOGICAL_CONTENT"
+                    and isinstance(excerpt, str) and re.fullmatch(r"[a-f0-9]{64}", excerpt)
+                    and isinstance(provenance, str) and re.fullmatch(r"[a-f0-9]{64}", provenance)
+                    and isinstance(context_ref, str) and context_ref
+                    and isinstance(notions, (list, tuple)) and len(notions) == 1
+                    and notions[0] == reference.get("notion_id")
+                    and isinstance(capacities, (list, tuple)) and bool(capacities)):
+                selection_sha = selection_sha256({
+                    "program_ref": selection["program_ref"],
+                    "program_version_ref": selection["program_version"],
+                    "question_ref": selection["question_ref"],
+                    "notion_ref": notions[0],
+                    "depth": selection["depth"],
+                    "capacity_refs": list(capacities),
+                    "provenance_sha256": provenance,
+                })
+                for link in self.catalog.read_exact_passage_contexts(
+                    str(identity["object_kind"]), str(identity["object_ref"]),
+                    str(identity["passage_ref"]), str(identity["version_or_checksum"]),
+                    excerpt, context_ref, selection_sha,
+                ):
+                    element = elements.get(str(link.get("element_ref")))
+                    try:
+                        row_capacities = json.loads(str(link.get("capacity_refs_canonical_json")))
+                    except (TypeError, ValueError) as error:
+                        raise ValueError("EXACT_PASSAGE_ROW_INVALID") from error
+                    if (link.get("status") == "ADMITTED" and link.get("role") == "MAIN"
+                            and link.get("available_authority") == "UNKNOWN"
+                            and isinstance(link.get("owner_decision_sha256"), str)
+                            and re.fullmatch(r"[a-f0-9]{64}", str(link["owner_decision_sha256"]))
+                            and link.get("program_ref") == selection["program_ref"]
+                            and link.get("program_version") == selection["program_version"]
+                            and link.get("context_program_version") == selection["program_version"]
+                            and link.get("question_ref") == question["id"]
+                            and link.get("notion_ref") == notions[0]
+                            and link.get("depth") == selection["depth"]
+                            and link.get("context_depth") == selection["depth"]
+                            and link.get("provenance_sha256") == provenance
+                            and row_capacities == sorted(capacities)
+                            and element is not None
+                            and element["framework_version_id"] == selection["program_version"]
+                            and (element["id"] == question["id"]
+                                 or element["parent_element_id"] == question["id"])):
+                        relationships.append(dict(link))
+            return {**identity, "status": "EXACT_CONTEXT_ADMITTED" if relationships else "CONTENT_GAP",
+                    "relationships": relationships, "context_enrichment": False}
         # A canonical notion label can establish identity; it does not supply
         # contextual examples, methods, capacities or an admission by propagation.
         if verified and identity["object_kind"] == "NOTION" and identity["object_ref"] == reference.get("notion_id"):

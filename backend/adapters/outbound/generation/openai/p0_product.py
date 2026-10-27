@@ -37,6 +37,7 @@ from backend.adapters.outbound.generation.openai.p0_product_ledger import P0Prod
 from backend.adapters.outbound.generation.openai.p0_product_policy import (
     P1_HASHES,
     derive_grant,
+    prospective_grant,
     validate_permission,
     validate_source_receipts,
 )
@@ -54,13 +55,16 @@ class P0ProductGenerationAdapter:
                  receipt_root: Path, resolver: ProviderSecretResolver, credential_ref: ProviderCredentialRef,
                  transport: OpenAIResponsesTransportFactory, clock: Callable[[], datetime] = lambda: datetime.now(UTC),
                  continuity_chain: Callable[[], BoundChain] | None = None,
-                 local_context_adoption: Mapping[str, object] | None = None) -> None:
+                 local_context_adoption: Mapping[str, object] | None = None,
+                 credential_preflight: Callable[[], object] | None = None) -> None:
         self.permission = cast(dict[str, object], as_plain(permission))
         self.permission_identities, self.identity_source = permission_identities, identity_source
         self.tariff, self.tokenizer = cast(dict[str, object], as_plain(tariff)), tokenizer
         self.local_context_adoption = None if local_context_adoption is None else cast(dict[str, object], as_plain(local_context_adoption))
         self.root, self.resolver, self.credential_ref, self.transport, self.clock = receipt_root, resolver, credential_ref, transport, clock
         self.continuity_chain = continuity_chain
+        self.credential_preflight = credential_preflight
+        self.progress: Callable[[str, Mapping[str, object]], None] | None = None
         self.ledger: P0ProductLedger = (P0ProductLedger(root=receipt_root, permission=self.permission) if continuity_chain is None
             else P0ContinuityProductLedger(root=receipt_root, permission=self.permission,
                 chain_loader=continuity_chain, broker_identity=self, clock=clock))
@@ -77,7 +81,15 @@ class P0ProductGenerationAdapter:
             return {**self.identity_source(request, body), "namespace_sha256": grant["namespace_sha256"]}
         return NormalP0GenerationAdapter(grant=grant, identity_source=identities, tariff=self.tariff,
             tokenizer=self.tokenizer, receipt_root=self.root, resolver=self.resolver,
-            credential_ref=self.credential_ref, transport=self.transport, clock=self.clock)
+            credential_ref=self.credential_ref, transport=self.transport, clock=self.clock,
+            progress=self._notify)
+
+    def _notify(self, phase: str, evidence: Mapping[str, object] | None = None) -> None:
+        if self.progress is not None:
+            try:
+                self.progress(phase, {} if evidence is None else evidence)
+            except Exception:
+                pass  # Observation cannot grant authority or alter the operation.
 
     @staticmethod
     def _family(request: Mapping[str, object]) -> tuple[str, str]:
@@ -111,12 +123,7 @@ class P0ProductGenerationAdapter:
             raise ValueError("P0_PRODUCT_SOURCE_REFERENCE_SET_BINDING")
         if any(identities[k] != self.permission[k] for k in (P1_HASHES & HASH_FIELDS) | {"baseline_commit"}):
             raise ValueError("P0_PRODUCT_FACTORY_PERMISSION_BINDING")
-        grant = {**identities, "schema": "P0-NORMAL-CREATE-GRANT-1.0", "operation": "CREATE", "provider": "OPENAI",
-            "model": self.permission["model"], "endpoint": self.permission["endpoint"], "reasoning": "low", "tier": "default",
-            "max_output_tokens": 4096, "max_calls": 1, "count_calls": 0, "review_calls": 0, "modify_calls": 0,
-            "retry": 0, "fallback": "NONE", "parallelism": 1, "ceiling_usd": self.permission["per_call_ceiling_usd"],
-            "issued_at_utc": now.isoformat(), "expires_at_utc": min(now + timedelta(minutes=120), utc(self.permission["expires_at_utc"])).isoformat(),
-            "live_authorized": True, "transfer_authorized": True}
+        grant = prospective_grant(self.permission, identities, now)
         proof = preflight(raw, grant, self.tariff, self.tokenizer(raw), now=now)
         agent_preparation(request, now)
         return raw, identities, proof
@@ -166,6 +173,9 @@ class P0ProductGenerationAdapter:
             preview = self.previews.get(key)
             if preview is None:
                 raise ValueError("P0_PRODUCT_PREVIEW_UNKNOWN_OR_CONSUMED")
+            if self.credential_preflight is not None:
+                self.credential_preflight()  # No reservation LOCK or human input.
+            self._notify("PREFLIGHT_RUNNING")
             with self.ledger.locked():
                 slots = self.ledger.slots()
                 if any(slot["preview_sha256"] == key for slot in slots):
@@ -184,7 +194,10 @@ class P0ProductGenerationAdapter:
                     check_budget,
                 )
                 check_budget(self.permission, [money(slot["reserved_usd"]) for slot in slots], money(fresh["cost_bound_usd"]))
+                self._notify("PREFLIGHT_CHECKED", {"preflight_sha256": sha(canonical(fresh))})
                 self.ledger.reserve(grant=grant, preview_sha256=key, command_id=str(consent["command_id"]), preflight=fresh)
+                self._notify("BUDGET_RESERVED", {"reserved_usd": fresh["cost_bound_usd"],
+                    "grant_sha256": sha(canonical(grant))})
                 self.previews.pop(key)
                 adapter = self._adapter(grant)
                 dispatch_key = sha(canonical(as_plain(request)))
@@ -246,6 +259,10 @@ class P0ProductGenerationAdapter:
     def _historical_adapters_from(self, slots: Sequence[Mapping[str, object]]) -> list[NormalP0GenerationAdapter]:
         result = []
         for slot in slots:
+            # slots() has validated the complete financial inventory first.
+            # A finite-chain review/correction is never a recoverable CREATE.
+            if slot.get("schema") == "P0-FINITE-CHAIN-SLOT-2.0":
+                continue
             if self.continuity_chain is not None and slot["permission_sha256"] != sha(canonical(self.permission)):
                 continue
             adapter = self._adapter(cast(Mapping[str, object], slot["grant"]))
@@ -297,6 +314,31 @@ class P0ProductGenerationAdapter:
         if not isinstance(self.ledger, P0ContinuityProductLedger):
             raise ValueError("P0_CONTINUITY_PROFILE_REQUIRED")
         return self.ledger.snapshot()
+
+    def read_command(self, command_id: str) -> dict[str, object]:
+        """Read only this permission's retained slot. Never resume an operation."""
+        from backend.infrastructure.filesystem import capture_secure_path
+        unavailable: dict[str, object] = {"state": "LOCAL_COMMAND_FOLLOWUP_UNAVAILABLE", "command_id": command_id}
+        # Merely consulting an unused permission must not create its LOCK.
+        if not capture_secure_path(self.root / (self.ledger.prefix + "LOCK"), allowed_root=self.root).exists:
+            return unavailable
+        with self.ledger.locked():
+            slots = [slot for slot in self.ledger.slots()
+                if slot["permission_sha256"] == sha(canonical(self.permission)) and slot["command_id"] == command_id]
+            if not slots:
+                return unavailable
+            if len(slots) != 1:
+                raise ValueError("P0_PRODUCT_COMMAND_AMBIGUOUS")
+            slot = slots[0]
+            receipt = P0NormalReceipt(self.root, str(slot["namespace_sha256"]))
+            markers = [name for name in ("RESERVED", "PROVIDER_ATTEMPTED", "RESPONSE_CAPTURED", "PARSED",
+                "CONSUMED", "UNKNOWN", "PARSING_REJECTED") if receipt.exists(name)]
+            # Absence of a marker proves neither non-send nor zero billing.
+            return {"state": "LOCAL_COMMAND_UNCERTAIN", "command_id": command_id,
+                "phase": "RETAINED_AFTER_RESTART", "code": "P0_PRODUCT_RETAINED_OPERATION_NO_REPLAY",
+                "reserved_usd": slot["reserved_usd"], "request_sha256": slot["request_sha256"],
+                "observed_markers": markers, "provider_arrival": "NOT_ESTABLISHED",
+                "billed_cost": "NOT_ESTABLISHED", "retry_authorized": False}
 
     def control_evidence(self, *, request: Mapping[str, object], bundle_sha256: str) -> Mapping[str, object]:
         with self.lock:

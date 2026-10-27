@@ -12,6 +12,9 @@ from backend.modules.materialization_export.contracts.dto.word_document import (
 from backend.modules.materialization_export.ports.outbound.word_writer import WordWriter
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import items, object_data
 from backend.modules.pedagogical_design.contracts.dto.production_media import ProductionMediaPlan
+from backend.modules.work_orchestration.contracts.dto.p0_codesign_trace import (
+    SAVED_CODESIGN_CONTRACT,
+)
 from backend.modules.work_orchestration.contracts.dto.saved_production import SavedProduction
 
 _FICTIVE_TITLE = re.compile(r"^(Évaluation|Exercice|Cours|QCM|Quiz|Questions ouvertes)\s+ficti(?:f|ve|fs|ves)(?=\s*[—−-])", re.I)
@@ -26,9 +29,12 @@ class ExportSavedCommand:
 
     def preview(self, record: SavedProduction, kind: str, *, promoted: bool = False) -> WordDocument:
         document = self._preview(record, kind, promoted=promoted)
-        if self.product_projection and record.p0_bundle is not None and document.course_chapter is None:
+        if self.product_projection and record.p0_bundle is not None and document.course_chapter is None and document.exercise_profile is None:
             bundle = record.p0_bundle
             suffix = {"student": "", "correction": " Corrigé", "marking": " Barème"}[kind]
+            if (record.data["contract_id"] == SAVED_CODESIGN_CONTRACT and bundle.context.resource_type == "COURSE"
+                    and kind == "correction" and "course_chapter" not in bundle.data):
+                suffix = " — Support professeur"
             blocks: list[WordBlock] = []
             open_prompts = {str(q["prompt"]) for q in items(bundle.data["questions"], 60) if not q["options"]}
             for block in document.blocks:
@@ -40,7 +46,7 @@ class ExportSavedCommand:
                     + str(bundle.context.data["total_points"]) + " points"))
             document = replace(document, title=_FICTIVE_TITLE.sub(r"\1", str(bundle.data["title"])) + suffix,
                                blocks=tuple(blocks))
-        if self.product_projection or document.course_chapter is not None or document.production_media:
+        if self.product_projection or document.course_chapter is not None or document.production_media or document.exercise_profile is not None:
             return document
         if (self.presentation and kind != "student" and record.p0_bundle is not None
                 and "fictif" in str(record.p0_bundle.data["title"]).casefold()):
@@ -91,10 +97,29 @@ class ExportSavedCommand:
         return WordDocument(kind, titles[kind], tuple(blocks))
 
     @staticmethod
-    def _preview_p0(record: SavedProduction, kind: str, *, promoted: bool) -> WordDocument:
+    def _preview_p0(record: SavedProduction, kind: str, *, promoted: bool, course_support: bool = True) -> WordDocument:
         bundle = record.p0_bundle
         if bundle is None:
             raise ValueError("R6_P0_BUNDLE_REQUIRED")
+        if (course_support and record.data["contract_id"] == SAVED_CODESIGN_CONTRACT
+                and bundle.context.resource_type == "COURSE" and "course_chapter" not in bundle.data and kind == "correction"):
+            student = ExportSavedCommand._preview_p0(record, "student", promoted=promoted, course_support=False)
+            teacher = ExportSavedCommand._preview_p0(record, "correction", promoted=promoted, course_support=False)
+            blocks = [*student.blocks, WordBlock("Heading1", "Notes du professeur"),
+                      *(block for block in teacher.blocks if block.style == "Note")]
+            for report in items(record.data["reviews"], 32):
+                blocks.append(WordBlock("Note", "Revue IA : " + str(report["overall_assessment"]) + ". Acceptation enseignante non effectuée."))
+                for finding in items(report["findings"], 32):
+                    blocks.append(WordBlock("Normal", str(finding["description"]) + "\n" + str(finding["rationale"])))
+            blocks.extend(WordBlock("Note", text) for text in cast(tuple[str, ...], record.data["reservations"]))
+            blocks.extend(WordBlock("Note", text) for text in cast(tuple[str, ...], bundle.data["limitations"]))
+            return WordDocument(kind, str(bundle.data["title"]) + " — Support professeur", tuple(blocks), production_media=teacher.production_media)
+        if "exercise" in bundle.data:
+            from backend.modules.materialization_export.application.services.exercise_projection import (
+                project_exercise,
+            )
+
+            return project_exercise(bundle, kind, reservations=cast(tuple[str, ...], record.data["reservations"]))
         if "course_chapter" in bundle.data:
             if kind == "marking":
                 return WordDocument(kind, "Barème", (WordBlock("Normal", "Aucun barème chiffré pour ce cours."),))
@@ -115,7 +140,7 @@ class ExportSavedCommand:
                                 course_media=chapter.media(teacher=kind == "correction"))
         titles = {"student": "Document élève", "correction": "Corrigé professeur",
                   "marking": "Barème"}
-        blocks: list[WordBlock] = []
+        blocks = []
         from backend.modules.pedagogical_context.contracts.dto.stmg_institutional import (
             institutional_header,
         )

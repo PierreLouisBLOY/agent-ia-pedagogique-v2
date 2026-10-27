@@ -16,13 +16,15 @@ from backend.modules.work_orchestration.application.services.p0_creation import 
 from backend.modules.work_orchestration.application.services.production_media import (
     ProductionMediaService,
 )
+from backend.modules.work_orchestration.ports.outbound.p0_codesign import P0CoDesignPort
 
 if TYPE_CHECKING:
     from backend.infrastructure.composition.factories.local_browser import Read15RuntimeTarget
 
 
 def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
-                      generation: P0GenerationPort | None = None, review: P0ReviewPort | None = None) -> tuple[P0CreationService, P0CreationEndpoint]:
+                      generation: P0GenerationPort | None = None, review: P0ReviewPort | None = None,
+                      codesign: P0CoDesignPort | None = None) -> tuple[P0CreationService, P0CreationEndpoint]:
     # Local import avoids the existing target/factory dependency cycle.
     from backend.infrastructure.composition.factories.r6_p0 import (
         R6_EXACT_SOURCE_BINDINGS,
@@ -96,7 +98,8 @@ def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
         stmg_alignment,
     )
 
-    def resolve_institutional(selection: Mapping[str, object], selected_reference: Mapping[str, object]) -> Mapping[str, object]:
+    def resolve_institutional(selection: Mapping[str, object], selected_reference: Mapping[str, object], *,
+                              focus_witness: bool = False) -> Mapping[str, object]:
         if set(selected_reference) != {"notion_id", "passage_ref"}:
             raise ValueError("P0_INSTITUTIONAL_EXACT_NOTION_SOURCE_REQUIRED")
         passage = exact_passage(selected_reference)
@@ -104,19 +107,32 @@ def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
         attested = {**selected_reference, **{key: passage[key] for key in (
             "object_ref", "object_kind", "passage_ref", "version_or_checksum")}}
         resolver = bts_alignment if selection.get("contract_id") == "BTS-INSTITUTIONAL-CONTEXT-1.0" else stmg_alignment
+        if focus_witness:
+            if resolver is not stmg_alignment:
+                raise ValueError("EXERCISE_FOCUS_STMG_REQUIRED")
+            return stmg_alignment(target, selection=dict(selection), reference=attested, focus_witness=True)
         return resolver(target, selection=dict(selection), reference=attested)
 
-    service = P0CreationService(reference, generation=generation, review=review,
-        institutional_resolver=resolve_institutional, exact_institutional_required=True)
+    def resolve_focused(selection: Mapping[str, object], selected_reference: Mapping[str, object]) -> Mapping[str, object]:
+        return resolve_institutional(selection, selected_reference, focus_witness=True)
+
+    service = P0CreationService(reference, generation=generation, review=review, codesign=codesign,
+        institutional_resolver=resolve_institutional, focused_institutional_resolver=resolve_focused,
+        exact_institutional_required=True)
     metadata: list[dict[str, object]] = [{"resource_ref": binding.resource_ref, "resource_version_ref": binding.resource_version_ref,
                  "title": binding.canonical_title, "scenarios": list(binding.scenarios),
                  "authority": "NONE", "lifecycle_status": binding.lifecycle_status,
                  "validation_status": binding.validation_status} for binding in R6_EXACT_SOURCE_BINDINGS]
     endpoint = P0CreationEndpoint(service.execute, service.read, metadata, nonce=nonce,
         generation_bound=generation is not None, review_bound=review is not None,
-        institutional_catalog=lambda: {**stmg_alignment(target), **bts_alignment(target)},
+        institutional_catalog=lambda: {**stmg_alignment(target, question_fingerprints=True), **bts_alignment(target)},
         media_endpoint=build_p0_media(service), exact_notion_reader=inspect_exact_notion,
-        intention_execute=ProposeP0Intention().execute)
+        intention_execute=ProposeP0Intention().execute, codesign_command_read=service.read_codesign_command)
+    if codesign is not None:
+        from backend.adapters.inbound.api.p0_pilot_command_followup import P0PilotCommandFollowup
+
+        endpoint.codesign_command_followup = P0PilotCommandFollowup(service.execute, codesign=True)
+        endpoint.codesign_binding = "EXPLICIT_NATIVE_PORT_CONDITIONAL_AUTHORITY"
     return service, endpoint
 
 

@@ -8,12 +8,12 @@ class STMGAlignmentInbound:
     def __init__(self, query: ReadSTMGAlignment) -> None:
         self.query = query
 
-    def catalog(self) -> dict[str, object]:
-        return self.query.snapshot()
+    def catalog(self, *, question_fingerprints: bool = False) -> dict[str, object]:
+        return self.query.snapshot(question_fingerprints=question_fingerprints)
 
     def resolve(self, selection: Mapping[str, object], reference: Mapping[str, object], *,
-                mode: str = "LEGACY") -> dict[str, object]:
-        return self.query.resolve(selection, reference, mode=mode)
+                mode: str = "LEGACY", focus_witness: bool = False) -> dict[str, object]:
+        return self.query.resolve(selection, reference, mode=mode, focus_witness=focus_witness)
 
     def matrix(self) -> dict[str, object]:
         return self.query.matrix()

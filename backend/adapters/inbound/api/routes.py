@@ -27,6 +27,9 @@ R4_VALIDATE_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{ve
 R4_PROMOTE_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{version_ref}/promotion"
 R4_PREVIEW_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{version_ref}/preview/{document_kind}"
 R4_WORD_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{version_ref}/word/{document_kind}"
+R4_EDIT_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{version_ref}/saved-edit"
+R4_COMPARE_TEMPLATE: Final = "/api/v2/productions/{production_ref}/versions/{version_ref}/compare/{document_kind}"
+R4_LOCAL_EDIT_ROUTE_SPECS: Final = (("POST", R4_EDIT_TEMPLATE), ("GET", R4_COMPARE_TEMPLATE))
 _PRODUCTION_PREFIX: Final = "/api/v2/productions/"
 _RESOURCE_PREFIX: Final = "/api/v2/resources/"
 ROUTE_SPECS: Final = (
@@ -53,8 +56,16 @@ ROUTE_SPECS: Final = (
     (("GET",), R4_PREVIEW_TEMPLATE, None),
     (("GET",), R4_WORD_TEMPLATE, None),
 )
-ASSET_NAMES: Final = frozenset({"index.html", "app.js", "styles.css"})
+LOCAL_EDIT_ASSET_SPECS: Final = ((("GET", "HEAD"), "/assets/saved-course-edit.js", "saved-course-edit.js"),
+    (("GET", "HEAD"), "/assets/normal-on.js", "normal-on.js"),
+    (("GET", "HEAD"), "/assets/local-catalogue.js", "local-catalogue.js"))
+ASSET_NAMES: Final = frozenset({"index.html", "app.js", "styles.css", "saved-course-edit.js", "normal-on.js", "local-catalogue.js"})
 MAX_TARGET_BYTES: Final = 8 * 1_024
+CAPTURED_PARTIAL_ROOT: Final = "/api/v2/captured-partial"
+CAPTURED_PARTIAL_ROUTE_PATTERN: Final = re.compile(
+    re.escape(CAPTURED_PARTIAL_ROOT)
+    + r"(?:/(save|preview|word|inventory|reference)(?:/(student|correction))?)?"
+)
 # Versioned P0 companion, registered in this same closed local registry.
 # ROUTE_SPECS retains the historical R2/R3/R4 contract and its literal oracle.
 P0_ROOT: Final = "/api/v2/p0"
@@ -63,11 +74,21 @@ P0_ROUTE_SPECS: Final = (("GET", P0_ROOT),
     ("GET", P0_ROOT + "/versions/{production_ref}/{version_ref}"),
     ("GET", P0_ROOT + "/versions/{production_ref}/{version_ref}/teacher"))
 P0_INTENTION_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/intention"),)
+P0_LOCAL_PROPOSAL_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/local-propose"),)
+P0_ORGANIZATION_CAPTURE_ROUTE_SPECS: Final = (("GET", P0_ROOT + "/organizations/{organization_id}"),)
+P0_ORGANIZATION_SEARCH_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/organization-search"),)
+P0_CODESIGN_ROUTE_SPECS: Final = tuple(("POST", P0_ROOT + "/" + op) for op in ("codesign-preview", "codesign", "codesign-consent", "codesign-revoke"))
 P0_MEDIA_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/media"),)
 P0_CONSENT_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/consent-preview"), ("POST", P0_ROOT + "/consent-generate"))
+P0_PILOT_PREVIEW_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/pilot-preview"),
+    ("GET", P0_ROOT + "/pilot-candidate"))
+P0_PILOT_REVOCATION_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/pilot-revoke"),)
 P0_NOTION_EVIDENCE_TEMPLATE: Final = P0_ROOT + "/notion-evidence"
 P0_NOTION_EVIDENCE_ROUTE_SPECS: Final = (("GET", P0_NOTION_EVIDENCE_TEMPLATE),)
 _P0_VERSION = re.compile(P0_ROOT + r"/versions/(prod:[0-9a-f]{32})/(ver:[0-9a-f]{32})(/teacher)?")
+P0_COMMAND_TEMPLATE: Final = P0_ROOT + "/commands/{command_id}"
+P0_COMMAND_ROUTE_SPECS: Final = (("GET", P0_COMMAND_TEMPLATE),)
+_P0_COMMAND = re.compile(P0_ROOT + r"/commands/([0-9a-f]{32})")
 
 
 def is_p0_target(target: str) -> bool:
@@ -75,12 +96,21 @@ def is_p0_target(target: str) -> bool:
 
 
 def resolve_p0_route(method: str, target: str) -> tuple[str, str, str, bool, str]:
+    if (method, target) in P0_ORGANIZATION_SEARCH_ROUTE_SPECS:
+        return "organization-search", "", "", False, target
+    if method == "GET" and re.fullmatch(P0_ROOT + r"/organizations/(siren:[0-9]{9})", target):
+        return "organization-capture", target.rsplit("/",1)[1], "", False, P0_ROOT+"/organizations/{organization_id}"
+
+    if method == "GET" and (command := _P0_COMMAND.fullmatch(target)):
+        return "command-followup", command[1], "", False, P0_COMMAND_TEMPLATE
     if target.partition("?")[0] == P0_NOTION_EVIDENCE_TEMPLATE:
         resolve_p0_notion_evidence(method, target)
         return "notion-evidence", "", "", False, P0_NOTION_EVIDENCE_TEMPLATE
     if method == "GET" and target == P0_ROOT:
         return "metadata", "", "", False, target
-    if method == "POST" and (method, target) in P0_ROUTE_SPECS + P0_INTENTION_ROUTE_SPECS + P0_MEDIA_ROUTE_SPECS + P0_CONSENT_ROUTE_SPECS:
+    if method == "GET" and target == P0_ROOT + "/pilot-candidate":
+        return "pilot-candidate", "", "", False, target
+    if method == "POST" and (method, target) in P0_ROUTE_SPECS + P0_INTENTION_ROUTE_SPECS + P0_LOCAL_PROPOSAL_ROUTE_SPECS + P0_MEDIA_ROUTE_SPECS + P0_CONSENT_ROUTE_SPECS + P0_PILOT_PREVIEW_ROUTE_SPECS + P0_PILOT_REVOCATION_ROUTE_SPECS + P0_CODESIGN_ROUTE_SPECS:
         return target.rsplit("/", 1)[1], "", "", False, target
     if method == "GET" and (match := _P0_VERSION.fullmatch(target)):
         return "version", match[1], match[2], bool(match[3]), P0_ROUTE_SPECS[-1 if match[3] else -2][1]
@@ -203,11 +233,13 @@ def resolve_route(method: str, target: str) -> RouteMatch:
                     "saved-validation": (R4_VALIDATE_TEMPLATE, "validate", {"POST"}),
                     "promotion": (R4_PROMOTE_TEMPLATE, "gate" if method == "GET" else "promote", {"GET", "POST"}),
                     "preview": (R4_PREVIEW_TEMPLATE, "preview", {"GET"}),
-                    "word": (R4_WORD_TEMPLATE, "word", {"GET"})}
+                    "word": (R4_WORD_TEMPLATE, "word", {"GET"}),
+                    "saved-edit": (R4_EDIT_TEMPLATE, "edit", {"POST"}),
+                    "compare": (R4_COMPARE_TEMPLATE, "compare", {"GET"})}
                 selected = operations.get(segments[3])
                 if selected is not None:
                     template, operation, r4_methods = selected
-                    export = operation in {"preview", "word"}
+                    export = operation in {"preview", "word", "compare"}
                     if (export and (len(segments) != 5 or segments[-1] not in {"student", "correction", "marking"})) or (not export and len(segments) != 4):
                         raise RouteRejected(conversation=True)
                     if method not in r4_methods:
@@ -247,7 +279,7 @@ def resolve_route(method: str, target: str) -> RouteMatch:
         return _search_match(query)
     if "?" in target:
         raise RouteRejected()
-    for methods, template, asset in ROUTE_SPECS:
+    for methods, template, asset in ROUTE_SPECS + LOCAL_EDIT_ASSET_SPECS:
         if asset is not None and target == template:
             if method not in methods:
                 raise RouteRejected(method=True)

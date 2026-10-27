@@ -124,9 +124,11 @@ def _existing_components(path: Path) -> tuple[Path, ...]:
 def _assert_no_redirection(path: Path) -> None:
     try:
         for component in _existing_components(path):
-            if not os.path.lexists(component):
+            try:
+                component_stat = os.lstat(component)
+            except FileNotFoundError:
                 continue
-            if _is_redirection(os.lstat(component)):
+            if _is_redirection(component_stat):
                 _raise(LocalFileSecurityCode.PATH_REDIRECTION_FORBIDDEN)
     except LocalFileSecurityError:
         raise

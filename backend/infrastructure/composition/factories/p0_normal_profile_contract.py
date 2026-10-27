@@ -44,7 +44,10 @@ def descriptor(value: object) -> Mapping[str, object]:
 
 
 def bind_profile(envelope: Mapping[str, object], *, permission: Mapping[str, object], decision: Mapping[str, object],
-                 delegation: Mapping[str, object], operator: Mapping[str, object]) -> Mapping[str, object]:
+                 delegation: Mapping[str, object], operator: Mapping[str, object],
+                 proposed: bool = False) -> Mapping[str, object]:
+    if type(proposed) is not bool:
+        raise ValueError("P0_NORMAL_PROFILE_MODE_REQUIRED")
     closed(envelope, {"schema", "profile", "permission", "decision"}, "P0_NORMAL_ENVELOPE_FIELDS")
     if envelope["schema"] != "P0-NORMAL-PROFILE-ENVELOPE-1.0":
         raise ValueError("P0_NORMAL_ENVELOPE_SCHEMA")
@@ -85,7 +88,7 @@ def bind_profile(envelope: Mapping[str, object], *, permission: Mapping[str, obj
         raise ValueError("P0_NORMAL_LOGICAL_CREDENTIAL_REQUIRED")
     closed(decision, DECISION_CONTINUITY_FIELDS if continuity else (DECISION_CONTEXT_FIELDS if contextual else DECISION_FIELDS), "P0_NORMAL_DECISION_FIELDS")
     decision_schema = "P0-NORMAL-OWNER-DECISION-3.0" if continuity else ("P0-NORMAL-OWNER-DECISION-2.0" if contextual else "P0-NORMAL-OWNER-DECISION-1.0")
-    if decision["schema"] != decision_schema or decision["status"] != "ADOPTED":
+    if decision["schema"] != decision_schema or decision["status"] != ("PROPOSED" if proposed else "ADOPTED"):
         raise ValueError("P0_NORMAL_OWNER_DECISION_REQUIRED")
     for key in ("excluded_oracles_and_private_evidence", "source_authority_unknown_preserved", "local_operator_delegation_accepted"):
         if decision[key] is not True:

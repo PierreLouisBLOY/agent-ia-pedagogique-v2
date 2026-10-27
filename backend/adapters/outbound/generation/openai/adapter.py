@@ -203,6 +203,12 @@ def _map_response_body(
             GenerationPortErrorCode.UNAVAILABLE,
             "OPENAI_RESPONSE_FAILED",
         )
+    from backend.adapters.outbound.generation.openai.p0_codesign_contract import (
+        CONTRACT,
+        map_response,
+    )
+    if request.output_contract.get("contract_id") == CONTRACT:
+        return map_response(request, response, metadata)
     if is_prepare_request(request) or is_harden_request(request):
         text = (materialized_harden_text(response.output_text, request, diagnostic)
                 if is_harden_request(request)

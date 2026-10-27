@@ -9,6 +9,9 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     identifier,
     object_data,
 )
+from backend.modules.work_orchestration.contracts.dto.p0_codesign_trace import (
+    SAVED_CODESIGN_CONTRACT,
+)
 from backend.modules.work_orchestration.contracts.dto.saved_production import SavedProduction
 
 
@@ -56,6 +59,20 @@ class Lot2SavedProductionInbound(SavedProductionInbound):
             return super().execute(operation, production_ref, version_ref,
                                    body=body, kind=kind, correlation=correlation)
         record = self.service.store.load(production_ref, version_ref)
+        if operation == "edit":
+            values = dict(body or {})
+            if (set(values) != {"action_id", "record_sha256", "question_id", "prompt", "expected_answer", "rationale"}
+                    or any(not isinstance(v, str) for v in values.values())):
+                raise ValueError("R4_REQUEST_REJECTED")
+            return self.service.edit_local_chapter(production_ref, version_ref,
+                action_id=identifier(values["action_id"], "action"),
+                expected_sha256=str(values["record_sha256"]), question_id=str(values["question_id"]),
+                prompt=str(values["prompt"]), expected_answer=str(values["expected_answer"]),
+                rationale=str(values["rationale"]))
+        if operation == "compare":
+            if body:
+                raise ValueError("R4_REQUEST_REJECTED")
+            return self.service.compare_local_chapter(production_ref, version_ref, kind)
         if record.p0_bundle is None:
             return super().execute(operation, production_ref, version_ref,
                                    body=body, kind=kind, correlation=correlation)
@@ -67,7 +84,8 @@ class Lot2SavedProductionInbound(SavedProductionInbound):
         if operation in {"preview", "word"}:
             if (
                 (record.p0_bundle.context.resource_type == "COURSE" and kind != "student"
-                 and not (kind == "correction" and "course_chapter" in record.p0_bundle.data))
+                 and not (kind == "correction" and ("course_chapter" in record.p0_bundle.data
+                    or record.data["contract_id"] == SAVED_CODESIGN_CONTRACT)))
                 or (record.p0_bundle.context.resource_type != "ASSESSMENT" and kind == "marking")
             ):
                 raise ValueError("R4_EXPORT_KIND")

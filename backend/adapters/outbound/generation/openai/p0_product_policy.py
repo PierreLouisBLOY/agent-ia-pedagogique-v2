@@ -53,6 +53,17 @@ F1_FIELDS = {"schema", "request_sha256", "request_bytes", "tokenizer_sha256", "t
              "count_calls", "retry", "fallback", "status"}
 
 
+def prospective_grant(permission: Mapping[str, object], identities: Mapping[str, object],
+                      now: datetime) -> dict[str, object]:
+    """Calculation input only; publishing a grant remains accept()'s responsibility."""
+    return {**identities, "schema": "P0-NORMAL-CREATE-GRANT-1.0", "operation": "CREATE", "provider": "OPENAI",
+        "model": permission["model"], "endpoint": permission["endpoint"], "reasoning": "low", "tier": "default",
+        "max_output_tokens": 4096, "max_calls": 1, "count_calls": 0, "review_calls": 0, "modify_calls": 0,
+        "retry": 0, "fallback": "NONE", "parallelism": 1, "ceiling_usd": permission["per_call_ceiling_usd"],
+        "issued_at_utc": now.isoformat(), "expires_at_utc": min(now + timedelta(minutes=120), utc(permission["expires_at_utc"])).isoformat(),
+        "live_authorized": True, "transfer_authorized": True}
+
+
 def validate_permission(permission: Mapping[str, object], *, identities: Mapping[str, object],
                         now: datetime, family: str, level: str) -> None:
     closed(permission, P1_FIELDS, "P1_FIELDS")

@@ -17,6 +17,17 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     nonempty,
     object_data,
 )
+from backend.modules.pedagogical_design.contracts.dto.chapter_assembly import (
+    ASSEMBLY_CHAPTER_CONTRACT,
+    assembly_projection,
+    validate_assembly,
+)
+from backend.modules.pedagogical_design.contracts.dto.learning_links import (
+    require_ordered_answers,
+    require_provenance_kind,
+    require_subset,
+    require_unique_coverage,
+)
 from backend.modules.pedagogical_design.contracts.dto.visual_brief import visual_briefs
 from backend.shared_kernel._safe_data import freeze_safe_mapping
 
@@ -81,10 +92,12 @@ class CourseChapter:
     data: Mapping[str, object]
 
     def __post_init__(self) -> None:
-        illustrated = self.data.get("contract_id") == COURSE_MEDIA_CONTRACT
-        data = object_data(self.data, _FIELDS | {"visual_briefs", "media_assets"} if illustrated else _FIELDS)
+        assembly = self.data.get("contract_id") == ASSEMBLY_CHAPTER_CONTRACT
+        illustrated = self.data.get("contract_id") == COURSE_MEDIA_CONTRACT or (assembly and "visual_briefs" in self.data)
+        fields = _FIELDS | ({"assembly"} if assembly else set()) | ({"visual_briefs", "media_assets"} if illustrated else set())
+        data = object_data(self.data, fields)
         if data["contract_id"] not in {
-            COURSE_CHAPTER_CONTRACT, COURSE_MEDIA_CONTRACT, COURSE_LINEAGE_CONTRACT, COURSE_NOTION_LINEAGE_CONTRACT
+            COURSE_CHAPTER_CONTRACT, COURSE_MEDIA_CONTRACT, COURSE_LINEAGE_CONTRACT, COURSE_NOTION_LINEAGE_CONTRACT, ASSEMBLY_CHAPTER_CONTRACT
         }:
             raise ValueError("COURSE_CHAPTER_CONTRACT")
         if type(data["chapter_number"]) is not int or not 1 <= data["chapter_number"] <= 99:
@@ -110,8 +123,7 @@ class CourseChapter:
                 nonempty(doc[key], 8000)
             _table(doc["table"])
             provenance = object_data(doc["provenance"], {"kind", "source_ref"})
-            if provenance["kind"] not in {"LOCAL_FICTION", "SUPPLIED_REFERENCE"}:
-                raise ValueError("COURSE_DOCUMENT_PROVENANCE")
+            require_provenance_kind(provenance["kind"], code="COURSE_DOCUMENT_PROVENANCE")
             nonempty(provenance["source_ref"], 2000)
         concepts = _rows(data["concepts"], {"id", "notion", "definition", "explanation", "example"})
         for row in concepts:
@@ -124,10 +136,8 @@ class CourseChapter:
             if type(row["number"]) is not int or row["number"] != i:
                 raise ValueError("COURSE_QUESTION_NUMBER")
             nonempty(row["prompt"], 4000)
-            if not set(_strings(row["document_ids"], required=False)) <= doc_ids:
-                raise ValueError("COURSE_DOCUMENT_LINK")
-            if not set(_strings(row["capability_ids"])) <= cap_ids:
-                raise ValueError("COURSE_CAPABILITY_LINK")
+            require_subset(_strings(row["document_ids"], required=False), doc_ids, code="COURSE_DOCUMENT_LINK")
+            require_subset(_strings(row["capability_ids"]), cap_ids, code="COURSE_CAPABILITY_LINK")
             response = object_data(row["response"], {"kind", "lines", "table"})
             if response["kind"] not in {"LINES", "TABLE"} or type(response["lines"]) is not int or not 1 <= response["lines"] <= 8:
                 raise ValueError("COURSE_RESPONSE_SPACE")
@@ -143,7 +153,7 @@ class CourseChapter:
             if not set(_strings(row["document_ids"])) <= doc_ids or not set(_strings(row["concept_ids"])) <= concept_ids:
                 raise ValueError("COURSE_PART_LINK")
             for role in ("observation", "analysis", "reinvestment"):
-                refs = _strings(row[role])
+                refs = _strings(row[role], required=not assembly)
                 if not set(refs) <= question_ids:
                     raise ValueError("COURSE_QUESTION_LINK")
                 activity_ids.extend(refs)
@@ -154,12 +164,10 @@ class CourseChapter:
             raise ValueError("COURSE_DOCUMENT_LINK")
         activity_ids.extend(knowledge)
         activity_ids.extend(_strings(transfer["question_ids"]))
-        if len(activity_ids) != len(set(activity_ids)) or set(activity_ids) != question_ids:
-            raise ValueError("COURSE_QUESTION_COVERAGE")
+        require_unique_coverage(activity_ids, question_ids, code="COURSE_QUESTION_COVERAGE")
         nonempty(data["synthesis"], 8000)
         answers = _rows(data["teacher_answers"], {"id", "expected_answer", "rationale", "vigilance", "remediation"}, maximum=60)
-        if [a["id"] for a in answers] != [q["id"] for q in questions]:
-            raise ValueError("COURSE_ANSWER_LINK")
+        require_ordered_answers([q["id"] for q in questions], [a["id"] for a in answers], code="COURSE_ANSWER_LINK")
         for row in answers:
             for value in row.values():
                 nonempty(value, 4000)
@@ -174,6 +182,10 @@ class CourseChapter:
                 asset.bind(brief)
                 brief.bind(str(brief.data["production_ref"]), documents=used_documents, concepts=used_concepts,
                            capabilities={str(c["source_ref"]) for c in capacities}, notions=set(_strings(brief.data["notion_refs"])))
+        if assembly:
+            if activity_ids != [str(q["id"]) for q in questions]:
+                raise ValueError("ASSEMBLY_QUESTION_ORDER")
+            validate_assembly(data)
         if len(encoded(data)) > 128 * 1024:
             raise ValueError("COURSE_CHAPTER_SIZE")
         object.__setattr__(self, "data", freeze_safe_mapping(data))
@@ -248,6 +260,8 @@ class CourseChapter:
         if "visual_briefs" in data:
             data.pop("visual_briefs")
             data["media_assets"] = [p.asset.projection(p.brief) for p in self.media(teacher=teacher)]
+        if "assembly" in data:
+            data["assembly"] = assembly_projection(data["assembly"], teacher=teacher)
         if not teacher:
             data.pop("teacher_answers")
         return data
@@ -257,6 +271,9 @@ class CourseChapter:
         header = object_data(visible["program_header"])
         visible["program_header"] = {k: v for k, v in header.items() if k.endswith("_label")}
         visible.pop("contract_id")
+        if "assembly" in visible:
+            a = object_data(visible["assembly"])
+            visible["assembly"] = {k: a[k] for k in ("thread", "parts", "concept_vigilance")}
         if "media_assets" in visible:
             visible["media_assets"] = [{k: row[k] for k in ("caption", "alt_text")} for row in items(visible["media_assets"], 8)]
             visible["diagram_text"] = [as_plain(pair.brief.data["diagram"]) for pair in self.media(teacher=teacher)]
@@ -279,11 +296,16 @@ class CourseChapter:
                    "\n".join(str(c["label"]) for c in items(self.data["capabilities"]))},
                   {"section_id": "S_CONTEXT", "heading": str(object_data(self.data["context"])["title"]),
                    "text": str(object_data(self.data["context"])["text"])}]
+        if "assembly" in self.data:
+            result[1]["text"] = str(result[1]["text"]) + "\n\n" + str(object_data(object_data(self.data["assembly"])["thread"])["notice"])
         documents = {str(d["id"]): d for d in items(self.data["documents"])}
         questions = {str(q["id"]): q for q in items(self.data["questions"])}
         concepts = {str(c["id"]): c for c in items(self.data["concepts"])}
         for part in items(self.data["parts"]):
             lines: list[str] = []
+            if "assembly" in self.data:
+                meta = next(m for m in items(object_data(self.data["assembly"])["parts"]) if m["id"] == part["id"])
+                lines.append(str(meta["transition"]))
             for ref in cast(tuple[str, ...], part["document_ids"]):
                 doc = documents[ref]
                 lines.extend((str(doc["title"]), str(doc["text"])))
@@ -300,6 +322,12 @@ class CourseChapter:
             for ref in cast(tuple[str, ...], part["reinvestment"]):
                 q = questions[ref]
                 lines.append(str(q["number"]) + ". " + str(q["prompt"]))
+            if "assembly" in self.data and object_data(meta["formalization"])["position"] == "BEFORE_ACTIVITY":
+                start = next(i for i, line in enumerate(lines) if line.startswith("Notion — "))
+                count = 4 * len(cast(tuple[str, ...], part["concept_ids"]))
+                block = lines[start:start+count]
+                del lines[start:start+count]
+                lines[1:1] = block
             result.append({"section_id": "S_" + str(part["id"]), "heading": part["title"], "text": "\n\n".join(lines)})
         result.append({"section_id": "S_KNOWLEDGE", "heading": "Tester ses connaissances", "text":
             "\n".join(str(questions[q]["number"]) + ". " + str(questions[q]["prompt"]) for q in cast(tuple[str, ...], self.data["knowledge_check"]))})
@@ -308,4 +336,7 @@ class CourseChapter:
             "\n\n".join([str(documents[d]["text"]) for d in cast(tuple[str, ...], transfer["document_ids"])] +
                 [str(questions[q]["number"]) + ". " + str(questions[q]["prompt"]) for q in cast(tuple[str, ...], transfer["question_ids"])])})
         result.append({"section_id": "S_SYNTHESIS", "heading": "À retenir", "text": self.data["synthesis"]})
+        if "assembly" in self.data:
+            synthesis = result.pop()
+            result.insert(len(result)-2, synthesis)
         return result

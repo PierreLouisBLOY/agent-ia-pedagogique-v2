@@ -9,7 +9,9 @@ from typing import cast
 import openai
 from openai import DefaultHttpxClient, OpenAI
 from openai.types.responses.response import Response
-from openai.types.responses.response_create_params import ResponseCreateParamsNonStreaming
+from openai.types.responses.response_create_params import (
+    ResponseCreateParamsNonStreaming,
+)
 
 from backend.adapters.outbound.openai.contracts import (
     OpenAIIncompleteReason,
@@ -33,28 +35,43 @@ def openai_sdk_import_path() -> Path:
     return Path(openai.__file__).resolve()
 
 
+def build_fixed_r2_client(*, secret: ProviderSecretValue, timeout_seconds: float,
+                         environment_key_allowed: bool = False) -> OpenAI:
+    """Explicit secret, official destination, and no ambient SDK configuration."""
+    if type(secret) is not ProviderSecretValue or type(timeout_seconds) is not float or timeout_seconds <= 0:
+        raise ValueError("fixed R2 client requires a valid opaque secret and timeout")
+    if type(environment_key_allowed) is not bool:
+        raise ValueError("environment_key_allowed must be a boolean")
+    if any((name.startswith(("OPENAI_", "AZURE_OPENAI_")) and not
+            (environment_key_allowed and name == "OPENAI_API_KEY"))
+            or name.upper() in {"HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY",
+                "NO_PROXY", "SSL_CERT_FILE", "SSL_CERT_DIR"} for name in os.environ):
+        raise OpenAITransportError(OpenAITransportErrorCode.INVALID_REQUEST)
+    return OpenAI(api_key=secret.reveal_for_transport(), timeout=timeout_seconds,
+        max_retries=0, base_url="https://api.openai.com/v1", organization="", project="",
+        admin_api_key="", webhook_secret="",
+        http_client=DefaultHttpxClient(trust_env=False, follow_redirects=False))
+
+
 class OpenAISDKResponsesTransport:
     """One-shot Responses transport; retry and fallback remain external concerns."""
 
     __slots__ = ("__client", "__r2")
 
     def __init__(self, *, secret: ProviderSecretValue, timeout_seconds: float,
-                 r2_destination: bool = False) -> None:
+                 r2_destination: bool = False,
+                 environment_key_allowed: bool = False) -> None:
         if type(secret) is not ProviderSecretValue:
             raise TypeError("secret must be a ProviderSecretValue")
         if not isinstance(timeout_seconds, float) or timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be a positive float")
         self.__r2 = r2_destination
+        if environment_key_allowed and not r2_destination:
+            raise ValueError("explicit environment source requires fixed R2 destination")
         if r2_destination:
-            # Fail closed instead of mutating shared environment or importing ambient headers.
-            if any(name.startswith(("OPENAI_", "AZURE_OPENAI_")) or name.upper() in {
-                "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "SSL_CERT_FILE", "SSL_CERT_DIR"
-            } for name in os.environ):
-                raise OpenAITransportError(OpenAITransportErrorCode.INVALID_REQUEST)
-            self.__client = OpenAI(api_key=secret.reveal_for_transport(), timeout=timeout_seconds,
-                max_retries=0, base_url="https://api.openai.com/v1", organization="", project="",
-                admin_api_key="", webhook_secret="",
-                http_client=DefaultHttpxClient(trust_env=False, follow_redirects=False))
+            self.__client = build_fixed_r2_client(secret=secret,
+                timeout_seconds=timeout_seconds,
+                environment_key_allowed=environment_key_allowed)
         else:
             self.__client = OpenAI(
                 api_key=secret.reveal_for_transport(), timeout=timeout_seconds, max_retries=0,
@@ -109,8 +126,12 @@ class OpenAISDKResponsesTransport:
 
 
 class OpenAISDKResponsesTransportFactory:
-    def __init__(self, *, r2_destination: bool = False) -> None:
+    def __init__(self, *, r2_destination: bool = False,
+                 environment_key_allowed: bool = False) -> None:
         self.r2_destination = r2_destination
+        self.environment_key_allowed = environment_key_allowed
+        if environment_key_allowed and not r2_destination:
+            raise ValueError("explicit environment source requires fixed R2 destination")
 
     def build(
         self,
@@ -120,7 +141,7 @@ class OpenAISDKResponsesTransportFactory:
     ) -> OpenAIResponsesTransport:
         if self.r2_destination:
             return OpenAISDKResponsesTransport(secret=secret, timeout_seconds=timeout_seconds,
-                                              r2_destination=True)
+                r2_destination=True, environment_key_allowed=self.environment_key_allowed)
         return OpenAISDKResponsesTransport(secret=secret, timeout_seconds=timeout_seconds)
 
 

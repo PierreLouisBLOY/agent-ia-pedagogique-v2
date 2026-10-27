@@ -69,7 +69,8 @@ class P0ContinuityProductLedger(P0ProductLedger):
         self._chain: BoundChain | None = None
 
     @contextmanager
-    def locked(self) -> Iterator[None]:
+    def locked(self, *, create: bool = True) -> Iterator[None]:
+        # The continuity LOCK is always OPEN_EXISTING, for either caller mode.
         if self._held_thread == threading.get_ident():
             raise ValueError("P0_PRODUCT_CONCURRENT_DISPATCH")
         self.pin._root_unchanged()
@@ -79,10 +80,10 @@ class P0ContinuityProductLedger(P0ProductLedger):
             if not before.exists:
                 raise ValueError("P0_CONTINUITY_ORIGINAL_LOCK_MISSING")
             kernel = ctypes.WinDLL("kernel32", use_last_error=True)
-            create = kernel.CreateFileW
-            create.argtypes = (ctypes.c_wchar_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_void_p,
+            create_file = kernel.CreateFileW
+            create_file.argtypes = (ctypes.c_wchar_p, ctypes.c_uint32, ctypes.c_uint32, ctypes.c_void_p,
                 ctypes.c_uint32, ctypes.c_uint32, ctypes.c_void_p)
-            create.restype = ctypes.c_void_p
+            create_file.restype = ctypes.c_void_p
             close = kernel.CloseHandle
             close.argtypes, close.restype = (ctypes.c_void_p,), ctypes.c_int
             identify = kernel.GetFileInformationByHandleEx
@@ -93,7 +94,7 @@ class P0ContinuityProductLedger(P0ProductLedger):
             class FileIdentity(ctypes.Structure):
                 _fields_ = [("volume", ctypes.c_uint64), ("file_id", ctypes.c_ubyte * 16)]
 
-            handle = create(str(lock), 0x80000000, 0, None, 3, 0x00200000, None)
+            handle = create_file(str(lock), 0x80000000, 0, None, 3, 0x00200000, None)
             if handle in (None, ctypes.c_void_p(-1).value):
                 raise ValueError("P0_PRODUCT_CONCURRENT_DISPATCH")
             try:
@@ -115,12 +116,14 @@ class P0ContinuityProductLedger(P0ProductLedger):
                     raise ValueError("P0_CONTINUITY_ORIGINAL_LOCK_BINDING")
                 self.pin._root_unchanged()
                 self._held_thread, self._chain = threading.get_ident(), chain
+                self._held_lock_sha256 = sha(raw)
                 yield
                 self.pin._root_unchanged()
                 if not before.same_identity(capture_secure_path(lock, allowed_root=self.root)):
                     raise ValueError("P0_CONTINUITY_LOCK_IDENTITY_CHANGED")
             finally:
                 self._held_thread, self._chain = None, None
+                self._held_lock_sha256 = None
                 close(handle)
 
     def chain(self) -> BoundChain:
@@ -200,6 +203,12 @@ class P0ContinuityProductLedger(P0ProductLedger):
             if re.fullmatch(re.escape(self.prefix) + r"[0-9a-f]{64}\.json", path.name) is None:
                 raise ValueError("P0_PRODUCT_SLOT_NAME")
             record = decode(read_file_nofollow(path, allowed_root=self.root, maximum_bytes=32_000))
+            if record.get("schema") == "P0-FINITE-CHAIN-SLOT-2.0":
+                if self.finite_extension is None:
+                    raise ValueError("P0_CHAIN_ORIGIN_NOT_BOUND")
+                self.finite_extension.validate(record, file_name=path.name)
+                records.append(record)
+                continue
             validate_slot(chain, record, file_name=path.name)
             receipt = P0NormalReceipt(self.root, str(record["namespace_sha256"]))
             existing = [state for state in NORMAL_EVENTS if receipt.exists(state)]
@@ -218,13 +227,17 @@ class P0ContinuityProductLedger(P0ProductLedger):
                     ("RESERVED", "PROVIDER_ATTEMPTED", "RESPONSE_CAPTURED", "PARSED", "CONSUMED")}
                 validate_events(record, lifecycle)
             except (ValueError, FileNotFoundError, LocalFileSecurityError):
-                raise ValueError("P0_CONTINUITY_OUTCOME_RECONCILIATION_REQUIRED") from None
+                if self.finite_extension is None:
+                    raise ValueError("P0_CONTINUITY_OUTCOME_RECONCILIATION_REQUIRED") from None
+                self.finite_extension.validate_retained_origin(record)
             records.append(record)
+        if self.finite_extension is not None:
+            self.finite_extension.validate_group(records)
         validate_historical_witnesses(chain, records)
         self._verify_witness_evidence(chain, records)
         reject_orphan_namespaces(chain, records, normal_namespaces=self._normal_namespaces())
         # The closed arithmetic validates cumulative reserve and duplicates.
-        metadata(chain, records, now=self.clock())
+        metadata(chain, [r for r in records if r.get("schema") != "P0-FINITE-CHAIN-SLOT-2.0"], now=self.clock())
         self.pin._root_unchanged()
         return records
 

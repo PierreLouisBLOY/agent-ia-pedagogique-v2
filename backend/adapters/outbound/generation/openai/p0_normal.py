@@ -15,6 +15,7 @@ from typing import cast
 from backend.adapters.outbound.generation.openai.p0_content import (
     build_p0_content_request,
     content_fields_for,
+    content_schema,
 )
 from backend.adapters.outbound.generation.openai.p0_normal_agents import (
     agent_preparation,
@@ -86,6 +87,7 @@ class _TechnicalP0Port:
         owner = self.owner
         owner.receipt.reserve(grant=owner.grant, dispatch=self.dispatch, body=owner.body(self.wire), preflight=self.proof)
         self.reserved = True
+        owner._notify("RESERVED", {"preflight_sha256": sha(canonical(self.proof))})
         # A consumed namespace cannot be reopened if any later step fails.
         stage = FailureStage.CREDENTIAL_RESOLVE
         try:
@@ -98,10 +100,14 @@ class _TechnicalP0Port:
             _, latest, _ = owner._check(self.dispatch, require_unused=False)
             if latest != self.proof:
                 raise ValueError("P0_NORMAL_PREFLIGHT_CHANGED")
+            if owner.before_attempt is not None:
+                owner.before_attempt(self.dispatch)
             stage = FailureStage.ATTEMPT_PUBLISH
             owner.receipt.publish("PROVIDER_ATTEMPTED", owner.receipt.event("PROVIDER_ATTEMPTED", owner.grant, self.proof))
             self.attempted = 1
             stage = FailureStage.TRANSPORT_CREATE
+            owner._notify("TRANSPORT_ENTERED", {"provider_attempts": 1,
+                "provider_arrival": "NOT_ESTABLISHED"})
             response = transport.create(request=self.wire)
             stage = FailureStage.RESPONSE_METADATA
             usage = asdict(response.usage)
@@ -113,6 +119,8 @@ class _TechnicalP0Port:
             stage = FailureStage.RESPONSE_CAPTURE_PUBLISH
             owner.receipt.publish("RESPONSE_CAPTURED", owner.receipt.event("RESPONSE_CAPTURED", owner.grant,
                 self.proof, artifact=artifact_sha, status=response.status.value, usage=usage))
+            owner._notify("RESPONSE_CAPTURED", {"response_artifact_sha256": artifact_sha,
+                "response_status": response.status.value})
         except Exception as error:
             # First failure wins, even if either secondary write fails.
             self.failure_handled = True
@@ -153,7 +161,9 @@ class NormalP0GenerationAdapter:
                  tariff: Mapping[str, object], tokenizer: TokenizerSource,
                  receipt_root: Path, resolver: ProviderSecretResolver,
                  credential_ref: ProviderCredentialRef, transport: OpenAIResponsesTransportFactory,
-                 clock: Callable[[], datetime] = lambda: datetime.now(UTC), timeout_seconds: float = 120.0) -> None:
+                 clock: Callable[[], datetime] = lambda: datetime.now(UTC), timeout_seconds: float = 120.0,
+                 before_attempt: Callable[[Mapping[str, object]], None] | None = None,
+                 progress: Callable[[str, Mapping[str, object]], None] | None = None) -> None:
         if type(timeout_seconds) is not float or not 0 < timeout_seconds <= 120:
             raise ValueError("P0_NORMAL_TIMEOUT")
         self.grant = cast(dict[str, object], as_plain(grant))
@@ -161,10 +171,19 @@ class NormalP0GenerationAdapter:
         self.identities, self.tokenizer = identity_source, tokenizer
         self.resolver, self.credential_ref, self.transport = resolver, credential_ref, transport
         self.clock, self.timeout = clock, timeout_seconds
+        self.before_attempt = before_attempt
+        self.progress = progress
         self.receipt = P0NormalReceipt(receipt_root, cast(str, self.grant.get("namespace_sha256")))
         self._lock = threading.Lock()
         self._authorized: tuple[str, str] | None = None
         self._controls: dict[str, object] | None = None
+
+    def _notify(self, phase: str, evidence: Mapping[str, object]) -> None:
+        if self.progress is not None:
+            try:
+                self.progress(phase, evidence)
+            except Exception:
+                pass
 
     @staticmethod
     def body(wire: OpenAIResponsesRequest) -> bytes:
@@ -218,6 +237,7 @@ class NormalP0GenerationAdapter:
                 self.receipt.publish("PARSED", self.receipt.event("PARSED", self.grant, proof))
                 stage = FailureStage.CONSUMED_PUBLISH
                 self.receipt.publish("CONSUMED", self.receipt.event("CONSUMED", self.grant, proof))
+                self._notify("PARSED", {"provider_attempts": 1})
             except Exception as error:
                 if technical.reserved and not technical.failure_handled:
                     technical.failure_handled = True
@@ -245,6 +265,9 @@ class NormalP0GenerationAdapter:
         # Never format, log, retain or serialize the exception object or its context.
         try:
             source, code = failure_code(error)
+            self._notify("OUTCOME_UNCONFIRMED", {"technical_code": code,
+                "failure_stage": stage.value, "outcome_marker": marker,
+                "provider_attempts": attempted})
             self.receipt.publish_failure_diagnostic({
                 "schema": "P0-NORMAL-FAILURE-DIAGNOSTIC-1.0",
                 "timestamp_utc": datetime.now(UTC).isoformat(),
@@ -273,7 +296,10 @@ class NormalP0GenerationAdapter:
         if captured is None or canonical(captured[0]) != canonical(as_plain(request)):
             raise ValueError("P0_NORMAL_RECOVERY_BINDING")
         # Compare rebuilt body without identity/clock/tokenizer or authorization.
-        wire = build_p0_content_request(request)
+        # Read-only compatibility with the pinned historical schema. Ordinary
+        # generation always uses the new canonical identifier constraint.
+        legacy = self.grant["output_schema_sha256"] == sha(canonical(content_schema(legacy_section_ids=True)))
+        wire = build_p0_content_request(request, legacy_section_ids=legacy)
         if sha(self.body(wire)) != self.grant["request_sha256"]:
             raise ValueError("P0_NORMAL_RECOVERY_BODY")
         now = self.clock()

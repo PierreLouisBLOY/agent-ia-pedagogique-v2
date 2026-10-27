@@ -103,6 +103,10 @@ class EnvironmentProviderSecretResolver:
     def __str__(self) -> str:
         return "EnvironmentProviderSecretResolver"
 
+    def close(self) -> None:
+        """Drop the private environment snapshot when its composition closes."""
+        self.__environment.clear()
+
     def resolve(self, credential_ref: ProviderCredentialRef) -> ProviderSecretValue:
         if type(credential_ref) is not ProviderCredentialRef:
             raise TypeError("credential_ref must be a ProviderCredentialRef")

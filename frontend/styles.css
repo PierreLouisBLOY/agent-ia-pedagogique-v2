@@ -237,7 +237,7 @@ main { width:auto;max-width:none;margin:0;padding:30px; }
 @media(max-width:1180px) { body { grid-template-columns:195px minmax(0,1fr); } .sidebar { width:195px; } main { padding:24px; } }
 @media(max-width:760px) { body { display:block; } .sidebar { display:flex;position:static;width:auto;height:auto; } .sidebar .logo { padding-bottom:14px; } .sidebar .nav { display:flex;flex-wrap:wrap; } .sidebar .nav .new { margin-bottom:0; } .sidebar .side-bottom,.nav-caption,#recent-preparations { display:none; } .masthead { padding:12px 18px;height:auto; } main { padding:16px; } .content .intro { flex-direction:column; } .workspace { padding:16px; } #production-card-preview,#r4-preview-content { padding:16px; } .resource-grid { grid-template-columns:1fr; } }
 .production-card figure, #r4-preview-content figure { margin: 1.25rem 0; }
-.production-card figure img, #r4-preview-content figure img { display: block; max-width: 100%; height: auto; }
+.production-card figure img, #r4-preview-content figure img, .production-card figure canvas, #r4-preview-content figure canvas { display: block; max-width: 100%; height: auto; }
 .production-card figcaption { color: var(--muted, #56635c); margin-top: .5rem; }
 .production-workflow { margin: 1.25rem 0; padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: .8rem; background: #fff; }
 .production-workflow h3 { margin: 0 0 .75rem; font-size: 1rem; }
@@ -250,3 +250,9 @@ main { width:auto;max-width:none;margin:0;padding:30px; }
 .production-workflow li strong { font-size: .82rem; }
 .production-workflow li span { grid-column: 2; font-size: .76rem; line-height: 1.4; color: var(--muted, #56635c); }
 .production-workflow > p { margin: .65rem 0 0; color: var(--muted, #56635c); }
+#partial-capture { margin-bottom:2rem; }
+#partial-capture > p { overflow-wrap:anywhere; }
+#partial-capture article { margin-top:1.5rem; }
+#partial-capture article table { width:100%; border-collapse:collapse; margin:1rem 0; table-layout:fixed; }
+#partial-capture article th, #partial-capture article td { border:1px solid #d9d9d9; padding:.65rem; overflow-wrap:anywhere; text-align:left; }
+#partial-capture article th { background:#eaf2f8; }

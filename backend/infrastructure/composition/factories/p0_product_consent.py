@@ -22,19 +22,11 @@ if TYPE_CHECKING:
     from backend.infrastructure.composition.factories.local_browser import Read15RuntimeTarget
 
 
-def bind_product_consent(service: P0CreationService, endpoint: P0CreationEndpoint, *,
-                         target: "Read15RuntimeTarget", generation: P0ProductGenerationAdapter,
-                         admission: ReadP0SourceAdmission | ReadP0LocalReferenceContext,
-                         institutional_resolver: Callable[[Mapping[str, object], Mapping[str, object]], Mapping[str, object]] | None = None) -> None:
-    if service.generation is not generation:
-        raise ValueError("P0_PRODUCT_GENERATION_BINDING")
-
-    def prepared(ref: str, checksum: str) -> Mapping[str, object]:
-        value = service.prepared.get(ref)
-        if value is None or fingerprint(value) != checksum:
-            raise ValueError("P0_PREPARATION_CHANGED")
-        return value
-
+def product_source_reader(*, target: "Read15RuntimeTarget",
+                          admission: ReadP0SourceAdmission | ReadP0LocalReferenceContext,
+                          institutional_resolver: Callable[[Mapping[str, object], Mapping[str, object]], Mapping[str, object]] | None = None
+                          ) -> Callable[[Mapping[str, object]], list[dict[str, object]]]:
+    """The same Application source admission for normal and pilot consent."""
     def sources(request: Mapping[str, object]) -> list[dict[str, object]]:
         from backend.infrastructure.composition.factories.institutional_catalog import (
             bts_alignment,
@@ -45,6 +37,8 @@ def bind_product_consent(service: P0CreationService, endpoint: P0CreationEndpoin
         )
 
         context = object_data(request["context"])
+        if institutional_resolver is not None and context.get("contract_id") in {"P0-CONTEXT-EXERCISE-1.1", "P0-CONTEXT-CASE-STUDY-1.0"}:
+            raise ValueError("EXERCISE_FOCUS_LOCAL_REFERENCE_CONTEXT_UNSUPPORTED")
         selection = object_data(context.get("institutional", {}))
         notions = selection.get("notion_refs")
         if not isinstance(notions, (list, tuple)) or not notions:
@@ -66,10 +60,34 @@ def bind_product_consent(service: P0CreationService, endpoint: P0CreationEndpoin
         attested = {"notion_id": passage["notion_ref"], **{key: passage[key] for key in (
             "object_ref", "object_kind", "passage_ref", "version_or_checksum")}}
         resolver = bts_alignment if selection.get("contract_id") == "BTS-INSTITUTIONAL-CONTEXT-1.0" else stmg_alignment
-        resolved = (resolver(target, selection=selection, reference=attested) if institutional_resolver is None else
-            institutional_resolver(selection, {"notion_id": passage["notion_ref"], "passage_ref": passage["passage_ref"]}))
+        resolved: Mapping[str, object]
+        if institutional_resolver is None and context.get("contract_id") in {"P0-CONTEXT-EXERCISE-1.1", "P0-CONTEXT-CASE-STUDY-1.0"}:
+            if resolver is not stmg_alignment:
+                raise ValueError("EXERCISE_FOCUS_STMG_REQUIRED")
+            resolved = stmg_alignment(target, selection=selection, reference=attested, focus_witness=True)
+        else:
+            resolved = (resolver(target, selection=selection, reference=attested) if institutional_resolver is None else
+                institutional_resolver(selection, {"notion_id": passage["notion_ref"], "passage_ref": passage["passage_ref"]}))
         return admission.execute(request=request, passages=matched, resolution=resolved)
 
+    return sources
+
+
+def bind_product_consent(service: P0CreationService, endpoint: P0CreationEndpoint, *,
+                         target: "Read15RuntimeTarget", generation: P0ProductGenerationAdapter,
+                         admission: ReadP0SourceAdmission | ReadP0LocalReferenceContext,
+                         institutional_resolver: Callable[[Mapping[str, object], Mapping[str, object]], Mapping[str, object]] | None = None) -> None:
+    if service.generation is not generation:
+        raise ValueError("P0_PRODUCT_GENERATION_BINDING")
+
+    def prepared(ref: str, checksum: str) -> Mapping[str, object]:
+        value = service.prepared.get(ref)
+        if value is None or fingerprint(value) != checksum:
+            raise ValueError("P0_PREPARATION_CHANGED")
+        return value
+
+    sources = product_source_reader(target=target, admission=admission,
+        institutional_resolver=institutional_resolver)
     consent = P0ConsentService(prepared_reader=prepared, admission_reader=sources, permission=generation,
         generate=lambda command: service.execute("generate", command))
     endpoint.consent_execute = consent.execute

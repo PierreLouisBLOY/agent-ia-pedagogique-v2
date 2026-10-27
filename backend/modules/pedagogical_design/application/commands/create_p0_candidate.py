@@ -50,6 +50,8 @@ class CreateP0Candidate:
             ("corrections", ("expected_answer", "rationale")))
             for row in items(candidate.data[field], 60) for key in keys)
         require_supported_claims(text, context.get("institutional_resolution"))
+        if "exercise" in candidate.data:
+            require_supported_claims(str(candidate.data["exercise"]), context.get("institutional_resolution"))
         from backend.modules.pedagogical_design.contracts.dto.course_delivery import (
             validate_course_delivery,
         )

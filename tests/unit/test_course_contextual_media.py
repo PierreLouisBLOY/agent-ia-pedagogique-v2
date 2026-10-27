@@ -14,6 +14,7 @@ from backend.infrastructure.composition.factories.course_media import build_cour
 from backend.modules.materialization_export.contracts.dto.word_document import WordDocument
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import as_plain
 from backend.modules.pedagogical_design.contracts.dto.course_chapter import CourseChapter
+from backend.modules.pedagogical_design.contracts.dto.p0_production import P0Production
 from backend.modules.pedagogical_design.contracts.dto.visual_brief import VisualBrief
 from tests.unit.test_course_chapter import child_fixture
 from tests.unit.test_course_media import brief_data
@@ -159,7 +160,7 @@ def test_ag04_double_receives_all_eight_visuals_and_six_axes_without_pixels_or_a
     critic = TechnicalCritic()
     reviewed = P0ReviewAdapter(critic, authorize=lambda request: True).review(request={
         "production": production, "evidence_pack": {"passages": []}, "plan": {}, "validation": {},
-        "bundle_sha256": record.p0_bundle.sha256})
+        "bundle_sha256": P0Production(production).sha256})
     visuals = critic.requests[0].target_payload["visuals"]
     assert len(visuals) == 8
     assert all(len(v["axes"]) == 6 and "qualite_lecture" in v["axes"] for v in visuals)

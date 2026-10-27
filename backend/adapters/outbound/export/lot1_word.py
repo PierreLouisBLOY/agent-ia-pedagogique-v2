@@ -9,7 +9,12 @@ from backend.modules.materialization_export.contracts.dto.lot1_word_table import
     Lot1WordDocument,
     Lot1WordTable,
 )
-from backend.modules.materialization_export.contracts.dto.word_document import WordDocument
+from backend.modules.materialization_export.contracts.dto.partial_word_document import (
+    PartialWordDocument,
+)
+from backend.modules.materialization_export.contracts.dto.word_document import (
+    WordDocument,
+)
 
 _W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
@@ -18,7 +23,7 @@ def _w(name: str) -> str:
     return "{" + _W + "}" + name
 
 
-def _table(value: Lot1WordTable) -> Element:
+def _table(value: Lot1WordTable, *, keep_rows: bool = False, min_height: int = 0) -> Element:
     table = Element(_w("tbl"))
     props = SubElement(table, _w("tblPr"))
     SubElement(props, _w("tblW"), {_w("w"): "0", _w("type"): "auto"})
@@ -38,8 +43,14 @@ def _table(value: Lot1WordTable) -> Element:
         SubElement(grid, _w("gridCol"), {_w("w"): str(width)})
     for index, row in enumerate(value.rows):
         tr = SubElement(table, _w("tr"))
-        if index == 0:
-            SubElement(SubElement(tr, _w("trPr")), _w("tblHeader"), {_w("val"): "true"})
+        if index == 0 or keep_rows:
+            row_props = SubElement(tr, _w("trPr"))
+            if keep_rows:
+                SubElement(row_props, _w("cantSplit"))
+            if index == 0:
+                SubElement(row_props, _w("tblHeader"), {_w("val"): "true"})
+            elif min_height:
+                SubElement(row_props, _w("trHeight"), {_w("val"): str(min_height), _w("hRule"): "atLeast"})
         for column, cell in enumerate(row):
             tc = SubElement(tr, _w("tc"))
             tc_props = SubElement(tc, _w("tcPr"))
@@ -49,6 +60,10 @@ def _table(value: Lot1WordTable) -> Element:
             if index == 0:
                 SubElement(tc_props, _w("shd"), {_w("fill"): "EAF2F8"})
             _paragraph(tc, "Normal", cell)
+            if keep_rows and index == 0:
+                header_props = tc.find(_w("p") + "/" + _w("pPr"))
+                if header_props is not None:
+                    SubElement(header_props, _w("keepNext"))
             if column > 0:
                 paragraph = tc.find(_w("p"))
                 if paragraph is not None:
@@ -61,7 +76,7 @@ def _table(value: Lot1WordTable) -> Element:
 class Lot1OOXMLWordWriter(OOXMLWordWriter):
     def write(self, document: WordDocument) -> bytes:
         original = super().write(document)
-        if not isinstance(document, Lot1WordDocument) or not document.tables:
+        if not isinstance(document, (Lot1WordDocument, PartialWordDocument)) or not document.tables:
             return original
         with ZipFile(BytesIO(original)) as source:
             parts = {name: source.read(name) for name in source.namelist()}
@@ -71,7 +86,11 @@ class Lot1OOXMLWordWriter(OOXMLWordWriter):
             raise ValueError("LOT1_WORD_BODY_REJECTED")
         # Title is paragraph zero; WordBlock i follows at body index i + 1.
         for value in sorted(document.tables, key=lambda t: t.after_block_index, reverse=True):
-            body.insert(value.after_block_index + 2, _table(value))
+            height = 0
+            if isinstance(document, PartialWordDocument) and document.table_min_row_heights:
+                height = document.table_min_row_heights[document.tables.index(value)]
+            body.insert(value.after_block_index + 2, _table(value,
+                keep_rows=isinstance(document, PartialWordDocument), min_height=height))
         parts["word/document.xml"] = tostring(root, encoding="utf-8", xml_declaration=True)
         output = BytesIO()
         with ZipFile(output, "w") as archive:

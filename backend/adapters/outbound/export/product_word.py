@@ -7,6 +7,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 from backend.adapters.outbound.export.course_media_word import draw_image
 from backend.adapters.outbound.export.diffusion_word_v6 import diffusion_v6_text
+from backend.adapters.outbound.export.opc_xml import opc_xml
 from backend.adapters.outbound.export.word import _paragraph
 from backend.modules.materialization_export.contracts.dto.word_document import WordDocument
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import object_data
@@ -68,8 +69,8 @@ class ProductWordWriter:
                        "Type": IMAGE_REL, "Target": "media/figure_" + str(number) + ".png"})
             parts["word/media/figure_" + str(number) + ".png"] = pair.asset.raw
         parts["word/document.xml"] = tostring(root, encoding="utf-8", xml_declaration=True)
-        parts["word/_rels/document.xml.rels"] = tostring(relationships, encoding="utf-8", xml_declaration=True)
-        parts["[Content_Types].xml"] = tostring(types, encoding="utf-8", xml_declaration=True)
+        parts["word/_rels/document.xml.rels"] = opc_xml(relationships, "http://schemas.openxmlformats.org/package/2006/relationships")
+        parts["[Content_Types].xml"] = opc_xml(types, "http://schemas.openxmlformats.org/package/2006/content-types")
         output = BytesIO()
         with ZipFile(output, "w") as archive:
             for name, payload in parts.items():

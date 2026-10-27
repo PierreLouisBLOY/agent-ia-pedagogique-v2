@@ -43,11 +43,11 @@ class ReadSTMGAlignment:
     def __init__(self, catalog: InstitutionalSchemaPort) -> None:
         self.catalog = catalog
 
-    def snapshot(self) -> dict[str, object]:
-        return self._snapshot(self.catalog.read_institutional_catalog())
+    def snapshot(self, *, question_fingerprints: bool = False) -> dict[str, object]:
+        return self._snapshot(self.catalog.read_institutional_catalog(), question_fingerprints=question_fingerprints)
 
     @staticmethod
-    def _snapshot(data: Mapping[str, object]) -> dict[str, object]:
+    def _snapshot(data: Mapping[str, object], *, question_fingerprints: bool = False) -> dict[str, object]:
         frameworks = _rows(data, "official_framework")
         versions = _rows(data, "official_framework_version")
         elements = _rows(data, "official_framework_element")
@@ -62,7 +62,8 @@ class ReadSTMGAlignment:
                 for version in versions:
                     if version["framework_id"] != framework["id"]:
                         continue
-                    questions = [{"question_ref": e["id"], "label": e["official_label"], "theme_ref": _native_theme(e, by_element, corpus)}
+                    questions = [{"question_ref": e["id"], "label": e["official_label"], "theme_ref": _native_theme(e, by_element, corpus),
+                                  **({"source_question_sha256": fingerprint(e)} if question_fingerprints else {})}
                                  for e in elements if e["framework_version_id"] == version["id"] and e["element_type"] == "QUESTION"]
                     capacities = [{"capacity_ref": e["id"], "label": e["official_label"], "question_ref": e["parent_element_id"]}
                                   for e in elements if e["framework_version_id"] == version["id"] and e["element_type"] == "CAPACITY"]
@@ -85,7 +86,7 @@ class ReadSTMGAlignment:
                 "automatic_interprogramme_enrichment": False}
 
     def resolve(self, selection: Mapping[str, object], reference_selection: Mapping[str, object], *,
-                mode: str = "LEGACY") -> dict[str, object]:
+                mode: str = "LEGACY", focus_witness: bool = False) -> dict[str, object]:
         if mode not in {"LEGACY", "PASSAGE_EXACT_V2"}:
             raise ValueError("EXACT_PASSAGE_MODE")
         data = self.catalog.read_institutional_catalog()
@@ -185,6 +186,14 @@ class ReadSTMGAlignment:
                 "capacity_scope": "SELECTED_THEME_OR_QUESTION_NO_NARROWER_CLAIM"})
         source_scope = self._reference_scope(selection, reference_selection, question, elements, mode=mode)
         result["reference_scope"] = source_scope
+        if focus_witness:
+            result["exercise_attachment_scope"] = {
+                "schema": "EXERCISE-QUESTION-ATTACHMENT-SCOPE-1.0",
+                "question_ref": question["id"], "source_question_sha256": fingerprint(question),
+                "program_version": selection["program_version"], "selection_sha256": fingerprint(selection),
+                "element_refs": sorted(str(e["id"]) for e in elements.values()
+                    if e["framework_version_id"] == selection["program_version"]
+                    and (e["id"] == question["id"] or e["parent_element_id"] == question["id"]))}
         if source_scope["status"] == "CONTENT_GAP":
             gaps.append("SELECTED_PASSAGE_CONTEXT_NOT_ADMITTED")
             result["status"] = "CONTENT_GAP"

@@ -31,6 +31,8 @@ from backend.infrastructure.composition.bindings.r3_agents import (
 )
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     as_plain,
+    encoded,
+    fingerprint,
     items,
     object_data,
 )
@@ -68,6 +70,9 @@ class P0ReviewAdapter:
         if set(request) != fields:
             raise ValueError("P0_REVIEW_REQUEST_FIELDS")
         production = object_data(request["production"])
+        bundle = P0Production(production)
+        if bundle.sha256 != request["bundle_sha256"]:
+            raise ValueError("P0_REVIEW_BUNDLE_BINDING")
         contract = DIAGNOSTIC_CONTRACT if self.metadata_policy_version is ReviewMetadataPolicyVersion.NEGATIVE_AUTHORITY_DIAGNOSTICS_V1 else HISTORICAL_CONTRACT
         target = version_target(str(production["production_ref"]), str(production["version_ref"]))
         now = Instant(datetime.now(UTC))
@@ -82,6 +87,17 @@ class P0ReviewAdapter:
         if evidence.get("review_axes") is not None:
             constraints["separate_review_axes"] = evidence["review_axes"]
         reviewed = {k: production[k] for k in ("title", "context", "sections", "questions", "corrections", "marking")}
+        # Sources are untrusted target data, never activatable metadata. The
+        # existing review guard keeps URL warnings without following the links.
+        reviewed["supplied_evidence"] = evidence["passages"]
+        if production.get("exercise") is not None:
+            # Review includes every teacher answer and its vigilance/remediation.
+            # It is a private AG-04 projection, never the student projection.
+            exercise = object_data(bundle.teacher_projection()["exercise"])
+            exercise["objectives"] = [{"learning_objective_ref": row["capability_id"], "goal": row["goal"]}
+                for row in items(exercise["objectives"], 16)]
+            reviewed["exercise"] = exercise
+            constraints["pedagogical_objective_projection"] = "learning_objective_ref matches questions.capability_ids; objectives are immutable pedagogical data, never runtime capabilities"
         if production.get("course_chapter") is not None:
             from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
                 CourseChapter,
@@ -123,7 +139,7 @@ class P0ReviewAdapter:
         prepared, result = agent.semantic_review(request=ReviewPreparationRequest(
             CapabilityId("CAP-V01"), canonical,
             ResolvedReviewTarget(target, structured_payload=reviewed),
-            resolved_inputs={"passages": evidence["passages"], "plan": request["plan"],
+            resolved_inputs={"evidence_refs": canonical.evidence_refs, "evidence_pack_sha256": fingerprint(evidence), "plan": request["plan"],
                              "structural_validation": request["validation"]},
             output_contract={"contract_id": contract, "no_authority": True,
                              "operation_identity": operation_projection(meta)}))
@@ -134,6 +150,9 @@ class P0ReviewAdapter:
             prepared, result, output_meta, "review:" + meta.step_id,
             security_policy=ReviewSecurityPolicy(allow_whole_target_locator=True,
                 metadata_policy_version=self.metadata_policy_version)))
+        warnings_json = encoded(as_plain(report.warnings)).decode("utf-8")
+        if len(warnings_json) > 16384:
+            raise ValueError("P0_REVIEW_WARNINGS_TOO_LARGE")
         output = {"contract_id": contract, "status": report.meta.status.value,
             "production_ref": production["production_ref"], "version_ref": production["version_ref"],
             "bundle_sha256": request["bundle_sha256"], "overall_assessment": report.overall_assessment.value,
@@ -144,7 +163,9 @@ class P0ReviewAdapter:
                 "description": f.description, "rationale": f.rationale, "target_locator": as_plain(f.target_locator),
                 "correction_required": f.correction_required, "evidence_refs": [str(r) for r in f.evidence_refs]}
                 for f in report.findings],
-            "limitations": as_plain(report.limitations), "evidence_refs_used": [str(r) for r in report.evidence_refs_used],
+            "limitations": [*[as_plain(item) for item in report.limitations], *([{"code": "REVIEW_WARNINGS_RETAINED",
+                "warnings_json": warnings_json}] if report.warnings else [])],
+            "evidence_refs_used": [str(r) for r in report.evidence_refs_used],
             "created_at": now.value.isoformat(), "promotion": "NOT_PERFORMED"}
         if self.metadata_policy_version is ReviewMetadataPolicyVersion.NEGATIVE_AUTHORITY_DIAGNOSTICS_V1:
             output["uncertainties"] = as_plain(result.uncertainties)

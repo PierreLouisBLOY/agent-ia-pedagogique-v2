@@ -10,6 +10,7 @@ from backend.infrastructure.composition.factories.course_media import build_cour
 from backend.modules.pedagogical_context.contracts.dto.p0_context import P0Context
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import as_plain
 from backend.modules.pedagogical_design.contracts.dto.course_chapter import CourseChapter
+from backend.modules.pedagogical_design.contracts.dto.p0_production import P0Production
 from tests.unit.test_course_chapter import child_fixture
 from tests.unit.test_course_media import brief_data, media_chapter
 from tests.unit.test_p0_agentic_routing import TechnicalCritic
@@ -60,8 +61,12 @@ def test_ag04_receives_each_visual_semantics_and_five_axes_without_pixel_accepta
     production["course_chapter"] = as_plain(chapter.data)
     critic = TechnicalCritic()
     adapter = P0ReviewAdapter(critic, authorize=lambda request: True)
+    with pytest.raises(ValueError, match="P0_REVIEW_BUNDLE_BINDING"):
+        adapter.review(request={"production": production, "evidence_pack": {"passages": []},
+            "plan": {}, "validation": {}, "bundle_sha256": record.p0_bundle.sha256})
+    assert not critic.requests
     result = adapter.review(request={"production": production, "evidence_pack": {"passages": []},
-        "plan": {}, "validation": {}, "bundle_sha256": record.p0_bundle.sha256})
+        "plan": {}, "validation": {}, "bundle_sha256": P0Production(production).sha256})
     request = critic.requests[0]
     assert len(request.target_payload["visuals"]) == 1
     assert request.target_payload["visuals"][0]["asset_sha256"] == asset.data["png_sha256"]

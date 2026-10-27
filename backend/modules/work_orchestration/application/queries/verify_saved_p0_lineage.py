@@ -5,6 +5,10 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     items,
     object_data,
 )
+from backend.modules.work_orchestration.contracts.dto.p0_codesign_trace import (
+    SAVED_CODESIGN_CONTRACT,
+    validate_documentary,
+)
 from backend.modules.work_orchestration.contracts.dto.saved_production import SavedProduction
 
 
@@ -15,6 +19,22 @@ def verify_saved_parent(child: SavedProduction, parent: SavedProduction) -> None
     lineage, old = object_data(current.data["lineage"]), object_data(original.data["lineage"])
     if lineage["parent_version_ref"] != original.version_ref:
         raise ValueError("P0_SAVED_LINEAGE_BINDING")
+    from backend.modules.validation_control.application.commands.validate_p0 import (
+        ValidateP0Command,
+    )
+    if child.data["contract_id"] == SAVED_CODESIGN_CONTRACT:
+        from backend.modules.validation_control.application.commands.validate_p0 import (
+            ValidateP0Command,
+        )
+        proof = validate_documentary(child.data["codesign"], current)
+        renewable = {"source_run_id", "source_step_id", "source_request_id", "parent_version_ref"}
+        report = ValidateP0Command().execute(current, parent=original)
+        if (proof["parent_bundle_sha256"] != original.sha256 or proof["parent_record_sha256"] != parent.sha256
+                or current.data["context"] != original.data["context"] or current.data["references"] != original.data["references"]
+                or {k:v for k,v in lineage.items() if k not in renewable} != {k:v for k,v in old.items() if k not in renewable}
+                or not any(fingerprint(row) == fingerprint(report) for row in items(child.data["validations"], 32))):
+            raise ValueError("P0_SAVED_LINEAGE_BINDING")
+        return
     if ({k: v for k, v in lineage.items() if k != "parent_version_ref"}
             == {k: v for k, v in old.items() if k != "parent_version_ref"}
             and current.data["context"] == original.data["context"]

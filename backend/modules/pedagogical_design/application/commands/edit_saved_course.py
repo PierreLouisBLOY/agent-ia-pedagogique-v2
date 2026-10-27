@@ -9,7 +9,8 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
 from backend.modules.pedagogical_design.contracts.dto.course_chapter import CourseChapter
 
 
-def apply_course_edits(parent: Mapping[str, object], edits: Mapping[str, object]) -> dict[str, object]:
+def apply_course_edits(parent: Mapping[str, object], edits: Mapping[str, object], *,
+                       allow_assembly_question_edits: bool = False) -> dict[str, object]:
     if "course_chapter" not in parent:
         raise ValueError("P0_COURSE_EDITS_REQUIRED")
     if set(edits) - {"title", "course_edits"}:
@@ -56,7 +57,16 @@ def apply_course_edits(parent: Mapping[str, object], edits: Mapping[str, object]
     if "media_assets" in before and {k: v for k, v in chapter.items() if k != "title"} != {
         k: v for k, v in before.items() if k != "title"
     }:
-        raise ValueError("P0_COURSE_MEDIA_DEPENDENCY_CHANGED")
+        independent_question_patch = (
+            allow_assembly_question_edits
+            and chapter["contract_id"] == "COURSE-CHAPTER-ASSEMBLY-5.0"
+            and set(edits) == {"course_edits"}
+            and set(patch) == {"questions", "teacher_answers"}
+            and all(chapter[k] == before[k] for k in before
+                    if k not in {"questions", "teacher_answers"})
+        )
+        if not independent_question_patch:
+            raise ValueError("P0_COURSE_MEDIA_DEPENDENCY_CHANGED")
     if "title" in edits:
         chapter["title"] = edits["title"]
     validated = CourseChapter(chapter)

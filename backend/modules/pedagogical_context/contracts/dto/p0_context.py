@@ -57,11 +57,22 @@ class P0Context:
     data: Mapping[str, object]
 
     def __post_init__(self) -> None:
+        from backend.modules.pedagogical_context.contracts.dto.exercise_context import (
+            EXERCISE_CONTEXTS,
+            FOCUSED_CONTEXTS,
+            ExerciseQuestionFocus,
+            exercise_focus,
+        )
+
         course_choice = self.data.get("contract_id") in {P0_COURSE_CONTEXT_CONTRACT, P0_NOTION_COURSE_CONTEXT_CONTRACT}
-        institutional = self.data.get("contract_id") in {P0_INSTITUTIONAL_CONTEXT_CONTRACT, P0_COURSE_CONTEXT_CONTRACT, P0_NOTION_COURSE_CONTEXT_CONTRACT}
+        institutional = self.data.get("contract_id") in {P0_INSTITUTIONAL_CONTEXT_CONTRACT, P0_COURSE_CONTEXT_CONTRACT, P0_NOTION_COURSE_CONTEXT_CONTRACT, *EXERCISE_CONTEXTS}
         fields = _FIELDS | ({"institutional", "institutional_resolution", "local_progression"} if institutional else set())
+        if self.data.get("contract_id") in EXERCISE_CONTEXTS:
+            fields |= {"exercise_focus_justification"}
+        if self.data.get("contract_id") in FOCUSED_CONTEXTS:
+            fields |= {"exercise_focus_selection"}
         data = object_data(self.data, fields | ({"course_format"} if course_choice else set()))
-        if data["contract_id"] not in {P0_CONTEXT_CONTRACT, P0_INSTITUTIONAL_CONTEXT_CONTRACT, P0_COURSE_CONTEXT_CONTRACT, P0_NOTION_COURSE_CONTEXT_CONTRACT}:
+        if data["contract_id"] not in {P0_CONTEXT_CONTRACT, P0_INSTITUTIONAL_CONTEXT_CONTRACT, P0_COURSE_CONTEXT_CONTRACT, P0_NOTION_COURSE_CONTEXT_CONTRACT, *EXERCISE_CONTEXTS}:
             raise ValueError("P0_CONTEXT_CONTRACT")
         if data["resource_type"] not in P0_RESOURCE_TYPES:
             raise ValueError("P0_RESOURCE_TYPE")
@@ -124,6 +135,16 @@ class P0Context:
             r"[a-z]{2}(?:-[A-Z]{2})?", data["language"]
         ) is None:
             raise ValueError("P0_LANGUAGE")
+        if data["contract_id"] in EXERCISE_CONTEXTS:
+            if data["resource_type"] != "EXERCISE":
+                raise ValueError("EXERCISE_CONTEXT_REQUIRED")
+            _bounded_text(data["exercise_focus_justification"], 2000)
+            if data["contract_id"] in FOCUSED_CONTEXTS:
+                ExerciseQuestionFocus.from_value(data["exercise_focus_selection"])
+            # The normal prepare use case resolves this selection and constructs
+            # P0Context again before declaring PREPARATION_READY.
+            if data["institutional_resolution"] is not None:
+                exercise_focus(data)
         object.__setattr__(self, "data", freeze_safe_mapping(data))
 
     @property

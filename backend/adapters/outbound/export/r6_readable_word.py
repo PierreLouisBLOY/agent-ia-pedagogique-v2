@@ -20,6 +20,7 @@ from backend.adapters.outbound.export.diffusion_word_v6 import (
     diffusion_v6_document,
 )
 from backend.adapters.outbound.export.lot1_word import Lot1OOXMLWordWriter, _table
+from backend.adapters.outbound.export.opc_xml import opc_xml
 from backend.modules.materialization_export.contracts.dto.lot1_word_table import (
     Lot1WordDocument,
     Lot1WordTable,
@@ -80,6 +81,10 @@ class R6ReadableWordWriter(Lot1OOXMLWordWriter):
         self.product_v7 = profile == "product-v7"
 
     def write(self, document: WordDocument) -> bytes:
+        if document.exercise_profile is not None:
+            from backend.adapters.outbound.export.course_word import CourseOOXMLWordWriter
+
+            return CourseOOXMLWordWriter().write(document)
         if self.product_v7:
             from backend.adapters.outbound.export.product_word import ProductWordWriter
 
@@ -126,12 +131,12 @@ class R6ReadableWordWriter(Lot1OOXMLWordWriter):
                 "Id": "rIdClassroomFooter", "Type": "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer",
                 "Target": "footer1.xml",
             })
-            parts["word/_rels/document.xml.rels"] = tostring(relationships, encoding="utf-8", xml_declaration=True)
+            parts["word/_rels/document.xml.rels"] = opc_xml(relationships, "http://schemas.openxmlformats.org/package/2006/relationships")
             types = fromstring(parts["[Content_Types].xml"])
             SubElement(types, "{http://schemas.openxmlformats.org/package/2006/content-types}Override", {
                 "PartName": "/word/footer1.xml", "ContentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml",
             })
-            parts["[Content_Types].xml"] = tostring(types, encoding="utf-8", xml_declaration=True)
+            parts["[Content_Types].xml"] = opc_xml(types, "http://schemas.openxmlformats.org/package/2006/content-types")
         parts["word/document.xml"] = tostring(root, encoding="utf-8", xml_declaration=True)
         output = BytesIO()
         with ZipFile(output, "w") as archive:

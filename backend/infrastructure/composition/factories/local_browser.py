@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from secrets import token_urlsafe
 
+from backend.adapters.inbound.api.p0_creation import P0CreationEndpoint
 from backend.adapters.inbound.api.read15 import Read15Endpoint, Read15ValidationRejected
 from backend.adapters.inbound.api.routes import ASSET_NAMES
 from backend.adapters.inbound.api.saved_production import SavedProductionEndpoint
@@ -56,6 +57,10 @@ from backend.modules.materialization_export.application.commands.export_saved im
     ExportSavedCommand,
 )
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import as_plain
+from backend.modules.pedagogical_design.ports.outbound.p0_confirmed_recovery import (
+    P0ConfirmedGenerationRecoveryPort,
+    P0ConfirmedGenerationsRecoveryPort,
+)
 from backend.modules.pedagogical_design.ports.outbound.p0_generation import P0GenerationPort
 from backend.modules.resource_library.application.dto.input.search_local import SearchLocalRequest
 from backend.modules.resource_library.application.queries import GetResourceQuery
@@ -69,6 +74,7 @@ from backend.modules.resource_library.domain.value_objects.search_text import (
 from backend.modules.work_orchestration.application.queries.read_production import (
     ReadProductionQuery,
 )
+from backend.modules.work_orchestration.application.services.p0_creation import P0CreationService
 from backend.modules.work_orchestration.application.services.saved_production import (
     SavedProductionService,
 )
@@ -211,13 +217,17 @@ def build_local_read15(
     enable_review_modify: bool = False, r3_jobs: R3JobPort | None = None,
     saved_root: Path | None = None, create_saved: bool = False,
     p0_generation: P0GenerationPort | None = None,
+    p0_product_binder: Callable[[P0CreationService, P0CreationEndpoint], None] | None = None,
     observability_root: Path | None = None,
+    word_profile: str = "diffusion-v5",
 ) -> LocalRead15Composition:
     """Receive an explicit existing target; never read ambient environment settings."""
     if generation_jobs is not None and not enable_conversation:
         raise ValueError("R2_NOT_ENABLED")
     if (enable_review_modify and not enable_conversation) or (r3_jobs is not None and not enable_review_modify):
         raise ValueError("R3_NOT_ENABLED")
+    if isinstance(p0_generation, P0ConfirmedGenerationRecoveryPort) and saved_root is None:
+        raise ValueError("P0_NORMAL_SAVED_LIBRARY_REQUIRED")
     target.validate()
     # Verify that the authenticated supplied fixture can open as a query-only reader.
     connection = connect_sqlite(
@@ -251,13 +261,20 @@ def build_local_read15(
                 "bundle": snapshot["bundle"], "reviews": snapshot["reviews"],
                 "validations": snapshot["validations"], "origin": "LOCAL_APPLICATION",
                 "provenance": {}, "reservations": []})
-        saved = build_saved_application(saved_root, create=create_saved, source=source)
+        saved = build_saved_application(saved_root, create=create_saved, source=source,
+                                        word_profile=word_profile)
+        if isinstance(saved, Lot2SavedProductionInbound):
+            p0.saved_reader = saved.read_local_p0
     def harvest() -> None:
         if conversation:
             conversation.service.poll()
         if r3:
             r3.service.poll()
     try:
+        if isinstance(saved, Lot2SavedProductionInbound):
+            bind_confirmed_p0_publication(p0, saved, p0_generation)
+        if p0_product_binder is not None:
+            p0_product_binder(p0, p0_endpoint)
         service = LocalRead15Service(
             configuration, _application_reader(target), observability, assets,
             search_endpoint=_application_searcher(target),
@@ -282,13 +299,46 @@ def build_local_read15(
     return LocalRead15Composition(server, observability, conversation=conversation, r3=r3, saved=saved)
 
 
+def bind_confirmed_p0_publication(p0: P0CreationService, saved: Lot2SavedProductionInbound,
+                                generation: P0GenerationPort | None) -> None:
+    """Explicit companion only; no receipt discovery in the ordinary local mode."""
+    if not isinstance(generation, P0ConfirmedGenerationRecoveryPort):
+        return
+
+    def publish(production: str, version: str, bundle_sha256: str) -> Mapping[str, object]:
+        try:
+            record = saved.read_local_p0(production, version)
+        except ValueError as error:
+            if str(error) != "R4_NOT_FOUND":
+                raise
+            saved.execute("save", body={"production_ref": production, "version_ref": version},
+                          correlation="p0.confirmed-publication")
+            record = saved.read_local_p0(production, version)
+        if (record.production_ref != production or record.version_ref != version
+                or record.p0_bundle is None or record.p0_bundle.sha256 != bundle_sha256):
+            raise ValueError("P0_GENERATED_PUBLICATION_BINDING")
+        return {"state": "APPLICATION_SAVED", "production_ref": production,
+                "version_ref": version, "bundle_sha256": bundle_sha256,
+                "record_sha256": record.sha256}
+
+    p0.publish_generated = publish
+    if isinstance(generation, P0ConfirmedGenerationsRecoveryPort):
+        dispatches = generation.confirmed_dispatches()
+    else:
+        dispatch = generation.confirmed_dispatch()
+        dispatches = () if dispatch is None else (dispatch,)
+    for dispatch in dispatches:
+        p0.recover_confirmed_generation(dispatch)
+
+
 def build_saved_application(root: Path, *, create: bool = False,
         source: Callable[[str, str], SavedProduction] | None = None,
         word_profile: str = "diffusion-v5") -> SavedProductionInbound:
     store = LocalSavedProductionStore(root, create=create)
     return Lot2SavedProductionInbound(SavedProductionService(store), ReadProductionQuery(store),
                                   ExportSavedCommand(R6ReadableWordWriter(profile=word_profile),
-                                      presentation=diffusion_v6_document if word_profile == "diffusion-v6" else diffusion_document), source=source)
+                                      presentation=diffusion_v6_document if word_profile == "diffusion-v6" else diffusion_document,
+                                      product_projection=word_profile == "product-v7"), source=source)
 
 
 def build_local_saved(configuration: LocalBrowserHttpConfiguration, root: Path, *,

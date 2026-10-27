@@ -4,6 +4,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$applicationRoot = Split-Path -Parent $PSScriptRoot
 
 function Stop-Launch([int]$Code, [string]$Message) {
     [Console]::Error.WriteLine($Message)
@@ -32,6 +33,39 @@ if (($required | Where-Object { $_ -notin $keys }).Count -gt 0 -or
 
 $runtimePath = [Environment]::ExpandEnvironmentVariables($config.runtime_path)
 $dataRoot = [Environment]::ExpandEnvironmentVariables($config.data_root)
+$rejectedKeys = @('p0_rejected_profile', 'p0_rejected_inspection_plan', 'p0_rejected_adoption', 'p0_rejected_mode')
+$rejectedPresent = @($keys | Where-Object { $_ -in $rejectedKeys })
+if (@($keys | Where-Object { $_ -in $rejectedKeys -and $_ -cnotin $rejectedKeys }).Count -gt 0) {
+    Stop-Launch 2 'CONFIG_INVALID: P1 V2 keys must use their exact spelling.'
+}
+if ($rejectedPresent.Count -gt 0) {
+    $hasProfile = $keys -ccontains 'p0_rejected_profile'
+    $hasPlan = $keys -ccontains 'p0_rejected_inspection_plan'
+    if ($hasProfile -eq $hasPlan -or $keys -cnotcontains 'p0_rejected_adoption' -or
+        $keys -contains 'p0_normal_profile' -or $config.saved_root -isnot [string] -or -not $config.saved_root -or
+        $config.word_profile -cne 'product-v7' -or
+        @($keys | Where-Object { $_ -in @('saved_only', 'create_saved', 'enable_conversation', 'enable_review_modify',
+            'live_authorization', 'r5_scope', 'r5_authorization') -and $config.$_ }).Count -gt 0) {
+        Stop-Launch 2 'CONFIG_INVALID: exclusive P1 V2 selection, adoption, runtime and product-v7 library required.'
+    }
+    foreach ($taskKey in @('p0_rejected_profile', 'p0_rejected_inspection_plan', 'p0_rejected_adoption')) {
+        if ($keys -ccontains $taskKey -and ($config.$taskKey -isnot [string] -or
+            $config.$taskKey -notmatch '^[A-Za-z]:[\\/][^%$\x00]+$')) {
+            Stop-Launch 2 'CONFIG_INVALID: P1 V2 paths must be nonempty absolute drive-local literals.'
+        }
+    }
+    $rejectedMode = 'off'
+    if ($keys -ccontains 'p0_rejected_mode') {
+        if ($config.p0_rejected_mode -isnot [string] -or $config.p0_rejected_mode -cnotin @('inspect-only', 'off', 'on')) {
+            Stop-Launch 2 'CONFIG_INVALID: P1 V2 mode must be inspect-only, off or on.'
+        }
+        $rejectedMode = $config.p0_rejected_mode
+    }
+    if (($hasPlan -and ($keys -cnotcontains 'p0_rejected_mode' -or $rejectedMode -cne 'inspect-only')) -or
+        ($hasProfile -and $rejectedMode -ceq 'inspect-only')) {
+        Stop-Launch 2 'CONFIG_INVALID: P1 V2 plan requires inspect-only; a profile requires its adopted off/on mode.'
+    }
+}
 $hostAddress = '127.0.0.1'
 $client = [System.Net.Sockets.TcpClient]::new()
 try {
@@ -63,9 +97,38 @@ if ($config.PSObject.Properties.Name -contains 'saved_root' -and $config.saved_r
     }
 }
 
+if ($config.PSObject.Properties.Name -contains 'observability_root' -and $config.observability_root) {
+    $arguments += @('--observability-root', [Environment]::ExpandEnvironmentVariables([string]$config.observability_root))
+}
+if ($config.PSObject.Properties.Name -contains 'word_profile') {
+    if ($config.word_profile -notin @('diffusion-v5', 'diffusion-v6', 'product-v7')) {
+        Stop-Launch 2 'CONFIG_INVALID: word_profile is not a supported export profile.'
+    }
+    $arguments += @('--word-profile', [string]$config.word_profile)
+}
+
+if ($config.PSObject.Properties.Name -contains 'p0_normal_profile') {
+    if ($config.p0_normal_profile -isnot [string] -or -not $config.p0_normal_profile) {
+        Stop-Launch 2 'CONFIG_INVALID: p0_normal_profile must identify an explicitly adopted closed P1 profile.'
+    }
+    $arguments += @('--p0-normal-profile', [Environment]::ExpandEnvironmentVariables($config.p0_normal_profile))
+}
+foreach ($taskKey in @('p0_rejected_profile', 'p0_rejected_inspection_plan', 'p0_rejected_adoption', 'p0_rejected_mode')) {
+    if ($keys -ccontains $taskKey) {
+        $arguments += @('--' + $taskKey.Replace('_', '-'), [string]$config.$taskKey)
+    }
+}
+
 $url = "http://$hostAddress`:$($config.port)/"
-[Console]::WriteLine("Starting the local read-only product at $url")
+[Console]::WriteLine("Starting V2 at $url")
+if ($config.PSObject.Properties.Name -contains 'p0_normal_profile' -or
+    ($rejectedPresent.Count -gt 0 -and $rejectedMode -ceq 'on')) {
+    [Console]::WriteLine('Creation configuree : confirmation du contenu et du cout requise avant chaque envoi.')
+} else {
+    [Console]::WriteLine('Mode local hors ligne.')
+}
 [Console]::WriteLine('The server runs in this terminal. Press Ctrl+C to stop; run this script again to restart.')
+Set-Location -LiteralPath $applicationRoot
 if ($pythonPath) {
     & $pythonPath @arguments
 } else {

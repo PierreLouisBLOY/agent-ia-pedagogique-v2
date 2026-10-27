@@ -5,10 +5,17 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from backend.adapters.inbound.api.p0_creation import P0CreationEndpoint
+from backend.adapters.inbound.api.production_media import ProductionMediaEndpoint
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import items, object_data
 from backend.modules.pedagogical_design.ports.outbound.p0_generation import P0GenerationPort
 from backend.modules.quality_evaluation.ports.outbound.p0_review import P0ReviewPort
+from backend.modules.work_orchestration.application.queries.propose_p0_intention import (
+    ProposeP0Intention,
+)
 from backend.modules.work_orchestration.application.services.p0_creation import P0CreationService
+from backend.modules.work_orchestration.application.services.production_media import (
+    ProductionMediaService,
+)
 
 if TYPE_CHECKING:
     from backend.infrastructure.composition.factories.local_browser import Read15RuntimeTarget
@@ -22,6 +29,14 @@ def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
         load_p0_exact_reference,
         load_p0_reference,
     )
+
+    def inspect_exact_notion(notion_id: str) -> Mapping[str, object]:
+        from backend.infrastructure.composition.factories.r6_all_notions import (
+            exact_notion_evidence,
+        )
+
+        with exact_notion_evidence(target) as inbound:
+            return inbound.inspect(notion_id)
 
     def exact_passage(selection: Mapping[str, object]) -> dict[str, object]:
         from backend.infrastructure.composition.factories.r6_all_notions import (
@@ -99,5 +114,15 @@ def build_p0_creation(target: "Read15RuntimeTarget", nonce: str,
                  "validation_status": binding.validation_status} for binding in R6_EXACT_SOURCE_BINDINGS]
     endpoint = P0CreationEndpoint(service.execute, service.read, metadata, nonce=nonce,
         generation_bound=generation is not None, review_bound=review is not None,
-        institutional_catalog=lambda: {**stmg_alignment(target), **bts_alignment(target)})
+        institutional_catalog=lambda: {**stmg_alignment(target), **bts_alignment(target)},
+        media_endpoint=build_p0_media(service), exact_notion_reader=inspect_exact_notion,
+        intention_execute=ProposeP0Intention().execute)
     return service, endpoint
+
+
+def build_p0_media(service: P0CreationService) -> ProductionMediaEndpoint:
+    from backend.infrastructure.composition.factories.course_media import build_production_media
+
+    media = build_production_media(profile="diagram-v1")
+    local = ProductionMediaService(service.saved_source, media.execute, service.publish_local_child)
+    return ProductionMediaEndpoint(local.execute)

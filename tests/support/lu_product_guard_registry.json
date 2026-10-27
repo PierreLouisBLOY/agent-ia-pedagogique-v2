@@ -1,0 +1,1747 @@
+{
+  "schema": "LU-PRODUCT-GUARD-REGISTRY-1.0",
+  "status": "REVIEWED_EXACT_DELTA_PENDING_TARGETED_QUALIFICATION",
+  "timestamp_utc": "2026-10-16T15:56:09.761469+00:00",
+  "baseline": "89ef3edc5f9d09e5f769862833ffa2c1b175c8fb",
+  "baseline_tree": "93bdaa387815f6a6654496120b40e6853629f082",
+  "predecessor_manifest_sha256": "3d1ac5b5b44e7b920f1a19d338dbd4903df73bb92444d68723d01fcf36ffe1ee",
+  "structural_review_status": "DISTINCT_REVIEW_COMPLETED",
+  "structural_review_sha256": "1f63930c472e21b6e4a1db4127ebc1de87aba1e469dc33dc9201f6e51c86ae82",
+  "structural_reviewer": "/root",
+  "exact_delta_review_status": "DISTINCT_REVIEW_COMPLETED",
+  "qualification_status": "NOT_PERFORMED",
+  "guard_functions": "UNCHANGED",
+  "delta_paths": [
+    "architecture/adr/ADR-M02-local-contribution-overlay.md",
+    "backend/adapters/inbound/api/p0_creation.py",
+    "backend/adapters/inbound/api/p0_notion_evidence.py",
+    "backend/adapters/inbound/api/production_media.py",
+    "backend/adapters/inbound/api/routes.py",
+    "backend/adapters/inbound/api/saved_production.py",
+    "backend/adapters/inbound/application/institutional_catalog.py",
+    "backend/adapters/inbound/application/local_contribution.py",
+    "backend/adapters/inbound/application/lot2_saved_production.py",
+    "backend/adapters/inbound/application/p1_campaign_inspection.py",
+    "backend/adapters/inbound/application/production_media.py",
+    "backend/adapters/inbound/application/stmg_local_activity.py",
+    "backend/adapters/inbound/cli/local_browser.py",
+    "backend/adapters/outbound/evidence/p0_prepared_snapshot.py",
+    "backend/adapters/outbound/export/product_word.py",
+    "backend/adapters/outbound/export/r6_readable_word.py",
+    "backend/adapters/outbound/export/word.py",
+    "backend/adapters/outbound/generation/openai/p0_content.py",
+    "backend/adapters/outbound/generation/openai/p0_course_content_schema.py",
+    "backend/adapters/outbound/generation/openai/p0_normal.py",
+    "backend/adapters/outbound/generation/openai/p0_normal_agents.py",
+    "backend/adapters/outbound/generation/openai/p0_normal_diagnostic.py",
+    "backend/adapters/outbound/generation/openai/p0_normal_policy.py",
+    "backend/adapters/outbound/generation/openai/p0_normal_receipt.py",
+    "backend/adapters/outbound/generation/openai/p0_product.py",
+    "backend/adapters/outbound/generation/openai/p0_product_continuity_contract.py",
+    "backend/adapters/outbound/generation/openai/p0_product_continuity_ledger.py",
+    "backend/adapters/outbound/generation/openai/p0_product_ledger.py",
+    "backend/adapters/outbound/generation/openai/p0_product_policy.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_contract.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_ledger.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_policy.py",
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_continuation_contract.py",
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_continuation_ledger.py",
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_off_contract.py",
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_off_reader.py",
+    "backend/adapters/outbound/persistence/saved_production.py",
+    "backend/adapters/outbound/resource_library/local_contribution_store.py",
+    "backend/adapters/outbound/review/p0_review.py",
+    "backend/agent_runtime/security/tool_application.py",
+    "backend/infrastructure/composition/factories/course_media.py",
+    "backend/infrastructure/composition/factories/institutional_catalog.py",
+    "backend/infrastructure/composition/factories/local_browser.py",
+    "backend/infrastructure/composition/factories/local_contribution.py",
+    "backend/infrastructure/composition/factories/p0_creation.py",
+    "backend/infrastructure/composition/factories/p0_local_reference_context.py",
+    "backend/infrastructure/composition/factories/p0_normal_profile.py",
+    "backend/infrastructure/composition/factories/p0_normal_profile_contract.py",
+    "backend/infrastructure/composition/factories/p0_product_consent.py",
+    "backend/infrastructure/composition/factories/p0_rejected_profile.py",
+    "backend/infrastructure/composition/factories/p0_rejected_profile_contract.py",
+    "backend/infrastructure/composition/factories/p0_rejected_readset.py",
+    "backend/infrastructure/composition/factories/p0_unknown_continuation.py",
+    "backend/infrastructure/composition/factories/p0_unknown_off.py",
+    "backend/infrastructure/composition/factories/stmg_local_activity.py",
+    "backend/infrastructure/composition/factories/stmg_local_contribution.py",
+    "backend/modules/documents_provenance/contracts/dto/local_contribution_provenance.py",
+    "backend/modules/knowledge_reference/application/queries/inspect_institutional_catalog.py",
+    "backend/modules/knowledge_reference/application/queries/qualified_institutional_corpus.py",
+    "backend/modules/knowledge_reference/application/queries/stmg_alignment.py",
+    "backend/modules/materialization_export/application/commands/export_saved.py",
+    "backend/modules/materialization_export/contracts/dto/word_document.py",
+    "backend/modules/pedagogical_context/contracts/dto/course_notions.py",
+    "backend/modules/pedagogical_context/contracts/dto/p0_context.py",
+    "backend/modules/pedagogical_context/contracts/dto/stmg_local_activity.py",
+    "backend/modules/pedagogical_design/application/commands/create_p0_candidate.py",
+    "backend/modules/pedagogical_design/application/commands/edit_saved_course.py",
+    "backend/modules/pedagogical_design/application/commands/prepare_production_media.py",
+    "backend/modules/pedagogical_design/application/commands/reframe_course.py",
+    "backend/modules/pedagogical_design/application/mappers/course_provider_content.py",
+    "backend/modules/pedagogical_design/contracts/dto/course_chapter.py",
+    "backend/modules/pedagogical_design/contracts/dto/course_delivery.py",
+    "backend/modules/pedagogical_design/contracts/dto/course_policy.py",
+    "backend/modules/pedagogical_design/contracts/dto/p0_production.py",
+    "backend/modules/pedagogical_design/contracts/dto/production_media.py",
+    "backend/modules/pedagogical_design/ports/outbound/p0_confirmed_recovery.py",
+    "backend/modules/pedagogical_design/ports/outbound/p0_generation_controls.py",
+    "backend/modules/resource_library/application/commands/register_local_contribution.py",
+    "backend/modules/resource_library/application/queries/read_local_contribution.py",
+    "backend/modules/resource_library/contracts/dto/local_contribution.py",
+    "backend/modules/resource_library/ports/outbound/local_contribution_store.py",
+    "backend/modules/validation_control/application/commands/validate_p0.py",
+    "backend/modules/work_orchestration/application/queries/inspect_p1_campaign.py",
+    "backend/modules/work_orchestration/application/queries/p0_local_reference_context.py",
+    "backend/modules/work_orchestration/application/queries/p0_source_admission.py",
+    "backend/modules/work_orchestration/application/queries/propose_p0_intention.py",
+    "backend/modules/work_orchestration/application/queries/stmg_local_activity.py",
+    "backend/modules/work_orchestration/application/queries/verify_saved_p0_lineage.py",
+    "backend/modules/work_orchestration/application/services/p0_agentic.py",
+    "backend/modules/work_orchestration/application/services/p0_consent.py",
+    "backend/modules/work_orchestration/application/services/p0_creation.py",
+    "backend/modules/work_orchestration/application/services/production_media.py",
+    "backend/modules/work_orchestration/application/services/saved_production.py",
+    "backend/modules/work_orchestration/contracts/dto/p0_production_read_view.py",
+    "backend/modules/work_orchestration/contracts/dto/p1_campaign_inspection.py",
+    "backend/modules/work_orchestration/contracts/dto/p1_operation_intent.py",
+    "backend/modules/work_orchestration/contracts/dto/p1_unknown_continuation_snapshot.py",
+    "backend/modules/work_orchestration/contracts/dto/p1_unknown_off_inspection.py",
+    "backend/modules/work_orchestration/contracts/dto/saved_production.py",
+    "docs/adr/ADR-LU-P0-boundary-repair.md",
+    "docs/adr/ADR-LU-P1-exact-local-source-context.md",
+    "docs/adr/ADR-LU-S5-local-media-http-addendum.md",
+    "docs/adr/ADR-LU-S5-media-export-errors-addendum.md",
+    "docs/adr/ADR-LU-S5-media-local-revision-addendum.md",
+    "docs/adr/ADR-LU-S5-production-media.md",
+    "docs/adr/ADR_STMG_LOCAL_ACTIVITY_QUALIFICATION.md",
+    "docs/development/ADR_COURSE_NOTION_BINDING_V4_2026-10-14.md",
+    "docs/development/ADR_LU_COURSE_LINEAGE_RETENTION_2026-10-12.md",
+    "docs/development/ADR_LU_COURSE_NORMAL_RICH_2026-10-13.md",
+    "docs/development/ADR_LU_PRODUIT_01_ACTIVE_GUARD.md",
+    "docs/development/ADR_LU_PRODUIT_01_CANDIDATE_STATUS_BINDING.md",
+    "docs/development/ADR_LU_PRODUIT_01_CONFIRMED_RECOVERY.md",
+    "docs/development/ADR_LU_PRODUIT_01_COURSE_LOCAL_EDITS.md",
+    "docs/development/ADR_LU_PRODUIT_01_INBOUND_DESTINATION_RESTORATION.md",
+    "docs/development/ADR_LU_PRODUIT_01_INTENTION_PROPOSAL.md",
+    "docs/development/ADR_LU_PRODUIT_01_LOCAL_RESUME.md",
+    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROFILE.md",
+    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROFILE_PACKAGE_BASELINE.md",
+    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROVIDER_COMPOSITION.md",
+    "docs/development/ADR_LU_PRODUIT_01_P1_CONTINUITY_2026-10-13.md",
+    "docs/development/ADR_LU_PRODUIT_01_P1_KNOWN_REJECTED_CONTINUITY_V2_2026-10-14.md",
+    "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md",
+    "docs/development/ADR_LU_PRODUIT_01_WINDOWS_SOURCE_COVERAGE.md",
+    "docs/development/ADR_P0_NORMAL_FAILURE_DIAGNOSTIC_2026-10-15.md",
+    "docs/development/ADR_P1_UNKNOWN_LOCAL_OFF_2026-10-16.md",
+    "docs/development/ADR_P1_UNKNOWN_OPERATIONAL_CONTINUITY_2026-10-16.md",
+    "docs/development/COURSE_NOTION_V4_QUALIFICATION_2026-10-14.md",
+    "docs/development/INSTITUTIONAL_TREATMENT_REGISTER.md",
+    "docs/development/P0_EXACT_NOTION_HTTP.md",
+    "docs/development/P0_NORMAL_PROVIDER_CONTRACTS_1_0.md",
+    "docs/development/P0_PRODUCT_PERMISSION_INTERFACES_1_0.md",
+    "docs/user/INTEGRATED_PRODUCT_GUIDE.md",
+    "frontend/app.js",
+    "frontend/index.html",
+    "frontend/styles.css",
+    "tests/integration/test_local_contribution_filesystem.py",
+    "tests/integration/test_p0_intention_http.py",
+    "tests/integration/test_p0_local_reference_context_composition.py",
+    "tests/integration/test_p0_product_consent_http.py",
+    "tests/integration/test_p0_product_continuity_native.py",
+    "tests/integration/test_p0_product_rejected_continuity_native.py",
+    "tests/integration/test_p0_product_unknown_continuation_authority.py",
+    "tests/integration/test_p0_product_unknown_continuation_faults.py",
+    "tests/integration/test_p0_product_unknown_continuation_native.py",
+    "tests/integration/test_p0_product_unknown_off_native.py",
+    "tests/integration/test_rich_course_normal_application.py",
+    "tests/support/lu_product_guard_registry.json",
+    "tests/support/r6_scope_guard.py",
+    "tests/support/r6_scope_manifest.json",
+    "tests/unit/test_course_notion_contract.py",
+    "tests/unit/test_course_plain_lineage.py",
+    "tests/unit/test_institutional_treatment.py",
+    "tests/unit/test_integrated_p0_agentic_controls.py",
+    "tests/unit/test_integrated_saved_p0_resume.py",
+    "tests/unit/test_local_contribution.py",
+    "tests/unit/test_lu_product_active_guard.py",
+    "tests/unit/test_p0_candidate_status_binding.py",
+    "tests/unit/test_p0_confirmed_application_recovery.py",
+    "tests/unit/test_p0_exact_notion_http.py",
+    "tests/unit/test_p0_intention_proposal.py",
+    "tests/unit/test_p0_local_reference_context.py",
+    "tests/unit/test_p0_local_source_policy.py",
+    "tests/unit/test_p0_normal_cli.py",
+    "tests/unit/test_p0_normal_failure_diagnostic.py",
+    "tests/unit/test_p0_normal_generation.py",
+    "tests/unit/test_p0_normal_policy.py",
+    "tests/unit/test_p0_normal_profile.py",
+    "tests/unit/test_p0_prepared_evidence_boundary.py",
+    "tests/unit/test_p0_product_continuity.py",
+    "tests/unit/test_p0_product_destination.py",
+    "tests/unit/test_p0_product_permission.py",
+    "tests/unit/test_p0_product_rejected_continuity.py",
+    "tests/unit/test_p0_product_unknown_continuation.py",
+    "tests/unit/test_p0_product_unknown_off.py",
+    "tests/unit/test_p0_rejected_launch_dispatch.py",
+    "tests/unit/test_p0_rich_course_content.py",
+    "tests/unit/test_p0_source_admission.py",
+    "tests/unit/test_p0_wire_projection_boundary.py",
+    "tests/unit/test_p1_campaign_inspection.py",
+    "tests/unit/test_product_media.py",
+    "tests/unit/test_product_media_http.py",
+    "tests/unit/test_product_media_review_routing.py",
+    "tests/unit/test_rich_course_context_delivery.py",
+    "tests/unit/test_saved_course_local_edits.py",
+    "tests/unit/test_saved_p0_read_compatibility.py",
+    "tests/unit/test_stabilisation_active_guard.py",
+    "tests/unit/test_stmg_local_activity_qualification.py",
+    "tests/unit/test_stmg_local_contribution.py",
+    "tools/launch-local.ps1",
+    "tools/p0-tokenize-local.py",
+    "tools/tests/p0_conversation_shell.test.cjs",
+    "tools/tests/p0_course_media_editor.test.cjs",
+    "tools/tests/p0_preparation_deadline.test.cjs",
+    "tools/tests/p0_product_consent.test.cjs",
+    "tools/tests/p0_rich_course_context.test.cjs",
+    "tools/tests/p0_rich_course_preview.test.cjs",
+    "tools/tests/p0_ui_async_binding.test.cjs",
+    "tools/tests/p0_ui_local_reference_context.test.cjs",
+    "tools/tests/p0_ui_request.test.cjs",
+    "tools/tests/pr4_lifecycle_regressions.test.cjs",
+    "tools/tests/stmg_context.test.cjs"
+  ],
+  "changed_owners": [
+    "architecture/adr/ADR-M02-local-contribution-overlay.md",
+    "backend/adapters/inbound/api/p0_creation.py",
+    "backend/adapters/inbound/api/p0_notion_evidence.py",
+    "backend/adapters/inbound/api/production_media.py",
+    "backend/adapters/inbound/api/routes.py",
+    "backend/adapters/inbound/api/saved_production.py",
+    "backend/adapters/inbound/application/institutional_catalog.py",
+    "backend/adapters/inbound/application/local_contribution.py",
+    "backend/adapters/inbound/application/lot2_saved_production.py",
+    "backend/adapters/inbound/application/p1_campaign_inspection.py",
+    "backend/adapters/inbound/application/production_media.py",
+    "backend/adapters/inbound/application/stmg_local_activity.py",
+    "backend/adapters/inbound/cli/local_browser.py",
+    "backend/adapters/outbound/evidence/p0_prepared_snapshot.py",
+    "backend/adapters/outbound/export/product_word.py",
+    "backend/adapters/outbound/export/r6_readable_word.py",
+    "backend/adapters/outbound/export/word.py",
+    "backend/adapters/outbound/generation/openai/p0_content.py",
+    "backend/adapters/outbound/generation/openai/p0_course_content_schema.py",
+    "backend/adapters/outbound/generation/openai/p0_normal.py",
+    "backend/adapters/outbound/generation/openai/p0_normal_agents.py",
+    "backend/adapters/outbound/generation/openai/p0_normal_diagnostic.py",
+    "backend/adapters/outbound/generation/openai/p0_normal_policy.py",
+    "backend/adapters/outbound/generation/openai/p0_normal_receipt.py",
+    "backend/adapters/outbound/generation/openai/p0_product.py",
+    "backend/adapters/outbound/generation/openai/p0_product_continuity_contract.py",
+    "backend/adapters/outbound/generation/openai/p0_product_continuity_ledger.py",
+    "backend/adapters/outbound/generation/openai/p0_product_ledger.py",
+    "backend/adapters/outbound/generation/openai/p0_product_policy.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_contract.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_ledger.py",
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_policy.py",
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_continuation_contract.py",
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_continuation_ledger.py",
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_off_contract.py",
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_off_reader.py",
+    "backend/adapters/outbound/persistence/saved_production.py",
+    "backend/adapters/outbound/resource_library/local_contribution_store.py",
+    "backend/adapters/outbound/review/p0_review.py",
+    "backend/agent_runtime/security/tool_application.py",
+    "backend/infrastructure/composition/factories/course_media.py",
+    "backend/infrastructure/composition/factories/institutional_catalog.py",
+    "backend/infrastructure/composition/factories/local_browser.py",
+    "backend/infrastructure/composition/factories/local_contribution.py",
+    "backend/infrastructure/composition/factories/p0_creation.py",
+    "backend/infrastructure/composition/factories/p0_local_reference_context.py",
+    "backend/infrastructure/composition/factories/p0_normal_profile.py",
+    "backend/infrastructure/composition/factories/p0_normal_profile_contract.py",
+    "backend/infrastructure/composition/factories/p0_product_consent.py",
+    "backend/infrastructure/composition/factories/p0_rejected_profile.py",
+    "backend/infrastructure/composition/factories/p0_rejected_profile_contract.py",
+    "backend/infrastructure/composition/factories/p0_rejected_readset.py",
+    "backend/infrastructure/composition/factories/p0_unknown_continuation.py",
+    "backend/infrastructure/composition/factories/p0_unknown_off.py",
+    "backend/infrastructure/composition/factories/stmg_local_activity.py",
+    "backend/infrastructure/composition/factories/stmg_local_contribution.py",
+    "backend/modules/documents_provenance/contracts/dto/local_contribution_provenance.py",
+    "backend/modules/knowledge_reference/application/queries/inspect_institutional_catalog.py",
+    "backend/modules/knowledge_reference/application/queries/qualified_institutional_corpus.py",
+    "backend/modules/knowledge_reference/application/queries/stmg_alignment.py",
+    "backend/modules/materialization_export/application/commands/export_saved.py",
+    "backend/modules/materialization_export/contracts/dto/word_document.py",
+    "backend/modules/pedagogical_context/contracts/dto/course_notions.py",
+    "backend/modules/pedagogical_context/contracts/dto/p0_context.py",
+    "backend/modules/pedagogical_context/contracts/dto/stmg_local_activity.py",
+    "backend/modules/pedagogical_design/application/commands/create_p0_candidate.py",
+    "backend/modules/pedagogical_design/application/commands/edit_saved_course.py",
+    "backend/modules/pedagogical_design/application/commands/prepare_production_media.py",
+    "backend/modules/pedagogical_design/application/commands/reframe_course.py",
+    "backend/modules/pedagogical_design/application/mappers/course_provider_content.py",
+    "backend/modules/pedagogical_design/contracts/dto/course_chapter.py",
+    "backend/modules/pedagogical_design/contracts/dto/course_delivery.py",
+    "backend/modules/pedagogical_design/contracts/dto/course_policy.py",
+    "backend/modules/pedagogical_design/contracts/dto/p0_production.py",
+    "backend/modules/pedagogical_design/contracts/dto/production_media.py",
+    "backend/modules/pedagogical_design/ports/outbound/p0_confirmed_recovery.py",
+    "backend/modules/pedagogical_design/ports/outbound/p0_generation_controls.py",
+    "backend/modules/resource_library/application/commands/register_local_contribution.py",
+    "backend/modules/resource_library/application/queries/read_local_contribution.py",
+    "backend/modules/resource_library/contracts/dto/local_contribution.py",
+    "backend/modules/resource_library/ports/outbound/local_contribution_store.py",
+    "backend/modules/validation_control/application/commands/validate_p0.py",
+    "backend/modules/work_orchestration/application/queries/inspect_p1_campaign.py",
+    "backend/modules/work_orchestration/application/queries/p0_local_reference_context.py",
+    "backend/modules/work_orchestration/application/queries/p0_source_admission.py",
+    "backend/modules/work_orchestration/application/queries/propose_p0_intention.py",
+    "backend/modules/work_orchestration/application/queries/stmg_local_activity.py",
+    "backend/modules/work_orchestration/application/queries/verify_saved_p0_lineage.py",
+    "backend/modules/work_orchestration/application/services/p0_agentic.py",
+    "backend/modules/work_orchestration/application/services/p0_consent.py",
+    "backend/modules/work_orchestration/application/services/p0_creation.py",
+    "backend/modules/work_orchestration/application/services/production_media.py",
+    "backend/modules/work_orchestration/application/services/saved_production.py",
+    "backend/modules/work_orchestration/contracts/dto/p0_production_read_view.py",
+    "backend/modules/work_orchestration/contracts/dto/p1_campaign_inspection.py",
+    "backend/modules/work_orchestration/contracts/dto/p1_operation_intent.py",
+    "backend/modules/work_orchestration/contracts/dto/p1_unknown_continuation_snapshot.py",
+    "backend/modules/work_orchestration/contracts/dto/p1_unknown_off_inspection.py",
+    "backend/modules/work_orchestration/contracts/dto/saved_production.py",
+    "docs/adr/ADR-LU-P0-boundary-repair.md",
+    "docs/adr/ADR-LU-P1-exact-local-source-context.md",
+    "docs/adr/ADR-LU-S5-local-media-http-addendum.md",
+    "docs/adr/ADR-LU-S5-media-export-errors-addendum.md",
+    "docs/adr/ADR-LU-S5-media-local-revision-addendum.md",
+    "docs/adr/ADR-LU-S5-production-media.md",
+    "docs/adr/ADR_STMG_LOCAL_ACTIVITY_QUALIFICATION.md",
+    "docs/development/ADR_COURSE_NOTION_BINDING_V4_2026-10-14.md",
+    "docs/development/ADR_LU_COURSE_LINEAGE_RETENTION_2026-10-12.md",
+    "docs/development/ADR_LU_COURSE_NORMAL_RICH_2026-10-13.md",
+    "docs/development/ADR_LU_PRODUIT_01_ACTIVE_GUARD.md",
+    "docs/development/ADR_LU_PRODUIT_01_CANDIDATE_STATUS_BINDING.md",
+    "docs/development/ADR_LU_PRODUIT_01_CONFIRMED_RECOVERY.md",
+    "docs/development/ADR_LU_PRODUIT_01_COURSE_LOCAL_EDITS.md",
+    "docs/development/ADR_LU_PRODUIT_01_INBOUND_DESTINATION_RESTORATION.md",
+    "docs/development/ADR_LU_PRODUIT_01_INTENTION_PROPOSAL.md",
+    "docs/development/ADR_LU_PRODUIT_01_LOCAL_RESUME.md",
+    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROFILE.md",
+    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROFILE_PACKAGE_BASELINE.md",
+    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROVIDER_COMPOSITION.md",
+    "docs/development/ADR_LU_PRODUIT_01_P1_CONTINUITY_2026-10-13.md",
+    "docs/development/ADR_LU_PRODUIT_01_P1_KNOWN_REJECTED_CONTINUITY_V2_2026-10-14.md",
+    "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md",
+    "docs/development/ADR_LU_PRODUIT_01_WINDOWS_SOURCE_COVERAGE.md",
+    "docs/development/ADR_P0_NORMAL_FAILURE_DIAGNOSTIC_2026-10-15.md",
+    "docs/development/ADR_P1_UNKNOWN_LOCAL_OFF_2026-10-16.md",
+    "docs/development/ADR_P1_UNKNOWN_OPERATIONAL_CONTINUITY_2026-10-16.md",
+    "docs/development/COURSE_NOTION_V4_QUALIFICATION_2026-10-14.md",
+    "docs/development/INSTITUTIONAL_TREATMENT_REGISTER.md",
+    "docs/development/P0_EXACT_NOTION_HTTP.md",
+    "docs/development/P0_NORMAL_PROVIDER_CONTRACTS_1_0.md",
+    "docs/development/P0_PRODUCT_PERMISSION_INTERFACES_1_0.md",
+    "docs/user/INTEGRATED_PRODUCT_GUIDE.md",
+    "frontend/app.js",
+    "frontend/index.html",
+    "frontend/styles.css",
+    "tests/integration/test_local_contribution_filesystem.py",
+    "tests/integration/test_p0_intention_http.py",
+    "tests/integration/test_p0_local_reference_context_composition.py",
+    "tests/integration/test_p0_product_consent_http.py",
+    "tests/integration/test_p0_product_continuity_native.py",
+    "tests/integration/test_p0_product_rejected_continuity_native.py",
+    "tests/integration/test_p0_product_unknown_continuation_authority.py",
+    "tests/integration/test_p0_product_unknown_continuation_faults.py",
+    "tests/integration/test_p0_product_unknown_continuation_native.py",
+    "tests/integration/test_p0_product_unknown_off_native.py",
+    "tests/integration/test_rich_course_normal_application.py",
+    "tests/unit/test_course_notion_contract.py",
+    "tests/unit/test_course_plain_lineage.py",
+    "tests/unit/test_institutional_treatment.py",
+    "tests/unit/test_integrated_p0_agentic_controls.py",
+    "tests/unit/test_integrated_saved_p0_resume.py",
+    "tests/unit/test_local_contribution.py",
+    "tests/unit/test_lu_product_active_guard.py",
+    "tests/unit/test_p0_candidate_status_binding.py",
+    "tests/unit/test_p0_confirmed_application_recovery.py",
+    "tests/unit/test_p0_exact_notion_http.py",
+    "tests/unit/test_p0_intention_proposal.py",
+    "tests/unit/test_p0_local_reference_context.py",
+    "tests/unit/test_p0_local_source_policy.py",
+    "tests/unit/test_p0_normal_cli.py",
+    "tests/unit/test_p0_normal_failure_diagnostic.py",
+    "tests/unit/test_p0_normal_generation.py",
+    "tests/unit/test_p0_normal_policy.py",
+    "tests/unit/test_p0_normal_profile.py",
+    "tests/unit/test_p0_prepared_evidence_boundary.py",
+    "tests/unit/test_p0_product_continuity.py",
+    "tests/unit/test_p0_product_destination.py",
+    "tests/unit/test_p0_product_permission.py",
+    "tests/unit/test_p0_product_rejected_continuity.py",
+    "tests/unit/test_p0_product_unknown_continuation.py",
+    "tests/unit/test_p0_product_unknown_off.py",
+    "tests/unit/test_p0_rejected_launch_dispatch.py",
+    "tests/unit/test_p0_rich_course_content.py",
+    "tests/unit/test_p0_source_admission.py",
+    "tests/unit/test_p0_wire_projection_boundary.py",
+    "tests/unit/test_p1_campaign_inspection.py",
+    "tests/unit/test_product_media.py",
+    "tests/unit/test_product_media_http.py",
+    "tests/unit/test_product_media_review_routing.py",
+    "tests/unit/test_rich_course_context_delivery.py",
+    "tests/unit/test_saved_course_local_edits.py",
+    "tests/unit/test_saved_p0_read_compatibility.py",
+    "tests/unit/test_stabilisation_active_guard.py",
+    "tests/unit/test_stmg_local_activity_qualification.py",
+    "tests/unit/test_stmg_local_contribution.py",
+    "tools/launch-local.ps1",
+    "tools/p0-tokenize-local.py",
+    "tools/tests/p0_conversation_shell.test.cjs",
+    "tools/tests/p0_course_media_editor.test.cjs",
+    "tools/tests/p0_preparation_deadline.test.cjs",
+    "tools/tests/p0_product_consent.test.cjs",
+    "tools/tests/p0_rich_course_context.test.cjs",
+    "tools/tests/p0_rich_course_preview.test.cjs",
+    "tools/tests/p0_ui_async_binding.test.cjs",
+    "tools/tests/p0_ui_local_reference_context.test.cjs",
+    "tools/tests/p0_ui_request.test.cjs",
+    "tools/tests/pr4_lifecycle_regressions.test.cjs",
+    "tools/tests/stmg_context.test.cjs"
+  ],
+  "owner_sha256": {
+    "architecture/adr/ADR-M02-local-contribution-overlay.md": {
+      "before": null,
+      "after": "18adc5d603eb627b7631e7eeea9deeb188b7921be612de5e175e2930066d917b"
+    },
+    "backend/adapters/inbound/api/p0_creation.py": {
+      "before": "b48da62775eb3137d86b8b407def1dc3fab0d1a42c9bce6b6dd9f57d1f561727",
+      "after": "176ca414cf749d59ceacbfa72ded1bb5e2b0fd3a4b6f5f8c3a296f2f83e4a4cc"
+    },
+    "backend/adapters/inbound/api/p0_notion_evidence.py": {
+      "before": null,
+      "after": "26a1193b278c0aa2660d3ca4cffe3de743e37f8df8ccf425a9f138fd8f57ef20"
+    },
+    "backend/adapters/inbound/api/production_media.py": {
+      "before": null,
+      "after": "e544f83ce3269520ebb11acddb6bd2b5bee0e2378f2591efffa2e8152b0a95c2"
+    },
+    "backend/adapters/inbound/api/routes.py": {
+      "before": "f8541ab9b354cc040202911622f4a20e0d666d85c4cab55b0f23e5dd7850486a",
+      "after": "1856e3c2980649d16c241bf1d7b54dc04c595c2175f8ea1e8568be4e322f8789"
+    },
+    "backend/adapters/inbound/api/saved_production.py": {
+      "before": "04c4dcbd885862566ce652b8d4fce669c1017c49027427fe081f3d405dd42396",
+      "after": "a6a6ace17fdfdcee62ec61d19bd378677b2ad5638296a7a197d68ced92d51296"
+    },
+    "backend/adapters/inbound/application/institutional_catalog.py": {
+      "before": "c06259164be9da6014559c6c9152844109602a4ec00dd906d9f8c5094fb74ab1",
+      "after": "04db1105030eb5939dc9a2609fce150280289abe8437f11140a3effa2eab0be5"
+    },
+    "backend/adapters/inbound/application/local_contribution.py": {
+      "before": null,
+      "after": "1026931e5318609b43811b24f4e6357d188f6dac01574ec1d86132c9992331b2"
+    },
+    "backend/adapters/inbound/application/lot2_saved_production.py": {
+      "before": "c48f2ce6620dfd4287f0740c86dd12f130d4b7f9dbc563ac427c8805f406243d",
+      "after": "e645cb14f0e2117e365297ab1b63db4800e8b3756d3f754b5c26fe7f9d4a831c"
+    },
+    "backend/adapters/inbound/application/p1_campaign_inspection.py": {
+      "before": null,
+      "after": "e300402cb1f5ba15d1ff96494a1c5dde604c58baa2b963a8a53c8ddda84489a4"
+    },
+    "backend/adapters/inbound/application/production_media.py": {
+      "before": null,
+      "after": "cffb273a141b4e3a3056bb2920e83791f78f649d15ed8e11e8b46bc10b4e3aa9"
+    },
+    "backend/adapters/inbound/application/stmg_local_activity.py": {
+      "before": null,
+      "after": "66e9c1a9cce47cbdb2eac8e2d61d07dced0ea3b2d7f597aa9cb4b282cdecfea9"
+    },
+    "backend/adapters/inbound/cli/local_browser.py": {
+      "before": "e46d81e3d7e1530243a28d519044e0afc67c7604c4da7595176a4ba0e75975bf",
+      "after": "3c42917f129276e5cf0fc65701b0857439466eadd3fdd8eca5cf47a26fc699a2"
+    },
+    "backend/adapters/outbound/evidence/p0_prepared_snapshot.py": {
+      "before": null,
+      "after": "ecf86c045b42e14a5173b4495a90f0a3e84170f3047bfb30c864bd93b4b94c54"
+    },
+    "backend/adapters/outbound/export/product_word.py": {
+      "before": null,
+      "after": "156e8f9cbf9fc345b4f1b527b19fe845604cf1e1802aeafd57e60fa53bc7f552"
+    },
+    "backend/adapters/outbound/export/r6_readable_word.py": {
+      "before": "bd9b97322063df2f6e4f78435d89e2176f198ba2c7db41d2768531481cf6ad69",
+      "after": "b263b22cf8251378d9057f41b5294269f19603218373b1ab7356606cc0e578b8"
+    },
+    "backend/adapters/outbound/export/word.py": {
+      "before": "9e52dc031aa0751c01fdfb62899ef417bf4c2497156c4d6b8e3b7611757cf67d",
+      "after": "34bcece8879fbf022304bd3d6df8c3f99363554d2a9f63e53da6abb883db07da"
+    },
+    "backend/adapters/outbound/generation/openai/p0_content.py": {
+      "before": "b520fd45f0bc4a656918aad4512bd47da62714c5171bf21ed974683681d0a333",
+      "after": "677d60ab8aeac22ea9a6c4aa069c5a9d3a93f952e484e032b40da4f04be9413c"
+    },
+    "backend/adapters/outbound/generation/openai/p0_course_content_schema.py": {
+      "before": null,
+      "after": "2cadf601d7d07369f3a31cdbf0cd9153c1d15df00539261fc2e65d53ddc8acce"
+    },
+    "backend/adapters/outbound/generation/openai/p0_normal.py": {
+      "before": null,
+      "after": "c2dcdedba2a1ab176dc8a43da808dd03d55257d149edf3b50a12b1a008f0b3ff"
+    },
+    "backend/adapters/outbound/generation/openai/p0_normal_agents.py": {
+      "before": null,
+      "after": "57117d9251ce3319888e23cf0859277d200fdb490bcbc5d395ddd254bd5bd14d"
+    },
+    "backend/adapters/outbound/generation/openai/p0_normal_diagnostic.py": {
+      "before": null,
+      "after": "84ec8a32c346bd46e7aa29bc16621407eec06f02fa8e2ee86f0b69f3e5efcd51"
+    },
+    "backend/adapters/outbound/generation/openai/p0_normal_policy.py": {
+      "before": null,
+      "after": "e631d256d77d60de7aef75b7369258f4468d58088df489cc232d52efbb614ff8"
+    },
+    "backend/adapters/outbound/generation/openai/p0_normal_receipt.py": {
+      "before": null,
+      "after": "8fcbfab8d9c5d9331c0b943c8f8516829cc3658e99fcefc836bac63c70937595"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product.py": {
+      "before": null,
+      "after": "df94053a545fa32b727ea9b545a53f156dc99b7a05946700b00e591b458a3912"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_continuity_contract.py": {
+      "before": null,
+      "after": "fb2250fa1fb583c734fffa4f9d86c87b560a957e9e75b3fa89298bb5d7294a69"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_continuity_ledger.py": {
+      "before": null,
+      "after": "9732b36c78032c1effabafd7e6fd2089b4628219115feb604225d07c9e11b2a5"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_ledger.py": {
+      "before": null,
+      "after": "770d1de467b987944c83141302eaeb8f8f98ef018f08f847668581cd2f353020"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_policy.py": {
+      "before": null,
+      "after": "44eb407f91e3b55b8a4762df9ebe5fa5340f5fa266777693635477119a8aa232"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_rejected.py": {
+      "before": null,
+      "after": "881e1f12cb445da168128a7fa1cc247bffdbeaa6d75b90d88425374e541b6fa7"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_contract.py": {
+      "before": null,
+      "after": "7a47eea79a0f609189cc31e9a6f76268d90d41a74b50177d982761fa84ee6383"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_continuity_ledger.py": {
+      "before": null,
+      "after": "7ebe1be8259c60085f37d20322ff3de53ec6387245b5be08b78d97850f7c21d8"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_rejected_policy.py": {
+      "before": null,
+      "after": "66978fbab5b875b57e53927ca5bb3b48b11d54c9e71bb09f39e6accc0a333ef8"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_continuation_contract.py": {
+      "before": null,
+      "after": "cbd4d5c216f316218640246072e724e3348ea124787848ba203c0cf684c15d5a"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_continuation_ledger.py": {
+      "before": null,
+      "after": "0d6968ec082d609c77f06df76261c3f72d1de5342a279bc90738127cbf19d5ac"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_off_contract.py": {
+      "before": null,
+      "after": "ac41296454891960fddfce3214b795dec64e912a0e14b7bdcf2f79613bc66fe8"
+    },
+    "backend/adapters/outbound/generation/openai/p0_product_unknown_off_reader.py": {
+      "before": null,
+      "after": "cd1c425e0d3d82747fbf765433d18fd10ee95e33b35d1272c6710d2c784cf2c2"
+    },
+    "backend/adapters/outbound/persistence/saved_production.py": {
+      "before": "2f1615c4781c0a3502ba0b2ce0276c9378823e7980ac71cf75b6db4f804fb086",
+      "after": "3347a49aaa438bf20d6af768102dcce6f918b5b6f03bafeb3b69ea01766070e0"
+    },
+    "backend/adapters/outbound/resource_library/local_contribution_store.py": {
+      "before": null,
+      "after": "9da9c9fb29a2d7548489033713c4513f21b0a9b4f49a8299c68c4da3f2581280"
+    },
+    "backend/adapters/outbound/review/p0_review.py": {
+      "before": "b5bc4255e172dbbb0f07f44bcff89ea02db41bbe5f6739857902dae277eaa809",
+      "after": "97bd6ffb2a54a799ce2158b73819efae493fcba72c49a77c64f1285758ed18c2"
+    },
+    "backend/agent_runtime/security/tool_application.py": {
+      "before": "2a87420492909cc11bc6816e78c3bfec2433fb19ff7cc9c805ce2af243d91d40",
+      "after": "e8445e1669cccfff625d373425143fda8f04e4baa3ae2edd743be54a5102b548"
+    },
+    "backend/infrastructure/composition/factories/course_media.py": {
+      "before": "01aa19d88a6d23ca756f4c603f09e04dd8c6f318f24616bb963a5e4df348a677",
+      "after": "c995863edd8c5e8557e32f1af43087bd88baeb518aef9ee6e6174fed0d0b2300"
+    },
+    "backend/infrastructure/composition/factories/institutional_catalog.py": {
+      "before": "6b4ca35c19ffdd927e72d5cde5ce516bab2ba4a7ce7dd3951834a381ad0c8eed",
+      "after": "4360243fd1601dd1571c7d13fdda582d9b00fd48aed0bffbf092be59f09ab520"
+    },
+    "backend/infrastructure/composition/factories/local_browser.py": {
+      "before": "c4a6889f448bd8fdbcbfb72aa71c8cb343e0085ea024da96dbce3f372dc6085a",
+      "after": "fe8eb73ef186477471ba62c27f834895a2a9ffb3fe6546091f9e3865ae6da4ea"
+    },
+    "backend/infrastructure/composition/factories/local_contribution.py": {
+      "before": null,
+      "after": "57c2d5fc8a308e102193022f69c07b8073a5f161bc04ce325340d8e409a7c6d9"
+    },
+    "backend/infrastructure/composition/factories/p0_creation.py": {
+      "before": "b8e0710dc105a10be04ae7a48cdbb32c916a07b8e934b84d3dfff85fa1ea0ae6",
+      "after": "17caf0eb94f081c74c558403724c6157336f7c840cdfee1435a07dfb22862175"
+    },
+    "backend/infrastructure/composition/factories/p0_local_reference_context.py": {
+      "before": null,
+      "after": "682ed1faa4548c877de0daf03750413d388518c31577237484783b717819ffc6"
+    },
+    "backend/infrastructure/composition/factories/p0_normal_profile.py": {
+      "before": null,
+      "after": "4ce9f85c7a0bd87d2a88944938837ca86c8a9543bd9ae296d500cee12c5d26f4"
+    },
+    "backend/infrastructure/composition/factories/p0_normal_profile_contract.py": {
+      "before": null,
+      "after": "edf403642d1b2594eca5479e0b1a5dab02c64dd6ad39c15f1c7bff765d5dcc30"
+    },
+    "backend/infrastructure/composition/factories/p0_product_consent.py": {
+      "before": null,
+      "after": "45f1d101af2d4930d65c07b82b014ccafd48506d6a93ba4f213c557856e8fb82"
+    },
+    "backend/infrastructure/composition/factories/p0_rejected_profile.py": {
+      "before": null,
+      "after": "f3da5f3d2ba8bfce8b0ad00c5381c4f98c7f1d7f3dfcc0105ea77ebe48753a99"
+    },
+    "backend/infrastructure/composition/factories/p0_rejected_profile_contract.py": {
+      "before": null,
+      "after": "5e8b4ca283856ad2dfb7eb4b3733aefafd5a10e4a4752baa31bb8a13527569cd"
+    },
+    "backend/infrastructure/composition/factories/p0_rejected_readset.py": {
+      "before": null,
+      "after": "40f1fb705084a74040b858605ea424b917a66c741f14d3bc7501d51f6ed54a9a"
+    },
+    "backend/infrastructure/composition/factories/p0_unknown_continuation.py": {
+      "before": null,
+      "after": "2918eb40ecbca28f00a551d9b36d7fb3bb77b32a6ba9f75a80d3ad3d05cc9d20"
+    },
+    "backend/infrastructure/composition/factories/p0_unknown_off.py": {
+      "before": null,
+      "after": "5b2efe297a5ea4b3a49315e599594bdaa3def49bd830afc168aa9712e9a646e3"
+    },
+    "backend/infrastructure/composition/factories/stmg_local_activity.py": {
+      "before": null,
+      "after": "285594f14a9164ec64c84dde9004ffcab9572df5dba1452ef55a17dc6001daf8"
+    },
+    "backend/infrastructure/composition/factories/stmg_local_contribution.py": {
+      "before": null,
+      "after": "78cefd3ef5326162ed37b8142fc5746fb357840d4aa84fd41bafa1b6ec6f7b72"
+    },
+    "backend/modules/documents_provenance/contracts/dto/local_contribution_provenance.py": {
+      "before": null,
+      "after": "b491eca65bf79934c87628c5cc2cf779e9fd09f20591a53357f9dc2908f9a247"
+    },
+    "backend/modules/knowledge_reference/application/queries/inspect_institutional_catalog.py": {
+      "before": "cff7b45755d3005fc814abdd1e947a1db084ed0d000b37afa2c6fda906e9f296",
+      "after": "989130e7788a9dff45130426e8931da5d8854633d92336bcf6f1e162de5d9bcf"
+    },
+    "backend/modules/knowledge_reference/application/queries/qualified_institutional_corpus.py": {
+      "before": "2b4971b03c51572b08d0b14716736a82b941d2885994ef608b914f572d79b3e1",
+      "after": "cb5f8101d353afbfe0cea50aae8ff734cb82058d0160c5006530060d4110ad20"
+    },
+    "backend/modules/knowledge_reference/application/queries/stmg_alignment.py": {
+      "before": "ac14175c2e293927474a5cef603d74275547de402a04e1f4dc6ef7d66d864c7e",
+      "after": "235844fed694eb48942d1b481d0274017e3a81feed0ea4870ea7abc7809f4d29"
+    },
+    "backend/modules/materialization_export/application/commands/export_saved.py": {
+      "before": "25f0435c8a63e5c7b6358abdf571e40b5eb4a2004d4704b92a647d932523b1c6",
+      "after": "af44bf0044a85326058f4a89e34642a0e340757758725d741cf2972be13d72e7"
+    },
+    "backend/modules/materialization_export/contracts/dto/word_document.py": {
+      "before": "ebaeef1a94cf2bc4d9ce32f6873ddac0db2e68e3a041888a04be5f592cd37d2d",
+      "after": "3d8e01c80bcf4f4a972d1bd79d2a60fddd636314299d8e73657828e49d9089e7"
+    },
+    "backend/modules/pedagogical_context/contracts/dto/course_notions.py": {
+      "before": null,
+      "after": "795818c3060e421dd5de96b23bd4a5c3c8a0a700161623a8e33d509a3adf579e"
+    },
+    "backend/modules/pedagogical_context/contracts/dto/p0_context.py": {
+      "before": "fb7009830c113ecd82fa09c44e5cd974300405aa5f9fa7837887a03882d3a0ae",
+      "after": "200e99070dba10b0db62ebd4dc9a0c70b14813b4f825d7490142e2076abdb244"
+    },
+    "backend/modules/pedagogical_context/contracts/dto/stmg_local_activity.py": {
+      "before": null,
+      "after": "ed6b1898a04e7f274255dab8c0afd2e9a2971d66bc938d00d01147188f232223"
+    },
+    "backend/modules/pedagogical_design/application/commands/create_p0_candidate.py": {
+      "before": "5433bb0279bc931340481139cf77b9597e50c893863b07171d256a2e4e697932",
+      "after": "808a4c9846868125caa74c44e77527f18a49db515b3a3b22531d4ccd17eaa5b4"
+    },
+    "backend/modules/pedagogical_design/application/commands/edit_saved_course.py": {
+      "before": null,
+      "after": "fc2c8bf838f3b8779edf4a6ab21c23b28499746407f53b2ff5ff8f986030dfd8"
+    },
+    "backend/modules/pedagogical_design/application/commands/prepare_production_media.py": {
+      "before": null,
+      "after": "f0361e62388410a8bcbb2528c7644243a28fdbe1d1abbdb67fb16585613a4a05"
+    },
+    "backend/modules/pedagogical_design/application/commands/reframe_course.py": {
+      "before": "9d643d39803bd17a3b4fb3c14a3585eb9b5fabe6a7bf106a9329daa1bbac5838",
+      "after": "4e5a6d0b64916b423ced1ad7935b051c040084e9426be7e628bbc787a605ed43"
+    },
+    "backend/modules/pedagogical_design/application/mappers/course_provider_content.py": {
+      "before": null,
+      "after": "216f5191896790ee4bf270841bbc9183f19c9c67bef5e1cbdcd168fdc415264b"
+    },
+    "backend/modules/pedagogical_design/contracts/dto/course_chapter.py": {
+      "before": "2ccb7a6067d237d65dc02d89fd9f94de8197b8bc762b53c7c396ecd5841bcaf8",
+      "after": "3ac4fdbb92cb97f0165341704d452b6c7e901fa676b1a605f665a56f8d049508"
+    },
+    "backend/modules/pedagogical_design/contracts/dto/course_delivery.py": {
+      "before": null,
+      "after": "21fdb48177071bbedc6f9209987fe51f646e1e858f16f52ace8a5ceceddd9698"
+    },
+    "backend/modules/pedagogical_design/contracts/dto/course_policy.py": {
+      "before": "bed22d50324661bbe1c0e7488ed5f45a8ce75bb66a39fc40ab53fa291ec91d64",
+      "after": "5d7072774a80d0e954948aad293399d92cde0fd274116a8a17f899424fb77c9d"
+    },
+    "backend/modules/pedagogical_design/contracts/dto/p0_production.py": {
+      "before": "61692b9855a75bf78b2f590a46b37d40a0f979d22a5f75e6160126213f67ddd3",
+      "after": "c812670454ba9385dc38e2018fbd910fe9fd10fa78d44c33caef39d97c02b8a6"
+    },
+    "backend/modules/pedagogical_design/contracts/dto/production_media.py": {
+      "before": null,
+      "after": "2b2e6d3294e5fbb9067e29478ebd10fcf76f574f06ca97d937c2fe2028017a39"
+    },
+    "backend/modules/pedagogical_design/ports/outbound/p0_confirmed_recovery.py": {
+      "before": null,
+      "after": "fcda7441fe38ed225599c5dd24b8297ea1be3b2c1f4cf7b4de9f39fe395920e8"
+    },
+    "backend/modules/pedagogical_design/ports/outbound/p0_generation_controls.py": {
+      "before": null,
+      "after": "19c93474f4af7e230a8fc2291d473ad06ca8f8e6f393ac048b232b161739926b"
+    },
+    "backend/modules/resource_library/application/commands/register_local_contribution.py": {
+      "before": null,
+      "after": "9fd73aaebf42bb42717d92f60ea51ed4b85b229c4fcc33c60e9c3df76dbfa0bf"
+    },
+    "backend/modules/resource_library/application/queries/read_local_contribution.py": {
+      "before": null,
+      "after": "14713ec160af885382f019252a5e39e7888c0b0f6f85cfcaa6b25cc6524f09e1"
+    },
+    "backend/modules/resource_library/contracts/dto/local_contribution.py": {
+      "before": null,
+      "after": "f1f9bf7fa0c605ffdac649b205c063166a5a022eada3026b37e4f5530af22b83"
+    },
+    "backend/modules/resource_library/ports/outbound/local_contribution_store.py": {
+      "before": null,
+      "after": "03944ea56d8c84ca0faf64353c7f1ae9d1b7652db220ab6b05d94b46a4db7656"
+    },
+    "backend/modules/validation_control/application/commands/validate_p0.py": {
+      "before": "5ebeda4e61eb71593734ea0ff6273cc28e9ff29fbaef56e9a81fccc520333c27",
+      "after": "51ba6b879d90bd322923ae8cbce958fbb333f85f2ea1a800ee577be198efe65f"
+    },
+    "backend/modules/work_orchestration/application/queries/inspect_p1_campaign.py": {
+      "before": null,
+      "after": "0bea83a96b60bb34c01adae0c9151a9a5cc5a3199ba77f4882a4b24d2a00f5db"
+    },
+    "backend/modules/work_orchestration/application/queries/p0_local_reference_context.py": {
+      "before": null,
+      "after": "1006fb361f77712b8e8da99e5d7ea9fdca169ab799d9ee8f928aaed6420ae9ed"
+    },
+    "backend/modules/work_orchestration/application/queries/p0_source_admission.py": {
+      "before": null,
+      "after": "e25ef0ac0cc9c5ba7eec7836243ddaf8ccc252b6d895768fd712e1b129ef70bc"
+    },
+    "backend/modules/work_orchestration/application/queries/propose_p0_intention.py": {
+      "before": null,
+      "after": "cead05a18b6542d959561acf0c5294bc26843360e80b02e6d7a91e39e68117c1"
+    },
+    "backend/modules/work_orchestration/application/queries/stmg_local_activity.py": {
+      "before": null,
+      "after": "9449564c46caaadb5fc08be727ee3b44afded9b601df810732a673626769c6a5"
+    },
+    "backend/modules/work_orchestration/application/queries/verify_saved_p0_lineage.py": {
+      "before": null,
+      "after": "c9b427faa9dc9f1a8c4a939c47cc25a4d10a95f151d9b9dbd0ccc919048c5116"
+    },
+    "backend/modules/work_orchestration/application/services/p0_agentic.py": {
+      "before": "c6e5cb028eb90675deb51441b77dfcfdb3169707185c86f1dfb614a94e9ac31f",
+      "after": "e85fabd4340a515be8309366eed5f10bead085b83fbcce842d8b81fd802e930c"
+    },
+    "backend/modules/work_orchestration/application/services/p0_consent.py": {
+      "before": null,
+      "after": "964f9f7911b3de952ec042f996bdea73795d2cb4d397c74274325e6b854f16c4"
+    },
+    "backend/modules/work_orchestration/application/services/p0_creation.py": {
+      "before": "6156d966f6d683c77318322d0feb9fb048e72464b2cf4ba83f5f2288db4f0526",
+      "after": "125c4c4def358a5db43c38feb86920221b0f74b5574631ece5fd1178f887e9f3"
+    },
+    "backend/modules/work_orchestration/application/services/production_media.py": {
+      "before": null,
+      "after": "bbe71afc923ec9059242a469bfbfc4e65f6e2db3a5a504cfac36cb797498bf39"
+    },
+    "backend/modules/work_orchestration/application/services/saved_production.py": {
+      "before": "09ca3bf1ccd613dd564e959cac98202cf661e20948055c31a26198d0a8ec616e",
+      "after": "bf8171c0d0c3a7ab766e9a870cb2ee4715a027622244becbf73b007476168920"
+    },
+    "backend/modules/work_orchestration/contracts/dto/p0_production_read_view.py": {
+      "before": "4179d597a9a71e26f190ba61153c1f0837e482679d46505a2c008203333c3fc3",
+      "after": "6795f280df08e5e24602cbbce72654f7075ff90252c5b42c3613be76fa5c60e3"
+    },
+    "backend/modules/work_orchestration/contracts/dto/p1_campaign_inspection.py": {
+      "before": null,
+      "after": "61b9757aae79508db0f3ae1e0d2c5fc8161f26f63c7e8b40518f46f860dd0a39"
+    },
+    "backend/modules/work_orchestration/contracts/dto/p1_operation_intent.py": {
+      "before": null,
+      "after": "8640229791d165e4a17f68c4eca5ff21d19668ffa23415c51cf631142f4c415b"
+    },
+    "backend/modules/work_orchestration/contracts/dto/p1_unknown_continuation_snapshot.py": {
+      "before": null,
+      "after": "4e82550224d593db5c14d9b8b94f5562734272d51472c87977b8b6e119017f6b"
+    },
+    "backend/modules/work_orchestration/contracts/dto/p1_unknown_off_inspection.py": {
+      "before": null,
+      "after": "e75d2cef097501ff170a09f2dd4ca3ad1366406b22c4d97b16ba53b353730e25"
+    },
+    "backend/modules/work_orchestration/contracts/dto/saved_production.py": {
+      "before": "7652b2bf61878e5ce14acde8febb08a269fefb2ef186f964b98f1cca037c98ef",
+      "after": "5f96e7f31e9ee15ed93fee8e1d317b3ab07191d1bc03b9f37726a4ad8933295d"
+    },
+    "docs/adr/ADR-LU-P0-boundary-repair.md": {
+      "before": null,
+      "after": "a3656fff63f2431490bf77ff3756ee581dcc16e93749b290dcd7e295b52d6995"
+    },
+    "docs/adr/ADR-LU-P1-exact-local-source-context.md": {
+      "before": null,
+      "after": "28047befe97446a15507241ed5502c946af3f56ffaec25f5d44c68062b79720b"
+    },
+    "docs/adr/ADR-LU-S5-local-media-http-addendum.md": {
+      "before": null,
+      "after": "0a9318dd6b90528b5e6212c9ec1eac98da644b1d64ddc96d8a0764618cfbbc5b"
+    },
+    "docs/adr/ADR-LU-S5-media-export-errors-addendum.md": {
+      "before": null,
+      "after": "be70f14bde98d38655f2d9e6c504d982a97330bc0809befaf17977d2c9c3f598"
+    },
+    "docs/adr/ADR-LU-S5-media-local-revision-addendum.md": {
+      "before": null,
+      "after": "bd7fe35dee971018ca6d60df396e8b0a5b9606ba934fca19e47eed82a176cf60"
+    },
+    "docs/adr/ADR-LU-S5-production-media.md": {
+      "before": null,
+      "after": "b69bc1bad962a8ec6827b031ba5d1d5cbe94531ccacba6ca82ace9e8aef82b5a"
+    },
+    "docs/adr/ADR_STMG_LOCAL_ACTIVITY_QUALIFICATION.md": {
+      "before": null,
+      "after": "c49e2ac56a7469c8c25adc34730f47b68d147e04fc12b0db4ef36caa10e852e4"
+    },
+    "docs/development/ADR_COURSE_NOTION_BINDING_V4_2026-10-14.md": {
+      "before": null,
+      "after": "05021eae2b6bc3764926806410b735ed5f917546972733b543fc486b75cc2cc9"
+    },
+    "docs/development/ADR_LU_COURSE_LINEAGE_RETENTION_2026-10-12.md": {
+      "before": null,
+      "after": "26ef305f38a20cc3e9caf1fd429e3ce30628a43924161c42574b1f5428f3624e"
+    },
+    "docs/development/ADR_LU_COURSE_NORMAL_RICH_2026-10-13.md": {
+      "before": null,
+      "after": "57268bb291395cfb2dd285ccdd055b02c34a02a2f7e5ad2c34746ab0b894726e"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_ACTIVE_GUARD.md": {
+      "before": null,
+      "after": "424dc4fd45bd79243c15be2732f70c101b920ed8d9d59868346f7b58827e49ab"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_CANDIDATE_STATUS_BINDING.md": {
+      "before": null,
+      "after": "ae068429a30c558ee132012f54603f08c71e3640bf97e01532b7fe02d9a2681f"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_CONFIRMED_RECOVERY.md": {
+      "before": null,
+      "after": "0ed07a94306db5f47d626fc49e098e8938d7d4d69f279c047fd3c1f802942d60"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_COURSE_LOCAL_EDITS.md": {
+      "before": null,
+      "after": "931c2ea60f970a755b3333b36f628a3d85af89dbbbab0b52d16b57392183966f"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_INBOUND_DESTINATION_RESTORATION.md": {
+      "before": null,
+      "after": "45c463e0941ac541878fff94f69ea403acfcf23f6cf4bcb263aa807ab7a971d9"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_INTENTION_PROPOSAL.md": {
+      "before": null,
+      "after": "a4b87330a60656ad35c9d017b764a6f84eb7dbd81fddcb0857fc6cb30ee7655f"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_LOCAL_RESUME.md": {
+      "before": null,
+      "after": "df781a28812fd2dec802280253366c7cf114009da6fe399072c3882daa6bd007"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROFILE.md": {
+      "before": null,
+      "after": "5c4bbb9515d21118f8d8071635a2ad10fc3cc21f6709ee7fb85f6c653a35cf32"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROFILE_PACKAGE_BASELINE.md": {
+      "before": null,
+      "after": "85481931f106f7e38925e19cd5dff17b034c66ad86c338f5f3c2871a94a1152f"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_NORMAL_PROVIDER_COMPOSITION.md": {
+      "before": null,
+      "after": "9e807c704ae1357d8846013c019e6a342e22462e05ccb5d7a589b8b3d7915eb3"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_P1_CONTINUITY_2026-10-13.md": {
+      "before": null,
+      "after": "e6e41572f0f3b39294a70ad0c6c5d3a1920c378762a86d48293edb2a89e11f74"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_P1_KNOWN_REJECTED_CONTINUITY_V2_2026-10-14.md": {
+      "before": null,
+      "after": "1b04bd0eb332850369dbbc350c5d69d7960a3758773b67067e5af31911cf62a5"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_PRODUCT_PERMISSION.md": {
+      "before": null,
+      "after": "e1535827cd3665d672814451297c2441e54c1e55ca7060287adc59ec6c3df9a5"
+    },
+    "docs/development/ADR_LU_PRODUIT_01_WINDOWS_SOURCE_COVERAGE.md": {
+      "before": null,
+      "after": "fa4faa64fcb23978cf84b81f519bea1c557e862b68bfb30951e64a566f901587"
+    },
+    "docs/development/ADR_P0_NORMAL_FAILURE_DIAGNOSTIC_2026-10-15.md": {
+      "before": null,
+      "after": "432a158c3c497d1ffd015b119778f1b98f8d3b3f7bcddc5cb6ed28d4c4455698"
+    },
+    "docs/development/ADR_P1_UNKNOWN_LOCAL_OFF_2026-10-16.md": {
+      "before": null,
+      "after": "d05e0fc4995bc7ec46ca8ed18698e3f88b9d344509dc88534f99e6430263acb6"
+    },
+    "docs/development/ADR_P1_UNKNOWN_OPERATIONAL_CONTINUITY_2026-10-16.md": {
+      "before": null,
+      "after": "f656f0fc21549138b9487a825f94cb0b182c7e94b530073dc977dc45fd467c06"
+    },
+    "docs/development/COURSE_NOTION_V4_QUALIFICATION_2026-10-14.md": {
+      "before": null,
+      "after": "00ce7f343cd33b5701ba5180631f7b50b9d4d73eb0d61b1ee47e26130a657b75"
+    },
+    "docs/development/INSTITUTIONAL_TREATMENT_REGISTER.md": {
+      "before": null,
+      "after": "35dc756fcda41a51f65980438022ed5729910da84b2a850af4bd9231b3d559bd"
+    },
+    "docs/development/P0_EXACT_NOTION_HTTP.md": {
+      "before": null,
+      "after": "d6586dbd7e5acae2348aec3e6cb8854e4b73605311915c7b08e6ece95c5f42b9"
+    },
+    "docs/development/P0_NORMAL_PROVIDER_CONTRACTS_1_0.md": {
+      "before": null,
+      "after": "4f57dd375d2a9c41dba346bdef37cde2dce0bfe084d78fd310159d8256a4a8c2"
+    },
+    "docs/development/P0_PRODUCT_PERMISSION_INTERFACES_1_0.md": {
+      "before": null,
+      "after": "5416311084ea322b67dd891abc0188bc9d971ea1ba83885bc606170dbe8d20dc"
+    },
+    "docs/user/INTEGRATED_PRODUCT_GUIDE.md": {
+      "before": null,
+      "after": "efabd8142ecbd58135909afae57afa013bf3ecef3317dcdba069d78f3ca0e002"
+    },
+    "frontend/app.js": {
+      "before": "5576c34c7de646954d3b08167ea55eb85a08d6204f572150824e6fbf05ba1ae2",
+      "after": "0bd49d77fcef60038a74946a45022196ed351a8deae182bfc99494b41260c419"
+    },
+    "frontend/index.html": {
+      "before": "54774234c07a50798680bec14f9997bb7127edd89a552c0581f5b15fe0921fbb",
+      "after": "c95218467275c42e0a0af590bfe764ace0724a31c6612fe7b3dc3dad1536b04e"
+    },
+    "frontend/styles.css": {
+      "before": "b7dd20537ef28f3653eb56ffe6d1b879bf1e82613ad1d54669cb29b124af7c9a",
+      "after": "bf295938537e18931d883a77621a725712f88a110208a84c7d469056a8e7551c"
+    },
+    "tests/integration/test_local_contribution_filesystem.py": {
+      "before": null,
+      "after": "acf3eca741f4acb9103a8ae638213ebe27cd74745e9920214edb98f2fe733284"
+    },
+    "tests/integration/test_p0_intention_http.py": {
+      "before": null,
+      "after": "315d947fe7a776d44e6f49753e32cd0041392aff525e8585cebd62889077e301"
+    },
+    "tests/integration/test_p0_local_reference_context_composition.py": {
+      "before": null,
+      "after": "eabb79a08037a10a66cafa7e148e61fc57a444547e8e649f8803ab678c8144a9"
+    },
+    "tests/integration/test_p0_product_consent_http.py": {
+      "before": null,
+      "after": "7547adea76f059793104916c68eac0283f9b7fee1a332741bf8b529626575bea"
+    },
+    "tests/integration/test_p0_product_continuity_native.py": {
+      "before": null,
+      "after": "4f5f805b45bac3900c912847453f923800be521b049796e31b5f9bca06fc1a69"
+    },
+    "tests/integration/test_p0_product_rejected_continuity_native.py": {
+      "before": null,
+      "after": "967d0a46fb6540787dca3c72118926b6ac5ef7a45380f994da4aebae4ccd322c"
+    },
+    "tests/integration/test_p0_product_unknown_continuation_authority.py": {
+      "before": null,
+      "after": "c91ad873d8f836480900d6b8fa9b1f6141e05fc2085782d7bf23535fdda8e9d8"
+    },
+    "tests/integration/test_p0_product_unknown_continuation_faults.py": {
+      "before": null,
+      "after": "833a108ed18ae279179b8b48c74f17323f9c7258d65c0b761be31c58c95b38a4"
+    },
+    "tests/integration/test_p0_product_unknown_continuation_native.py": {
+      "before": null,
+      "after": "3808086defc8fa47c8c296795f843fae96aafd9541f67ca11d818342eaf0d96d"
+    },
+    "tests/integration/test_p0_product_unknown_off_native.py": {
+      "before": null,
+      "after": "e2a7e40f5a08e134491b1c2c7b18d5feb0845e336d495d66a7b5b7f4e3c51e70"
+    },
+    "tests/integration/test_rich_course_normal_application.py": {
+      "before": null,
+      "after": "86f12d8406c62362a0b262e37fb4a096307cd9ef7fa7a2accc59446e2b05d27b"
+    },
+    "tests/unit/test_course_notion_contract.py": {
+      "before": null,
+      "after": "bc36d042a14ef55da9d6d3dc572430e361b69d88ce103957a5132228ed24ac39"
+    },
+    "tests/unit/test_course_plain_lineage.py": {
+      "before": null,
+      "after": "31c2ecde83c22b679e94a372df2302adca42db138933999afeaa72deda570f62"
+    },
+    "tests/unit/test_institutional_treatment.py": {
+      "before": null,
+      "after": "969fe948e1cf17e7806e30940f9bd4916c46e089469f8a09d2b2bb60a9563285"
+    },
+    "tests/unit/test_integrated_p0_agentic_controls.py": {
+      "before": null,
+      "after": "6382868935795adc2d947d7032f12025259fb00ea4de2d29f24c4be015be7f78"
+    },
+    "tests/unit/test_integrated_saved_p0_resume.py": {
+      "before": null,
+      "after": "1999f18edd744376b09e8610a2b1c27135a2fc028c5485fb72b711bb61a48381"
+    },
+    "tests/unit/test_local_contribution.py": {
+      "before": null,
+      "after": "a7229c711bbd5d04708337361d1116b453e5a16523433cfa5a6e66f16c06740d"
+    },
+    "tests/unit/test_lu_product_active_guard.py": {
+      "before": null,
+      "after": "99b7e26a9e9ade0b5eff78ffff6edb11eb56a005fde0bd6ea4b3bfb4492ac81f"
+    },
+    "tests/unit/test_p0_candidate_status_binding.py": {
+      "before": null,
+      "after": "117dc6c31c46030df49479ee181e3a2e522a827d7f5a1554ebbe469892bc6cbd"
+    },
+    "tests/unit/test_p0_confirmed_application_recovery.py": {
+      "before": null,
+      "after": "1712d97f32d72e51d600d84426a08fd0165d8d2446ca0d4e3f3427eabcd79ab1"
+    },
+    "tests/unit/test_p0_exact_notion_http.py": {
+      "before": null,
+      "after": "4bf1922b311add4077b1bdbf75b1ce826ce0d4beb93b73e6ca653489a6b56bad"
+    },
+    "tests/unit/test_p0_intention_proposal.py": {
+      "before": null,
+      "after": "0b489fe54938a031c633b162eade63a92644307d6250f2efabf543be8c2e8ce4"
+    },
+    "tests/unit/test_p0_local_reference_context.py": {
+      "before": null,
+      "after": "e6985b08d8a23e2134e19b8ddac97f1b59a9b2d816107649d65ec15298cf37af"
+    },
+    "tests/unit/test_p0_local_source_policy.py": {
+      "before": null,
+      "after": "33dd03ae9ab982332db24971ebb0eed5e717e839dcbd7764c5695f377e571a22"
+    },
+    "tests/unit/test_p0_normal_cli.py": {
+      "before": null,
+      "after": "0149ec8cabb65973477493b901c2324142fb719a8a43acf7a3f543484519b80d"
+    },
+    "tests/unit/test_p0_normal_failure_diagnostic.py": {
+      "before": null,
+      "after": "34baf6e84ed3f6ed8600e6b38e956e000a822ee50ea9fffaedbfa6e80fbd15a7"
+    },
+    "tests/unit/test_p0_normal_generation.py": {
+      "before": null,
+      "after": "b6500f134916c0e46cea817557f74026a8deb1799309a1d1c474d69093ba7f43"
+    },
+    "tests/unit/test_p0_normal_policy.py": {
+      "before": null,
+      "after": "1d0ffe74e78c84c8b5186d64473629cc21a89d2f62a58abc037fc505a49c12e3"
+    },
+    "tests/unit/test_p0_normal_profile.py": {
+      "before": null,
+      "after": "e7c01fc29f0874d192ea9124e6c54e018faca4c2da1694b8ebadbb9d5cd847f8"
+    },
+    "tests/unit/test_p0_prepared_evidence_boundary.py": {
+      "before": null,
+      "after": "8b05b2bef50c35083392ba4dcbb946c0058a9ceb21417951f4ecb75e9509996a"
+    },
+    "tests/unit/test_p0_product_continuity.py": {
+      "before": null,
+      "after": "444e0af3e223c9503723c849edc1c0429edf682759ab751eaa7471ab411e5887"
+    },
+    "tests/unit/test_p0_product_destination.py": {
+      "before": null,
+      "after": "04c787ed194445128ff41038b784c2eb6a6dec3e512d63331d96f53cd76a99c5"
+    },
+    "tests/unit/test_p0_product_permission.py": {
+      "before": null,
+      "after": "bea1ed6d90e158c335a18a81b3b95eeef7412fed667643111419e4702bc0cd40"
+    },
+    "tests/unit/test_p0_product_rejected_continuity.py": {
+      "before": null,
+      "after": "4c3a36ca683074f0c295940ba87501b45749a74ba9c96ac047f16bbf29f32aee"
+    },
+    "tests/unit/test_p0_product_unknown_continuation.py": {
+      "before": null,
+      "after": "a5eda968fcbe2579fdb48a9a0cb25d21131967a718210aa076bf0a46fc6c0396"
+    },
+    "tests/unit/test_p0_product_unknown_off.py": {
+      "before": null,
+      "after": "885db5566b583ce03ed6e3c4a41080deb494df4365685c263dcae4cf3b98007c"
+    },
+    "tests/unit/test_p0_rejected_launch_dispatch.py": {
+      "before": null,
+      "after": "15520993905b9000b576fe69ed0690705a9b2ef5773ae3e92130169df59b45fe"
+    },
+    "tests/unit/test_p0_rich_course_content.py": {
+      "before": null,
+      "after": "1488711c50e29d677b2aa9e39aa4c6c0c45fa97ffb72121abf50c953ce3fdbb6"
+    },
+    "tests/unit/test_p0_source_admission.py": {
+      "before": null,
+      "after": "dbc6600d778210030be283918efe5455d184268880dae67af02d621d1d865e41"
+    },
+    "tests/unit/test_p0_wire_projection_boundary.py": {
+      "before": null,
+      "after": "9452c27f02bb6bbcc567a3cbc651ce2381848fb0934d8af61901607d62198e57"
+    },
+    "tests/unit/test_p1_campaign_inspection.py": {
+      "before": null,
+      "after": "60c2756cfcfe644f0c67739822fbaa38ab44f019e8b0514fecc715c97461c412"
+    },
+    "tests/unit/test_product_media.py": {
+      "before": null,
+      "after": "49f435532f4c925685ec8c26c799e3bca616ceba000b5b834c4e25f08d6fc3e8"
+    },
+    "tests/unit/test_product_media_http.py": {
+      "before": null,
+      "after": "2ad04c4d61ef24125f43a244b57a2275f6f1bd30463cb5fbfad23a68397c9bed"
+    },
+    "tests/unit/test_product_media_review_routing.py": {
+      "before": null,
+      "after": "1dd4f95dff6e117dd3dc5e1d8a1ace1b820c2888b318333841d2b10ffba34c38"
+    },
+    "tests/unit/test_rich_course_context_delivery.py": {
+      "before": null,
+      "after": "72f97d99cbc5a9c46db3a208bc1c0bf6050353314b4a7a15f3bfae9aff90aae8"
+    },
+    "tests/unit/test_saved_course_local_edits.py": {
+      "before": null,
+      "after": "13cd2f908816517783614cf46979904cbf4180ea3a049b72fb8212670264a52f"
+    },
+    "tests/unit/test_saved_p0_read_compatibility.py": {
+      "before": null,
+      "after": "4e5ca44d50561ea5716664835f513995e96de946108afb23f1df955274ffa464"
+    },
+    "tests/unit/test_stabilisation_active_guard.py": {
+      "before": "0aad38dc9bb6bdb010ec45743c878da39d152506258345f65571b82c6a5b49ab",
+      "after": "46bed71cc1cf9962ffcf20055db9456c423bf24b0201e7f78daeca7adc179871"
+    },
+    "tests/unit/test_stmg_local_activity_qualification.py": {
+      "before": null,
+      "after": "37b09cfe6b602b0d7b9410fdc80515c939cc6c3b90b4d20d04ca2155a60bbdca"
+    },
+    "tests/unit/test_stmg_local_contribution.py": {
+      "before": null,
+      "after": "8f5701a58804583d15e4afcb38ca4876264b796c03cce1278382d8f299c5a79a"
+    },
+    "tools/launch-local.ps1": {
+      "before": "4cdc708d6f9f4a2f3e026cb3cc0a3b6ac8af4c2dc4551096fd213493c7d5bfd6",
+      "after": "ab567e045375d331f98c816f70c33e3280dc0d7a94ee2ce9be3f2fd5814c095c"
+    },
+    "tools/p0-tokenize-local.py": {
+      "before": null,
+      "after": "3c9a3607e487a724e32eede57a3a702baaefbe4fdc49f08796c4a82aa40a598a"
+    },
+    "tools/tests/p0_conversation_shell.test.cjs": {
+      "before": "c271c8d8233d6dffc5c98f6a3e64735278c2f1a7cba99c1bbfd625da8953ba94",
+      "after": "07d94b3a4ab0ef4d8638171e28283ff0d438f1886bdbc4d92ce763fd344ca571"
+    },
+    "tools/tests/p0_course_media_editor.test.cjs": {
+      "before": null,
+      "after": "a34730e0ab4e332ecbf1c55a3b1888822dca58d18458e20962c8c4b0d2b6e7b0"
+    },
+    "tools/tests/p0_preparation_deadline.test.cjs": {
+      "before": null,
+      "after": "f0cf1e60c4211d44725b29715beb94b0cead7753a45f35c971009e929ffdd81b"
+    },
+    "tools/tests/p0_product_consent.test.cjs": {
+      "before": null,
+      "after": "f883098f0774479cd3e54f8244af572089fc59fdd8da49abf5c696c716aad923"
+    },
+    "tools/tests/p0_rich_course_context.test.cjs": {
+      "before": null,
+      "after": "232edb66f274ebf170827e1e9b35b097d00c506115b3d5894d1dfd2258623b37"
+    },
+    "tools/tests/p0_rich_course_preview.test.cjs": {
+      "before": null,
+      "after": "13da2ab8849bf71e68e819db5f656690ff055bcca312abf7d2c00754dd952424"
+    },
+    "tools/tests/p0_ui_async_binding.test.cjs": {
+      "before": null,
+      "after": "1175ce61663b494660fa4777f42779c4b80d746bb5b8e10996d32f8a7fc0e3a4"
+    },
+    "tools/tests/p0_ui_local_reference_context.test.cjs": {
+      "before": null,
+      "after": "ea04482a9a69fe64efe2cea08f75263fa662f3a120846c4225e1a8ad8b93691c"
+    },
+    "tools/tests/p0_ui_request.test.cjs": {
+      "before": "6f8f04cab090d652dff9f8cb81de1d5a13654e0781224ab448dc245dae758b50",
+      "after": "d5cad04679bda12be077259492c97be2bc6e8f2eb2048229ad1a57d94715cf7b"
+    },
+    "tools/tests/pr4_lifecycle_regressions.test.cjs": {
+      "before": "5904d2d89d13625fbb97b0824a3e5ab5611106d41deb70fe794c3a1c3116f72e",
+      "after": "3dfb8d8b329bfa8201b1dd570f24ec10d152eda9f99ac56097b427a120d46cbc"
+    },
+    "tools/tests/stmg_context.test.cjs": {
+      "before": "e8328e3ee41f01596c1cf5c6d6ca9bac3a65345b226c0ec25c4a17bf67604e83",
+      "after": "25119c483895d2e7bc4e295659d11e307fda43cb919b1bd74e1222e48e147123"
+    }
+  },
+  "planned_control_paths": [
+    "tests/support/lu_product_guard_registry.json",
+    "tests/support/r6_scope_guard.py",
+    "tests/support/r6_scope_manifest.json"
+  ],
+  "received_owner_count": 452,
+  "received_owner_hashes": {
+    ".gitignore": "9738c55106ce92ed8f8ab032ef87fe6be26cc0efd074c88241aeef0b61197b1a",
+    "architecture/adr/ADR-conversational-review-modify-product-boundary.md": "ea4443b41a2c0af8e4480cae54fee9af0a147cae3c7b807a3ff0f083933a49cd",
+    "architecture/adr/ADR-r3-cap-a01-targeted-alignment.md": "f1ac846535c9f6530f7bcc0485477accd96f205a40011062344a2e1b93d31fa7",
+    "architecture/adr/ADR-r3-d3-restoration-harden-boundary.md": "61a9297306fb887e2b54f7ec6a3423330f91b61afe6614f99d6431154da495f4",
+    "architecture/adr/ADR-r3-deterministic-locator-materialization.md": "e4eb2b10857f0cbd525113dc83f893466ec9141410baab01f3bb74c42fc78bd1",
+    "architecture/adr/ADR-r3-explicit-editorial-corrections.md": "b20960c05eee7f48cb04741467169b53b1aa3e8351d859e4355c3026c9f0ed50",
+    "architecture/adr/ADR-r3-parse-observability.md": "5b8c063110320d4219d472bacbbe47d8d1700124433de62450a7fd3b7ab0f319",
+    "architecture/adr/ADR-r3-portable-clone-private-preparations.md": "77ce28c04b6bc830f64012228428811af5df431dab07d441022a4f630135b52b",
+    "architecture/adr/ADR-r3-prepare-contract-alignment.md": "7da2c2115812d0ff9f8c7edebea48a6c27508ece2110d80b134850ef4bbfbec5",
+    "architecture/adr/ADR-r4-save-reopen-word.md": "5075e453702d1a11906a350dec6f21107ac8df3de163cadf85c2ef8466a81a41",
+    "architecture/adr/ADR-r5-exact-selection-worker.md": "aa51b96cc9a1085cfd0c68efb8633d9e68ae6d18071ca7f676fa92903357fbb0",
+    "architecture/adr/ADR-r5-local-reference-provenance.md": "3f2ddfbaa87977154601750eb0a51ae7f31c83cc74de878789ed24231c22b12c",
+    "backend/adapters/inbound/api/p0_creation.py": "b48da62775eb3137d86b8b407def1dc3fab0d1a42c9bce6b6dd9f57d1f561727",
+    "backend/adapters/inbound/api/r3_review_modify.py": "06c3051e0ed5b7acb16cde69ff2ea9c3af52d75b801e3892e2ee90b4224e12ff",
+    "backend/adapters/inbound/api/routes.py": "f8541ab9b354cc040202911622f4a20e0d666d85c4cab55b0f23e5dd7850486a",
+    "backend/adapters/inbound/api/saved_production.py": "04c4dcbd885862566ce652b8d4fce669c1017c49027427fe081f3d405dd42396",
+    "backend/adapters/inbound/api/search.py": "57fd268392034b01a8bf2cec1ad242bbf1c48d7ac1e5fff3a56ec74604bc997f",
+    "backend/adapters/inbound/api/server.py": "06add706e275ed0d900ddef9454d19c39e6e4e2dcf848dcf0ba5ba7038ec32f3",
+    "backend/adapters/inbound/application/bts_alignment.py": "3630533c70a03ce461d50ed48668ef9a99843c3da68c3dea9aadedb54907f8a6",
+    "backend/adapters/inbound/application/course_media.py": "2800bc8d940a53d0d15ce15ef12270869cd647dfbdcfc6b2653728e1e12e4ca1",
+    "backend/adapters/inbound/application/exact_notion_evidence.py": "f3e658e8a74cb1ea1a57e15dcf750fc8f974a3656cf28974c12415cc6d765eb0",
+    "backend/adapters/inbound/application/institutional_catalog.py": "c06259164be9da6014559c6c9152844109602a4ec00dd906d9f8c5094fb74ab1",
+    "backend/adapters/inbound/application/institutional_qualification.py": "ffaaee0e6209da82322d79de930521bfebecec4df2445d3aa4893b1324239fe0",
+    "backend/adapters/inbound/application/local_search.py": "6fed469c7500159e6ad624af0e096fe40422d8979019b1bdaa4ed5c61d07b76b",
+    "backend/adapters/inbound/application/lot2_saved_production.py": "c48f2ce6620dfd4287f0740c86dd12f130d4b7f9dbc563ac427c8805f406243d",
+    "backend/adapters/inbound/application/r3_review_modify.py": "1e26bf5686fae4fe2630229cd0261751cf9a6563a47082c70cea719d5b51a770",
+    "backend/adapters/inbound/application/reframe_course.py": "1a6d8ed568254ba753b8e91fb4f705544241d632aa4b8bfd0f542faf68433b94",
+    "backend/adapters/inbound/application/saved_production.py": "8f03f4e68593610e67d8452daaace849b875b5758df4a448373606036ade8e3e",
+    "backend/adapters/inbound/application/stmg_alignment.py": "842c1a8ba19f93623005423f3489130dd9de1c4f86d95421b2031f6858094b68",
+    "backend/adapters/inbound/cli/local_browser.py": "e46d81e3d7e1530243a28d519044e0afc67c7604c4da7595176a4ba0e75975bf",
+    "backend/adapters/inbound/cli/local_references.py": "078da24f5f1071497cfe8d8608431daae387482289d4934201823c99192ae1a0",
+    "backend/adapters/outbound/document_content/sqlite.py": "44fcdf3291fdd0efbce45cc049f9dcbacda7ab3532a77aff23e76016b4ea7b1d",
+    "backend/adapters/outbound/evidence/local_reference.py": "060b49406ed47e2c1ac83c9302406cbd7bffa0aeb3864e55b025178c9eacb41e",
+    "backend/adapters/outbound/evidence/sqlite.py": "292893e9b89d241d31f93a8b6916156b8c5317487aa952f7d3ac55a1f889187b",
+    "backend/adapters/outbound/export/__init__.py": "86b0ad4f981190ecf4ad628106735e93164e6e9c673c3aed44b756788e65ec65",
+    "backend/adapters/outbound/export/classroom_word.py": "974d46831f67a10ca2ee6d7b80117957a962d9812f3c0c61dd21cbb124558e2b",
+    "backend/adapters/outbound/export/contextual_media.py": "0f04d8f8596937a1f054656c95268842fe1fd7e0c7d522d3050bdf6af6b54f3f",
+    "backend/adapters/outbound/export/course_media_word.py": "d1081be5bbf4d24b88dc483ced4d7b8071ff365879ff230a79f1e12fa08cfada",
+    "backend/adapters/outbound/export/course_word.py": "7fcdfe4c546394dca94be90e106dcf8cab8787c416b3879a4d508c5ec3b84a96",
+    "backend/adapters/outbound/export/diffusion_word.py": "c85607c2ddaccdad1dd6b8c785ada6df6e0c10abf2ce710b181936124fc52d5a",
+    "backend/adapters/outbound/export/diffusion_word_v6.py": "704b944d23888a6abcf38ae491e9020076a90bddb7737d9d2821cec1070926b8",
+    "backend/adapters/outbound/export/local_media.py": "43f9756af0acb79458807d3868f19d82e1b1ba400b9b369ca54621266c1b7df1",
+    "backend/adapters/outbound/export/lot1_word.py": "70b0f4757b6281caaa3b2a0394cf7aee2851d87e7be60f2d5e14c736fc989fe5",
+    "backend/adapters/outbound/export/r6_readable_word.py": "bd9b97322063df2f6e4f78435d89e2176f198ba2c7db41d2768531481cf6ad69",
+    "backend/adapters/outbound/export/word.py": "9e52dc031aa0751c01fdfb62899ef417bf4c2497156c4d6b8e3b7611757cf67d",
+    "backend/adapters/outbound/generation/assessment_revision.py": "805ede26f6435b833555c3bd71aae79c21417532747f5e650348e99d18c71d5d",
+    "backend/adapters/outbound/generation/conversation.py": "adce06b89d14e967121622174a35fdd2c43aa2879e04efd8eb12ba4a1d212170",
+    "backend/adapters/outbound/generation/course_visual_brief.py": "90d6b7679565bbbfc5c6759d3b49e0bb29780161391f9fa52972648479754527",
+    "backend/adapters/outbound/generation/openai/adapter.py": "747bb1d21843c4da57f62bd248e9b762fa99351627d98996eb55c8e848f342a4",
+    "backend/adapters/outbound/generation/openai/harden_contract.py": "f7356eb7a60a72b46a0c3a05d39c91e5c23754d626139cdbc9d948ff8ceed2a5",
+    "backend/adapters/outbound/generation/openai/harden_materialization.py": "2ed6e6c336ba7061c7da445eacb782d20ac7c4a3796dbec65307bbaa06f7b2e1",
+    "backend/adapters/outbound/generation/openai/locator_materialization.py": "baa06ce9538b8bb493c3e8a25945f2b099d2dfcb2393249ca21abc6818d01595",
+    "backend/adapters/outbound/generation/openai/mapping.py": "c76176325a814aeac97924eb26caa6391f738ace86e890071757d9be554079eb",
+    "backend/adapters/outbound/generation/openai/p0_content.py": "b520fd45f0bc4a656918aad4512bd47da62714c5171bf21ed974683681d0a333",
+    "backend/adapters/outbound/generation/openai/prepare_contract.py": "a5df681dd26c0205fc644fc18eaf507b83deb29dd899454159e81e42b68c3b5f",
+    "backend/adapters/outbound/generation/openai/r5_contract.py": "7f356578700542b553e13c811b386e63821b451e3e48433e3ba47dd30d966bac",
+    "backend/adapters/outbound/generation/parse_diagnostic.py": "4032684e9c609f14d0a8a1e0ecd11c617a9cfd08e291979776587d9db4d0023a",
+    "backend/adapters/outbound/persistence/conversation_memory.py": "67f7610d0daa3bd45ee9b746aad4e4bcb53d7ab12916626f39f6c805ba45d77d",
+    "backend/adapters/outbound/persistence/migrations.py": "950faf5da41f51888d2ee613c0e80fe1ab999170cdc9a812c0959457dfa5fd14",
+    "backend/adapters/outbound/persistence/saved_production.py": "2f1615c4781c0a3502ba0b2ce0276c9378823e7980ac71cf75b6db4f804fb086",
+    "backend/adapters/outbound/resource_library/__init__.py": "c0265eb5f1dcd68354ee359b5d7e0908a376298200986949ae68eb1038c099ea",
+    "backend/adapters/outbound/resource_library/boreal_documentary.py": "ee1be3719bde0369736cc78d55be0a0c7d3072aeb77ac82bd0b41f1d4f2236ef",
+    "backend/adapters/outbound/resource_library/canonical_notion_sqlite.py": "3a92bd84b96464d2fa339c0da7f402245111ee7a3a79783b7a5356139f8374d1",
+    "backend/adapters/outbound/resource_library/exact_notion_evidence.py": "a25f87c7075e58da370095a13b709714d460e1a2db7143475b4da579ac83d924",
+    "backend/adapters/outbound/resource_library/exact_source_sqlite.py": "ce726e0b5221a0dff03c62049c64d87d63332d9260678cfd7b88b28543e7072f",
+    "backend/adapters/outbound/resource_library/institutional_qualification_sqlite.py": "be412d14bd67a19f0ee09adb291b9846611a2650c828f5c683428ba635872adc",
+    "backend/adapters/outbound/resource_library/institutional_sqlite.py": "de1a7ee2c02d72c81d1fb9ed8789ea431016aca0c27ac883d9371db9ef1df5f2",
+    "backend/adapters/outbound/review/assessment_review.py": "bef70d5526dfa8f490859e2178e582b37d6b08e558ad517100bbabd4ca92a7e0",
+    "backend/adapters/outbound/review/openai/adapter.py": "2324ca1d3ba2ece5b8a9b5a8466bc4e3c115ec4f02535a985c80e9ea20510e6f",
+    "backend/adapters/outbound/review/p0_review.py": "b5bc4255e172dbbb0f07f44bcff89ea02db41bbe5f6739857902dae277eaa809",
+    "backend/adapters/outbound/search/local.py": "5ecc006bfd952bdf641e4ed33fed4f4a587acb63ba0b49d4273071a5f4b3473e",
+    "backend/adapters/outbound/search/source_status.py": "356051bd513d0981e33e902804747bafecf855622705454e42dd8656aa323854",
+    "backend/adapters/outbound/search/sqlite.py": "8d77f49dbbc5fde5627ca6359a7d216e0439aac441c67c9a433f5232fedfea27",
+    "backend/adapters/outbound/system/r3_job.py": "77570a9858d06f5b860f0f6b1110db1a110e564bb32013118f4122502200bc8a",
+    "backend/agent_runtime/agents/review/review_agent_model.py": "2273009cb6f360707b40adbdfd40e61ad8c8aa9b6e2457920567651800870f45",
+    "backend/agent_runtime/agents/review/review_metadata_successor.py": "f3be764025bb356c4ea2049e2df5a07d2c0df46cd3dc112ea87eb17c33c895c8",
+    "backend/agent_runtime/agents/review/review_security.py": "392deb33d6a2a986e0da105449ded3408757f19ae6fcf49f4140dfb9f30bf8d7",
+    "backend/agent_runtime/agents/review/review_security_model.py": "b349e28d86056cfe8aeec52b84befc53e30e14dac484707f243cd9ea85b6e9d3",
+    "backend/infrastructure/composition/bindings/conversation_agents.py": "faed74af8fe9b07898531310b44d2c0fe082906cc8d12859fc1799e8c02d280b",
+    "backend/infrastructure/composition/bindings/conversation_routing.py": "3425b7951bf18ecc2ec682f3922134932940bc02ef14cbee8c9db04a3d4f9534",
+    "backend/infrastructure/composition/bindings/r3_agents.py": "36a8a2e03aab0392f72140c94994afa04524cec46e223f170e2412c7590cf22d",
+    "backend/infrastructure/composition/bindings/r3_harden_projection.py": "21e9fb0078e259b528f16bb8c337fff07600bba524d95b2026f0babd55af928c",
+    "backend/infrastructure/composition/bootstrap/conversation_worker.py": "0caa06ce7099b8571f2136cc42d2204ebf4e0bfa0f913923409ac80705c42554",
+    "backend/infrastructure/composition/bootstrap/r3_worker.py": "6dc4ce1f51da1e53d60a688f689b62dc661880ddf62187d12df3b8342a7424b5",
+    "backend/infrastructure/composition/factories/boreal_documentary.py": "53228bfceab9cd27eac5177cc7391423dd4e407c89c6c70894b3b6c170d51c7f",
+    "backend/infrastructure/composition/factories/conversation.py": "d3817b7f4186ea2eecbc01732c903471869e1f9710e11c2dc6a4c0ad8b5ed97e",
+    "backend/infrastructure/composition/factories/course_media.py": "01aa19d88a6d23ca756f4c603f09e04dd8c6f318f24616bb963a5e4df348a677",
+    "backend/infrastructure/composition/factories/institutional_catalog.py": "6b4ca35c19ffdd927e72d5cde5ce516bab2ba4a7ce7dd3951834a381ad0c8eed",
+    "backend/infrastructure/composition/factories/institutional_qualification.py": "e0fbf3d96477b742c8e6c5f796eb99f71b5d135529b90dbb28c8aab0c092f196",
+    "backend/infrastructure/composition/factories/local_browser.py": "c4a6889f448bd8fdbcbfb72aa71c8cb343e0085ea024da96dbce3f372dc6085a",
+    "backend/infrastructure/composition/factories/local_reference.py": "2da29c8a6215ca3196b3097369d192b545d5d831835f0db28f51d438b3f17880",
+    "backend/infrastructure/composition/factories/p0_creation.py": "b8e0710dc105a10be04ae7a48cdbb32c916a07b8e934b84d3dfff85fa1ea0ae6",
+    "backend/infrastructure/composition/factories/r3_d3_recovery.py": "56054d2c2f02ad356e650df1792bbcc42483e7bf5cc3377fcfceeff7cb40cceb",
+    "backend/infrastructure/composition/factories/r3_harden_execution.py": "60f11dd1f30587bca5e16e532f7f7e622268858ed06a46a7792aa5b9f7697531",
+    "backend/infrastructure/composition/factories/r3_harden_profile.py": "b6774f36d97c331f1ad42b4a744bda34d198378996a8fc32c18662407120a42a",
+    "backend/infrastructure/composition/factories/r3_harden_serialization.py": "7475ea2b84d080fd9f8e853042720a06401e0c624a48dadc855656a38ebd69a7",
+    "backend/infrastructure/composition/factories/r3_prepare_serialization.py": "df8452be7091017d19ac5a4e1abdadd1711f4300542e7c556a52325873660190",
+    "backend/infrastructure/composition/factories/r3_review_modify.py": "2a365eaa2c2b578663a03784791a84c2b7610b5e72f9b1429822f0ebbf9cb4fb",
+    "backend/infrastructure/composition/factories/r5_generation.py": "be89418a37965749a7ca1ad2fe363f0647280ed3da9730c4c26c280c07fbbdfd",
+    "backend/infrastructure/composition/factories/r6_all_notions.py": "95bfe29a16a0a4bb7565ae55b7b5d65cd762217b8aad78a4a6edcd906f23bfc3",
+    "backend/infrastructure/composition/factories/r6_p0.py": "c99e207266c37f2fbf1debe4313747aabb339ef8c689024b4f4a97572ac8d55b",
+    "backend/infrastructure/composition/factories/saved_p0_documentary.py": "43c876268574f269ffaefd2a5d50b75a7b56871088dbd3e740776261b6ad6fb5",
+    "backend/modules/knowledge_reference/application/commands/admit_institutional_qualification.py": "cba9345c3895fb3c6be6a1cf34ac0335b7bebe70214b0a7bfa921e1e722338f6",
+    "backend/modules/knowledge_reference/application/queries/bts_alignment.py": "eee1b452c3cffbb9c17951266d4e36a68511ca4c9208e3423f28a06b4d4b25b4",
+    "backend/modules/knowledge_reference/application/queries/inspect_institutional_catalog.py": "cff7b45755d3005fc814abdd1e947a1db084ed0d000b37afa2c6fda906e9f296",
+    "backend/modules/knowledge_reference/application/queries/qualified_institutional_corpus.py": "2b4971b03c51572b08d0b14716736a82b941d2885994ef608b914f572d79b3e1",
+    "backend/modules/knowledge_reference/application/queries/stmg_alignment.py": "ac14175c2e293927474a5cef603d74275547de402a04e1f4dc6ef7d66d864c7e",
+    "backend/modules/knowledge_reference/contracts/dto/admitted_institutional_sources.py": "9fc17e237e74200753af7d87e510f7e475b1c1fb19e4dd2e1bd6868b956a6ce0",
+    "backend/modules/knowledge_reference/contracts/dto/institutional_qualification.py": "9d3f5b8b22c274962e385a77bc92aa63ae58f65709c29fedb021cf66849599b2",
+    "backend/modules/knowledge_reference/contracts/dto/stmg_frames.py": "0bde2841d92da95cc5f5a824b0ce1bcabd934b2080a5bca016352933c51bf341",
+    "backend/modules/knowledge_reference/ports/outbound/institutional_catalog.py": "92d85839775eddc07b7d53308223b8444d3dde490486c80e19178f35797e5d42",
+    "backend/modules/knowledge_reference/ports/outbound/institutional_qualification.py": "214535fa5d20065183dffdcb79a568911f736bba925fd8e07501083ab98496c5",
+    "backend/modules/lifecycle_promotion/application/commands/promote_saved.py": "c143ac42c8022eb3e7ac99ee840819b4c942789dba146d3cec415f992f19a27d",
+    "backend/modules/lifecycle_promotion/contracts/dto/promotion.py": "0dea3c711172198f8a82016cd74060089f49c44ecd080227804465f23290a956",
+    "backend/modules/materialization_export/application/commands/export_saved.py": "25f0435c8a63e5c7b6358abdf571e40b5eb4a2004d4704b92a647d932523b1c6",
+    "backend/modules/materialization_export/application/services/__init__.py": "75e3e2c5871b5501357606f3d5022d61975895d068a809fcb35d7220f11af2f3",
+    "backend/modules/materialization_export/application/services/media_asset.py": "27f227fc345968562e027499149c09c41171bcb30a008e68a86d6dedf158d835",
+    "backend/modules/materialization_export/contracts/dto/lot1_word_table.py": "d49b6fc0b8e88ca7bf55c8a06c100c2ee5136bd6f3591cf418c0571cce5d9cfd",
+    "backend/modules/materialization_export/contracts/dto/media_asset.py": "7d506f0e16c1aaf1ffaf422276d21d15bc592a27d61730677da709dc21d64409",
+    "backend/modules/materialization_export/contracts/dto/word_document.py": "ebaeef1a94cf2bc4d9ce32f6873ddac0db2e68e3a041888a04be5f592cd37d2d",
+    "backend/modules/materialization_export/ports/outbound/media_renderer.py": "e736adf231a7c87655e51dea5e28a7b5e5b933b4257fa45372c8df995f81afd3",
+    "backend/modules/materialization_export/ports/outbound/word_writer.py": "dbcf14cf1088e4dce78bf7a00ae7b45bafba916c5354e2f4502cc5b4a11a2004",
+    "backend/modules/pedagogical_context/contracts/dto/bts_institutional.py": "5f39bcd4d35e498a8a0b4ea96543b473b68569b7b4e136726bdf77821a61c9f3",
+    "backend/modules/pedagogical_context/contracts/dto/p0_context.py": "fb7009830c113ecd82fa09c44e5cd974300405aa5f9fa7837887a03882d3a0ae",
+    "backend/modules/pedagogical_context/contracts/dto/stmg_institutional.py": "187f1463faf9c8d2a9574a96b1c65ca997d9c59f3ceb0ae558a3ba62da0788da",
+    "backend/modules/pedagogical_design/application/commands/create_conversation_draft.py": "9389e67f692fcca9377920ab42af15e62b2f76e7814a5f2deb394a3b818e364d",
+    "backend/modules/pedagogical_design/application/commands/create_p0_candidate.py": "5433bb0279bc931340481139cf77b9597e50c893863b07171d256a2e4e697932",
+    "backend/modules/pedagogical_design/application/commands/reassemble_p0_candidate.py": "14b9af343b352ff3ecca7f4effb5b6b1070fedf8cb4c69e6cb29eac4d5aec6a9",
+    "backend/modules/pedagogical_design/application/commands/reframe_course.py": "9d643d39803bd17a3b4fb3c14a3585eb9b5fabe6a7bf106a9329daa1bbac5838",
+    "backend/modules/pedagogical_design/application/commands/revise_assessment.py": "e24640bccc702e771a1fafb87f306b82ea336a7b4e2ac94940dc704e37509a2a",
+    "backend/modules/pedagogical_design/contracts/dto/assessment_bundle.py": "2a985e4bbf30f0a427029a4c2d60cb7ba6a47f5eab3b85696bdbe16295aa62ec",
+    "backend/modules/pedagogical_design/contracts/dto/assessment_revision.py": "9044270869537cf76415d492a41bb12cb45800a264583474de2f6d191639ba88",
+    "backend/modules/pedagogical_design/contracts/dto/conversation_draft.py": "74b20e758e6f75b620d895d8a40b658364727adafcf306d5e2a4b4786898e9d0",
+    "backend/modules/pedagogical_design/contracts/dto/course_chapter.py": "2ccb7a6067d237d65dc02d89fd9f94de8197b8bc762b53c7c396ecd5841bcaf8",
+    "backend/modules/pedagogical_design/contracts/dto/course_policy.py": "bed22d50324661bbe1c0e7488ed5f45a8ce75bb66a39fc40ab53fa291ec91d64",
+    "backend/modules/pedagogical_design/contracts/dto/p0_production.py": "61692b9855a75bf78b2f590a46b37d40a0f979d22a5f75e6160126213f67ddd3",
+    "backend/modules/pedagogical_design/contracts/dto/program_authority.py": "8c28dd368e3c2ccd4d06b4f7f3bce9f705cff0fdcf3425c90ff9c616dd03cd07",
+    "backend/modules/pedagogical_design/contracts/dto/visual_brief.py": "122efbac6c9f25589f973b5b764a81fb0e40bb1da7895ef5bef5ef7c83613c43",
+    "backend/modules/pedagogical_design/domain/policies/assessment_revision.py": "6eae51b9eed640ce0f51b54eecb99097f89dafb082a1894f0a9c03652d0f33fe",
+    "backend/modules/pedagogical_design/ports/inbound/revise_assessment.py": "a8ebce04d55b523c80ed914d0c84b034cd4983895c2d49cd2a077e4dc6440271",
+    "backend/modules/pedagogical_design/ports/outbound/assessment_revision.py": "196c97b054c6dee2fdda0d433be5263edd163c423c6b4404a8e3534fafedb043",
+    "backend/modules/pedagogical_design/ports/outbound/conversation_generation.py": "757b43e5f586d93ac22363e0b40f8637ffc2b6b66704d2075515cb3cb061ea00",
+    "backend/modules/pedagogical_design/ports/outbound/p0_generation.py": "e28a102c3090bb431d4029b2a793e474b24f7c1771e3ec7b1af76cbd818249fb",
+    "backend/modules/quality_evaluation/contracts/dto/p0_review_report.py": "5b2e562ee6516ec421956a23783383d675bc41aa4c3566fb39eb384fda2361b1",
+    "backend/modules/quality_evaluation/ports/outbound/p0_review.py": "bbb4db8044b7ac632ab765ac11989880770e27d03d05c0bc69da1eb1a2c74062",
+    "backend/modules/resource_library/application/dto/input/__init__.py": "601b08866a859669c87b0b243f1b160db5f817378d00b5799732cc2c57c1f125",
+    "backend/modules/resource_library/application/dto/input/exact_resource_evidence.py": "a2566d050832df03a2fa758ea5e8b5440215c224c6437e61d7bad3f066d7f8c8",
+    "backend/modules/resource_library/application/dto/output/__init__.py": "848b1efb047e0b8e6b72ebd9156cc977222edc816919fb0a24e5110740fd9b4b",
+    "backend/modules/resource_library/application/dto/output/canonical_notion.py": "12bdfb56be085bf507151366d9a53ec72fba0a14748268a01c98314a3ed96ebe",
+    "backend/modules/resource_library/application/dto/output/exact_resource_evidence.py": "6a3bacdd779895b2a75966ef05cce4810c609e7bf09478088cafa9d987decc2d",
+    "backend/modules/resource_library/application/queries/__init__.py": "332dec6c103ceea05b17a4dddd2c75858f9e8fdf452d9af863e86de7cf4546b1",
+    "backend/modules/resource_library/application/queries/enumerate_canonical_notions.py": "38e3ff1d5900d147cebe35790091f088762d21975c1b1404c7d47907cace07a3",
+    "backend/modules/resource_library/application/queries/get_exact_notion_evidence.py": "38a0b0754aadb24429c1720cd695ef156036b173c3a0b59bafd3de307b677d15",
+    "backend/modules/resource_library/application/queries/get_exact_resource_evidence.py": "90672862b720a65101951234a5ea3373da79ee2ca77442f72a6d997ac9f571b7",
+    "backend/modules/resource_library/contracts/dto/search_source_status.py": "beaca5f44a04749795d046e57900806963a03a2a03452307d5a6605c9620a8ea",
+    "backend/modules/resource_library/ports/outbound/__init__.py": "d399ddaa1c006167fdd6379190e6e797605aae1e7b027c142f9b7445c1f5e524",
+    "backend/modules/resource_library/ports/outbound/canonical_notion_catalog.py": "1e2df2f01c4cbdfaf2e34856b10e405eea1e313277add1983c8ffed142960ce8",
+    "backend/modules/resource_library/ports/outbound/exact_notion_evidence.py": "b3e49f9b1865fd5b93b932bd757a0e356113eaa8d5e58c4841e414d71a01f82e",
+    "backend/modules/resource_library/ports/outbound/exact_resource_evidence.py": "e054d161b3285a1e347799039d61edede38e00f7771acdfca925c8924490471c",
+    "backend/modules/resource_library/ports/outbound/local_search.py": "0de5db5024a6e2ce76704ce08e32ec36de988a05dc8bbcb93a1dbb6c2e19ceaa",
+    "backend/modules/validation_control/application/commands/validate_assessment.py": "421b26f224d9e0c63d51ba345a57ace8d09830c002cb76339548956714abf638",
+    "backend/modules/validation_control/application/commands/validate_p0.py": "5ebeda4e61eb71593734ea0ff6273cc28e9ff29fbaef56e9a81fccc520333c27",
+    "backend/modules/validation_control/contracts/dto/deterministic_validation.py": "f6dc61deb03938e03be353f6eb65f747b26e47b71fa231227d87062c3d424896",
+    "backend/modules/validation_control/contracts/dto/editorial_scope.py": "4a94db413acfcf4f80a3462423f48a7ce331f8392eb598b106173421c3c93724",
+    "backend/modules/validation_control/domain/policies/assessment_checks.py": "a86263d56df152fc2c94a63f719e8ff9645977d3401edae3f17e8a91cc4dd97b",
+    "backend/modules/validation_control/ports/inbound/validate_assessment.py": "73fdcac5dd767cec5553d98e02c52a5b34cd9aa57832b3d86591704e06e32e37",
+    "backend/modules/work_orchestration/application/services/p0_agentic.py": "c6e5cb028eb90675deb51441b77dfcfdb3169707185c86f1dfb614a94e9ac31f",
+    "backend/modules/work_orchestration/application/services/p0_creation.py": "6156d966f6d683c77318322d0feb9fb048e72464b2cf4ba83f5f2288db4f0526",
+    "backend/modules/work_orchestration/application/services/r3_review_modify.py": "68b1cbc355de1b41418a4cbf8c98e228104256ec8091b4aaf8bb464ac5a07609",
+    "backend/modules/work_orchestration/application/services/saved_production.py": "09ca3bf1ccd613dd564e959cac98202cf661e20948055c31a26198d0a8ec616e",
+    "backend/modules/work_orchestration/contracts/dto/operation_identity.py": "e6cd64ddf4997d0c6cec5f87c121bea3d0749398685050dc8e94717fab545657",
+    "backend/modules/work_orchestration/contracts/dto/p0_production_read_view.py": "4179d597a9a71e26f190ba61153c1f0837e482679d46505a2c008203333c3fc3",
+    "backend/modules/work_orchestration/contracts/dto/r3_restoration.py": "0112a107983bd52a59e6b8f0a717cc2cfce3e7ee58e60b49a3ab1210884fd966",
+    "backend/modules/work_orchestration/contracts/dto/r3_review_modify.py": "50a0004dc2cc2706538d528e55448be476bae4b769568f7d5bc1759016559ca2",
+    "backend/modules/work_orchestration/contracts/dto/saved_production.py": "7652b2bf61878e5ce14acde8febb08a269fefb2ef186f964b98f1cca037c98ef",
+    "backend/modules/work_orchestration/ports/inbound/r3_review_modify.py": "076ec4c71fac47150c01a67bdae11fb091d4d6de67634ed552e8b86a53f24199",
+    "backend/modules/work_orchestration/ports/outbound/r3_job.py": "182e37233e22ca91431a9c9f1c384463cb255abf7d235f2050514cfa6a35bfed",
+    "backend/modules/work_orchestration/ports/outbound/r3_store.py": "856875a8c7813e603d1dec355dd6b27e259816f984c054a2f34331b892dd94c8",
+    "backend/modules/work_orchestration/ports/outbound/saved_production.py": "65ecfcfd2e5af1fdd343acae4ea0fe8a5814f61edb5639288f4330369039f08d",
+    "config/local-v2.example.json": "35f9626d47e14f5134049ceb729561aabe2f774e9cd5f5c9e620a04448eddb60",
+    "database/reference/CP645.json": "6f23ba61738635e11d6d3b5dd5fd5be8cd93820dcdda8587e2e0779908754ac7",
+    "database/reference/README.md": "a79539ce087647c8669a1ba3364a4331bc64bb060a9a3384a0fb0dbf084f3dd6",
+    "docs/development/ADR_BTS_INSTITUTIONAL_PREPARATION_2026-10-06.md": "fa37ce5bb03a924ad326e316cf9be6dcb6025c10a471826950ff7d647ddde4e1",
+    "docs/development/ADR_COURSE_BENCHMARK_PDF3_2026-10-05.md": "24a1234ccb267fa4072f8647fda8dd977e94845847dc4c3402e964e6d6120101",
+    "docs/development/ADR_COURSE_MEDIA_2026-10-06.md": "d5db8305b66b3beae42475ec50f1054e947c142206fef37b2f0d67ff56e5f7b0",
+    "docs/development/ADR_INSTITUTIONAL_AUTHORITY_628_2026-10-05.md": "4899b994152b45929834784c04d290c4baa242c81bd3af048ee729e8f14cc761",
+    "docs/development/ADR_INSTITUTIONAL_PROVIDER_PROJECTION_2026-10-06.md": "73264ed961f216698697e5fc6a35cbc6abd668a8f4d0139c3065dafa5e0114d3",
+    "docs/development/ADR_M01_VISUAL_ENRICHMENT_2026-10-07.md": "601943ce23aad289a2f7069cba3e0827c38e118e2ea9cd6154ea435da1a75a83",
+    "docs/development/ADR_REVIEW_METADATA_SUCCESSOR_V1_2026-10-05.md": "5bb3cd8de8352636d73ace76d4db12cda59670cadc1b7b09f2528ec9f4861954",
+    "docs/development/ADR_STABILISATION_HISTORICAL_ACTIVE_GUARDS_2026-10-07.md": "ea1d11e5a72d3c6ee065f3e3a3fe522cd609b1777f08e2279fd4b9a1d5ac69ae",
+    "docs/development/ADR_STABILISATION_R2_CALIBRATION_REPLAY_2026-10-07.md": "f67ea8a54d9ae08e3edc3f7198018d99d874a9e97bbc7f0003d44b32135cee57",
+    "docs/development/ADR_STABILISATION_R2_FINAL_COMPATIBILITY_2026-10-07.md": "b0ac5982832fe11bf2662f6c5d2fb86c38643eba80f5acfc1c79c7afee15e1bc",
+    "docs/development/ADR_STABILISATION_R2_OPERATION_IDENTITIES_2026-10-07.md": "b9bf474dd84dd4cb4716c7c322365c02fbef3b8981acbb370c3cc31bdd6f8636",
+    "docs/development/ADR_STABILISATION_R2_P0_CONTRACTS_2026-10-07.md": "b971abe19dd5d03438e2002c927a255843c782772ea0b58a78f709e785ab2897",
+    "docs/development/ADR_STABILISATION_R2_PRIVATE_SOURCE_EXCLUSIONS_2026-10-07.md": "25acec27d703015155b1c2eb59f864d2272796c246cf29a03c64b3296395f997",
+    "docs/development/ADR_STABILISATION_R2_SOURCE_STATUS_2026-10-07.md": "b26bc5bc0b873b256458f05e6ecf6e4156726e884a28772e93278e53b90860dc",
+    "docs/development/ADR_STMG_INSTITUTIONAL_ALIGNMENT_2026-10-05.md": "bd35a9c3eb8fde2a77882e834863e2001778b0c290d3f0e16fbf73ac0c157970",
+    "docs/development/INSTITUTIONAL_TEST_PRECONDITIONS_2026-10-06.md": "4517d3bdeecdba128e6a43c1faa02fcc1a764847a9a37abcb3d3796c8248cbae",
+    "docs/development/MEGA_LOT_LOCAL_CLOSURE_REVIEW.md": "396e3c73d116efe87375c166374c1f932713eec5cfb3cc07861b6f2481942a87",
+    "docs/development/MEGA_LOT_PHASE_B_C_2026-10-04.md": "e06f6a1c0d227c71c56ee26098a30246f03080903232841aebdf42a8bc115373",
+    "docs/development/MEGA_LOT_POST_20D6B49.md": "32f2541c066e07413f8e618175f7936eebd09a39d9c0f49c2c18000cb8742cf8",
+    "docs/development/P0_UI_CREATION_CONTINUATION.md": "91c6191084c27369d1ed79c98f2d1ab5189fb9a0db81d77ea90aa713da1a40ce",
+    "docs/development/P0_UI_QUALIFICATION_2026_10_04.md": "fcdf84de56eff1bb6c8a602af634e3f2b86be5b269b145d4e71787c205cff76d",
+    "docs/development/R4_SAVE_REOPEN_WORD.md": "3de5f813d2539baf2d85605c51c0312c5acc5e8c71985203cd610a1df7ad8ebb",
+    "docs/development/R5_EXACT_SELECTION_WORKER.md": "4694b0d8fe60aace7fa35e48a9c80496efd09cd09941b5be09bf9358f0c1d3c6",
+    "docs/development/R5_REAL_REFERENCES.md": "c0c125b40a99b3d08a1543524a606acd9cb11af04dc889503f289cddb9d70f34",
+    "docs/development/R6_H3_CONTINUATION_2026-10-03.md": "4e23d3e135576be8479754774c8241274ca428b5fad3c54f7f8b1a8390b56c32",
+    "docs/development/R6_P0_AUDIT_49B804B_2026-10-04.md": "ec237531e0c364ecaba22e3f3a1ebbde047b3e48db49a2c609f6b5217e902d77",
+    "docs/development/R6_P0_RECIPE_2026-10-04.md": "288007467931ade787525da2eebea626cf5113e235cc6a00a09a7b54b3c84844",
+    "docs/development/REPOSITORY_STRUCTURE.md": "ce28e812f256819b999450310768766cd006573d276c776de90cab9eaa26efb1",
+    "docs/development/STABILISATION_R2_CONTRATS_ET_ERRATA.md": "c60c3611c4eeb5f1042be7faef974c5940cdb71b1a91f899a616528f659fb63f",
+    "docs/development/STMG_INSTITUTIONAL_ALIGNMENT.md": "532ba23b56584ec43df5b60ffcf80aafeac0956585f7ac94c8a481e2e4c3fcc4",
+    "docs/development/SUPER_MACRO_POST_62AF2BB.md": "5ea4c34b3855599be7050057a23891f944424c0a141c5fa1b44212e502ead75f",
+    "docs/development/phase_12_18_h2_r3_d3/HARDEN_CONTRACT.json": "78f438f0898bfa7a0ec09acf7fd027214e7905915c8239a751645d9688666b61",
+    "docs/development/phase_12_18_h2_r3_d3/IMPLEMENTATION_SCOPE.json": "c6942cce8eedcd7380f2834b6496dc0c3fe258641c0f0396a8c70ddbe886d193",
+    "docs/development/phase_12_18_h2_r3_d3/README.md": "8573bedc4b47a1358c9f68595a456bc6e3b381bc5060940b8dc75d4c3a365281",
+    "docs/development/phase_12_18_h2_r3_d3/RESTORATION_CONTRACT.json": "03c52ca355d280ca09c7d243778d133429e4304fe6abd0b7b5b4caa5c3149cc7",
+    "docs/development/phase_12_18_h2_r3_editorial_corrections/CONTRACT_PROPOSAL.json": "46ef8f0e53bb080eaf04a87e788e1b9558cf0eb58afc886e6965296e98146fe1",
+    "docs/development/phase_12_18_h2_r3_review_modify/IMPLEMENTATION_EVIDENCE.md": "1223114ace412b931faf3eb6a1010c2360b17382ee24713d8492ee3aedd429aa",
+    "docs/development/phase_12_18_h2_r3_review_modify/LIVE_SCOPE_PROPOSAL.json": "136d22ca3ea654e6bd185bc56eb95fbd97fc807814a618ef79de0d2fcab17ddc",
+    "docs/development/phase_12_18_h2_r3_review_modify/MANIFEST_SHA256.txt": "b01b86970f653393469661f95c6b7d1f7ec3b2097200da1e216444a9f765fb3a",
+    "docs/development/phase_12_18_h2_r3_review_modify/R3_HTTP_LOCAL_V1.json": "a953d64380ad516733e2ac22dc5dd41db85d8db8c673e6bee84809b23501458b",
+    "docs/user/LOCAL_PRODUCT_LAUNCH_R6_H3.md": "2e14d281084f60d72fe656d6a74c7ffbe2d659c80c9b76907256059bd3dc418d",
+    "frontend/app.js": "5576c34c7de646954d3b08167ea55eb85a08d6204f572150824e6fbf05ba1ae2",
+    "frontend/index.html": "54774234c07a50798680bec14f9997bb7127edd89a552c0581f5b15fe0921fbb",
+    "frontend/styles.css": "b7dd20537ef28f3653eb56ffe6d1b879bf1e82613ad1d54669cb29b124af7c9a",
+    "tests/architecture/test_conversation_product_boundary.py": "57510a497f8fd4b01fdc218a070d9253e50836da1815bd553b6bbcf7737158e4",
+    "tests/architecture/test_local_browser_product_boundary.py": "58f43bf3b393d160c1dd51f5b1d9886f8c0add4d8d1451db31cf8ab622a0e520",
+    "tests/architecture/test_local_search_product_boundary.py": "7943869796f279ebabf662c0c3885ad3654812c62b7538038e6ce84abc181d74",
+    "tests/architecture/test_pedagogical_calibration_fitness.py": "e7bb1c450997a270c13a9d19a843063f5a893608c62f057b9f8a54a1ffffa3cf",
+    "tests/architecture/test_r3_d3_boundary.py": "aa04665a496c5edeeb5a8bdcecfb4e81db88d08191e4bce7ec535faa2f495980",
+    "tests/architecture/test_r3_editorial_correction_boundary.py": "28ef5c7f6c3e61fc4975a889e9dfae5fe9ceaf81b1b61d79e058b7e220cad185",
+    "tests/architecture/test_r3_guard_non_regression.py": "6ac8fc278007cf96eec80e037a65b01a0ee8722cf7dcc28a5078727ab4ec3f0f",
+    "tests/architecture/test_r3_product_boundary.py": "3a182ecd4177a2aaf73839b74d0ca87ff6ff50caabcb870ec2efe7f1ae008081",
+    "tests/architecture/test_r4_product_boundary.py": "b83e7a6f241ac0e13ab29b1433ddbb5070b1d841a85ee446e7d54f2381fd2a47",
+    "tests/architecture/test_r5_product_boundary.py": "f9e341ec30ef0ed44e8f03d3d2a3b36a688f7120c2527111b432d4a5217016e2",
+    "tests/architecture/test_r6_u1_exact_source_boundary.py": "6c55fb62fa57f058ec6de675dfa5e1e56d45332937cad50c6ccd6d4698e0188b",
+    "tests/architecture/test_repository_baseline.py": "360e11b79417d6b0b6d8e1c1061e69bc142232642c748c959f3981c551bae950",
+    "tests/architecture/test_resource_ref_contract_fitness.py": "52c6f1630472511da6d691fd35ec75cc5bb71a795ccd3b5d860625b1ab91edc8",
+    "tests/architecture/test_review_boundary_fitness.py": "2c3362036538054b86800ff9dcdb2f2ca02dfb2fc86b47c950ce50fc33de1c6c",
+    "tests/architecture/test_security_contract_boundary_fitness.py": "e405234f015d528016d4c0ced5815a9330f177eb946aea4c3a0c215b57187df3",
+    "tests/architecture/test_security_recovery_observability_e2e_fitness.py": "466c11aa8098629adc23705748c4668fe34f29031863b9dc0dd9ac66023b51f7",
+    "tests/conftest.py": "2ded1ef4dc7904a0188a3f3aeb34cc5a0684ca1379f064fbbbb01b2a3ee1b9a5",
+    "tests/integration/test_conversation_job_lifecycle.py": "7bae1ac064fa05405404e44676f29019833337addae42298858de2118d8c906d",
+    "tests/integration/test_cp645_evidence_real_gate.py": "515eedd7eb56e4d368deaedb07a6aba26f52825bdb561e580d5b51466a51eb03",
+    "tests/integration/test_local_browser_navigation_burst.py": "3af3f5f63111bb6091502d779cb6a29ff4ceaab0efc301a6b8ab780b6eff3c6f",
+    "tests/integration/test_p0_creation_http.py": "cd682c5d7fd8f0b97ff6b6c7b0bf0568005679fe627b930bebe89a9ca4b083e3",
+    "tests/integration/test_r3_cap_a01_targeted.py": "52c8f6c42f5745dc8cfb0d5cebe62b403038bb8fadfcc655c867beaceccade3d",
+    "tests/integration/test_r3_d3_http.py": "f5c291a68c75246018c38dd6051ee5e1322c47d63134918ddbd3a6446fc3b1b7",
+    "tests/integration/test_r3_d3_product.py": "8b8c6bbf5222de2b2f9ad0adef5bee3537a392f6b5f0631c6616a250f36bc33e",
+    "tests/integration/test_r3_d3_recovery.py": "03b82d72b6fba7902253b57b2992b0995517cf30f3ae69b05352567a57c19d5c",
+    "tests/integration/test_r3_editorial_corrections.py": "7ae6025039319e2310ea4ecc36c54f23b487c8a6b5a55389a704c7dfd475ecf9",
+    "tests/integration/test_r3_http.py": "c50304203ed90154a5d8e5235f194c7a0adfe2f58bd13129da24ea7df537e5bc",
+    "tests/integration/test_r3_jobs.py": "309a1d3849433d8bb3578477b041db0c3fcbe4b6e0aac4728edda8193ce60c3c",
+    "tests/integration/test_r3_locator_materialization.py": "8b0d0172e31416421af13f7e280d8336e5443bfdb9f67812e6c67768a852440e",
+    "tests/integration/test_r3_parse_observability.py": "f79cfe565926433c65c55fd203d04288b7f510e80acde4412378048eb2cb1d83",
+    "tests/integration/test_r3_prepare_contract_alignment.py": "1c93f00c56acb69b2d7707152143074755641b9fb31a62f5cd89ffb08436aa36",
+    "tests/integration/test_r3_product.py": "7ccb6b8b13d3ee38d0139b4fbeb66fc53abc730102bec790b27903f222964046",
+    "tests/integration/test_r4_local_http.py": "66bff6e0a4c72cae0742b9a37de23fa6daa69305aefdf44e7e0730df4e980d8e",
+    "tests/integration/test_r5_local_reference.py": "e2e98b3ea232fb524f420b07d53b38bab1f23d8ef523ecb49620c7a5caf4aefc",
+    "tests/integration/test_r5_worker.py": "c35709e25060fd22070dfd517b20aed11afb1b43d9b15f506bd21bae168db12b",
+    "tests/integration/test_r6_exact_notion_evidence_real.py": "f202989799ade1afbfadd3b7a07e45d8407ceb42a511f971251270edddac8a3b",
+    "tests/integration/test_r6_p0_matrix_application.py": "f2fd429ffa41446c96d4047c500f82f0f8ceb216d3d94b459647e4adb1386b29",
+    "tests/integration/test_r6_u1_exact_source_application.py": "15d1da6fa6f636a07ea86215dca248b692b22d19ad302f15e7de7f108ec1e720",
+    "tests/integration/test_sqlite_runtime_real_gate.py": "d04894325aaa1672456968f84d3ad1ee4047630def444a3a1d7cae5f6cf11530",
+    "tests/integration/test_stabilisation_r2_source_status.py": "ca3e36338b87b1e830320178b60df466a9de113a80daf3b75059b948a80db09c",
+    "tests/non_functional/test_retrieval_quality_real_gate.py": "c7591b461477ca8983d21ea1c2f71a6f24bcbfc7c36d181494510a5245c30309",
+    "tests/non_functional/test_semantic_retrieval_live_gate.py": "f971647244ea79b0e2f22ccfbfdc452e76868d292bc17ed2f08a2db26f851228",
+    "tests/non_functional/test_semantic_retrieval_offline_r1_gate.py": "f85112e84e0d42bd4db84bc8939c83be4f2491b4c007b4d990ccb65cb66dcee5",
+    "tests/support/conversation_fakes.py": "596a52914dbdb7de36a1af4e407b3ff0aa18fefd97131b1eb27f608424758eac",
+    "tests/support/historical_calibration_replay.py": "d972755d24b77af390d41b7e9e67f3d0689ddfe54e1cf486770e7210c15422bf",
+    "tests/support/historical_git_successor.py": "f6289459b084dcdaa4cd39f35b268f2639cb087455b2398914d1827840bd7681",
+    "tests/support/historical_guard_fixture.py": "cf8e5e11331a35d7e08a8f686cc7abbe64a829bef354767a47cf39aef2e6339e",
+    "tests/support/institutional_http_fixture.py": "cac893e6425ecc613ade03cea13bd9f4ef1b76cb0f7d5e9212e2dbdf15dc598a",
+    "tests/support/p0_generation_double.py": "29976a7a50fa8ddc9ad1e8ac76b2f4977d0e03cb388239d384de07ccbead5083",
+    "tests/support/r3_cap_a01_guard.py": "bf9de68f53e3227a05a09bda089972a2f1785f74f16d593fff495fda5a63a752",
+    "tests/support/r3_d3_fixtures.py": "fbd63ad54822fd9a36da54644d52fad95a708f79349f37a2a50db040822763f4",
+    "tests/support/r3_d3_scope_guard.py": "27f686fcd19d98241a135ecd09227f9ea679fcf322cd2c4508dd4c6c930e8db2",
+    "tests/support/r3_editorial_correction_guard.py": "cc98afaed47e6d45736d953a0494b13d43f1d4c32019492ffe0ef62c616c8b77",
+    "tests/support/r3_fakes.py": "b0fb4b78987bdb51d25fb15da4cfc7c6614e8204bc3a2f6b13a70f58c405c9aa",
+    "tests/support/r3_guard_oracle.py": "4dafa9dccd63d8a30a518fb5757bfbd1ab70361935bd9a80b3edb20bc01f5930",
+    "tests/support/r3_locator_fixtures.py": "433098c4445f8ba102e5a3f92cf30f339a081af61e9e0f7edfc89fef865b30c5",
+    "tests/support/r3_locator_materialization_guard.py": "777a36976277cee25cefe9b59e31d3708a4a7f40626d1c7a35e56891f043b74e",
+    "tests/support/r3_parse_observability_guard.py": "6cfd9afb207b7938a47ef173bb80881172c92668e8bde0955f777c5a417afcbf",
+    "tests/support/r3_portable_clone_guard.py": "c49d29577b361da3fd8fe6758c851c82f5dd2d8f857d2acef41bdaf0ff70884c",
+    "tests/support/r3_prepare_contract_alignment_guard.py": "894ffb34e71160bda89e10ae6c685b8a3e098e9868749633752bbc9b766216f1",
+    "tests/support/r3_serializer_8192_guard.py": "73f616ac465a836cdbcf5838b76c84639ad0d9e15158d51afef507259dbd036d",
+    "tests/support/r3_synthetic.py": "5f5cbc9e5394aa679a234571aab15074150d457d7331048c4e368e9f68417d71",
+    "tests/support/r4_scope_guard.py": "a07e32274e1294332882f38ad00f97b26697399a7f50d304cb6d133d8348a5fb",
+    "tests/support/r4_synthetic.py": "f8a348d528cf5372840fe02cf10baaf093137d1ba2931fbb1a69d886b663e55b",
+    "tests/support/r5_scope_guard.py": "b5e10a925e1f2de7c99d17fcb0b5ea63e32637d21084c655fd6b73371d6c7466",
+    "tests/support/r5_worker_guard.py": "1f96cf4bdf3aca6fad2a8001ef42a1e53bda7fcf7595f00f8f165f465a73d85c",
+    "tests/support/r5_worker_synthetic.py": "d083f8a54f5431bc9416087f8a04002df2ec317989a0c5faf3161befc5c876ab",
+    "tests/unit/test_assessment_bundle.py": "923b603fd4f9e2f5432fd988c9bad3b3da380e74877935d62d55c1ba0ad466bb",
+    "tests/unit/test_assessment_deterministic_validation.py": "349f4a22018d1c3c52e6747e84130528c302e23d324562c6ce81dda91cc43329",
+    "tests/unit/test_assessment_revision.py": "6ddaf299103511f0dce2d5af5c97dd56c67a18639f016323884497d68e177f9d",
+    "tests/unit/test_boreal_documentary_admission.py": "f4f31a19597e8d4fbfff5a589a4c430b84bd9a48d395accb2c6c012f9e20f550",
+    "tests/unit/test_boreal_documentary_mapping.py": "c706ca37efa0a8cacec0b84d105a5a6c098579d6eb0e62ed58bd3839bd4d335b",
+    "tests/unit/test_bts_institutional_preparation.py": "8247daf917077bfb298e6fbc9358e3c7fa306b27ea8dadaa3a6a59d5afbceff2",
+    "tests/unit/test_classroom_word_profile.py": "e5c0b63f984684c477f25c8abac33158d55fa19343e46a36c1fc81f9f2d18b39",
+    "tests/unit/test_conversation_wait.py": "757004dc00a448c7421fa16a120e50a1339dca6f1d6c1cc079b18ed75d38349a",
+    "tests/unit/test_course_chapter.py": "6b1d945f2927755100d861c339698f53f540113b852f3f7c5aad09728b73362c",
+    "tests/unit/test_course_contextual_media.py": "5b1db86bc73a4cc9c16909d16f1f37de24124ba6865b8917f068ec98d6901e16",
+    "tests/unit/test_course_media.py": "0670e705c2c33fc4c418864590e4e48e09af0942fa62f2df96c1fa00b6b4462f",
+    "tests/unit/test_course_media_persistence.py": "37bdffa9a0479f3a8bbe4c39dacfe1b7c8a3787e55a5f9ac398aa1387e91ab02",
+    "tests/unit/test_course_media_routing.py": "2ecc202c2a60b8e1f387fd0579f5feb15f4c568c54e6d0d3fc5ea17087fce7bb",
+    "tests/unit/test_cp645_reference_manifest.py": "304b7e3e1bf86c5fc70a8251dbab37381ed60622c63a0b00a67d592626b1bbff",
+    "tests/unit/test_diffusion_word_profile.py": "0e738e6824c716ba0634b14e038385048a6a64b0974bf66aee980e546c384da5",
+    "tests/unit/test_diffusion_word_v6.py": "555ade42d9ab476423416dcef4133661f7ff058ee7a34c5b9195a31bd044e393",
+    "tests/unit/test_h3_launcher_contract.py": "bed0157d24df1eda67e9c99151d988f16b36181ab281d655b58ec1ffc2835ba6",
+    "tests/unit/test_historical_git_successor.py": "aea6ba2ace2f246b2deba2d3576c5c79ac7aeefbc7be0d9f255185eb7e3654c3",
+    "tests/unit/test_institutional_provider_projection.py": "3b57e5e8629dc7556536f594919d655d9a1567f758596b968c19fd10a74bb34d",
+    "tests/unit/test_institutional_qualification.py": "209c2981ea95e2072f38be149260faeb9446862c2087cfc87285b08b2645e287",
+    "tests/unit/test_local_browser_product_routes.py": "9c9732646c37ac0af91078bb86d6e6fddd62383013c75d1035721ceba3f3e892",
+    "tests/unit/test_mega_closure_guard.py": "f029338d64d1ae880345bb75feaa879dede957829b9e2c4d265f3910e22fd9c0",
+    "tests/unit/test_mega_closure_review.py": "fcd38616efb5d3e532288582eff681f9056057aa525199d1b1d50db790a5a19d",
+    "tests/unit/test_mega_no_count_content_successor.py": "542a3671dc30deacd86281fb073c44136dfaf6da3ee9673a1dbe73eee7a91441",
+    "tests/unit/test_mega_question_section_binding.py": "338a67506d0ba11ae342e2b14c4b456daffd8f2e0cb0e08972961df6305222d9",
+    "tests/unit/test_mega_scope_disposition.py": "c043612dd28e8a643ce5cfb1d38c4012d999b2a01bcc9971b1fda6b801c1a0bc",
+    "tests/unit/test_p0_agentic_routing.py": "fea5d16ec58c33a924334145858b1694bac1b27a4cf268655f821e79ecd1c338",
+    "tests/unit/test_p0_content_projection.py": "476d358f97590e1f9284f685215aebd08cecb6ed4b34e8fbf743e35b35b3dc39",
+    "tests/unit/test_p0_creation_contract.py": "43cd55ebe27bd7a93048dd2e4aef8bf28e3906ba09956a959d4abb64f784076f",
+    "tests/unit/test_p0_selected_source_boundary.py": "ed94317ec28650733d37970d53af5751fdaa4661bc2e918d8e8806fe4c6caa0e",
+    "tests/unit/test_pedagogical_calibration_r3b_r3.py": "7ebacfb37d341e73ca7a4dbe44cb3e3bb973b5d8acf66f9b4a740d2056500618",
+    "tests/unit/test_pedagogical_calibration_r4_r3_r3.py": "ccb59fb4d3787fb2e42a497f25cfffa5fb66d53e38c5f5b39c8d4ff1aceb50b5",
+    "tests/unit/test_qualified_institutional_corpus.py": "88d3fb17189fbea0259f8a13be8b9a6048c08b838cdc19beddf71537254b9362",
+    "tests/unit/test_r3_assets.py": "28466cbb35d68b13904d8ab0d9d8a41b7179465b65f5b6fa02aed7bc8929c390",
+    "tests/unit/test_r3_cap_a01_targeted.py": "dc64b4772a5e2d3c7f7332acd4ea3fbd703efdf69e11e5733b8910b7e6a0f6b4",
+    "tests/unit/test_r3_commands.py": "3c77e9cc25f2a9724f6a4cd50d3dc93c8d4f0e2764007e1b78241ece4c03a072",
+    "tests/unit/test_r3_d3_scope_guard.py": "acd494865c473ba08a3335a97038b107e82239b697f133a6c9aa65e02be36962",
+    "tests/unit/test_r3_dependency_refusal.py": "f7d3ef21d9fc52a56f06213e97f49cccfee203f6b7ccb250215591bf835a031b",
+    "tests/unit/test_r3_editorial_corrections.py": "ac3f3b06927f5110a2b924c133c50d8318f60f8151b6648e6e8246c1bdcfc48b",
+    "tests/unit/test_r3_editorial_validation_scope.py": "7a864f3547a4bdd44fac91e02fe4e90f2734999a862cd7863aff271c3685bf6a",
+    "tests/unit/test_r3_generation_mapping.py": "7c7d1c374a58aa700b6d9ba429110429c4b85c7344cf68ab8b767e71e533c792",
+    "tests/unit/test_r3_harden_execution.py": "dcac97eb098a1af746147184903af0f5de8bc5f95230f364cd4f7b9d3e82a2e3",
+    "tests/unit/test_r3_harden_wire.py": "26185aeb28722a4cb3b21f2a9e5037b6ddfdea3689614fcc8ca84438fa85be9c",
+    "tests/unit/test_r3_locator_materialization.py": "ccfa9716f8206b590d2cf2cfbd3763630b1ae26b6cd5933f60107982192c1f7c",
+    "tests/unit/test_r3_parse_observability.py": "0af38899d409488492133f3a332816292aebe45a102bb66d89fa22e65991035f",
+    "tests/unit/test_r3_portable_clone_guard.py": "e1068216c0a67c6b8a395073c1d8b78fe0fa9f36962314975f1705e60ef57a46",
+    "tests/unit/test_r3_prepare_contract_alignment.py": "6de949dc6c9c14204cad38a90e3b819a5185f8d2b8dfaffd0c0a5cd9b3e5b5f0",
+    "tests/unit/test_r3_prepare_serialization.py": "a726ed24e2bda8a1b7683b0fa7bd6751261cbafc1d1c6682b75ef549f1820abe",
+    "tests/unit/test_r3_restoration.py": "3b7207b16a8ddf1520e8a08d608196d80a514a46cfa9c061aed727b8a702dde6",
+    "tests/unit/test_r3_review_mapping.py": "4b799fb4f681acf7539be091556d710830efbd67fbc2fda859942b722a76b884",
+    "tests/unit/test_r3_routes_security.py": "b3c99b5edebd079752a31a7a742d2952a76d335e1fd824992d67600d6a498afc",
+    "tests/unit/test_r4_promotion.py": "ee7384693ea5dfc7f6b26e183cb3b98e132be7488ee247996439d478a9621eb2",
+    "tests/unit/test_r4_saved_production.py": "7c1d6511cde8e055dca9e15683d17efc8df7925a352d7b2d1a6d253c53b4a919",
+    "tests/unit/test_r4_scope_guard.py": "16c89e411423ed065cc946a4ef9f6ca4ac67d3048d82031442a5b4ba7e66ea99",
+    "tests/unit/test_r4_word.py": "3b18777320a0fb78658cd1b4d4ed0b57c21d3a1a672fa5c79ca24845bc10c37b",
+    "tests/unit/test_r5_scope_guard.py": "1594986da4edb3978acdc7b66a427f8d7a2d031471198d21f1acc3e3de8b93ff",
+    "tests/unit/test_r5_worker_guard.py": "09e74874aedd80982d825d0a5332db214f5fce8faea1c00ca0152b10dba2a663",
+    "tests/unit/test_r6_canonical_notion_catalog.py": "c89c6eaa4c80ea1e5f3a40aa3c27ead4cd8477bb55ce6a3b21d2622deb8b2762",
+    "tests/unit/test_r6_exact_notion_evidence.py": "7a5d473fe0eb3d7e0c15df82a3c4ec3fdbb231ef58c3ec6ad2a5ef11c83a1c72",
+    "tests/unit/test_r6_p0_contract.py": "bba1a6cafcf493cb755f5e2020772596ca22e6315ddb27c16fc97ff8981d6b82",
+    "tests/unit/test_r6_p0_reassembly.py": "e4450d6486f2412b30c492779e9f0209df7bd4af4b0814adc2d5f3049feed4dd",
+    "tests/unit/test_r6_readable_word.py": "df8fa9effac591ee81e76e316c5b42db65f038a1390c4d584ef4a7b0180c0d53",
+    "tests/unit/test_r6_recipe_guard.py": "229d09990dca0bd982726e7b621a7f19b5b08a326d2f5dbc4c9266e252871d7e",
+    "tests/unit/test_r6_saved_p0_documentary.py": "5c63237b844a30c0c778e0ff4175c1cf1ae14949f7ec363557b5f56e81cfadba",
+    "tests/unit/test_r6_u1_exact_source.py": "8655c96535c91e3153c283903666fa77a2b32f98b1cd1e2d748fc3d4638792a6",
+    "tests/unit/test_review_metadata_successor.py": "ebffcbd1ed2a98bb1afb409cb4cac957594fb96955b0fc587290971170110210",
+    "tests/unit/test_stabilisation_active_guard.py": "0aad38dc9bb6bdb010ec45743c878da39d152506258345f65571b82c6a5b49ab",
+    "tests/unit/test_stabilisation_private_source_exclusions.py": "f16fd42b346a608e051476812a7f7b4205381b243199c06c505a8ae203a7ebb5",
+    "tests/unit/test_stabilisation_r2_harden_identity.py": "023d125ca6ed3bc8c4d0be0629f3ec1d2c55bba47fa7ced4935c48aff0a7c071",
+    "tests/unit/test_stabilisation_r2_operation_identity.py": "690578101b1acb0cd56a421f36f39deeb026a19576e47b1529b9e526d5c02f27",
+    "tests/unit/test_stabilisation_r2_p0.py": "fc50447e6893272c7659624481268a7d0625e0aacd8056ae1874a6f37c60576d",
+    "tests/unit/test_stmg_active_guard.py": "bf9128daf1ffdeb4405ff3c128e6aeca409546955a2c61b26d3b22a64677689c",
+    "tests/unit/test_stmg_institutional_alignment.py": "618a2aabff6a8a544735ca1463cc4b84671b632782982a034667dd8542e1d4dc",
+    "tools/launch-local.ps1": "4cdc708d6f9f4a2f3e026cb3cc0a3b6ac8af4c2dc4551096fd213493c7d5bfd6",
+    "tools/mega_no_count/README.md": "b91077d8d055b341e1047a7caba2c848941040cde69223ac062954985f762062",
+    "tools/mega_no_count/mega_content_ids.py": "e7b9130d18fa06f5bc17e608324af406ae46f18d460380d27ada1afc2f656dc1",
+    "tools/mega_no_count/mega_f02_windows_handles.py": "9bc9ae2037d5e2345b1a9a176b0e0fe960e12a1563b2110e273d19072a9680c8",
+    "tools/mega_no_count/mega_no_count_continuation.py": "99a256da50b3f2cf1fc58301a8c4ac3279ee61865397e5a13154071bda362d35",
+    "tools/mega_no_count/mega_no_count_gate.py": "d1983a25d15512d8ed333c531c3367debccd9ae06e751a2cc2852d5c781051c1",
+    "tools/mega_no_count/mega_no_count_remaining.py": "c14444f3ad66613428b35d657542d58e52953a921308bce75a950dfe78693b26",
+    "tools/mega_no_count/mega_question_section_binding.py": "1deee565eaa719e9bc7dec72b2f31c6f7c50ff8a1a4e9ec16c8f4299dfe99fea",
+    "tools/mega_no_count/mega_retained_inputs.py": "c1fdcf4ab1d8caf695cf1c62bd03272d7d7ca46c8af78e5083067a41e1e39335",
+    "tools/mega_no_count/mega_tariff_fetch.py": "d1475340356f269563696f942d544f1895b6f90c9953df577507274af7b740cf",
+    "tools/mega_no_count/mega_tokenizer_count.py": "0df0f1c3f8351e8f7d4c8d045749cacccd16e3771b612955a6a7f2e66bcd34cf",
+    "tools/r6/run_all_notions.py": "9f29a14426ab0d74ac64d35472d6ab0ac5364fca14669c5b308f14b3c9746275",
+    "tools/tests/p0_conversation_shell.test.cjs": "c271c8d8233d6dffc5c98f6a3e64735278c2f1a7cba99c1bbfd625da8953ba94",
+    "tools/tests/p0_ui_request.test.cjs": "6f8f04cab090d652dff9f8cb81de1d5a13654e0781224ab448dc245dae758b50",
+    "tools/tests/stmg_context.test.cjs": "e8328e3ee41f01596c1cf5c6d6ca9bac3a65345b226c0ec25c4a17bf67604e83",
+    "backend/modules/work_orchestration/ports/inbound/production_read.py": "b164cedbc87b717db06636173bc582c53a4a4a1641c571318115a4d20668c1c3",
+    "backend/modules/pedagogical_context/contracts/dto/conversation_context.py": "02cbdf1f24286b6b04f3891e93d8c7a36b07e64863f40c1e206271097ba224d3",
+    "backend/modules/work_orchestration/ports/outbound/production_store.py": "5701bdaf9cfb463c6da546adf4b6f596d2bcbd6b33fd1296afead55f9d58f73b",
+    "tests/unit/test_conversation_context.py": "28bcdc18ab2292e79225798f54bd296c157730904cd59fa27980efcdc06bf4e0",
+    "backend/modules/work_orchestration/application/queries/read_production.py": "443b14bf8669277bb9f99c4f6bdae68f1135581cf694e0d6ac9a49a797e6cddb",
+    "docs/development/phase_12_18_h2_r2_generation/LIVE_GENERATION_SCOPE.json": "ea3b57a7309e639554be5fc417349ce6eac228c384db71da221b38acbab544fa",
+    "tests/unit/test_production_read.py": "9870dcf08c7a1b526dc8dd7624e82e2d88cc7d7bddcf48d8ef565cdc364dc922",
+    "backend/adapters/inbound/api/conversation.py": "6306a4f47c228764678743bc62cb0cbd9d1f46a494f060586bf7ce32c40c5678",
+    "backend/modules/work_orchestration/contracts/dto/production_read_view.py": "a01e51387c11c6749c57f1f1d25a41121e72cc3d5d1e0c713c7ec57800a96b70",
+    "tests/unit/test_conversation_routes_security.py": "50a926724111f9752ae16ee37aa6ee319b671301ba5394dba78f1025b010ece3",
+    "tests/calibration/pedagogical/repair_tranche_v4_2.py": "9b85e5496ed9177bfd11fff896b7bd9bd87b4bf919216c6327172a784cf952d9",
+    "tests/support/conversation_synthetic.py": "7b3f4735b7a645ed7b4e53d4d6905c144b09ebcdd0db5df581d8ad4f3734f0fd",
+    "tests/unit/test_conversation_assets.py": "6568a03cc87483788a563bc67c16e47afaa89c1041f79f9a78b176e679d6359a",
+    "backend/modules/work_orchestration/application/dto/input/read_production.py": "ae2b6357968d43ecf8e32d1e0b5a3ac442531cd11fd61841ebe254acd85c1546",
+    "tests/integration/test_conversation_http.py": "42f7bd656ff794c7c8854156afed00860c48b6597897069c90bbc56179c510c7",
+    "tests/integration/test_conversation_product.py": "a366ebc01af116ad239ca1d94258a84f38ee97e1603a2d911db71d16eef35030",
+    "backend/adapters/inbound/api/production.py": "2260eb2b36a48da075f70bbe3197103b8590de94fb8cee0de87f49c882a905f1",
+    "tests/architecture/test_repository_hygiene_b06.py": "8ceffb8d460a759ec90371e246aef43d346801ca6fc064c8ba2877d439ae51e9",
+    "backend/adapters/outbound/system/conversation_job.py": "87c570813f2ef72c968bbab65c299016b1c10f998ec07c5480430865104da618",
+    "backend/modules/work_orchestration/ports/outbound/generation_job.py": "35a4ff33b29c25d869d0bda7d7ff8f7c3ff220d3ae358325dc4eafda41115ce4",
+    "backend/adapters/inbound/api/local_browser.py": "03686d1539e4826fb7fc7fe9f936f704989f454460ef23539b20a1e3e543c4ef",
+    "backend/adapters/inbound/application/production.py": "5367785f507da237f5fd408294c76fb5698fbb6aead78addd171513b27515aa0",
+    "docs/development/phase_12_18_h2_r2_generation/IMPLEMENTATION_EVIDENCE.md": "f9aa511c0a05367a34f9326c4f29123607779b62c256dbf563ba443f2504460b",
+    "backend/modules/work_orchestration/contracts/dto/conversation.py": "4a08dc4b38b5507b0266996e0459a6c103a353fa8fd3d1b7ed20c6daf1e1bf00",
+    "backend/modules/work_orchestration/application/services/conversation.py": "ea1d7f9b18b13660f9a7d0e0abd0b43a3ccd0548ba0b39dbc3651d109437d2f6",
+    "backend/adapters/outbound/openai/transport.py": "9d46fc6874ab05693e3159893caa3f2c21602613d150ae35c430fec45dd8c7d1",
+    "docs/development/phase_12_18_h2_r2_generation/MANIFEST_SHA256.txt": "212c8cbf6ef21145d8fd73add3b607fe55274c66462876c0c5d99fa07f26b0ee",
+    "tests/unit/test_conversation_application.py": "e28add30b67269fc4c5ad4d82048e1cdaf23bdf0d0b7e99f7f3e7d46b492c2a1",
+    "backend/modules/work_orchestration/ports/inbound/conversation.py": "b761e95956096994db2be3c53f7978cb43a92cfe041bf88622744a6e264ab426",
+    "docs/development/ADR_STABILISATION_R2_R2_OWNER_COVERAGE_2026-10-07.md": "f800a22a0aed4a0e8dc1fac14a6d1eac8ffdf99beac51ea912b1a928430ab11f",
+    "backend/agent_runtime/contracts/planning/delegation.py": "97624ff541157d5bd2b0732958f0b7bfe959cb88bf3225d0b2dc4516c7bd7efe",
+    "backend/adapters/outbound/openai/contracts.py": "2d9829b1fbf18a2e87dcddff386682e8c92fa976104514bbc11683ae5a2429c2",
+    "tests/unit/test_conversation_generation.py": "0fba05cbe7681e12afe162b3dfee9917adcf34b95874221cef1f3942a4b7efe7",
+    "backend/modules/pedagogical_design/ports/inbound/create_conversation_draft.py": "e2f4b8a6bf074698d88abe98f599cf53851484f9ce269557bf1595765d028246",
+    "architecture/adr/ADR-conversational-generation-product-boundary.md": "a5576aab15c17b269b62b7efb52f5e8baf1d15e5c92762f78b0b0fe68a387a82",
+    "backend/modules/pedagogical_context/application/services/conversation_context.py": "a320bb5df2ca159384830df9ed98ab2624e3c2bbdb264c46482a264b7980ffcc",
+    "tests/architecture/test_calibration_tooling_boundary.py": "dfa0f3ad3e7db0c12a6b4ed349f76f722f3e1326133e02f451a28e9c6dd2b39a",
+    "tests/unit/test_openai_conversation_mapping.py": "ff459b8caf7c73d72fd9c0c6ffc1b0b2ea244c3ff70c9f7a45c3181a875670b5",
+    "backend/adapters/inbound/application/conversation.py": "b23c8188b987b6c686bcb937df0f9f6ed537e938326bd1aab229250acb261cb6",
+    "docs/development/phase_12_18_h2_r2_generation/CONVERSATION_HTTP_LOCAL_V1.json": "b65f7927ff0b8605be3038600f365ada359680596051a57ddae5282d81ce5332",
+    "backend/modules/work_orchestration/ports/outbound/conversation_store.py": "4adc41d6a46ff5f4642bb835d95e7a8d8be2f2a8c0cb3e4f35757073027300a9",
+    "tests/unit/test_pr4_quantitative_application.py": "cead6f573b84922d0241e9d81788839f05c975db611058ba32458c222b1d2458",
+    "tools/tests/pr4_lifecycle_regressions.test.cjs": "5904d2d89d13625fbb97b0824a3e5ab5611106d41deb70fe794c3a1c3116f72e",
+    "docs/development/PR4_CORRECTIONS_2026-10-08.md": "7cccb145b5591c97f6e984a3f9fcfdcd191b4cbb9104bc5789ab6953aca03911",
+    "tests/unit/test_pr4_readonly_seed_copy.py": "e7a77072fa43c9d9a5338ba011f6904c97fb4d8019edbe3a9e71ab51f11b7285",
+    "tests/architecture/test_sqlite_seed_runtime_lifecycle_fitness.py": "836463fe50e3b6a18a21b8738cf57e70066e046fb187189e39530d837898cd6f",
+    "backend/adapters/inbound/application/runtime_schema_inspection.py": "4c2c43d2f5ee4d098e95ce134574e637d0310eb0ad3e71c03432cfad34021ddf",
+    "backend/adapters/outbound/persistence/runtime_schema_inspection.py": "6b015acdf28d81aa2102784955e371154af99bcc239b52759093c3f5e612f69b",
+    "backend/infrastructure/composition/factories/runtime_schema_inspection.py": "a788083f486ec449fa6c5fd30833c916ce73caaaecf02077c1f213999d11de52",
+    "backend/modules/local_provisioning/application/inspect_runtime_schema.py": "da07bbfa28ea436da7bedee819ddc0cad370fdcd2e87a006d0fd0aa891e14046",
+    "backend/modules/local_provisioning/application/runtime_schema_snapshot.py": "80b72011e31386ced39b29f822068a41620c8b57914d58560e29be444505738a",
+    "backend/modules/local_provisioning/ports/runtime_schema_inspection.py": "c2ea62928f7bbc25efc4052625fd5c5702f0e4c914b557815cec0acd57768cd8",
+    "tests/unit/test_runtime_schema_inspection.py": "6d1af8df909543babd095b74a41c7fdd69326ab437ef23c320eb4d1270c4d51a",
+    "backend/adapters/inbound/application/sql_successor.py": "28ff0591b8f8eb05eb6e529c7086ec47d7b468cce8e93b73fa854f86b76802df",
+    "backend/adapters/outbound/persistence/sql_successor.py": "e1306c7f6ec09e48168698e9313fff05e2188ad9d3f3807b205d612d9c037497",
+    "backend/adapters/outbound/persistence/sql_successor_sql.py": "c2ffa2bb76e258ceb4bcb6b5b53367c7bf5fe714debaad0aa83c06d58a858780",
+    "backend/adapters/outbound/persistence/sql_successor_stability.py": "d67dcca2b5a41dbadcfd589faac6898d36af69278f24823a2b2b6c201b0e0a01",
+    "backend/infrastructure/composition/factories/sql_successor.py": "676a345d287cd9f1726fb34399e18a43c46ce296b67689b8283a3e3834cd6ff1",
+    "backend/modules/local_provisioning/application/sql_successor.py": "25c144c842164903d56afc8d59730cb4bcc671f829c9e5c056a32792109cb4d1",
+    "tests/support/sql_successor_fixture.py": "ce88f0b28db2797b401bbc1354df605c9889fbd763d1fc680153ecfe67dfb993",
+    "tests/unit/test_sql_successor.py": "51317f5c0248edb7146f575ae80b5c73d5dab237ec5e62e18bce68eca1e22c25",
+    "backend/modules/local_provisioning/application/use_cases.py": "e8c8fe4ed0650362a06feb9b0f80fea107de96d83e511d4073a4332ebfd0c028",
+    "tests/unit/test_local_provisioning_application.py": "b4c2df1acd670dad007479582e60a71cb11c5524a8ee71e13878852a58516da9",
+    "architecture/adr/ADR-sql-successor-rollback-rback83.md": "9f7d243ef80fab22fb2ca1a3ad31800b510146ae0df0edd46e7c31a4fecb32c0",
+    "backend/adapters/inbound/application/sql_rollback.py": "6b20ffe49a6e43ef13c8cef9fc2561d5f1a1b2bfb974b8b93ff90379c74627aa",
+    "backend/adapters/outbound/persistence/sql_rollback.py": "53436020b5a04d6f974b403702b3c96c32b14faa743cfc1a5ceffe60adfc6d37",
+    "backend/adapters/outbound/persistence/sql_rollback_handles.py": "4430b5734b95d5fbbee8c3537e06f2583fa0143080a47faaa5647f2ff8031241",
+    "backend/infrastructure/composition/factories/sql_rollback.py": "b995bcf928f0fb12ab0b0b0c392a81a5c3ffa63147ca64d4c0fec0327a4bc2db",
+    "backend/modules/local_provisioning/application/sql_rollback.py": "a9186255d35fff48ea242191e0e80011db4a696843e7c1033aa78873a071830e",
+    "tests/support/sql_rollback_worker.py": "9eddcda6b50dde804705bfc20a4f35c2c10e05fc03f454cb159d5bf6170a4763",
+    "tests/unit/test_sql_rollback.py": "bd6b8ef73330fbf6d3acf8a1e6f4bab78052b2bfc0a1cc0d405d1bc406ad37e8"
+  },
+  "private_exclusions": [
+    "docs/development/phase_12_18_h1_audit_cumulatif/01_BASELINE_ET_PERIMETRE.md",
+    "docs/development/phase_12_18_h1_audit_cumulatif/02_MATRICE_CUMULATIVE_12_1_12_17.json",
+    "docs/development/phase_12_18_h1_audit_cumulatif/03_ETAT_INTEGRATION_PRODUIT.md",
+    "docs/development/phase_12_18_h1_audit_cumulatif/04_ECARTS_ET_PREPARATION_RECETTE.json",
+    "docs/development/phase_12_18_h1_audit_cumulatif/LIVRABLE_12_18_H1_AUDIT_CUMULATIF.md",
+    "docs/development/phase_12_18_h1_audit_cumulatif/MANIFEST_SHA256.txt",
+    "docs/development/phase_12_18_h1a_sources_et_evolution_guard/01_SOURCES_ET_ECARTS_RECONCILIES.json",
+    "docs/development/phase_12_18_h1a_sources_et_evolution_guard/02_PROPOSITION_EVOLUTION_GUARD.md",
+    "docs/development/phase_12_18_h1a_sources_et_evolution_guard/03_PAQUET_DECISION_ET_PLAN_H2.md",
+    "docs/development/phase_12_18_h1a_sources_et_evolution_guard/LIVRABLE_H1A_SOURCES_ET_GUARD.md",
+    "docs/development/phase_12_18_h1a_sources_et_evolution_guard/MANIFEST_SHA256.txt",
+    "docs/development/phase_12_18_h2_r2_generation_preparation/01_CONTRAT_R2_GENERATION_CONVERSATIONNELLE.md",
+    "docs/development/phase_12_18_h2_r2_generation_preparation/02_INVENTAIRE_GUARDS_TESTS_PERMISSIONS_R2.json",
+    "docs/development/phase_12_18_h2_r2_generation_preparation/03_DECISION_ET_PLAN_EXECUTION_R2.md",
+    "docs/development/phase_12_18_h2_r2_generation_preparation/MANIFEST_SHA256.txt",
+    "docs/development/phase_12_18_h2_r3_review_modify_preparation/01_CONTRAT_R3_REVIEW_VALIDATION_MODIFICATION.md",
+    "docs/development/phase_12_18_h2_r3_review_modify_preparation/02_INVENTAIRE_FICHIERS_GUARDS_R3.json",
+    "docs/development/phase_12_18_h2_r3_review_modify_preparation/03_DECISION_ET_PLAN_EXECUTION_R3.md",
+    "docs/development/phase_12_18_h2_r3_review_modify_preparation/04_SCENARIO_ACCEPTATION_R3.md",
+    "docs/development/phase_12_18_h2_r3_review_modify_preparation/LIVRABLE_PROPOSITION_R3.md",
+    "docs/development/phase_12_18_h2_r3_review_modify_preparation/MANIFEST_SHA256.txt",
+    "docs/development/phase_12_18_h2_recherche_locale_preparation/01_BASELINE_ET_REUTILISATION.md",
+    "docs/development/phase_12_18_h2_recherche_locale_preparation/02_CONTRAT_RECHERCHE_LOCALE_PROPOSE.md",
+    "docs/development/phase_12_18_h2_recherche_locale_preparation/03_INVENTAIRE_FICHIERS_ET_GUARDS.json",
+    "docs/development/phase_12_18_h2_recherche_locale_preparation/04_DECISION_ET_PLAN_IMPLEMENTATION.md",
+    "docs/development/phase_12_18_h2_recherche_locale_preparation/LIVRABLE_PROPOSITION_RECHERCHE_LOCALE.md",
+    "docs/development/phase_12_18_h2_recherche_locale_preparation/MANIFEST_SHA256.txt"
+  ],
+  "historical_successors_count": 32,
+  "historical_successors_sha256": "bc018a9ac3a7f4654b92d39f87d4fbb62bc7697858e34ddbcdac176f8d0583ff",
+  "source_snapshot_review_required_before_pin": true,
+  "coverage": {
+    "all_owners_positive_and_mutations": "tests/unit/test_stabilisation_active_guard.py::test_active_owner_working_and_real_index_mutations",
+    "manifest_scanner_mutations": "tests/unit/test_stabilisation_active_guard.py::test_guard_or_manifest_substitution_rejects_all_active_owners",
+    "real_cumulative_delta": "tests/unit/test_stabilisation_active_guard.py::test_active_delta_uses_real_git_inventory_without_archival_exemption",
+    "exact_lu_delta": "tests/unit/test_lu_product_active_guard.py::test_lu_registry_equals_real_delta_and_only_admitted_owners_change",
+    "preserved_historical_entry": "tests/unit/test_lu_product_active_guard.py::test_lu_entry_and_complete_predecessor_are_preserved",
+    "registry_and_coordinated_manifest_mutation": "tests/unit/test_lu_product_active_guard.py::test_lu_registry_substitution_never_acquires_admission",
+    "exact_private_exclusions_and_synthetic_index": "tests/unit/test_stabilisation_private_source_exclusions.py"
+  },
+  "provider_calls": 0,
+  "runtime_reads": 0,
+  "runtime_writes": 0,
+  "historical_results": "UNCHANGED",
+  "refresh_scope": {
+    "previous_commit": "a31ff4d250f8aeae82118547fb4057bb5082d1f9",
+    "delta_from_previous": [
+      "backend/adapters/outbound/generation/openai/p0_product_rejected.py",
+      "backend/adapters/outbound/generation/openai/p0_product_unknown_continuation_contract.py",
+      "backend/adapters/outbound/generation/openai/p0_product_unknown_continuation_ledger.py",
+      "backend/infrastructure/composition/factories/p0_rejected_profile.py",
+      "backend/infrastructure/composition/factories/p0_unknown_continuation.py",
+      "backend/modules/work_orchestration/contracts/dto/p1_campaign_inspection.py",
+      "backend/modules/work_orchestration/contracts/dto/p1_operation_intent.py",
+      "backend/modules/work_orchestration/contracts/dto/p1_unknown_continuation_snapshot.py",
+      "docs/development/ADR_P1_UNKNOWN_OPERATIONAL_CONTINUITY_2026-10-16.md",
+      "tests/integration/test_p0_product_unknown_continuation_authority.py",
+      "tests/integration/test_p0_product_unknown_continuation_faults.py",
+      "tests/integration/test_p0_product_unknown_continuation_native.py",
+      "tests/support/lu_product_guard_registry.json",
+      "tests/support/r6_scope_guard.py",
+      "tests/support/r6_scope_manifest.json",
+      "tests/unit/test_p0_product_unknown_continuation.py"
+    ],
+    "guard_functions": "UNCHANGED",
+    "no_effect_authority": true
+  },
+  "exact_delta_review_sha256": "f0be3fef0587ff650db2fd6d0ea8a2cd0f7c6e9ce4c184d2c56b20db8c98ef16",
+  "exact_delta_reviewer": "/root/operational_prior_review"
+}

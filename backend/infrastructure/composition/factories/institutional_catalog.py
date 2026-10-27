@@ -16,13 +16,14 @@ from backend.modules.knowledge_reference.application.queries.stmg_alignment impo
 
 
 def inspect_institutional_catalog(target: Read15RuntimeTarget, *, read: bool = False,
+                                 treatment: bool = False,
                                  scope: tuple[str, str, tuple[str, ...], str | None] | None = None) -> dict[str, object]:
     target.validate()
     connection = connect_sqlite(target.runtime_path, readonly=True, allowed_root=target.data_root)
     try:
         inbound = InstitutionalCatalogInbound(InspectInstitutionalCatalog(
             SQLiteInstitutionalCatalogAdapter(connection)))
-        result = inbound.resolve_scope(version_ref=scope[0], element_ref=scope[1], notion_refs=scope[2], local_year=scope[3]) if scope else inbound.read() if read else inbound.inspect()
+        result = inbound.resolve_scope(version_ref=scope[0], element_ref=scope[1], notion_refs=scope[2], local_year=scope[3]) if scope else inbound.treatment() if treatment else inbound.read() if read else inbound.inspect()
     finally:
         connection.close()
     target.validate()
@@ -48,7 +49,8 @@ def bts_alignment(target: Read15RuntimeTarget, *, selection: dict[str, object] |
 
 
 def stmg_alignment(target: Read15RuntimeTarget, *, selection: dict[str, object] | None = None,
-                   reference: dict[str, object] | None = None, matrix: bool = False) -> dict[str, object]:
+                   reference: dict[str, object] | None = None, matrix: bool = False,
+                   mode: str = "LEGACY") -> dict[str, object]:
     target.validate()
     connection = connect_sqlite(target.runtime_path, readonly=True, allowed_root=target.data_root)
     try:
@@ -56,7 +58,7 @@ def stmg_alignment(target: Read15RuntimeTarget, *, selection: dict[str, object] 
         if selection is not None:
             if reference is None:
                 raise ValueError("P0_INSTITUTIONAL_REFERENCE_REQUIRED")
-            result = inbound.resolve(selection, reference)
+            result = inbound.resolve(selection, reference, mode=mode)
         else:
             result = inbound.matrix() if matrix else inbound.catalog()
     finally:

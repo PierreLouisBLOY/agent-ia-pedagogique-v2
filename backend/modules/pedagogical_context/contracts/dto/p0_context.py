@@ -15,6 +15,8 @@ from backend.shared_kernel._safe_data import freeze_safe_mapping
 
 P0_CONTEXT_CONTRACT = "R6-P0-CONTEXT-1.0"
 P0_INSTITUTIONAL_CONTEXT_CONTRACT = "P0-CONTEXT-2.0"
+P0_COURSE_CONTEXT_CONTRACT = "P0-CONTEXT-COURSE-3.0"
+P0_NOTION_COURSE_CONTEXT_CONTRACT = "P0-CONTEXT-COURSE-4.0"
 P0_RESOURCE_TYPES = frozenset({"COURSE", "EXERCISE", "QUESTION_SET", "ASSESSMENT"})
 P0_QUESTION_MODES = frozenset({"OPEN_QUESTIONS", "QCM", "QUIZ"})
 P0_LEVELS = frozenset({"FIRST_STMG", "FINAL_STMG", "BTS_CG_YEAR_1", "BTS_CG_YEAR_2"})
@@ -55,9 +57,11 @@ class P0Context:
     data: Mapping[str, object]
 
     def __post_init__(self) -> None:
-        institutional = self.data.get("contract_id") == P0_INSTITUTIONAL_CONTEXT_CONTRACT
-        data = object_data(self.data, _FIELDS | {"institutional", "institutional_resolution", "local_progression"} if institutional else _FIELDS)
-        if data["contract_id"] not in {P0_CONTEXT_CONTRACT, P0_INSTITUTIONAL_CONTEXT_CONTRACT}:
+        course_choice = self.data.get("contract_id") in {P0_COURSE_CONTEXT_CONTRACT, P0_NOTION_COURSE_CONTEXT_CONTRACT}
+        institutional = self.data.get("contract_id") in {P0_INSTITUTIONAL_CONTEXT_CONTRACT, P0_COURSE_CONTEXT_CONTRACT, P0_NOTION_COURSE_CONTEXT_CONTRACT}
+        fields = _FIELDS | ({"institutional", "institutional_resolution", "local_progression"} if institutional else set())
+        data = object_data(self.data, fields | ({"course_format"} if course_choice else set()))
+        if data["contract_id"] not in {P0_CONTEXT_CONTRACT, P0_INSTITUTIONAL_CONTEXT_CONTRACT, P0_COURSE_CONTEXT_CONTRACT, P0_NOTION_COURSE_CONTEXT_CONTRACT}:
             raise ValueError("P0_CONTEXT_CONTRACT")
         if data["resource_type"] not in P0_RESOURCE_TYPES:
             raise ValueError("P0_RESOURCE_TYPE")
@@ -69,6 +73,13 @@ class P0Context:
             raise ValueError("P0_QUESTION_MODE")
         if data["level"] not in P0_LEVELS:
             raise ValueError("P0_LEVEL")
+        if course_choice:
+            if data["contract_id"] == P0_NOTION_COURSE_CONTEXT_CONTRACT and data["course_format"] != "CHAPTER":
+                raise ValueError("P0_NOTION_COURSE_FORMAT")
+            if data["resource_type"] != "COURSE" or data["course_format"] not in {"CHAPTER", "EXPLAINED"}:
+                raise ValueError("P0_COURSE_FORMAT")
+            if data["course_format"] == "CHAPTER" and not str(data["level"]).endswith("STMG"):
+                raise ValueError("P0_RICH_COURSE_LEVEL_UNSUPPORTED")
         _bounded_text(data["discipline"], 200 if institutional else 100)
         if institutional:
             from backend.modules.pedagogical_context.contracts.dto.bts_institutional import (
@@ -93,6 +104,10 @@ class P0Context:
                 for value in object_data(progression, {"chapter", "sequence", "week"}).values():
                     if value is not None:
                         _bounded_text(value, 200)
+            if course_choice and data["course_format"] == "CHAPTER":
+                chapter = object_data(progression).get("chapter") if progression is not None else None
+                if not isinstance(chapter, str) or re.fullmatch(r"[1-9][0-9]?", chapter) is None:
+                    raise ValueError("P0_RICH_COURSE_CHAPTER_NUMBER")
         _text_items(data["topics"], 16 if institutional and data["resource_type"] == "COURSE" else 8)
         _text_items(data["objectives"])
         if data["difficulty"] not in P0_DIFFICULTIES:
@@ -138,3 +153,8 @@ class P0Context:
         resolution = self.data.get("institutional_resolution")
         if resolution is None or object_data(resolution).get("status") != "RESOLVED_ADMITTED":
             raise ValueError("P0_INSTITUTIONAL_CONTENT_GAP")
+
+    @property
+    def course_format(self) -> str:
+        """Historical contexts retain their explained wire; choices are explicit."""
+        return str(self.data.get("course_format", "EXPLAINED"))

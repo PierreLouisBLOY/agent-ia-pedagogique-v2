@@ -17,7 +17,7 @@ const sandbox={p0:{institutionalCatalog:{frames,notions:[{notion_ref:'notion:sha
   p0Element:node,document:{createElement:()=>node('new-'+Math.random()),getElementById:node}};
 vm.createContext(sandbox);
 vm.runInContext(source.slice(source.indexOf('function p0Context()'),source.indexOf('p0Element("family").addEventListener')),sandbox);
-node('family').value='COURSE';node('topics').value='Notion partagée';node('objectives').value='Expliquer';node('difficulty').value='STANDARD';
+node('family').value='COURSE';node('course-format').value='EXPLAINED';node('topics').value='Notion partagée';node('objectives').value='Expliquer';node('difficulty').value='STANDARD';
 for(const frame of frames){
   node('level').value=frame.level;sandbox.p0InstitutionalOptions();
   assert.equal(node('frame').children[0].value,'','No implicit subject selection');
@@ -28,7 +28,8 @@ for(const frame of frames){
   assert.equal(node('capacities').children.length,1);
   assert.equal(node('capacities').children[0].value,'capacity:'+frame.frame);
   node('depth').value='APPLICATION';node('program-notions').selectedOptions=[{value:'notion:shared'}];node('capacities').selectedOptions=[{value:'capacity:'+frame.frame}];
-  const context=sandbox.p0Context();assert.equal(context.contract_id,'P0-CONTEXT-2.0');
+  const context=sandbox.p0Context();assert.equal(context.contract_id,'P0-CONTEXT-COURSE-3.0');
+  assert.equal(context.course_format,'EXPLAINED');
   assert.equal(context.institutional.program_ref,frame.program_ref);assert.equal(context.institutional.program_version,frame.program_version);
   assert.equal(context.institutional.teaching_subject,frame.teaching_subject);assert.equal(context.institutional.specific_track,frame.specific_track);
   assert.equal(context.institutional_resolution,null);assert.equal(context.discipline,frame.label);
@@ -62,7 +63,7 @@ node('frame').value=bts.program_version;sandbox.p0InstitutionalQuestionOptions()
 node('program-question').value='a:1.2';sandbox.p0InstitutionalCapacityOptions();
 assert.deepEqual(node('capacities').children.map(n=>n.value),['c:1']);
 node('capacities').selectedOptions=[{value:'c:1'}];node('program-notions').selectedOptions=[{value:'notion:shared'}];node('depth').value='APPLICATION';
-const btsContext=sandbox.p0Context();assert.equal(btsContext.contract_id,'P0-CONTEXT-2.0');
+const btsContext=sandbox.p0Context();assert.equal(btsContext.contract_id,'P0-CONTEXT-COURSE-3.0');
 assert.equal(btsContext.institutional.process_ref,'p:1');assert.equal(btsContext.institutional.activity_ref,'a:1.2');
 assert.equal(btsContext.institutional.local_year,'BTS_CG_YEAR_2');assert(!('theme_ref' in btsContext.institutional));
 assert(node('program-status').textContent.includes('progression locale'));

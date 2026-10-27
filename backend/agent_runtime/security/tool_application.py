@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from collections.abc import Collection, Mapping
+from collections.abc import Collection, Mapping, Sequence
 
 from backend.agent_runtime.contracts.common import ContractRef, ContractSchemaVersion
+from backend.agent_runtime.contracts.evidence import EvidenceItem, LabeledEvidenceItem
 from backend.agent_runtime.contracts.security import (
     ContentOrigin,
+    ContentRole,
     ContentSecurityDisposition,
+    ContentTrustClass,
     ContentTrustLabel,
     LabeledContent,
     SecurityBoundary,
@@ -206,3 +209,25 @@ def _boundary_for_origin(origin: ContentOrigin) -> SecurityBoundary:
         ContentOrigin.RECOVERY_DATA: SecurityBoundary.RECOVERY,
         ContentOrigin.INTERNAL_CONTROL: SecurityBoundary.INFRASTRUCTURE,
     }[origin]
+
+
+def label_untrusted_evidence_items(evidence_items: Sequence[EvidenceItem]) -> tuple[LabeledEvidenceItem, ...]:
+    """Security projection only; evidence construction/admission stay with AG02/Application."""
+    result = []
+    for item in evidence_items:
+        if type(item) is not EvidenceItem or not item.excerpt_or_summary:
+            raise ValueError("UNTRUSTED_EVIDENCE_CONTENT_REQUIRED")
+        label = ContentTrustLabel(ContentOrigin.EVIDENCE, ContentRole.EVIDENCE, ContentTrustClass.UNTRUSTED, item.source_ref)
+        content = LabeledContent(item.evidence_id, item.excerpt_or_summary, label, item.evidence_id)
+        assessment = InstructionDataBoundaryPolicy().assess(content=content,
+            context=ContentIsolationContext(SecurityBoundary.EVIDENCE),
+            signals=scan_content_threats(item.excerpt_or_summary, content_ref=item.evidence_id, logical_location="p0_evidence"))
+        result.append(LabeledEvidenceItem(item, content, assessment))
+    return tuple(result)
+
+
+def label_untrusted_application_inputs(value: Mapping[str, object], *, content_ref: str,
+    forbidden_keys: Collection[str], root_location: str) -> tuple[tuple[LabeledContent, ...], StructuredContentSecurityAssessment]:
+    label = ContentTrustLabel(ContentOrigin.APPLICATION_OUTPUT, ContentRole.RESULT, ContentTrustClass.UNTRUSTED, content_ref)
+    return assess_structured_boundary_content(value, content_ref=content_ref, label=label,
+        boundary=SecurityBoundary.APPLICATION, forbidden_keys=forbidden_keys, root_location=root_location)

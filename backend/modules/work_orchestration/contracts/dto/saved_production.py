@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     AssessmentBundle,
@@ -27,6 +27,7 @@ SAVED_P0_CONTRACT = "SAVED-PRODUCTION-P0-1.0"
 @dataclass(frozen=True, slots=True)
 class SavedProduction:
     data: Mapping[str, object]
+    _typed_p0_bundle: P0Production | None = field(default=None, init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         data = object_data(self.data, {"contract_id", "view", "bundle", "reviews", "validations",
@@ -34,6 +35,7 @@ class SavedProduction:
         if data["contract_id"] not in {SAVED_CONTRACT, SAVED_P0_CONTRACT}:
             raise ValueError("SAVED_CONTRACT")
         view_data = object_data(data["view"])
+        p0_bundle: P0Production | None = None
         if data["contract_id"] == SAVED_CONTRACT:
             lineage = object_data(view_data.get("lineage"))
             view: ProductionReadView | P0ProductionReadView = ProductionReadView(
@@ -68,8 +70,8 @@ class SavedProduction:
             ):
                 raise ValueError("SAVED_VERSION_MISMATCH")
             active_bundle_sha = p0_bundle.sha256
-        for field in ("reviews", "validations"):
-            for report in items(data[field], 32):
+        for report_field in ("reviews", "validations"):
+            for report in items(data[report_field], 32):
                 if (report.get("production_ref"), report.get("version_ref")) != (
                     view.production_ref, view.version_ref
                 ) or report.get("bundle_sha256") != active_bundle_sha:
@@ -90,6 +92,7 @@ class SavedProduction:
         if len(encoded(data)) > 512 * 1024:
             raise ValueError("SAVED_SIZE")
         object.__setattr__(self, "data", freeze_safe_mapping(data))
+        object.__setattr__(self, "_typed_p0_bundle", p0_bundle)
 
     @property
     def production_ref(self) -> str:
@@ -119,9 +122,7 @@ class SavedProduction:
 
     @property
     def p0_bundle(self) -> P0Production | None:
-        if self.data["contract_id"] != SAVED_P0_CONTRACT:
-            return None
-        return P0Production(object_data(self.data["bundle"]))
+        return self._typed_p0_bundle
 
     def mutable_copy(self) -> dict[str, object]:
         return object_data(as_plain(self.data))

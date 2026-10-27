@@ -143,9 +143,11 @@ def effort_plan(context: P0Context, *, production: Mapping[str, object] | None =
         plan["institutional"] = data["institutional"]
         plan["institutional_resolution"] = data["institutional_resolution"]
         if data["resource_type"] == "COURSE":
-            from backend.modules.pedagogical_design.contracts.dto.course_policy import COURSE_POLICY
+            from backend.modules.pedagogical_design.contracts.dto.course_policy import (
+                course_policy_for,
+            )
 
-            plan["course_policy"] = COURSE_POLICY
+            plan["course_policy"] = course_policy_for(context)
         plan["institutional_validation"] = "EXACT_PROGRAMME_ALIGNMENT"
         plan["review_axes"] = alignment_axes(data["institutional_resolution"])
     return plan
@@ -153,7 +155,13 @@ def effort_plan(context: P0Context, *, production: Mapping[str, object] | None =
 
 def evidence_pack(context: P0Context, references: object, evidence: Mapping[str, object]) -> dict[str, object]:
     refs = items(references, 8)
-    if not refs or set(evidence) != {str(r["evidence_id"]) for r in refs}:
+    identifiers = [str(reference["evidence_id"]) for reference in refs]
+    # The declared effort controls retrieval before output exists. A generation
+    # cannot silently expand the selected input pack beyond that Application plan.
+    retrieval = object_data(effort_plan(context)["retrieval"])
+    if (not refs or len(refs) > int(str(retrieval["max_passages"]))
+            or len(identifiers) != len(set(identifiers))
+            or set(evidence) != set(identifiers)):
         raise ValueError("P0_EVIDENCE_PACK_SCOPE")
     passages: list[dict[str, object]] = []
     for reference in refs:
@@ -190,6 +198,14 @@ def evidence_pack(context: P0Context, references: object, evidence: Mapping[str,
 def quality_status(plan: Mapping[str, object], *, review: Mapping[str, object] | None = None,
                    production: Mapping[str, object] | None = None,
                    calculation_control: AssessmentValidation | None = None) -> dict[str, object]:
+    if production is not None:
+        if ("context_sha256" in plan and ("context_sha256" in production or "production_ref" in production)
+                and plan["context_sha256"] != production.get("context_sha256")):
+            raise ValueError("P0_QUALITY_CONTEXT_BINDING")
+        if review is not None and (
+                review.get("production_ref"), review.get("version_ref"), review.get("bundle_sha256")) != (
+                production.get("production_ref"), production.get("version_ref"), fingerprint(production)):
+            raise ValueError("P0_QUALITY_REVIEW_BINDING")
     # Structural success is neither an arithmetic proof nor semantic coverage.
     resolution = plan.get("institutional_resolution")
     gap = resolution is not None and object_data(resolution)["status"] != "RESOLVED_ADMITTED"
@@ -212,5 +228,6 @@ def quality_status(plan: Mapping[str, object], *, review: Mapping[str, object] |
         "calculations": calculations, "calculation_reason": reason,
         "instruction": "CONSIGNE_COUVERTE" if review and review.get("instruction_coverage") == "FULL" else "PARTIELLE",
         "review": "REVUE_OK" if review and review.get("status") == "completed" and review.get("overall_assessment") == "acceptable"
+            and review.get("correction_required") is False
             and not review.get("limitations") and not review.get("uncertainties")
             else "RESERVE", "human_review": "HUMAN_REVIEW_REQUIRED"}

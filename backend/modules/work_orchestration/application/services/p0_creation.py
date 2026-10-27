@@ -8,15 +8,24 @@ from backend.modules.pedagogical_context.contracts.dto.p0_context import P0Conte
 from backend.modules.pedagogical_design.application.commands.create_p0_candidate import (
     CreateP0Candidate,
     ReviseP0Candidate,
+    ReviseSavedP0Candidate,
 )
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     as_plain,
     encoded,
     fingerprint,
+    identifier,
+    items,
     object_data,
 )
 from backend.modules.pedagogical_design.contracts.dto.p0_production import P0Production
+from backend.modules.pedagogical_design.ports.outbound.p0_confirmed_recovery import (
+    P0ConfirmedGenerationRecoveryPort,
+)
 from backend.modules.pedagogical_design.ports.outbound.p0_generation import P0GenerationPort
+from backend.modules.pedagogical_design.ports.outbound.p0_generation_controls import (
+    P0GenerationControlsPort,
+)
 from backend.modules.quality_evaluation.contracts.dto.p0_review_report import (
     validate_p0_review_fields,
 )
@@ -59,6 +68,11 @@ class P0CreationService:
         self.validations: dict[str, dict[str, object]] = {}
         self.review_consumed: set[str] = set()
         self.correction_consumed: set[str] = set()
+        self.saved_reader: Callable[[str, str], SavedProduction] | None = None
+        self.resumed: dict[str, SavedProduction] = {}
+        self.local_reopened: set[str] = set()
+        self.publish_generated: Callable[[str, str, str], Mapping[str, object]] | None = None
+        self.generation_controls: dict[str, dict[str, object]] = {}
 
     def execute(self, operation: str, body: Mapping[str, object]) -> dict[str, object]:
         fields = {
@@ -155,6 +169,31 @@ class P0CreationService:
         # Remove the preparation before the single permitted dispatch, including failure.
         del self.prepared[str(data["preparation_ref"])]
         output = self.generation.generate(request=request)
+        return self._receive_generated(request, output, recovered=False)
+
+    def recover_confirmed_generation(self, request: Mapping[str, object]) -> Mapping[str, object]:
+        """Read a captured effect; never authorize, reserve or dispatch it again."""
+        if not isinstance(self.generation, P0ConfirmedGenerationRecoveryPort):
+            raise ValueError("P0_CONFIRMED_RECOVERY_UNAVAILABLE")
+        if self.publish_generated is None or self.saved_reader is None:
+            raise ValueError("P0_CONFIRMED_RECOVERY_PUBLICATION_REQUIRED")
+        output = self.generation.recover_confirmed(request=request)
+        result = self._receive_generated(request, output, recovered=True)
+        version = str(request["version_ref"])
+        record = self.saved_reader(str(request["production_ref"]), version)
+        candidate = self.records[version]
+        if record.p0_bundle is None or record.p0_bundle.sha256 != candidate.sha256:
+            raise ValueError("P0_CONFIRMED_RECOVERY_PUBLICATION_BINDING")
+        self.resumed[version] = record
+        self.local_reopened.add(version)
+        result["agentic"] = self._memory(candidate)
+        return result
+
+    def _receive_generated(self, request: Mapping[str, object], output: Mapping[str, object],
+                           *, recovered: bool) -> dict[str, object]:
+        context = P0Context(object_data(request["context"]))
+        if context.institutional is not None or self.exact_institutional_required:
+            context.require_institutional_dispatch()
         evidence = {str(k): str(v) for k, v in object_data(request["evidence"]).items()}
         candidate = CreateP0Candidate().execute(output, evidence=evidence)
         if context.institutional is not None and context.resource_type == "COURSE" and "course_chapter" not in candidate.data:
@@ -166,13 +205,57 @@ class P0CreationService:
         for key in ("production_ref", "version_ref", "context", "context_sha256", "references", "lineage"):
             if as_plain(candidate.data[key]) != as_plain(request[key]):
                 raise ValueError("P0_OUTPUT_BINDING")
+        controls = None
+        if isinstance(self.generation, P0GenerationControlsPort):
+            controls = object_data(self.generation.control_evidence(request=request, bundle_sha256=candidate.sha256),
+                {"contract_id", "production_ref", "version_ref", "context_sha256", "bundle_sha256",
+                 "guard_disposition", "guard_warnings", "provided_evidence_refs", "declared_evidence_refs_used",
+                 "source_usage_declaration", "source_status", "review_state"})
+            if (any(controls[key] != value for key, value in (
+                    ("contract_id", "P0-GENERATION-CONTROLS-1.0"),
+                    ("production_ref", candidate.production_ref), ("version_ref", candidate.version_ref),
+                    ("context_sha256", candidate.context.sha256), ("bundle_sha256", candidate.sha256),
+                    ("source_usage_declaration", "NOT_IN_OUTPUT_SCHEMA"), ("source_status", "RESERVE"),
+                    ("review_state", "NOT_RUN")))
+                    or controls["guard_disposition"] not in {"ALLOW", "ALLOW_WITH_WARNINGS"}
+                    or as_plain(controls["declared_evidence_refs_used"]) != []
+                    or as_plain(controls["provided_evidence_refs"]) != list(evidence)):
+                raise ValueError("P0_GENERATION_CONTROLS_BINDING")
+            for warning in items(controls["guard_warnings"], 16):
+                object_data(warning, {"code", "location"})
+                if any(not isinstance(value, str) or not 1 <= len(value) <= 160
+                       for value in warning.values()):
+                    raise ValueError("P0_GENERATION_CONTROLS_BINDING")
+            controls = object_data(as_plain(controls))
+        prior = self.records.get(candidate.version_ref)
+        if prior is not None and prior.sha256 != candidate.sha256:
+            raise ValueError("P0_SAVED_VERSION_CONFLICT")
+        if prior is None and len(self.records) >= 256:
+            raise ValueError("P0_SESSION_FULL")
         self.records[candidate.version_ref] = candidate
+        if controls is not None:
+            self.generation_controls[candidate.version_ref] = controls
         self.evidence[candidate.version_ref] = {str(k): str(v) for k, v in object_data(request["evidence"]).items()}
         self.plans[candidate.version_ref] = effort_plan(context, production=candidate.data)
+        self.packs[candidate.version_ref] = evidence_pack(context, request["references"], evidence)
         self._validate({"production_ref": candidate.production_ref, "version_ref": candidate.version_ref})
+        publication = None
+        if self.publish_generated is not None:
+            publication = object_data(self.publish_generated(candidate.production_ref,
+                candidate.version_ref, candidate.sha256),
+                {"state", "production_ref", "version_ref", "bundle_sha256", "record_sha256"})
+            if (publication["state"] != "APPLICATION_SAVED"
+                    or any(publication[key] != expected for key, expected in (
+                        ("production_ref", candidate.production_ref),
+                        ("version_ref", candidate.version_ref), ("bundle_sha256", candidate.sha256)))
+                    or not isinstance(publication["record_sha256"], str)
+                    or len(publication["record_sha256"]) != 64
+                    or any(c not in "0123456789abcdef" for c in publication["record_sha256"])):
+                raise ValueError("P0_GENERATED_PUBLICATION_BINDING")
         return {"state": "CANDIDATE", "view": as_plain(P0ProductionReadView.from_bundle(candidate).data),
-                "provider_attempts": 1, "retry": 0, "promotion": "NOT_PERFORMED",
-                "agentic": self._memory(candidate)}
+                "provider_attempts": 0 if recovered else 1, "retry": 0,
+                "recovery": "CONFIRMED_LOCAL_RESULT" if recovered else "NOT_PERFORMED",
+                "promotion": "NOT_PERFORMED", "publication": publication, "agentic": self._memory(candidate)}
 
     def _memory(self, candidate: P0Production) -> dict[str, object]:
         plan = self.plans[candidate.version_ref]
@@ -180,55 +263,166 @@ class P0CreationService:
             "evidence_pack_sha256": fingerprint(self.packs[candidate.version_ref]),
             "validation": self.validations.get(candidate.version_ref),
             "review": self.reports.get(candidate.version_ref),
-            "quality": quality_status(plan, review=self.reports.get(candidate.version_ref), production=candidate.data),
-            "persistence": "EXPLICIT_APPLICATION_SAVE_REQUIRED"}
+            "quality": self._local_quality(candidate, quality_status(plan,
+                review=self.reports.get(candidate.version_ref), production=candidate.data)),
+            "generation_controls": self.generation_controls.get(candidate.version_ref),
+            "persistence": "APPLICATION_PUBLICATION_REQUIRED" if self.publish_generated else "EXPLICIT_APPLICATION_SAVE_REQUIRED"}
 
     def _version(self, data: Mapping[str, object]) -> P0Production:
         candidate = self.records.get(str(data.get("version_ref")))
+        if candidate is None and self.saved_reader is not None:
+            self._resume(data)
+            candidate = self.records.get(str(data.get("version_ref")))
         if candidate is None or candidate.production_ref != data.get("production_ref"):
             raise ValueError("P0_NOT_FOUND")
         if data.get("bundle_sha256", candidate.sha256) != candidate.sha256:
             raise ValueError("P0_VERSION_CHANGED")
         return candidate
 
+    def _resume(self, data: Mapping[str, object]) -> None:
+        production = identifier(data.get("production_ref"), "prod")
+        version = identifier(data.get("version_ref"), "ver")
+        if self.saved_reader is None:
+            raise ValueError("P0_NOT_FOUND")
+        staged: dict[str, SavedProduction] = {}
+        next_version: str | None = version
+        while next_version is not None:
+            if next_version in staged or len(staged) >= 33:
+                raise ValueError("P0_SAVED_LINEAGE")
+            record = self.saved_reader(production, next_version)
+            candidate = record.p0_bundle
+            if (record.data["origin"] != "LOCAL_APPLICATION" or candidate is None
+                    or record.production_ref != production or record.version_ref != next_version):
+                raise ValueError("P0_SAVED_SOURCE_REJECTED")
+            if next_version == version and data.get("bundle_sha256", candidate.sha256) != candidate.sha256:
+                raise ValueError("P0_VERSION_CHANGED")
+            prior = self.records.get(next_version)
+            if prior is not None and prior.sha256 != candidate.sha256:
+                raise ValueError("P0_SAVED_VERSION_CONFLICT")
+            prior_record = self.resumed.get(next_version)
+            if prior_record is not None and prior_record.sha256 != record.sha256:
+                raise ValueError("P0_SAVED_VERSION_CONFLICT")
+            staged[next_version] = record
+            parent = object_data(candidate.data["lineage"])["parent_version_ref"]
+            next_version = str(parent) if parent is not None else None
+        if len(set(self.records) | set(staged)) > 256:
+            raise ValueError("P0_SESSION_FULL")
+        from backend.modules.work_orchestration.application.queries.verify_saved_p0_lineage import (
+            verify_saved_parent,
+        )
+
+        for record in staged.values():
+            assert record.p0_bundle is not None
+            parent_ref = object_data(record.p0_bundle.data["lineage"])["parent_version_ref"]
+            if parent_ref is not None:
+                verify_saved_parent(record, staged[str(parent_ref)])
+        # Nothing is admitted until the entire chain and identity are verified.
+        for key, record in staged.items():
+            candidate = record.p0_bundle
+            assert candidate is not None
+            if key not in self.records:
+                self.records[key] = candidate
+                self.resumed[key] = record
+                self.plans[key] = effort_plan(candidate.context, production=candidate.data)
+                self.packs[key] = {}
+                self.evidence[key] = {}
+                for field, destination in (("reviews", self.reports), ("validations", self.validations)):
+                    reports = items(record.data[field], 32)
+                    if reports:
+                        destination[key] = object_data(as_plain(reports[-1]))
+                self.local_reopened.add(key)
+
+    def _local_quality(self, candidate: P0Production, quality: dict[str, object]) -> dict[str, object]:
+        if candidate.version_ref in self.local_reopened:
+            return {**quality, "sources": "RESERVE",
+                    "source_reason": "HISTORICAL_EVIDENCE_NOT_REVALIDATED"}
+        if self._root(candidate).version_ref in self.generation_controls:
+            return {**quality, "sources": "RESERVE", "source_reason": "SOURCE_USAGE_NOT_DECLARED"}
+        return quality
+
     def read(self, production: str, version: str, *, teacher: bool = False) -> dict[str, object]:
         candidate = self._version({"production_ref": production, "version_ref": version})
         if teacher:
-            result: dict[str, object] = {"version_ref": version, "bundle_sha256": candidate.sha256,
+            result: dict[str, object] = {"production_ref": production, "version_ref": version, "bundle_sha256": candidate.sha256,
                     "corrections": as_plain(candidate.data["corrections"]),
                     "marking": as_plain(candidate.data["marking"])}
             if "course_chapter" in candidate.data:
                 result["course_chapter"] = candidate.teacher_projection()["course_chapter"]
+            if "media_plan" in candidate.data:
+                result["media_assets"] = candidate.teacher_projection()["media_assets"]
             return result
         return object_data(as_plain(P0ProductionReadView.from_bundle(candidate).data))
+
+    def publish_local_child(self, parent_record: SavedProduction, child_record: SavedProduction) -> None:
+        """Admit one verified local media child, without restoring source authority."""
+        parent = self._version({"production_ref": parent_record.production_ref,
+            "version_ref": parent_record.version_ref,
+            "bundle_sha256": parent_record.p0_bundle.sha256 if parent_record.p0_bundle else ""})
+        if self.saved_source(parent.production_ref, parent.version_ref).sha256 != parent_record.sha256:
+            raise ValueError("P0_SAVED_VERSION_CONFLICT")
+        child = child_record.p0_bundle
+        if child is None or child_record.data["origin"] != "LOCAL_APPLICATION":
+            raise ValueError("P0_SAVED_SOURCE_REJECTED")
+        ReviseSavedP0Candidate().execute(parent, child.mutable_copy())
+        if child.version_ref in self.records or len(self.records) >= 256:
+            raise ValueError("P0_SAVED_VERSION_CONFLICT")
+        plan = effort_plan(child.context, production=child.data)
+        self.records[child.version_ref] = child
+        self.resumed[child.version_ref] = child_record
+        self.plans[child.version_ref] = plan
+        self.packs[child.version_ref] = {}
+        self.evidence[child.version_ref] = {}
+        self.local_reopened.add(child.version_ref)
+        validations = items(child_record.data["validations"], 32)
+        if validations:
+            self.validations[child.version_ref] = object_data(as_plain(validations[-1]))
 
     def _revise(self, data: dict[str, object]) -> dict[str, object]:
         parent = self._version(data)
         edits = object_data(data["edits"])
-        if not edits or set(edits) - {"title", "sections", "questions", "corrections", "marking"}:
+        if not edits or set(edits) - {"title", "sections", "questions", "corrections", "marking", "course_edits"}:
             raise ValueError("P0_EDITS_REJECTED")
         output = parent.mutable_copy()
-        output.update(edits)
+        if "course_chapter" in output:
+            from backend.modules.pedagogical_design.application.commands.edit_saved_course import (
+                apply_course_edits,
+            )
+            output = apply_course_edits(output, edits)
+        else:
+            if "course_edits" in edits:
+                raise ValueError("P0_COURSE_EDITS_REQUIRED")
+            output.update(edits)
         output["version_ref"] = "ver:" + token_hex(16)
         output["lineage"] = {**object_data(output["lineage"]), "parent_version_ref": parent.version_ref}
-        child = ReviseP0Candidate().execute(parent, output, evidence=self.evidence[parent.version_ref])
+        from backend.modules.pedagogical_design.contracts.dto.production_media import (
+            rebind_unchanged_media,
+        )
+
+        output = rebind_unchanged_media(parent.data, output)
+        reopened = parent.version_ref in self.local_reopened
+        child = (ReviseSavedP0Candidate().execute(parent, output) if reopened else
+                 ReviseP0Candidate().execute(parent, output, evidence=self.evidence[parent.version_ref]))
         self.records[child.version_ref] = child
         self.evidence[child.version_ref] = dict(self.evidence[parent.version_ref])
         self.plans[child.version_ref] = effort_plan(P0Context(object_data(child.data["context"])), production=child.data)
         self.packs[child.version_ref] = dict(self.packs[parent.version_ref])
+        if reopened:
+            self.local_reopened.add(child.version_ref)
         return {"state": "CANDIDATE", "view": as_plain(P0ProductionReadView.from_bundle(child).data),
                 "provider_attempts": 0, "promotion": "NOT_PERFORMED",
-                "quality": quality_status(self.plans[child.version_ref], production=child.data)}
+                "quality": self._local_quality(child, quality_status(self.plans[child.version_ref], production=child.data))}
 
     def _validate(self, data: dict[str, object]) -> dict[str, object]:
         candidate = self._version(data)
         parent = self.records.get(str(object_data(candidate.data["lineage"])["parent_version_ref"]))
         report = ValidateP0Command().execute(candidate, parent=parent)
         self.validations[candidate.version_ref] = report
-        return {**report, "quality": quality_status(self.plans[candidate.version_ref], review=self.reports.get(candidate.version_ref), production=candidate.data)}
+        return {**report, "quality": self._local_quality(candidate, quality_status(self.plans[candidate.version_ref], review=self.reports.get(candidate.version_ref), production=candidate.data))}
 
     def _review(self, data: dict[str, object]) -> dict[str, object]:
         candidate = self._version(data)
+        if candidate.version_ref in self.local_reopened:
+            raise ValueError("P0_REOPENED_REVIEW_REQUIRES_FRESH_EVIDENCE")
         context = P0Context(object_data(candidate.data["context"]))
         if context.institutional is not None or self.exact_institutional_required or (self.exact_stmg_required and str(context.data["level"]).endswith("STMG")):
             context.require_institutional_dispatch()
@@ -276,6 +470,8 @@ class P0CreationService:
 
     def _correct(self, data: dict[str, object]) -> dict[str, object]:
         parent = self._version(data)
+        if parent.version_ref in self.local_reopened:
+            raise ValueError("P0_REOPENED_REVIEW_REQUIRES_FRESH_EVIDENCE")
         report = self.reports.get(parent.version_ref)
         if not report or fingerprint(report) != data["review_sha256"] or not report["correction_required"]:
             raise ValueError("P0_CORRECTION_REVIEW_REQUIRED")
@@ -296,9 +492,34 @@ class P0CreationService:
 
     def saved_source(self, production: str, version: str) -> SavedProduction:
         candidate = self._version({"production_ref": production, "version_ref": version})
+        if version in self.resumed:
+            return self.resumed[version]
+        if version in self.local_reopened:
+            parent_version = str(object_data(candidate.data["lineage"])["parent_version_ref"])
+            parent_record = self.saved_source(production, parent_version)
+            raw_reservations = parent_record.data["reservations"]
+            if not isinstance(raw_reservations, (list, tuple)):
+                raise ValueError("P0_SAVED_RESERVATIONS_INVALID")
+            reservations = list(raw_reservations)
+            if "HISTORICAL_EVIDENCE_NOT_REVALIDATED" not in reservations:
+                if len(reservations) == 16:
+                    raise ValueError("P0_SAVED_RESERVATIONS_FULL")
+                reservations.append("HISTORICAL_EVIDENCE_NOT_REVALIDATED")
+            return SavedProduction({"contract_id": SAVED_P0_CONTRACT,
+                "view": as_plain(P0ProductionReadView.from_bundle(candidate).data),
+                "bundle": candidate.mutable_copy(), "reviews": [],
+                "validations": [self.validations[version]] if version in self.validations else [],
+                "origin": "LOCAL_APPLICATION", "provenance": {
+                    **object_data(parent_record.data["provenance"]),
+                    "PLAN_SHA256": fingerprint(self.plans[version]),
+                    "LOCAL_PARENT_RECORD_SHA256": parent_record.sha256},
+                "reservations": reservations})
+        controls = self.generation_controls.get(self._root(candidate).version_ref)
         return SavedProduction({"contract_id": SAVED_P0_CONTRACT,
             "view": as_plain(P0ProductionReadView.from_bundle(candidate).data),
             "bundle": candidate.mutable_copy(), "reviews": [self.reports[version]] if version in self.reports else [],
             "validations": [self.validations[version]] if version in self.validations else [],
             "origin": "LOCAL_APPLICATION", "provenance": {"PLAN_SHA256": fingerprint(self.plans[version]),
-                "EVIDENCE_PACK_SHA256": fingerprint(self.packs[version])}, "reservations": []})
+                "EVIDENCE_PACK_SHA256": fingerprint(self.packs[version]),
+                **({"GENERATION_CONTROL_SHA256": fingerprint(controls)} if controls else {})},
+            "reservations": ["SOURCE_USAGE_NOT_DECLARED"] if controls else []})

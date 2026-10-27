@@ -34,6 +34,7 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     items,
     object_data,
 )
+from backend.modules.pedagogical_design.contracts.dto.p0_production import P0Production
 from backend.modules.quality_evaluation.contracts.dto.p0_review_report import (
     DIAGNOSTIC_CONTRACT,
     HISTORICAL_CONTRACT,
@@ -98,6 +99,22 @@ class P0ReviewAdapter:
                     "scope": "EVERY_VISUAL_EXPLICIT_FINDING_IF_UNVERIFIED",
                     "pixel_inspection": "SEPARATE_REQUIRED", "pedagogical_acceptance": "NOT_PERFORMED"}
                 reviewed["visuals"] = visuals
+        if production.get("media_plan") is not None:
+            bundle = P0Production(production)
+            if bundle.sha256 != request["bundle_sha256"]:
+                raise ValueError("P0_REVIEW_BUNDLE_BINDING")
+            visuals = bundle.media_review_context()
+            if visuals:
+                constraints["visual_review_requirements"] = {
+                    "axes": ["exactitude", "niveau", "utilite", "coherence", "absence_surinterpretation"],
+                    "scope": "EVERY_VISUAL_EXPLICIT_FINDING_IF_UNVERIFIED",
+                    "pixel_inspection": "SEPARATE_REQUIRED", "pedagogical_acceptance": "NOT_PERFORMED"}
+                reviewed["visuals"] = visuals
+            else:
+                constraints["media_choice"] = {
+                    "decision": "NO_MEDIA",
+                    "reason": object_data(production["media_plan"])["no_media_reason"],
+                    "pedagogical_acceptance": "NOT_PERFORMED"}
         canonical = ReviewRequest(meta, target, tuple(ReviewDimension),
             constraints,
             tuple(str(r["evidence_id"]) for r in items(evidence["passages"], 8)),

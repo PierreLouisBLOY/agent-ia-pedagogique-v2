@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from typing import Final
 from urllib.parse import unquote_to_bytes
@@ -61,6 +62,11 @@ P0_ROUTE_SPECS: Final = (("GET", P0_ROOT),
     *(("POST", P0_ROOT + "/" + operation) for operation in ("prepare", "generate", "revise", "validate", "review", "correct")),
     ("GET", P0_ROOT + "/versions/{production_ref}/{version_ref}"),
     ("GET", P0_ROOT + "/versions/{production_ref}/{version_ref}/teacher"))
+P0_INTENTION_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/intention"),)
+P0_MEDIA_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/media"),)
+P0_CONSENT_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/consent-preview"), ("POST", P0_ROOT + "/consent-generate"))
+P0_NOTION_EVIDENCE_TEMPLATE: Final = P0_ROOT + "/notion-evidence"
+P0_NOTION_EVIDENCE_ROUTE_SPECS: Final = (("GET", P0_NOTION_EVIDENCE_TEMPLATE),)
 _P0_VERSION = re.compile(P0_ROOT + r"/versions/(prod:[0-9a-f]{32})/(ver:[0-9a-f]{32})(/teacher)?")
 
 
@@ -69,13 +75,38 @@ def is_p0_target(target: str) -> bool:
 
 
 def resolve_p0_route(method: str, target: str) -> tuple[str, str, str, bool, str]:
+    if target.partition("?")[0] == P0_NOTION_EVIDENCE_TEMPLATE:
+        resolve_p0_notion_evidence(method, target)
+        return "notion-evidence", "", "", False, P0_NOTION_EVIDENCE_TEMPLATE
     if method == "GET" and target == P0_ROOT:
         return "metadata", "", "", False, target
-    if method == "POST" and (method, target) in P0_ROUTE_SPECS:
+    if method == "POST" and (method, target) in P0_ROUTE_SPECS + P0_INTENTION_ROUTE_SPECS + P0_MEDIA_ROUTE_SPECS + P0_CONSENT_ROUTE_SPECS:
         return target.rsplit("/", 1)[1], "", "", False, target
     if method == "GET" and (match := _P0_VERSION.fullmatch(target)):
         return "version", match[1], match[2], bool(match[3]), P0_ROUTE_SPECS[-1 if match[3] else -2][1]
     raise ValueError("P0_ROUTE_REJECTED")
+
+
+def resolve_p0_notion_evidence(method: str, target: str) -> str:
+    """One exact canonical notion ID; no aliases, paths, SQL or arbitrary selectors."""
+    try:
+        raw = target.encode("ascii")
+        path, separator, query = target.partition("?")
+        key, equals, value = query.partition("=")
+        if (method != "GET" or path != P0_NOTION_EVIDENCE_TEMPLATE or separator != "?"
+                or key != "notion_id" or equals != "=" or not value or "&" in query
+                or not raw or len(raw) > MAX_TARGET_BYTES or "#" in target or "\\" in target
+                or any(byte <= 32 or byte == 127 for byte in raw) or _BAD_ESCAPE.search(target)):
+            raise ValueError
+        notion_id = unquote_to_bytes(value).decode("utf-8")
+        if type(notion_id) is not str or not 1 <= len(notion_id) <= 256 or any(
+                unicodedata.category(char)[0] not in {"L", "N"} and char not in "._:-" for char in notion_id):
+            raise ValueError
+        if not notion_id.startswith("notion:") or len(notion_id) <= len("notion:"):
+            raise ValueError
+        return notion_id
+    except (ValueError, AttributeError, TypeError):
+        raise ValueError("P0_REFERENCE_REQUEST_REJECTED") from None
 
 
 _BAD_ESCAPE = re.compile(r"%(?![0-9a-fA-F]{2})")

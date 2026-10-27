@@ -11,8 +11,9 @@ class STMGAlignmentInbound:
     def catalog(self) -> dict[str, object]:
         return self.query.snapshot()
 
-    def resolve(self, selection: Mapping[str, object], reference: Mapping[str, object]) -> dict[str, object]:
-        return self.query.resolve(selection, reference)
+    def resolve(self, selection: Mapping[str, object], reference: Mapping[str, object], *,
+                mode: str = "LEGACY") -> dict[str, object]:
+        return self.query.resolve(selection, reference, mode=mode)
 
     def matrix(self) -> dict[str, object]:
         return self.query.matrix()

@@ -5,7 +5,11 @@ from dataclasses import dataclass
 from typing import cast
 
 from backend.modules.materialization_export.contracts.dto.media_asset import CourseMedia, MediaAsset
-from backend.modules.pedagogical_context.contracts.dto.p0_context import P0Context
+from backend.modules.pedagogical_context.contracts.dto.course_notions import course_notion_rows
+from backend.modules.pedagogical_context.contracts.dto.p0_context import (
+    P0_NOTION_COURSE_CONTEXT_CONTRACT,
+    P0Context,
+)
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     as_plain,
     encoded,
@@ -17,8 +21,11 @@ from backend.modules.pedagogical_design.contracts.dto.visual_brief import visual
 from backend.shared_kernel._safe_data import freeze_safe_mapping
 
 COURSE_CHAPTER_CONTRACT = "COURSE-CHAPTER-1.0"
+COURSE_LINEAGE_CONTRACT = "COURSE-CHAPTER-LINEAGE-3.0"
 COURSE_MEDIA_CONTRACT = "COURSE-CHAPTER-MEDIA-2.0"
 COURSE_PRODUCTION_CONTRACT = "R6-P0-PRODUCTION-COURSE-2.0"
+COURSE_NOTION_LINEAGE_CONTRACT = "COURSE-CHAPTER-LINEAGE-4.0"
+COURSE_NOTION_PRODUCTION_CONTRACT = "R6-P0-PRODUCTION-COURSE-3.0"
 CHECK_NAMES = (
     "has_program_header", "has_capabilities", "has_notions", "has_context",
     "has_learning_documents", "has_numbered_questions", "has_conceptualization",
@@ -76,7 +83,9 @@ class CourseChapter:
     def __post_init__(self) -> None:
         illustrated = self.data.get("contract_id") == COURSE_MEDIA_CONTRACT
         data = object_data(self.data, _FIELDS | {"visual_briefs", "media_assets"} if illustrated else _FIELDS)
-        if data["contract_id"] not in {COURSE_CHAPTER_CONTRACT, COURSE_MEDIA_CONTRACT}:
+        if data["contract_id"] not in {
+            COURSE_CHAPTER_CONTRACT, COURSE_MEDIA_CONTRACT, COURSE_LINEAGE_CONTRACT, COURSE_NOTION_LINEAGE_CONTRACT
+        }:
             raise ValueError("COURSE_CHAPTER_CONTRACT")
         if type(data["chapter_number"]) is not int or not 1 <= data["chapter_number"] <= 99:
             raise ValueError("COURSE_CHAPTER_NUMBER")
@@ -174,6 +183,11 @@ class CourseChapter:
     def bind_context(self, context: P0Context) -> None:
         if context.resource_type != "COURSE" or context.institutional is None:
             raise ValueError("COURSE_CONTEXT_REQUIRED")
+        notion_chapter = self.data["contract_id"] == COURSE_NOTION_LINEAGE_CONTRACT
+        if notion_chapter != (context.data["contract_id"] == P0_NOTION_COURSE_CONTEXT_CONTRACT):
+            raise ValueError("COURSE_NOTION_CONTEXT_BINDING")
+        if notion_chapter and str(self.data["chapter_number"]) != object_data(context.data["local_progression"])["chapter"]:
+            raise ValueError("COURSE_NOTION_CHAPTER_NUMBER_BINDING")
         header = object_data(self.data["program_header"])
         for key in ("frame", "program_ref", "program_version", "theme_ref", "question_ref"):
             if header[key] != context.institutional[key]:
@@ -191,8 +205,17 @@ class CourseChapter:
                     raise ValueError("COURSE_CAPABILITY_AUTHORITY_BINDING")
         if header["question_label"] != object_data(resolution["question"])["official_label"]:
             raise ValueError("COURSE_PROGRAM_BINDING")
-        if header["subject_label"] != context.data["discipline"] or set(_strings(self.data["notions"])) != set(_strings(context.data["topics"])):
+        expected_notions = ([row["label"] for row in course_notion_rows(context)]
+                           if notion_chapter else _strings(context.data["topics"]))
+        if header["subject_label"] != context.data["discipline"] or set(_strings(self.data["notions"])) != set(expected_notions):
             raise ValueError("COURSE_PROGRAM_BINDING")
+        if notion_chapter and {str(row["notion"]) for row in items(self.data["concepts"])} != set(expected_notions):
+            raise ValueError("COURSE_NOTION_CONCEPT_COVERAGE")
+        if notion_chapter:
+            linked = {str(ref) for part in items(self.data["parts"])
+                      for ref in _strings(part["concept_ids"])}
+            if linked != {str(row["id"]) for row in items(self.data["concepts"])}:
+                raise ValueError("COURSE_NOTION_CONCEPT_DELIVERY_COVERAGE")
         level_labels = {"FIRST_STMG": "Première STMG", "FINAL_STMG": "Terminale STMG"}
         if header["level_label"] != level_labels.get(str(context.data["level"])):
             raise ValueError("COURSE_PROGRAM_BINDING")

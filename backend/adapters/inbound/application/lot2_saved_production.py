@@ -13,6 +13,10 @@ from backend.modules.work_orchestration.contracts.dto.saved_production import Sa
 
 
 class Lot2SavedProductionInbound(SavedProductionInbound):
+    def read_local_p0(self, production_ref: str, version_ref: str) -> SavedProduction:
+        """Application-only read callback; no client can submit a stored bundle."""
+        return self.service.read_local_p0(production_ref, version_ref)
+
     def execute(
         self, operation: str, production_ref: str = "", version_ref: str = "",
         *, body: Mapping[str, object] | None = None, kind: str = "",

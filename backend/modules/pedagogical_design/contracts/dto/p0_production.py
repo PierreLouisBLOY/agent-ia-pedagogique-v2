@@ -18,6 +18,10 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     nonempty,
     object_data,
 )
+from backend.modules.pedagogical_design.contracts.dto.production_media import (
+    MEDIA_PRODUCTION_CONTRACT,
+    ProductionMediaPlan,
+)
 from backend.shared_kernel._safe_data import freeze_safe_mapping
 
 P0_PRODUCTION_CONTRACT = "R6-P0-PRODUCTION-1.0"
@@ -178,18 +182,24 @@ class P0Production:
 
     def __post_init__(self) -> None:
         from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
+            COURSE_NOTION_LINEAGE_CONTRACT,
+            COURSE_NOTION_PRODUCTION_CONTRACT,
             COURSE_PRODUCTION_CONTRACT,
             CourseChapter,
         )
 
-        is_chapter = self.data.get("contract_id") == COURSE_PRODUCTION_CONTRACT
-        data = object_data(self.data, _FIELDS | {"course_chapter"} if is_chapter else _FIELDS)
-        if data["contract_id"] not in {P0_PRODUCTION_CONTRACT, COURSE_PRODUCTION_CONTRACT}:
+        is_chapter = self.data.get("contract_id") in {COURSE_PRODUCTION_CONTRACT, COURSE_NOTION_PRODUCTION_CONTRACT}
+        is_media = self.data.get("contract_id") == MEDIA_PRODUCTION_CONTRACT
+        fields = _FIELDS | ({"course_chapter"} if is_chapter else {"media_plan"} if is_media else set())
+        data = object_data(self.data, fields)
+        if data["contract_id"] not in {P0_PRODUCTION_CONTRACT, COURSE_PRODUCTION_CONTRACT, COURSE_NOTION_PRODUCTION_CONTRACT, MEDIA_PRODUCTION_CONTRACT}:
             raise ValueError("P0_PRODUCTION_CONTRACT")
         identifier(data["production_ref"], "prod")
         identifier(data["version_ref"], "ver")
         nonempty(data["title"], 300)
         context = P0Context(object_data(data["context"]))
+        if (data["contract_id"] == COURSE_NOTION_PRODUCTION_CONTRACT) != (context.data["contract_id"] == "P0-CONTEXT-COURSE-4.0"):
+            raise ValueError("P0_NOTION_COURSE_PRODUCTION_BINDING")
         if data["context_sha256"] != context.sha256:
             raise ValueError("P0_CONTEXT_HASH")
         _validated_sections(data["sections"])
@@ -198,8 +208,12 @@ class P0Production:
         marking = _validated_marking(data["marking"])
         _validated_references(data["references"])
         self._validate_content(context, questions, corrections, marking)
+        if is_media:
+            ProductionMediaPlan(object_data(data["media_plan"])).bind(data)
         if is_chapter:
             chapter = CourseChapter(object_data(data["course_chapter"]))
+            if (data["contract_id"] == COURSE_NOTION_PRODUCTION_CONTRACT) != (chapter.data["contract_id"] == COURSE_NOTION_LINEAGE_CONTRACT):
+                raise ValueError("P0_NOTION_COURSE_PRODUCTION_BINDING")
             chapter.bind_production(str(data["production_ref"]))
             chapter.bind_context(context)
             if as_plain(data["sections"]) != chapter.sections() or data["title"] != chapter.data["title"]:
@@ -294,6 +308,8 @@ class P0Production:
             )
 
             result["course_chapter"] = CourseChapter(object_data(self.data["course_chapter"])).projection()
+        if "media_plan" in self.data:
+            result["media_assets"] = ProductionMediaPlan(object_data(self.data["media_plan"])).projection("student")
         return result
 
     def teacher_projection(self) -> dict[str, object]:
@@ -310,4 +326,31 @@ class P0Production:
             )
 
             result["course_chapter"] = CourseChapter(object_data(self.data["course_chapter"])).projection(teacher=True)
+        if "media_plan" in self.data:
+            result["media_assets"] = ProductionMediaPlan(object_data(self.data["media_plan"])).projection("correction")
+        return result
+
+    def media_review_context(self) -> list[dict[str, object]]:
+        """Bounded textual commitments; hashes never attest pixel inspection."""
+        if "course_chapter" in self.data:
+            from backend.modules.pedagogical_design.contracts.dto.course_chapter import (
+                CourseChapter,
+            )
+
+            return CourseChapter(object_data(self.data["course_chapter"])).media_review_context()
+        if "media_plan" not in self.data:
+            return []
+        from backend.modules.pedagogical_design.contracts.dto.visual_brief import VisualBrief
+
+        result = []
+        plan = ProductionMediaPlan(object_data(self.data["media_plan"]))
+        plan.bind(self.data)
+        for entry in items(plan.data["entries"], 8):
+            asset = entry["asset"]
+            brief = VisualBrief(object_data(entry["brief"]))
+            commitment = brief.review_context(str(object_data(asset)["png_sha256"]) if asset is not None else "UNAVAILABLE")
+            commitment.update(version_ref=self.version_ref, dependencies=as_plain(entry["dependencies"]),
+                              required=entry["required"], omission_reason=entry["omission_reason"],
+                              availability="PRESENT" if asset is not None else "MISSING")
+            result.append(commitment)
         return result

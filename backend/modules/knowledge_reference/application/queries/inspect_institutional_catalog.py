@@ -34,3 +34,10 @@ class InspectInstitutionalCatalog:
 
         return QualifiedInstitutionalCorpus(self.read()).resolve_scope(version_ref=version_ref,
             element_ref=element_ref, notion_refs=notion_refs, local_year=local_year)
+
+    def treatment(self) -> dict[str, object]:
+        from backend.modules.knowledge_reference.application.queries.qualified_institutional_corpus import (
+            QualifiedInstitutionalCorpus,
+        )
+
+        return QualifiedInstitutionalCorpus(self.read()).treatment()

@@ -17,6 +17,7 @@ from backend.shared_kernel._safe_data import freeze_safe_mapping
 
 P0_VIEW_CONTRACT = "R6-P0-PRODUCTION-VIEW-1.0"
 COURSE_VIEW_CONTRACT = "R6-P0-PRODUCTION-VIEW-COURSE-2.0"
+MEDIA_VIEW_CONTRACT = "R6-P0-PRODUCTION-VIEW-MEDIA-3.0"
 _FIELDS = {
     "contract_id",
     "production_ref",
@@ -43,8 +44,9 @@ class P0ProductionReadView:
 
     def __post_init__(self) -> None:
         chapter = self.data.get("contract_id") == COURSE_VIEW_CONTRACT
-        data = object_data(self.data, _FIELDS | {"course_chapter"} if chapter else _FIELDS)
-        if data["contract_id"] not in {P0_VIEW_CONTRACT, COURSE_VIEW_CONTRACT}:
+        media = self.data.get("contract_id") == MEDIA_VIEW_CONTRACT
+        data = object_data(self.data, _FIELDS | ({"course_chapter"} if chapter else {"media_assets"} if media else set()))
+        if data["contract_id"] not in {P0_VIEW_CONTRACT, COURSE_VIEW_CONTRACT, MEDIA_VIEW_CONTRACT}:
             raise ValueError("P0_VIEW_CONTRACT")
         if chapter and "teacher_answers" in object_data(data["course_chapter"]):
             raise ValueError("COURSE_STUDENT_ANSWER_FORBIDDEN")
@@ -81,7 +83,7 @@ class P0ProductionReadView:
     def from_bundle(cls, bundle: P0Production) -> P0ProductionReadView:
         context = bundle.context
         data = {
-                "contract_id": COURSE_VIEW_CONTRACT if "course_chapter" in bundle.data else P0_VIEW_CONTRACT,
+                "contract_id": COURSE_VIEW_CONTRACT if "course_chapter" in bundle.data else MEDIA_VIEW_CONTRACT if "media_plan" in bundle.data else P0_VIEW_CONTRACT,
                 "production_ref": bundle.production_ref,
                 "version_ref": bundle.version_ref,
                 "production_kind": context.resource_type,
@@ -100,6 +102,8 @@ class P0ProductionReadView:
             }
         if "course_chapter" in bundle.data:
             data["course_chapter"] = bundle.student_projection()["course_chapter"]
+        if "media_plan" in bundle.data:
+            data["media_assets"] = bundle.student_projection()["media_assets"]
         return cls(data)
 
     @property

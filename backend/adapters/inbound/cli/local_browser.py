@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import argparse
 import getpass
+import re
 import sys
 import tempfile
 import warnings
 from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING, Protocol
 
 from backend.infrastructure.composition.factories.conversation import (
     build_r2_process_job,
@@ -21,6 +23,25 @@ from backend.infrastructure.composition.factories.local_browser import (
     build_local_saved,
 )
 from backend.infrastructure.config.schemas.http import LocalBrowserHttpConfiguration
+from backend.modules.pedagogical_design.ports.outbound.p0_generation import P0GenerationPort
+
+if TYPE_CHECKING:
+    from backend.adapters.inbound.api.p0_creation import P0CreationEndpoint
+    from backend.modules.work_orchestration.application.services.p0_creation import (
+        P0CreationService,
+    )
+
+
+class _ProductComposition(Protocol):
+    @property
+    def generation(self) -> P0GenerationPort | None: ...
+
+    def bind(self, service: P0CreationService, endpoint: P0CreationEndpoint) -> None: ...
+    def close(self) -> None: ...
+
+
+def _drive_literal(value: Path | None) -> bool:
+    return value is not None and re.fullmatch(r"[A-Za-z]:[\\/][^%$\x00]+", str(value)) is not None
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -32,7 +53,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--runtime-sha256")
     parser.add_argument("--saved-root", type=Path, help="Stockage R4 explicitement désigné hors dépôt")
     parser.add_argument("--create-saved", action="store_true", help="Créer une racine R4 neuve uniquement")
+    parser.add_argument("--observability-root", type=Path, help="Dossier local de traces explicitement désigné")
     parser.add_argument("--saved-only", action="store_true", help="Ouvrir R4 sans bibliothèque ni fournisseur")
+    parser.add_argument("--word-profile", choices=("diffusion-v5", "diffusion-v6", "product-v7"),
+                        default="diffusion-v5", help="Profil explicite des exports, sans retouche des archives")
     parser.add_argument("--enable-conversation", action="store_true",
                         help="R2 volatile, sans autorisation fournisseur implicite")
     parser.add_argument("--enable-review-modify", action="store_true",
@@ -41,7 +65,53 @@ def main(argv: Sequence[str] | None = None) -> int:
                         help="Fichier explicite réservé au handoff live ; refusé tant que ses préconditions ne sont pas établies")
     parser.add_argument("--r5-scope", type=Path, help="Sélection R5 exacte, opt-in distinct de R2")
     parser.add_argument("--r5-authorization", type=Path, help="Accord R5 distinct ; aucun accord live implicite")
+    parser.add_argument("--p0-normal-profile", type=Path,
+        help="Profil P1 fermé explicitement adopté ; consentement local exact et budget requis")
+    parser.add_argument("--p0-rejected-profile", type=Path)
+    parser.add_argument("--p0-rejected-inspection-plan", type=Path)
+    parser.add_argument("--p0-rejected-adoption", type=Path)
+    parser.add_argument("--p0-rejected-mode", choices=("inspect-only", "off", "on"))
     args = parser.parse_args(argv)
+    rejected = any(
+        value is not None
+        for value in (
+            args.p0_rejected_profile,
+            args.p0_rejected_inspection_plan,
+            args.p0_rejected_adoption,
+            args.p0_rejected_mode,
+        )
+    )
+    if rejected and (
+        bool(args.p0_rejected_profile) == bool(args.p0_rejected_inspection_plan)
+        or not _drive_literal(args.p0_rejected_adoption)
+        or not _drive_literal(args.p0_rejected_profile or args.p0_rejected_inspection_plan)
+        or args.p0_normal_profile is not None
+        or args.saved_root is None
+        or args.word_profile != "product-v7"
+        or any(
+            (
+                args.saved_only,
+                args.create_saved,
+                args.enable_conversation,
+                args.enable_review_modify,
+                args.live_authorization,
+                args.r5_scope,
+                args.r5_authorization,
+            )
+        )
+        or any(value is None for value in (args.runtime, args.data_root, args.runtime_sha256))
+        or (
+            args.p0_rejected_inspection_plan is not None and args.p0_rejected_mode != "inspect-only"
+        )
+        or (args.p0_rejected_profile is not None and args.p0_rejected_mode == "inspect-only")
+    ):
+        print("P0_REJECTED_EXPLICIT_SELECTION_REQUIRED")
+        return 1
+    if args.p0_normal_profile is not None and (args.saved_root is None or args.word_profile != "product-v7"
+            or args.create_saved or any((args.saved_only, args.enable_conversation, args.enable_review_modify,
+                args.live_authorization, args.r5_scope, args.r5_authorization))):
+        print("P0_NORMAL_EXPLICIT_PROFILE_AND_LIBRARY_REQUIRED")
+        return 1
     if (bool(args.r5_scope) != bool(args.r5_authorization) or
             (args.r5_scope and (args.live_authorization or args.saved_only or args.enable_review_modify
                                or not args.enable_conversation))):
@@ -54,7 +124,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 1
         try:
             saved = build_local_saved(LocalBrowserHttpConfiguration(port=args.port, bind_host=args.bind_host),
-                                      args.saved_root, create=args.create_saved)
+                                      args.saved_root, create=args.create_saved, word_profile=args.word_profile)
         except Exception:
             print("R4_STARTUP_REJECTED")
             return 1
@@ -75,6 +145,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
     jobs = None
     secret_value = ""
+    normal: _ProductComposition | None = None
     if args.r5_scope is not None:
         try:
             from backend.infrastructure.composition.factories.r5_generation import (
@@ -118,6 +189,42 @@ def main(argv: Sequence[str] | None = None) -> int:
         except Exception:
             print("R2_LIVE_PREFLIGHT_NOT_READY")
             return 1
+    if args.p0_normal_profile is not None:
+        try:
+            from backend.infrastructure.composition.factories.p0_normal_profile import (
+                P0NormalProductComposition,
+            )
+            normal = P0NormalProductComposition(path=args.p0_normal_profile,
+                target=Read15RuntimeTarget(args.runtime, args.data_root, args.runtime_sha256), saved_root=args.saved_root)
+        except Exception:
+            print("P0_NORMAL_PROFILE_NOT_ADOPTED_OR_INVALID")
+            return 1
+    if rejected:
+        try:
+            from backend.infrastructure.composition.factories.p0_rejected_profile import (
+                P0RejectedInspectionComposition,
+                P0RejectedProductComposition,
+            )
+
+            target = Read15RuntimeTarget(args.runtime, args.data_root, args.runtime_sha256)
+            if args.p0_rejected_inspection_plan is not None:
+                normal = P0RejectedInspectionComposition(
+                    plan_path=args.p0_rejected_inspection_plan,
+                    adoption_path=args.p0_rejected_adoption,
+                    target=target,
+                    saved_root=args.saved_root,
+                )
+            else:
+                normal = P0RejectedProductComposition(
+                    path=args.p0_rejected_profile,
+                    adoption_path=args.p0_rejected_adoption,
+                    target=target,
+                    saved_root=args.saved_root,
+                    mode=args.p0_rejected_mode or "off",
+                )
+        except Exception:
+            print("P0_REJECTED_COMPOSITION_NOT_ADOPTED_OR_INVALID")
+            return 1
     try:
         composition = build_local_read15(
             LocalBrowserHttpConfiguration(port=args.port, bind_host=args.bind_host),
@@ -126,8 +233,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             generation_jobs=jobs,
             enable_review_modify=args.enable_review_modify,
             saved_root=args.saved_root, create_saved=args.create_saved,
+            word_profile=args.word_profile,
+            observability_root=args.observability_root,
+            p0_generation=normal.generation if normal is not None else None,
+            p0_product_binder=normal.bind if normal is not None else None,
         )
     except Exception:
+        if normal is not None:
+            normal.close()
         print("LOCAL_READ15_STARTUP_REJECTED")
         return 1
     try:
@@ -139,8 +252,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("LOCAL_READ15_EXECUTION_FAILED")
         return 1
     finally:
-        composition.close()
-        secret_value = ""
+        try:
+            composition.close()
+        finally:
+            if normal is not None:
+                normal.close()
+            secret_value = ""
     return 0
 
 

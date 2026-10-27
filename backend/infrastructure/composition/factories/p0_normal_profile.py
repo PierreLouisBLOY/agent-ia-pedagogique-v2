@@ -17,13 +17,22 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, cast
 
-from backend.adapters.outbound.generation.openai.p0_content import build_p0_content_request
-from backend.adapters.outbound.generation.openai.p0_normal_policy import canonical, closed, sha, utc
+from backend.adapters.outbound.generation.openai.p0_content import (
+    build_p0_content_request,
+)
+from backend.adapters.outbound.generation.openai.p0_normal_policy import (
+    canonical,
+    closed,
+    sha,
+    utc,
+)
 from backend.adapters.outbound.generation.openai.p0_normal_receipt import (
     P0NormalReceipt,
     pinned_receipt_root,
 )
-from backend.adapters.outbound.generation.openai.p0_product import P0ProductGenerationAdapter
+from backend.adapters.outbound.generation.openai.p0_product import (
+    P0ProductGenerationAdapter,
+)
 from backend.adapters.outbound.generation.openai.p0_product_continuity_contract import (
     BoundChain,
     OriginProof,
@@ -39,9 +48,13 @@ from backend.infrastructure.composition.factories.p0_normal_profile_contract imp
     bind_profile,
     descriptor,
 )
-from backend.infrastructure.composition.factories.p0_product_consent import bind_product_consent
+from backend.infrastructure.composition.factories.p0_product_consent import (
+    bind_product_consent,
+)
 from backend.infrastructure.config.secrets.provider import (
+    EnvironmentProviderSecretResolver,
     ProviderCredentialRef,
+    ProviderSecretError,
     ProviderSecretValue,
 )
 from backend.infrastructure.filesystem import (
@@ -58,7 +71,9 @@ from backend.modules.work_orchestration.application.queries.p0_source_admission 
 
 if TYPE_CHECKING:
     from backend.adapters.inbound.api.p0_creation import P0CreationEndpoint
-    from backend.infrastructure.composition.factories.local_browser import Read15RuntimeTarget
+    from backend.infrastructure.composition.factories.local_browser import (
+        Read15RuntimeTarget,
+    )
     from backend.modules.work_orchestration.application.services.p0_creation import (
         P0CreationService,
     )
@@ -136,6 +151,46 @@ def windows_operator() -> dict[str, object]:
         close(token)
 
 
+def require_local_masked_console() -> None:
+    """Require real console input and a visible prompt channel, never NUL/pipe.
+
+    Windows reports a DEVNULL-backed stdin as a TTY in some launch modes, so
+    isatty alone cannot prove that a person can answer the masked prompt.
+    A ConPTY terminal need not have a visible GetConsoleWindow handle; console
+    mode on both standard handles is the relevant capability here.
+    """
+    if os.name != "nt" or sys.stdin is None or sys.stderr is None:
+        raise ValueError("P0_NORMAL_INTERACTIVE_CONSOLE_REQUIRED")
+    try:
+        import msvcrt
+
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        console_mode = kernel.GetConsoleMode
+        console_mode.argtypes = (ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32))
+        console_mode.restype = ctypes.c_int
+        for stream in (sys.stdin, sys.stderr):
+            if not stream.isatty():
+                raise ValueError("P0_NORMAL_INTERACTIVE_CONSOLE_REQUIRED")
+            handle = msvcrt.get_osfhandle(stream.fileno())
+            mode = ctypes.c_uint32()
+            if not console_mode(ctypes.c_void_p(handle), ctypes.byref(mode)):
+                raise ValueError("P0_NORMAL_INTERACTIVE_CONSOLE_REQUIRED")
+    except (AttributeError, OSError, ValueError):
+        raise ValueError("P0_NORMAL_INTERACTIVE_CONSOLE_REQUIRED") from None
+
+
+def require_openai_environment_key() -> None:
+    """Fail before temporal records when the pilot's inherited key is absent."""
+    resolver = build_p0_secret_resolver(ProviderCredentialRef("openai.p0.normal"),
+        credential_source="OPENAI_API_KEY")
+    try:
+        resolver.resolve(resolver.ref)
+    except ProviderSecretError:
+        raise ValueError("P1_PILOT_OPENAI_API_KEY_MISSING_OR_INVALID") from None
+    finally:
+        resolver.close()
+
+
 class MaskedLocalSecretResolver:
     """Explicit native masked prompt after preflight, retained only for this session."""
     def __init__(self, credential_ref: ProviderCredentialRef) -> None:
@@ -148,17 +203,108 @@ class MaskedLocalSecretResolver:
             raise ValueError("P0_NORMAL_CREDENTIAL_REFERENCE_REJECTED")
         with self.lock:
             if self._value is None:
-                if not sys.stdin.isatty():
-                    raise ValueError("P0_NORMAL_MASKED_CONSOLE_REQUIRED")
+                try:
+                    require_local_masked_console()
+                except ValueError:
+                    # Preserve the resolver's historical refusal code. The
+                    # native console check still runs before any prompt.
+                    raise ValueError("P0_NORMAL_MASKED_CONSOLE_REQUIRED") from None
                 with warnings.catch_warnings():
                     warnings.simplefilter("error", getpass.GetPassWarning)
-                    value = getpass.getpass("Credential OpenAI P0 (saisie masquée, mémoire de session) : ")
+                    try:
+                        value = getpass.getpass("Credential OpenAI P0 (saisie masquée, mémoire de session) : ")
+                    except (EOFError, KeyboardInterrupt):
+                        raise ValueError("P0_NORMAL_CREDENTIAL_CANCELLED") from None
+                    except (getpass.GetPassWarning, OSError):
+                        raise ValueError("P0_NORMAL_MASKING_UNAVAILABLE") from None
                 self._value = ProviderSecretValue(value)
+            return self._value
+
+    def resolve_prepared(self, credential_ref: ProviderCredentialRef) -> ProviderSecretValue:
+        """Supply the already acquired value without a prompt under a LOCK."""
+        if credential_ref != self.ref:
+            raise ValueError("P0_NORMAL_CREDENTIAL_REFERENCE_REJECTED")
+        with self.lock:
+            if self._value is None:
+                raise ValueError("P0_NORMAL_CREDENTIAL_NOT_PREPARED")
             return self._value
 
     def close(self) -> None:
         with self.lock:
             self._value = None
+
+
+class OpenAIEnvironmentSecretResolver:
+    """Pilot-only adapter from OPENAI_API_KEY to the profile's logical ref."""
+
+    def __init__(self, credential_ref: ProviderCredentialRef,
+                 environment: Mapping[str, str]) -> None:
+        if type(credential_ref) is not ProviderCredentialRef:
+            raise TypeError("credential_ref must be a ProviderCredentialRef")
+        if not isinstance(environment, Mapping):
+            raise TypeError("environment must be a mapping")
+        self.ref = credential_ref
+        value = environment.get("OPENAI_API_KEY")
+        self._invalid = value is not None and (not isinstance(value, str)
+            or not value or len(value) > 16384
+            or any(ord(char) < 33 or ord(char) > 126 for char in value))
+        snapshot = ({credential_ref.value: value}
+            if isinstance(value, str) and not self._invalid else {})
+        self._resolver = EnvironmentProviderSecretResolver(snapshot)
+        self._lock = threading.Lock()
+        self._value: ProviderSecretValue | None = None
+
+    def __repr__(self) -> str:
+        return "OpenAIEnvironmentSecretResolver([REDACTED])"
+
+    def resolve(self, credential_ref: ProviderCredentialRef) -> ProviderSecretValue:
+        if credential_ref != self.ref:
+            raise ValueError("P0_NORMAL_CREDENTIAL_REFERENCE_REJECTED")
+        with self._lock:
+            if self._invalid:
+                from backend.infrastructure.config.secrets.provider import (
+                    ProviderSecretErrorCode,
+                )
+
+                raise ProviderSecretError(ProviderSecretErrorCode.INVALID_PROVIDER_SECRET)
+            if self._value is None:
+                self._value = self._resolver.resolve(credential_ref)
+            return self._value
+
+    def resolve_prepared(self, credential_ref: ProviderCredentialRef) -> ProviderSecretValue:
+        if credential_ref != self.ref:
+            raise ValueError("P0_NORMAL_CREDENTIAL_REFERENCE_REJECTED")
+        with self._lock:
+            if self._value is None:
+                raise ValueError("P0_NORMAL_CREDENTIAL_NOT_PREPARED")
+            return self._value
+
+    def close(self) -> None:
+        with self._lock:
+            self._value = None
+            self._resolver.close()
+
+
+def build_p0_secret_resolver(credential_ref: ProviderCredentialRef, *,
+        credential_source: str, environment: Mapping[str, str] | None = None,
+        ) -> MaskedLocalSecretResolver | OpenAIEnvironmentSecretResolver:
+    """One explicit credential selection for the product and its diagnosis."""
+    if credential_source == "OPENAI_API_KEY":
+        return OpenAIEnvironmentSecretResolver(credential_ref,
+            os.environ if environment is None else environment)
+    if credential_source == "masked-console":
+        return MaskedLocalSecretResolver(credential_ref)
+    raise ValueError("P0_NORMAL_CREDENTIAL_SOURCE_REJECTED")
+
+
+class PreparedLocalSecretResolver:
+    """Pilot transport boundary: a missing prepared key fails without prompting."""
+
+    def __init__(self, owner: MaskedLocalSecretResolver | OpenAIEnvironmentSecretResolver) -> None:
+        self.owner = owner
+
+    def resolve(self, credential_ref: ProviderCredentialRef) -> ProviderSecretValue:
+        return self.owner.resolve_prepared(credential_ref)
 
 
 class LocalTokenizerHelper:
@@ -283,8 +429,19 @@ def verify_source_package(profile: Mapping[str, object], *, application_root: Pa
 
 class P0NormalProductComposition:
     def __init__(self, *, path: Path, target: Read15RuntimeTarget, saved_root: Path,
-                 application_root: Path = _ROOT) -> None:
+                 application_root: Path = _ROOT,
+                 credential_source: str = "masked-console", mode: str = "enabled",
+                 followup_enabled: bool = False) -> None:
+        if mode not in {"enabled", "prepare-only", "evidence-only"}:
+            raise ValueError("P0_NORMAL_MODE_REQUIRED")
+        self.mode = mode
+        if type(followup_enabled) is not bool:
+            raise ValueError("P0_NORMAL_FOLLOWUP_MODE_REQUIRED")
+        self.followup_enabled = followup_enabled
+        if credential_source not in {"masked-console", "OPENAI_API_KEY"}:
+            raise ValueError("P0_NORMAL_CREDENTIAL_SOURCE_REJECTED")
         self.path, self.target, self.saved_root, self.application_root = path, target, saved_root, application_root
+        self.credential_source = credential_source
         if not path.is_absolute():
             raise ValueError("P0_NORMAL_PROFILE_ABSOLUTE_REQUIRED")
         raw = read_file_nofollow(path, allowed_root=path.parent, maximum_bytes=128_000)
@@ -294,7 +451,9 @@ class P0NormalProductComposition:
         profile = cast(Mapping[str, object], self.envelope["profile"])
         delegation = cast(dict[str, object], read_descriptor(profile["operator_delegation"]))
         self.profile = dict(bind_profile(self.envelope, permission=self.permission, decision=self.decision,
-            delegation=delegation, operator=windows_operator()))
+            delegation=delegation, operator=windows_operator(), proposed=mode == "prepare-only"))
+        if mode == "prepare-only" and self.profile["schema"] != "P0-NORMAL-PROFILE-1.0":
+            raise ValueError("P0_NORMAL_PROPOSAL_CANONICAL_SOURCE_ONLY")
         self.continuity = self.profile["schema"] == "P0-NORMAL-PROFILE-3.0"
         self.source_owner_sha256 = (str(descriptor(self.profile["source_admission_owner_decision"])["sha256"])
             if self.continuity else str(self.permission["owner_decision_sha256"]))
@@ -318,7 +477,8 @@ class P0NormalProductComposition:
         self.tariff = cast(dict[str, object], read_descriptor(self.profile["tariff"]))
         self.tokenizer_manifest = cast(dict[str, object], read_descriptor(self.profile["tokenizer_manifest"]))
         source_manifest = cast(dict[str, object], read_descriptor(self.profile["source_admission_manifest"], canonical_required=False))
-        self.admission = ReadP0SourceAdmission(source_manifest,
+        self.source_manifest = source_manifest
+        self._admission = None if mode == "prepare-only" else ReadP0SourceAdmission(source_manifest,
             manifest_sha256=str(descriptor(self.profile["source_admission_manifest"])["sha256"]),
             adopted_manifest_sha256=str(self.decision["source_admission_manifest_sha256"]), owner_admission_sha256=self.source_owner_sha256)
         self.local_context: ReadP0LocalReferenceContext | None = None
@@ -338,7 +498,7 @@ class P0NormalProductComposition:
                     continuity_manifest_sha256=descriptor(self.profile["continuity_manifest"])["sha256"],
                     continuity_anchor_sha256=descriptor(self.profile["continuity_anchor"])["sha256"],
                     source_admission_owner_decision_sha256=self.source_owner_sha256)
-        self.resolver = MaskedLocalSecretResolver(ProviderCredentialRef(str(self.profile["credential_ref"])))
+        self._resolver: MaskedLocalSecretResolver | OpenAIEnvironmentSecretResolver | None = None
         self.tokenizer = LocalTokenizerHelper(self.tokenizer_manifest, str(self.permission["tokenizer_manifest_sha256"]), application_root=application_root)
         current = self.identities()
         families, levels = cast(list[str], self.permission["allowed_families"]), cast(list[str], self.permission["allowed_levels"])
@@ -354,11 +514,27 @@ class P0NormalProductComposition:
         # before this fixed local probe; no subject/reference/grant, provider
         # COUNT or credential is involved in readiness.
         self.tokenizer(canonical({"model": "gpt-5.6-terra", "input": "P0 LOCAL TOKENIZER READINESS PROBE"}))
+        self.generation: P0ProductGenerationAdapter | None = None
+        if mode in {"prepare-only", "evidence-only"}:
+            return  # No resolver, provider adapter, consent or temporal authority.
+        credential_ref = ProviderCredentialRef(str(self.profile["credential_ref"]))
+        self._resolver = build_p0_secret_resolver(credential_ref,
+            credential_source=credential_source)
+        resolver = self.resolver
+        def prepare_secret() -> None:
+            try:
+                resolver.resolve(resolver.ref)
+            except ProviderSecretError:
+                raise ValueError("P0_NORMAL_OPENAI_API_KEY_MISSING_OR_INVALID") from None
         self.generation = P0ProductGenerationAdapter(permission=self.permission, permission_identities=self.identities,
             identity_source=self.grant_identities, tariff=self.tariff, tokenizer=self.tokenizer, receipt_root=self.root,
-            resolver=self.resolver, credential_ref=self.resolver.ref, transport=OpenAISDKResponsesTransportFactory(r2_destination=True),
+            resolver=PreparedLocalSecretResolver(resolver) if credential_source == "OPENAI_API_KEY" else resolver,
+            credential_ref=resolver.ref,
+            transport=OpenAISDKResponsesTransportFactory(r2_destination=True,
+                environment_key_allowed=credential_source == "OPENAI_API_KEY"),
             local_context_adoption=self.local_context_adoption,
-            continuity_chain=self._continuity_chain if self.continuity else None)
+            continuity_chain=self._continuity_chain if self.continuity else None,
+            credential_preflight=prepare_secret if credential_source == "OPENAI_API_KEY" else None)
 
     def _continuity_chain(self) -> BoundChain:
         if not self.continuity:
@@ -408,6 +584,22 @@ class P0NormalProductComposition:
         current = OriginProof(self.permission, self.envelope, self.decision, delegation, windows_operator(), native)
         return bind_chain(manifest, origins, current, ancestor_manifests=prior_manifests, anchor=anchor)
 
+    @property
+    def admission(self) -> ReadP0SourceAdmission:
+        if self._admission is None:
+            raise ValueError("P0_NORMAL_SOURCE_ADOPTION_REQUIRED")
+        return self._admission
+
+    @property
+    def resolver(self) -> MaskedLocalSecretResolver | OpenAIEnvironmentSecretResolver:
+        if self._resolver is None:
+            raise ValueError("P0_NORMAL_RESOLVER_NOT_COMPOSED")
+        return self._resolver
+
+    @property
+    def has_resolver(self) -> bool:
+        return self._resolver is not None
+
     def identities(self) -> Mapping[str, object]:
         from backend.infrastructure.composition.factories.conversation import (
             r2_environment_identity,
@@ -421,7 +613,8 @@ class P0NormalProductComposition:
         permission = cast(dict[str, object], read_descriptor(self.envelope["permission"]))
         decision = cast(dict[str, object], read_descriptor(self.envelope["decision"]))
         delegation = cast(dict[str, object], read_descriptor(self.profile["operator_delegation"]))
-        bind_profile(self.envelope, permission=permission, decision=decision, delegation=delegation, operator=windows_operator())
+        bind_profile(self.envelope, permission=permission, decision=decision, delegation=delegation,
+            operator=windows_operator(), proposed=self.mode == "prepare-only")
         r2_environment_identity()
         before = capture_secure_path(self.saved_root, allowed_root=self.saved_root)
         if not self.store_identity.same_identity(before):
@@ -465,12 +658,26 @@ class P0NormalProductComposition:
             "output_schema_sha256": sha(canonical(wire.output_schema)), "namespace_sha256": str(self.permission["permission_namespace_sha256"])}
 
     def bind(self, service: P0CreationService, endpoint: P0CreationEndpoint) -> None:
+        if self.mode == "evidence-only":
+            raise ValueError("P0_CHAIN_HISTORICAL_EVIDENCE_HAS_NO_CREATE_BINDING")
+        if self.local_context is not None:
+            # 1.1 is qualified only on the native canonical-notion path.
+            # Never mix that resolver with a local-reference admission manifest.
+            service.focused_institutional_resolver = None
+        if self.mode == "prepare-only":
+            from backend.infrastructure.composition.factories.p0_normal_preview import (
+                bind_normal_proposal,
+            )
+            bind_normal_proposal(self, service, endpoint)
+            return
+        assert self.generation is not None and self.admission is not None
         if self.continuity:
             # Available OFF as a read-only Application callback. The retained
             # original LOCK and full lifecycle are checked on every snapshot.
             endpoint.campaign_snapshot = self.generation.campaign_snapshot
         if self.local_context is None:
             bind_product_consent(service, endpoint, target=self.target, generation=self.generation, admission=self.admission)
+            self._bind_followup(endpoint)
             return
         from backend.infrastructure.composition.factories.p0_local_reference_context import (
             build_local_reference_resolver,
@@ -489,6 +696,19 @@ class P0NormalProductComposition:
             return
         bind_product_consent(service, endpoint, target=self.target, generation=self.generation, admission=self.local_context,
             institutional_resolver=resolver)
+        self._bind_followup(endpoint)
+
+    def _bind_followup(self, endpoint: P0CreationEndpoint) -> None:
+        if not self.followup_enabled:
+            return
+        from backend.adapters.inbound.api.p0_pilot_command_followup import P0PilotCommandFollowup
+        assert self.generation is not None and endpoint.consent_execute is not None
+        followup = P0PilotCommandFollowup(endpoint.consent_execute, normal=True,
+            retained_reader=self.generation.read_command)
+        endpoint.normal_command_followup = followup
+        endpoint.normal_mode = "ENABLED"
+        self.generation.progress = followup.observe
 
     def close(self) -> None:
-        self.resolver.close()
+        if self._resolver is not None:
+            self._resolver.close()

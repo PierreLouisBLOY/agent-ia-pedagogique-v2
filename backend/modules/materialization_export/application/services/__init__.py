@@ -1,1 +1,1 @@
-"""Application media services reuse versioned production persistence."""
+"""Application services for materialization without provider authority."""

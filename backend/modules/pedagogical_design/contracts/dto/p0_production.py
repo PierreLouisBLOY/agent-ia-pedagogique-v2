@@ -18,9 +18,21 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     nonempty,
     object_data,
 )
+from backend.modules.pedagogical_design.contracts.dto.case_study import (
+    CASE_CONTEXT,
+    CASE_PRODUCTION,
+)
+from backend.modules.pedagogical_design.contracts.dto.chapter_assembly import (
+    ASSEMBLY_PRODUCTION_CONTRACT,
+    ASSEMBLY_PROVENANCE,
+)
 from backend.modules.pedagogical_design.contracts.dto.production_media import (
     MEDIA_PRODUCTION_CONTRACT,
     ProductionMediaPlan,
+)
+from backend.modules.pedagogical_design.contracts.dto.section_identity import (
+    valid_question_id,
+    valid_section_id,
 )
 from backend.shared_kernel._safe_data import freeze_safe_mapping
 
@@ -66,7 +78,7 @@ _REFERENCE_FIELDS = {
 
 
 def _question_id(value: object) -> str:
-    if not isinstance(value, str) or re.fullmatch(r"Q[A-Z0-9_-]{1,63}", value) is None:
+    if not valid_question_id(value):
         raise ValueError("P0_QUESTION_ID")
     return value
 
@@ -91,7 +103,7 @@ def _validated_sections(value: object) -> tuple[dict[str, object], ...]:
     for section in sections:
         object_data(section, {"section_id", "heading", "text"})
         section_id = section["section_id"]
-        if not isinstance(section_id, str) or re.fullmatch(r"S[A-Z0-9_-]{1,63}", section_id) is None:
+        if not valid_section_id(section_id):
             raise ValueError("P0_SECTION_ID")
         nonempty(section["heading"], 200)
         nonempty(section["text"], 16_000)
@@ -148,7 +160,7 @@ def _validated_marking(value: object) -> tuple[dict[str, object], ...]:
     return marking
 
 
-def _validated_references(value: object) -> tuple[dict[str, object], ...]:
+def _validated_references(value: object, *, local_assembly: bool = False) -> tuple[dict[str, object], ...]:
     references = items(value, 8)
     if not references:
         raise ValueError("P0_REFERENCES")
@@ -169,7 +181,7 @@ def _validated_references(value: object) -> tuple[dict[str, object], ...]:
         excerpt_sha = reference["excerpt_sha256"]
         if not isinstance(excerpt_sha, str) or re.fullmatch(r"[0-9a-f]{64}", excerpt_sha) is None:
             raise ValueError("P0_REFERENCE_HASH")
-        if reference["provenance_label"] != P0_PROVENANCE_LABEL:
+        if reference["provenance_label"] != (ASSEMBLY_PROVENANCE if local_assembly else P0_PROVENANCE_LABEL):
             raise ValueError("P0_REFERENCE_PROVENANCE")
     if len(ids) != len(set(ids)):
         raise ValueError("P0_REFERENCES")
@@ -188,16 +200,27 @@ class P0Production:
             CourseChapter,
         )
 
-        is_chapter = self.data.get("contract_id") in {COURSE_PRODUCTION_CONTRACT, COURSE_NOTION_PRODUCTION_CONTRACT}
+        is_chapter = self.data.get("contract_id") in {COURSE_PRODUCTION_CONTRACT, COURSE_NOTION_PRODUCTION_CONTRACT, ASSEMBLY_PRODUCTION_CONTRACT}
         is_media = self.data.get("contract_id") == MEDIA_PRODUCTION_CONTRACT
-        fields = _FIELDS | ({"course_chapter"} if is_chapter else {"media_plan"} if is_media else set())
+        from backend.modules.pedagogical_context.contracts.dto.exercise_context import (
+            EXERCISE_CONTEXTS,
+        )
+        from backend.modules.pedagogical_design.contracts.dto.exercise_profile import (
+            EXERCISE_PRODUCTION,
+            StructuredExercise,
+        )
+
+        is_exercise = self.data.get("contract_id") in {EXERCISE_PRODUCTION, CASE_PRODUCTION}
+        fields = _FIELDS | ({"exercise"} if is_exercise else {"course_chapter"} if is_chapter else {"media_plan"} if is_media else set())
         data = object_data(self.data, fields)
-        if data["contract_id"] not in {P0_PRODUCTION_CONTRACT, COURSE_PRODUCTION_CONTRACT, COURSE_NOTION_PRODUCTION_CONTRACT, MEDIA_PRODUCTION_CONTRACT}:
+        if data["contract_id"] not in {P0_PRODUCTION_CONTRACT, COURSE_PRODUCTION_CONTRACT, COURSE_NOTION_PRODUCTION_CONTRACT, MEDIA_PRODUCTION_CONTRACT, ASSEMBLY_PRODUCTION_CONTRACT, EXERCISE_PRODUCTION, CASE_PRODUCTION}:
             raise ValueError("P0_PRODUCTION_CONTRACT")
         identifier(data["production_ref"], "prod")
         identifier(data["version_ref"], "ver")
         nonempty(data["title"], 300)
         context = P0Context(object_data(data["context"]))
+        if is_exercise != (context.data["contract_id"] in EXERCISE_CONTEXTS):
+            raise ValueError("EXERCISE_PRODUCTION_CONTEXT_BINDING")
         if (data["contract_id"] == COURSE_NOTION_PRODUCTION_CONTRACT) != (context.data["contract_id"] == "P0-CONTEXT-COURSE-4.0"):
             raise ValueError("P0_NOTION_COURSE_PRODUCTION_BINDING")
         if data["context_sha256"] != context.sha256:
@@ -206,14 +229,28 @@ class P0Production:
         questions = _validated_questions(data["questions"])
         corrections = _validated_corrections(data["corrections"])
         marking = _validated_marking(data["marking"])
-        _validated_references(data["references"])
+        _validated_references(data["references"], local_assembly=data["contract_id"] == ASSEMBLY_PRODUCTION_CONTRACT)
         self._validate_content(context, questions, corrections, marking)
+        if (data["contract_id"] == CASE_PRODUCTION) != (context.data["contract_id"] == CASE_CONTEXT):
+            raise ValueError("P0_CASE_CONTEXT_BINDING")
+        if is_exercise:
+            exercise = StructuredExercise(object_data(data["exercise"]), case_study=data["contract_id"] == CASE_PRODUCTION)
+            exercise.bind(context.data, data["references"])
+            if (as_plain(data["sections"]) != exercise.sections()
+                    or as_plain(data["questions"]) != exercise.simple_questions()
+                    or as_plain(data["corrections"]) != exercise.simple_answers()):
+                raise ValueError("EXERCISE_SIMPLE_PROJECTION_BINDING")
         if is_media:
             ProductionMediaPlan(object_data(data["media_plan"])).bind(data)
         if is_chapter:
             chapter = CourseChapter(object_data(data["course_chapter"]))
             if (data["contract_id"] == COURSE_NOTION_PRODUCTION_CONTRACT) != (chapter.data["contract_id"] == COURSE_NOTION_LINEAGE_CONTRACT):
                 raise ValueError("P0_NOTION_COURSE_PRODUCTION_BINDING")
+            from backend.modules.pedagogical_design.contracts.dto.chapter_assembly import (
+                ASSEMBLY_CHAPTER_CONTRACT,
+            )
+            if (data["contract_id"] == ASSEMBLY_PRODUCTION_CONTRACT) != (chapter.data["contract_id"] == ASSEMBLY_CHAPTER_CONTRACT):
+                raise ValueError("ASSEMBLY_PRODUCTION_BINDING")
             chapter.bind_production(str(data["production_ref"]))
             chapter.bind_context(context)
             if as_plain(data["sections"]) != chapter.sections() or data["title"] != chapter.data["title"]:
@@ -310,6 +347,12 @@ class P0Production:
             result["course_chapter"] = CourseChapter(object_data(self.data["course_chapter"])).projection()
         if "media_plan" in self.data:
             result["media_assets"] = ProductionMediaPlan(object_data(self.data["media_plan"])).projection("student")
+        if "exercise" in self.data:
+            from backend.modules.pedagogical_design.contracts.dto.exercise_profile import (
+                StructuredExercise,
+            )
+
+            result["exercise"] = StructuredExercise(object_data(self.data["exercise"]), case_study=self.data["contract_id"] == CASE_PRODUCTION).projection()
         return result
 
     def teacher_projection(self) -> dict[str, object]:
@@ -328,6 +371,12 @@ class P0Production:
             result["course_chapter"] = CourseChapter(object_data(self.data["course_chapter"])).projection(teacher=True)
         if "media_plan" in self.data:
             result["media_assets"] = ProductionMediaPlan(object_data(self.data["media_plan"])).projection("correction")
+        if "exercise" in self.data:
+            from backend.modules.pedagogical_design.contracts.dto.exercise_profile import (
+                StructuredExercise,
+            )
+
+            result["exercise"] = StructuredExercise(object_data(self.data["exercise"]), case_study=self.data["contract_id"] == CASE_PRODUCTION).projection(teacher=True)
         return result
 
     def media_review_context(self) -> list[dict[str, object]]:

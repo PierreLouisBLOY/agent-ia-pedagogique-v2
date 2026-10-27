@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Projet V2 — Atelier pédagogique</title>
   <link rel="stylesheet" href="/assets/styles.css">
+  <script src="/assets/normal-on.js" defer></script>
   <script src="/assets/app.js" defer></script>
+  <script src="/assets/saved-course-edit.js" defer></script>
 </head>
 <body>
   <a class="skip" href="#main-content">Aller au contenu</a>
@@ -26,6 +28,10 @@
 <div class="header-actions"><span class="local-indicator">Local</span><button id="sources-toggle" type="button" aria-expanded="true" aria-controls="sources-drawer">Sources &amp; contexte</button></div>
   </header>
   <main id="main-content" tabindex="-1">
+    <section id="p0-finite-follow-panel" class="content" hidden>
+      <p id="p0-finite-follow-status" role="status"></p>
+      <button id="p0-finite-follow" type="button">Consulter la dernière chaîne sans la relancer</button>
+    </section>
 
 
     <section id="product-home" class="content" data-panel="home" aria-labelledby="home-heading">
@@ -49,6 +55,16 @@
           <label for="p0-course-format">Format du cours</label>
           <select id="p0-course-format"><option value="CHAPTER">Chapitre riche — documents, activités et corrigé séparé</option><option value="EXPLAINED">Cours expliqué — notions, méthode et application guidée</option></select>
           <p id="p0-course-format-note"></p>
+        </div>
+        <div id="p0-exercise-format-panel" hidden>
+          <label for="p0-exercise-format">Format de l'exercice</label>
+          <select id="p0-exercise-format"><option value="SIMPLE">Exercice simple</option><option value="STRUCTURED">Exercice structuré — observer, analyser, réinvestir</option><option value="CASE_STUDY">Étude de cas — dossier, données et missions</option></select>
+          <div id="p0-exercise-focus-panel" hidden>
+            <p>Choisissez explicitement la question travaillée. Cette focalisation est pédagogique locale ; le libellé du programme reste inchangé.</p>
+            <p id="p0-exercise-source-label"></p>
+            <label for="p0-exercise-focus">Question travaillée</label><select id="p0-exercise-focus"><option value="">Choisir une composante exacte</option></select>
+            <label for="p0-exercise-justification">Justification pédagogique locale</label><textarea id="p0-exercise-justification" maxlength="2000" rows="2"></textarea>
+          </div>
         </div>
         <label for="p0-level">Niveau</label>
         <select id="p0-level" required><option value="">Choisir</option><option value="FIRST_STMG">Première STMG</option><option value="FINAL_STMG">Terminale STMG</option><option value="BTS_CG_YEAR_1">BTS CG première année</option><option value="BTS_CG_YEAR_2">BTS CG deuxième année</option></select>
@@ -85,9 +101,21 @@
         <button id="p0-prepare" type="submit" disabled>Confirmer le contexte et préparer</button>
       </form></details>
       <p id="p0-status" role="status" aria-live="polite">Connexion en cours.</p>
+      <button id="p0-follow-command" type="button" hidden>Consulter la commande engagée</button>
       <details class="secondary"><summary>Connexion et limites</summary><p>Sans autorisation fournisseur distincte, la génération est indisponible. Une vérification de structure ne constitue pas une validation pédagogique.</p><button id="p0-connect" type="button">Vérifier la connexion au service</button></details>
       <div id="p0-preparation"></div>
+      <button id="p0-local-propose" type="button">Proposer un exercice local de lecture critique</button>
       <button id="p0-generate" type="button" disabled>Demander la génération autorisée</button>
+      <section id="p0-pilot-preview" class="secondary" aria-labelledby="p0-pilot-preview-heading" hidden>
+        <h3 id="p0-pilot-preview-heading">Aperçu local du pilote — aucun envoi</h3>
+        <div id="p0-pilot-preview-summary"></div>
+        <details><summary>Sources publiques des preuves proposées</summary>
+          <p>Modèle et tarif GPT-5.6 Terra · tarification des écritures de cache · résolveur tiktoken 0.14.0 · empreinte publiée de o200k_base. Les références exactes figurent dans le journal du pilote.</p>
+          <p>Sources documentaires datées ; leur présence ne vaut pas admission pour un envoi.</p>
+        </details>
+        <details><summary>Corps exact envisagé pour le fournisseur</summary><pre id="p0-pilot-preview-body"></pre></details>
+        <details><summary>Identités et limites</summary><pre id="p0-pilot-preview-identities"></pre></details>
+      </section>
       <section id="p0-consent" class="secondary" aria-labelledby="p0-consent-heading" hidden>
         <h3 id="p0-consent-heading">Vérifier avant l’envoi</h3>
         <div id="p0-consent-summary"></div>
@@ -95,6 +123,7 @@
         <details><summary>Identités et contrôles de cette demande</summary><pre id="p0-consent-identities"></pre></details>
         <label><input id="p0-consent-transfer" type="checkbox"> J’autorise l’envoi à OpenAI de ce contenu exact.</label>
         <label><input id="p0-consent-cost" type="checkbox"> J’accepte le coût maximal affiché pour cette création.</label>
+        <label id="p0-consent-double-risk-label" hidden><input id="p0-consent-double-risk" type="checkbox"><span id="p0-consent-double-risk-text"> Je comprends que la tentative UNKNOWN a pu réussir et être facturée : cette nouvelle création du même cours peut produire et coûter deux fois.</span></label>
         <button id="p0-consent-send" type="button" disabled>Envoyer cette requête et créer la ressource</button>
         <button id="p0-consent-cancel" type="button">Annuler cet envoi</button>
       </section>
@@ -115,6 +144,24 @@
       <div id="production-card-preview"></div>
       <section id="production-card-teacher-preview" aria-label="Document professeur séparé" hidden></section>
       <details id="production-edit-panel" class="secondary"><summary>Modifier le contenu de cette version</summary><div id="p0-review"></div></details>
+      <details id="p0-codesign" class="secondary" hidden><summary>Co-conception avec les agents IA</summary>
+        <label for="p0-codesign-direction">Point de départ</label>
+        <select id="p0-codesign-direction"><option value="V2_TO_AI">Améliorer un brouillon V2</option><option value="AI_TO_V2">Créer une variante IA puis la vérifier dans V2</option></select>
+        <label for="p0-codesign-objective">Amélioration recherchée</label>
+        <textarea id="p0-codesign-objective" maxlength="2000" rows="2"></textarea>
+        <label for="p0-codesign-evidence-query">Recherche dans les sources locales (facultative ; sinon, thèmes du contexte)</label>
+        <input id="p0-codesign-evidence-query" maxlength="256" placeholder="Organisation, notion ou mots à rechercher">
+        <button id="p0-codesign-preview" type="button">Examiner le parcours sans envoi</button>
+        <p id="p0-codesign-status" role="status"></p>
+        <pre id="p0-codesign-identities"></pre>
+        <details id="p0-codesign-body-panel" hidden><summary>Premier contenu exact transmis</summary><pre id="p0-codesign-body"></pre></details>
+        <div id="p0-codesign-consents" hidden>
+          <label><input id="p0-codesign-transfer" type="checkbox"> J'autorise le transfert du contenu présenté et des dérivés bornés décrits dans cet aperçu.</label>
+          <label><input id="p0-codesign-cost" type="checkbox"> J'accepte le plafond cumulé de cette chaîne et la conservation des réservations antérieures.</label>
+          <button id="p0-codesign-final" type="button" disabled>Confirmer et exécuter cette chaîne une seule fois</button>
+          <button id="p0-codesign-revoke" type="button">Révoquer cette chaîne</button>
+        </div>
+      </details>
       <button id="p0-teacher" type="button" disabled>Consulter séparément le corrigé et le barème</button>
       <div id="p0-teacher-content"></div>
       <details id="p0-media-panel" class="secondary"><summary>Visuel pédagogique de cette version</summary>
@@ -147,6 +194,7 @@
     <section id="productions-view" class="workspace" aria-labelledby="r4-heading" data-panel="productions" hidden>
       <p class="eyebrow">Mes documents</p>
       <h2 id="r4-heading">Version conservée et exports</h2>
+      <p>Bibliothèque locale des productions : consultez une version, modifiez une copie brouillon puis comparez-la à son parent.</p>
       <p>Sauvegarder n’est pas promouvoir. Les imports historiques sont documentaires et non modifiables.</p>
       <details class="secondary"><summary>Sauvegarde du parcours conversationnel antérieur</summary><button id="r4-save" type="button">Sauvegarder la version R3 consultée</button></details>
       <button id="r4-refresh" type="button">Retrouver les versions sauvegardées</button>
@@ -154,12 +202,30 @@
       <select id="r4-version"></select>
       <button id="r4-resume" type="button" disabled>Reprendre dans l’atelier</button>
       <button id="r4-open" type="button">Rouvrir</button>
+      <button id="r4-local-copy" type="button" disabled>Modifier une copie</button>
+      <form id="r4-local-editor" hidden>
+        <h3>Copie brouillon non sauvegardée</h3>
+        <p>Vous modifiez une question et sa proposition de correction. L'original est conservé ; cette copie n'hérite d'aucune validation.</p>
+        <label for="r4-local-question">Question à modifier</label>
+        <select id="r4-local-question"></select>
+        <label for="r4-local-prompt">Consigne élève</label>
+        <textarea id="r4-local-prompt" required maxlength="4000" rows="4"></textarea>
+        <label for="r4-local-answer">Proposition de correction professeur</label>
+        <textarea id="r4-local-answer" required maxlength="4000" rows="4"></textarea>
+        <label for="r4-local-rationale">Justification professeur</label>
+        <textarea id="r4-local-rationale" required maxlength="4000" rows="3"></textarea>
+        <button id="r4-local-save" type="submit">Enregistrer la copie brouillon</button>
+        <button id="r4-local-cancel" type="button">Annuler la copie non sauvegardée</button>
+      </form>
       <p id="r4-status" role="status" aria-live="polite">Chargement des documents…</p>
       <details class="secondary"><summary>Provenance, version et réserves</summary><div id="r4-details"></div></details>
       <label for="r4-kind">Document Word</label>
       <select id="r4-kind"><option value="student">Sujet élève</option><option value="correction">Corrigé professeur</option><option value="marking">Barème</option></select>
       <button id="r4-preview" type="button" disabled>Prévisualiser</button>
       <button id="r4-download" type="button" disabled>Télécharger le DOCX éditable</button>
+      <button id="r4-local-compare" type="button" disabled>Comparer au parent</button>
+      <button id="r4-local-parent" type="button" disabled>Revenir à l'original</button>
+      <div id="r4-local-diff" aria-live="polite"></div>
       <div id="r4-preview-content"></div>
       <details class="secondary"><summary>Validation et promotion distinctes</summary><h3>Actions distinctes sur une version locale</h3>
       <button id="r4-validate" type="button" disabled>Nouvelle validation CAP-A01</button>
@@ -241,7 +307,26 @@
       <p id="search-status" role="status" aria-live="polite">Aucune recherche effectuée.</p>
       <p id="search-window" class="scope-note" hidden>Fenêtre de recherche bornée : précisez
         ou reformulez les mots. Cette liste n'est pas un inventaire complet de la bibliothèque.</p>
-      <ol id="search-results" aria-label="Passages trouvés"></ol>
+        <ol id="search-results" aria-label="Passages trouvés"></ol>
+        <details class="secondary"><summary>Rechercher une organisation dans les captures locales</summary>
+          <p>Classement documentaire proposé. Les critères locaux ne créent aucune relation canonique avec une notion.</p>
+          <form id="organization-search-form">
+            <label>Notion exacte<input id="organization-search-notion" maxlength="256" placeholder="notion:organisation" required></label>
+            <label>Secteur déclaré<input id="organization-search-sector" maxlength="200" required></label>
+            <label>Type<select id="organization-search-type"><option value="ENTERPRISE">Entreprise</option><option value="ASSOCIATION">Association</option><option value="ADMINISTRATION">Administration</option><option value="COOPERATIVE">Coopérative</option></select></label>
+            <button type="submit">Rechercher dans les captures indexées</button>
+          </form><div id="organization-search-result" role="status" aria-live="polite"></div>
+        </details>
+
+      <details class="secondary"><summary>Organisation et source publique conservée</summary>
+        <p>Consultez une capture locale datée. Cette consultation ne lance aucune recherche sur Internet.</p>
+        <form id="organization-capture-form">
+          <label for="organization-siren">SIREN de l’organisation</label>
+          <input id="organization-siren" inputmode="numeric" pattern="[0-9]{9}" maxlength="9" required>
+          <button type="submit">Consulter la capture locale</button>
+        </form>
+        <div id="organization-capture-result" role="status" aria-live="polite"></div>
+      </details>
     </section>
     <section class="workspace" aria-label="Consultation" data-panel="library" hidden>
       <form id="resource-form">
@@ -269,10 +354,11 @@
       <p id="request-correlation" class="correlation" hidden></p>
     </section>
     <section class="workspace" data-panel="conversations" hidden><h2>Conversations de cette session</h2><p>Ces demandes sont conservées en mémoire jusqu’à la fermeture de cette page. Sauvegardez les productions à conserver.</p><ol id="session-conversations"><li>Aucune demande envoyée.</li></ol></section>
-    <section class="workspace" data-panel="settings" hidden><h2>Réglages et disponibilité</h2><p>Bibliothèque locale en lecture seule. Génération et revue fournisseur : non raccordées dans cette composition.</p><p>Les versions sauvegardées ne restaurent ni une autorisation fournisseur ni une conversation en cours.</p></section>
+    <section class="workspace" data-panel="settings" hidden><h2>Réglages et disponibilité</h2><p>Bibliothèque locale : consultation, copies brouillon et exports. Génération et revue fournisseur : non raccordées dans cette composition.</p><p>Les versions sauvegardées ne restaurent ni une autorisation fournisseur ni une conversation en cours.</p></section>
   </main>
   <footer>Projet V2 <span>Références locales · Documents à relire avant usage pédagogique</span></footer>
 </div>
   <aside id="sources-drawer" class="sources-drawer" aria-label="Sources et contexte"><h2>Sources &amp; contexte</h2><h3>Votre préparation</h3><div id="drawer-context"><p>Décrivez votre demande pour préparer le contexte.</p></div><h3>Sources sélectionnées</h3><div id="drawer-sources"><p>Aucune source confirmée.</p></div><h3>Vérifications</h3><div id="drawer-quality"><p>Aucune vérification exécutée.</p></div><p class="scope-note">Les sources sont limitées aux passages sélectionnés. La qualité pédagogique reste à examiner.</p><details class="secondary"><summary>Traçabilité exacte</summary><pre id="drawer-identities">Aucune identité confirmée.</pre></details></aside>
+  <script src="/assets/local-catalogue.js" defer></script>
 </body>
 </html>

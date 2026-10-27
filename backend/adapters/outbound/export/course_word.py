@@ -1,139 +1,40 @@
-"""Original V2 COURSE template, activated only by an explicit chapter projection."""
-from io import BytesIO
+"""Existing chapter writer with shared components and explicit specialised layouts."""
+from dataclasses import replace
 from typing import cast
-from xml.etree.ElementTree import Element, SubElement, tostring
-from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
+from xml.etree.ElementTree import Element, SubElement
 
 from backend.adapters.outbound.export.course_media_word import draw_image
+from backend.adapters.outbound.export.learning_word_components import (
+    _document,
+    _p,
+    _question,
+    _styles,
+    _table,
+    _w,
+    keep_short_group,
+    package_word,
+    page_footer,
+    page_header,
+    page_section,
+)
+from backend.modules.materialization_export.contracts.dto.exercise_word_projection import (
+    require_student_editorial_text,
+)
 from backend.modules.materialization_export.contracts.dto.word_document import WordDocument
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import items, object_data
-
-W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
-PKG = "http://schemas.openxmlformats.org/package/2006/relationships"
-
-
-def _w(name: str) -> str:
-    return "{" + W + "}" + name
-
-
-def _p(parent: Element, text: str, style: str = "Normal", *, before: bool = False) -> Element:
-    p = SubElement(parent, _w("p"))
-    pr = SubElement(p, _w("pPr"))
-    SubElement(pr, _w("pStyle"), {_w("val"): style})
-    if before:
-        SubElement(pr, _w("pageBreakBefore"))
-    for i, line in enumerate(text.split("\n")):
-        run = SubElement(p, _w("r"))
-        if i:
-            SubElement(run, _w("br"))
-        SubElement(run, _w("t"), {"{http://www.w3.org/XML/1998/namespace}space": "preserve"}).text = line
-    return p
-
-
-def _table(parent: Element, value: object, *, response: bool = False) -> None:
-    data = object_data(value)
-    columns = cast(tuple[str, ...], data["columns"])
-    rows = cast(tuple[tuple[str, ...], ...], data["rows"])
-    table = SubElement(parent, _w("tbl"))
-    props = SubElement(table, _w("tblPr"))
-    SubElement(props, _w("tblW"), {_w("w"): "9638", _w("type"): "dxa"})
-    SubElement(props, _w("tblLayout"), {_w("type"): "fixed"})
-    margins = SubElement(props, _w("tblCellMar"))
-    for side in ("top", "bottom", "left", "right"):
-        SubElement(margins, _w(side), {_w("w"): "100", _w("type"): "dxa"})
-    borders = SubElement(props, _w("tblBorders"))
-    for side in ("top", "bottom", "left", "right", "insideH", "insideV"):
-        SubElement(borders, _w(side), {_w("val"): "single", _w("sz"): "4", _w("color"): "CCD4DE"})
-    grid = SubElement(table, _w("tblGrid"))
-    width = 9638 // len(columns)
-    for _ in columns:
-        SubElement(grid, _w("gridCol"), {_w("w"): str(width)})
-    for i, row in enumerate((columns, *rows)):
-        tr = SubElement(table, _w("tr"))
-        pr = SubElement(tr, _w("trPr"))
-        SubElement(pr, _w("cantSplit"))
-        if i == 0:
-            SubElement(pr, _w("tblHeader"))
-        elif response:
-            SubElement(pr, _w("trHeight"), {_w("val"): "460", _w("hRule"): "atLeast"})
-        for text in row:
-            cell = SubElement(tr, _w("tc"))
-            cp = SubElement(cell, _w("tcPr"))
-            SubElement(cp, _w("tcW"), {_w("w"): str(width), _w("type"): "dxa"})
-            SubElement(cp, _w("vAlign"), {_w("val"): "center"})
-            SubElement(cp, _w("shd"), {_w("fill"): "F5E6CC" if i == 0 else "F4F7FA" if i % 2 == 0 else "FFFFFF"})
-            _p(cell, text, "TableHeader" if i == 0 else "TableText")
-    _p(parent, "", "Spacer")
-
-
-def _document(parent: Element, row: dict[str, object], number: int) -> None:
-    _p(parent, f"Document {number} — {row['title']}", "DocumentTitle")
-    _p(parent, str(row["text"]), "DocumentText")
-    if row["table"] is not None:
-        _table(parent, row["table"])
-
-
-def _question(parent: Element, row: dict[str, object], answer: dict[str, object] | None, *, keep_responses: bool = False) -> None:
-    _p(parent, f"{row['number']}. {row['prompt']}", "Question")
-    if answer is not None:
-        for label, field in (("Réponse attendue", "expected_answer"), ("Justification", "rationale"),
-                             ("Point de vigilance", "vigilance"), ("Remédiation", "remediation")):
-            _p(parent, label + " — " + str(answer[field]), "TeacherAnswer")
-        return
-    response = object_data(row["response"])
-    if response["table"] is not None:
-        _table(parent, response["table"], response=True)
-    else:
-        lines = cast(int, response["lines"])
-        for i in range(lines):
-            p = _p(parent, " ", "Response")
-            if keep_responses and i < lines-1:
-                pr = p.find(_w("pPr"))
-                if pr is not None:
-                    SubElement(pr, _w("keepNext"))
-
-
-def _styles() -> Element:
-    root = Element(_w("styles"))
-    defaults = SubElement(root, _w("docDefaults"))
-    rd = SubElement(SubElement(defaults, _w("rPrDefault")), _w("rPr"))
-    SubElement(rd, _w("rFonts"), {_w("ascii"): "Calibri", _w("hAnsi"): "Calibri"})
-    SubElement(rd, _w("lang"), {_w("val"): "fr-FR"})
-    specs = {"Normal": (22, False, 100), "Title": (38, True, 200), "Chapter": (24, True, 120),
-             "Heading1": (29, True, 160), "Heading2": (24, True, 120), "DocumentTitle": (22, True, 90),
-             "DocumentText": (22, False, 100), "Question": (22, True, 80), "Response": (22, False, 80),
-             "ConceptTitle": (22, True, 60), "ConceptText": (22, False, 140),
-             "TeacherAnswer": (21, False, 80), "TableHeader": (21, True, 30), "TableText": (21, False, 30),
-             "Footer": (18, False, 0), "Header": (20, True, 0), "Spacer": (8, False, 20)}
-    for name, (size, bold, after) in specs.items():
-        s = SubElement(root, _w("style"), {_w("type"): "paragraph", _w("styleId"): name})
-        SubElement(s, _w("name"), {_w("val"): name})
-        p = SubElement(s, _w("pPr"))
-        SubElement(p, _w("spacing"), {_w("after"): str(after), _w("line"): "260", _w("lineRule"): "auto"})
-        SubElement(p, _w("widowControl"))
-        if name in {"Title", "Chapter", "Heading1", "Heading2", "DocumentTitle", "ConceptTitle", "Question"}:
-            SubElement(p, _w("keepNext"))
-        if name.startswith("Concept"):
-            SubElement(p, _w("shd"), {_w("fill"): "E7F2F0"})
-            SubElement(p, _w("ind"), {_w("left"): "120", _w("right"): "120"})
-        if name == "Response":
-            border = SubElement(p, _w("pBdr"))
-            SubElement(border, _w("bottom"), {_w("val"): "dotted", _w("sz"): "4", _w("color"): "A6AFBB"})
-        if name == "DocumentTitle":
-            SubElement(p, _w("shd"), {_w("fill"): "F5E6CC"})
-        run = SubElement(s, _w("rPr"))
-        SubElement(run, _w("sz"), {_w("val"): str(size)})
-        SubElement(run, _w("color"), {_w("val"): "000000"})
-        if bold:
-            SubElement(run, _w("b"))
-    return root
+from backend.modules.pedagogical_design.contracts.dto.chapter_assembly import (
+    ASSEMBLY_CHAPTER_CONTRACT,
+)
 
 
 class CourseOOXMLWordWriter:
     def write(self, document: WordDocument) -> bytes:
+        if document.exercise_profile is not None:
+            return self._exercise(document)
         chapter = object_data(document.course_chapter)
         teacher = document.kind == "correction"
+        assembled = chapter["contract_id"] == ASSEMBLY_CHAPTER_CONTRACT
+        assembly = object_data(chapter["assembly"]) if assembled else {}
         if document.kind not in {"student", "correction"} or ("teacher_answers" in chapter) != teacher:
             raise ValueError("COURSE_WORD_PROJECTION")
         projected_media = items(chapter.get("media_assets", []), 8)
@@ -157,16 +58,25 @@ class CourseOOXMLWordWriter:
         header = object_data(chapter["program_header"])
         _p(body, "CHAPITRE " + str(chapter["chapter_number"]), "Chapter")
         _p(body, str(chapter["title"]), "Title")
+        if assembled and teacher:
+            _p(body, "Version professeur — propositions de correction à relire.", "Normal")
         _p(body, str(header["theme_label"]), "Heading2")
         caps = items(chapter["capabilities"])
-        _table(body, {"columns": ("Repère", "Contenu"), "rows": (
-            ("Question du programme", str(header["question_label"])),
-            ("Capacités travaillées", "\n".join(str(c["label"]) for c in caps)),
-            ("Notions mobilisées", ", ".join(cast(tuple[str, ...], chapter["notions"]))),
-        )})
+        if assembled:
+            _p(body, str(header["question_label"]), "Normal")
+            _p(body, "Capacités travaillées — " + "; ".join(str(c["label"]) for c in caps))
+            _p(body, "Notions — " + ", ".join(cast(tuple[str, ...], chapter["notions"])))
+        else:
+            _table(body, {"columns": ("Repère", "Contenu"), "rows": (
+                ("Question du programme", str(header["question_label"])),
+                ("Capacités travaillées", "\n".join(str(c["label"]) for c in caps)),
+                ("Notions mobilisées", ", ".join(cast(tuple[str, ...], chapter["notions"]))),
+            )})
         story = object_data(chapter["context"])
         _p(body, "Contexte — " + str(story["title"]), "Heading2")
         _p(body, str(story["text"]))
+        if assembled:
+            _p(body, str(object_data(assembly["thread"])["notice"]), "DocumentText")
         media_at("CONTEXT", "AFTER_CONTEXT")
         _p(body, "Votre travail — Lire les documents, relever les faits puis justifier chaque réponse avec les notions du chapitre.")
         docs = {str(d["id"]): d for d in items(chapter["documents"])}
@@ -174,72 +84,144 @@ class CourseOOXMLWordWriter:
         questions = {str(q["id"]): q for q in items(chapter["questions"], 60)}
         concepts = {str(c["id"]): c for c in items(chapter["concepts"])}
         answers = {str(a["id"]): a for a in items(chapter["teacher_answers"], 60)} if teacher else {}
-        flowing_teacher = teacher and bool(document.course_media)
-        enriched = any(p.brief.data["style_policy"] == "COURSE_LOCAL_ILLUSTRATION_V2" for p in document.course_media)
-        for part_index, part in enumerate(items(chapter["parts"])):
-            _p(body, str(part["title"]), "Heading1", before=part_index == 0 or not flowing_teacher)
-            for ref in cast(tuple[str, ...], part["document_ids"]):
-                _document(body, docs[ref], doc_numbers[ref])
-                media_at(ref, "AFTER_DOCUMENT")
-            for role in ("observation", "analysis"):
-                for ref in cast(tuple[str, ...], part[role]):
-                    _question(body, questions[ref], answers.get(ref), keep_responses=enriched)
+        if assembled and teacher:
+            criteria = {str(c["id"]): c["criteria"] for c in items(assembly["answer_criteria"], 60)}
+            answers = {key: {**row, "criteria": criteria[key]} for key, row in answers.items()}
+        def conceptualize(part: dict[str, object]) -> None:
+            vigilance = ({str(v["id"]): v["text"] for v in items(assembly["concept_vigilance"])} if assembled else {})
             for ref in cast(tuple[str, ...], part["concept_ids"]):
                 c = concepts[ref]
                 _p(body, "Notion — " + str(c["notion"]), "ConceptTitle")
-                _p(body, str(c["definition"]) + "\n" + str(c["explanation"]) + "\nExemple — " + str(c["example"]), "ConceptText")
+                concept_text = str(c["definition"]) + "\n" + str(c["explanation"]) + "\nExemple — " + str(c["example"])
+                if ref in vigilance:
+                    concept_text += "\nAttention — " + str(vigilance[ref])
+                concept_p = _p(body, concept_text, "ConceptText")
+                if assembled:
+                    properties = concept_p.find(_w("pPr"))
+                    assert properties is not None
+                    SubElement(properties, _w("keepLines"))
                 media_at(ref, "AFTER_CONCEPT")
+        flowing_teacher = teacher and bool(document.course_media)
+        enriched = any(p.brief.data["style_policy"] == "COURSE_LOCAL_ILLUSTRATION_V2" for p in document.course_media)
+        for part_index, part in enumerate(items(chapter["parts"])):
+            _p(body, str(part["title"]), "Heading1", before=(part_index == 0 or not flowing_teacher) and not assembled)
+            meta = next((m for m in items(assembly["parts"]) if m["id"] == part["id"]), {}) if assembled else {}
+            if assembled:
+                transition_p = _p(body, str(meta["transition"]))
+                transition_props = transition_p.find(_w("pPr"))
+                assert transition_props is not None
+                SubElement(transition_props, _w("keepNext"))
+            early = assembled and object_data(meta["formalization"])["position"] == "BEFORE_ACTIVITY"
+            if early:
+                conceptualize(part)
+            for ref in cast(tuple[str, ...], part["document_ids"]):
+                _document(body, docs[ref], doc_numbers[ref], grouped=assembled)
+                media_at(ref, "AFTER_DOCUMENT")
+            for role in ("observation", "analysis"):
+                for ref in cast(tuple[str, ...], part[role]):
+                    _question(body, questions[ref], answers.get(ref), keep_responses=enriched or assembled)
+            if not early:
+                conceptualize(part)
             for ref in cast(tuple[str, ...], part["reinvestment"]):
-                _question(body, questions[ref], answers.get(ref), keep_responses=enriched)
-        _p(body, "Tester ses connaissances", "Heading1", before=not flowing_teacher and not enriched)
+                _question(body, questions[ref], answers.get(ref), keep_responses=enriched or assembled)
+        if assembled:
+            _p(body, "À retenir", "Heading1")
+            _p(body, str(chapter["synthesis"]), "ConceptText")
+        _p(body, "Tester ses connaissances", "Heading1", before=not flowing_teacher and not enriched and not assembled)
         for ref in cast(tuple[str, ...], chapter["knowledge_check"]):
-            _question(body, questions[ref], answers.get(ref), keep_responses=enriched)
-        _p(body, "À retenir", "Heading2")
-        _p(body, str(chapter["synthesis"]), "ConceptText")
+            _question(body, questions[ref], answers.get(ref), keep_responses=enriched or assembled)
+        if not assembled:
+            _p(body, "À retenir", "Heading2")
+            _p(body, str(chapter["synthesis"]), "ConceptText")
         transfer = object_data(chapter["transfer"])
-        _p(body, str(transfer["title"]), "Heading1", before=not flowing_teacher)
+        _p(body, str(transfer["title"]), "Heading1", before=not flowing_teacher and not assembled)
         for ref in cast(tuple[str, ...], transfer["document_ids"]):
-            _document(body, docs[ref], doc_numbers[ref])
+            _document(body, docs[ref], doc_numbers[ref], grouped=assembled)
             media_at(ref, "AFTER_DOCUMENT")
         for ref in cast(tuple[str, ...], transfer["question_ids"]):
-            _question(body, questions[ref], answers.get(ref), keep_responses=enriched)
-        section = SubElement(body, _w("sectPr"))
-        SubElement(section, _w("headerReference"), {_w("type"): "default", "{" + R + "}id": "rId2"})
-        SubElement(section, _w("footerReference"), {_w("type"): "default", "{" + R + "}id": "rId3"})
-        SubElement(section, _w("pgSz"), {_w("w"): "11906", _w("h"): "16838"})
-        SubElement(section, _w("pgMar"), {_w("top"): "1134", _w("bottom"): "1134", _w("left"): "1134", _w("right"): "1134", _w("header"): "567", _w("footer"): "567"})
-        page_header = Element(_w("hdr"))
-        _p(page_header, str(header["subject_label"]).upper() + " • " + str(header["level_label"]).upper(), "Header")
-        page_footer = Element(_w("ftr"))
-        p = _p(page_footer, "Chapitre " + str(chapter["chapter_number"]) + " • Version " + ("professeur" if teacher else "élève") + " | ", "Footer")
-        field = SubElement(p, _w("fldSimple"), {_w("instr"): " PAGE "})
-        SubElement(SubElement(field, _w("r")), _w("t")).text = "1"
-        rels = Element("Relationships", {"xmlns": PKG})
-        SubElement(rels, "Relationship", {"Id": "rId1", "Type": R + "/officeDocument", "Target": "word/document.xml"})
-        doc_rels = Element("Relationships", {"xmlns": PKG})
-        for number, kind, name in ((1, "styles", "styles.xml"), (2, "header", "header1.xml"), (3, "footer", "footer1.xml")):
-            SubElement(doc_rels, "Relationship", {"Id": "rId" + str(number), "Type": R + "/" + kind, "Target": name})
+            _question(body, questions[ref], answers.get(ref), keep_responses=enriched or assembled)
+        if assembled and teacher:
+            _p(body, "Sources et choix pédagogiques", "Heading1")
+            for source in items(assembly["sources"]):
+                _p(body, str(source["title"]) + " — " + str(source["publisher"]) + " — consultation " + str(source["consulted_on"]), "DocumentTitle")
+                _p(body, str(source["fact"]) + "\n" + str(source["locator"]) + "\n" + str(source["rights"]), "DocumentText")
+                if source["url"]:
+                    _p(body, str(source["url"]), "DocumentText")
+            for source in items(assembly["document_sources"]):
+                _p(body, "Document " + str(doc_numbers[str(source["id"])]) + " — " + str(source["nature"]) + " — " + str(source["limits"]), "DocumentText")
+        page_section(body, reference001=assembled and not teacher)
+        header_node = page_header(str(header["subject_label"]), str(header["level_label"]))
+        footer_node = page_footer("Chapitre " + str(chapter["chapter_number"]) + " • Version " + ("professeur" if teacher else "élève"))
         if len(emitted) != len(document.course_media):
             raise ValueError("COURSE_WORD_MEDIA_NOT_PLACED")
-        for number, _ in enumerate(document.course_media, 1):
-            SubElement(doc_rels, "Relationship", {"Id": "rIdMedia"+str(number), "Type": R+"/image", "Target": "media/figure_"+str(number)+".png"})
-        types = Element("Types", {"xmlns": "http://schemas.openxmlformats.org/package/2006/content-types"})
-        SubElement(types, "Default", {"Extension": "rels", "ContentType": "application/vnd.openxmlformats-package.relationships+xml"})
-        if document.course_media:
-            SubElement(types, "Default", {"Extension": "png", "ContentType": "image/png"})
-        for name, kind in (("document.xml", "document.main"), ("styles.xml", "styles"), ("header1.xml", "header"), ("footer1.xml", "footer")):
-            SubElement(types, "Override", {"PartName": "/word/" + name, "ContentType": "application/vnd.openxmlformats-officedocument.wordprocessingml." + kind + "+xml"})
-        parts = {"[Content_Types].xml": types, "_rels/.rels": rels, "word/document.xml": root,
-                 "word/styles.xml": _styles(), "word/header1.xml": page_header,
-                 "word/footer1.xml": page_footer, "word/_rels/document.xml.rels": doc_rels}
-        result = BytesIO()
-        with ZipFile(result, "w") as archive:
-            for name, node in parts.items():
-                info = ZipInfo(name, (2000, 1, 1, 0, 0, 0))
-                info.compress_type = ZIP_DEFLATED
-                archive.writestr(info, tostring(node, encoding="utf-8", xml_declaration=True))
-            for number, pair in enumerate(document.course_media, 1):
-                info = ZipInfo("word/media/figure_"+str(number)+".png", (2000, 1, 1, 0, 0, 0))
-                info.compress_type = ZIP_DEFLATED
-                archive.writestr(info, pair.asset.raw)
-        return result.getvalue()
+        if assembled:
+            for table in body.findall(_w("tbl")):
+                first_row = table.find(_w("tr"))
+                assert first_row is not None
+                for paragraph in first_row.findall(".//" + _w("pPr")):
+                    SubElement(paragraph, _w("keepNext"))
+                if not teacher:
+                    for shade in first_row.findall(".//" + _w("shd")):
+                        shade.set(_w("fill"), "4B3268")
+        return package_word(root, _styles(reference001=assembled and not teacher), header_node,
+                            footer_node, tuple(pair.asset.raw for pair in document.course_media))
+
+    @staticmethod
+    def _exercise(document: WordDocument) -> bytes:
+        """A proportionate layout on the very same chapter OOXML components."""
+        document = replace(document)  # Revalidate a forged or substituted DTO before rendering.
+        projected = object_data(document.exercise_content)
+        content = object_data(projected["content"])
+        header = object_data(projected["header"])
+        teacher = document.kind == "correction"
+        if ("teacher_answers" in content) != teacher:
+            raise ValueError("EXERCISE_WORD_STUDENT_TEACHER_BINDING")
+        if not teacher:
+            require_student_editorial_text([document.title])
+        root = Element(_w("document"))
+        body = SubElement(root, _w("body"))
+        _p(body, document.title, "Title")
+        if projected["notice"]:
+            _p(body, str(projected["notice"]), "DocumentText")
+        _p(body, str(header["question"]), "Normal")
+        _p(body, "Notions — " + ", ".join(cast(list[str], header["notions"])), "DocumentText")
+        _p(body, "Objectifs de travail", "Heading1")
+        for goal in items(content["objectives"], 16):
+            _p(body, str(goal["goal"]), "Normal")
+        story = object_data(content["situation"])
+        _p(body, "Situation", "Heading1")
+        _p(body, ("Situation fictive. " if story["provenance"] == "LOCAL_FICTION" else "Référence fournie. ") + str(story["text"]))
+        for row in items(content["documents"], 12):
+            number = int(str(row["document_id"])[1:])
+            text = ("Situation fictive. " if row["provenance"] == "LOCAL_FICTION" else "Référence fournie. ") + str(row["text"])
+            _document(body, {"title": row["title"], "text": text, "table": None}, number, grouped=True)
+        _p(body, "Consignes", "Heading1")
+        _p(body, str(content["instructions"]))
+        answers = {str(row["question_id"]): row for row in items(content.get("teacher_answers", []), 30)}
+        labels = {"OBSERVE": "Observer", "ANALYSE": "Analyser", "APPLY": "Réinvestir"}
+        last_stage = None
+        for number, row in enumerate(items(content["questions"], 30), 1):
+            start = len(body)
+            if row["stage"] != last_stage:
+                _p(body, labels[str(row["stage"])], "Heading2")
+                last_stage = row["stage"]
+            ids = cast(tuple[str, ...], row["document_ids"])
+            prompt = str(row["prompt"]) + " (" + ("Document " if len(ids) == 1 else "Documents ") + ", ".join(str(int(ref[1:])) for ref in ids) + ")"
+            criteria = "; ".join(cast(list[str], row["success_criteria"]))
+            answer = answers.get(str(row["question_id"]))
+            if answer is not None:
+                answer = {**answer, "criteria": criteria}
+            _question(body, {"number": number, "prompt": prompt,
+                            "response": {"lines": row["answer_lines"], "table": None}}, answer,
+                      keep_responses=True, student_criteria=criteria, keep_answer_criteria=False)
+            keep_short_group(body, start)
+        if projected["source_notes"] or teacher:
+            _p(body, "Traçabilité interne du professeur" if teacher else "Sources", "Heading1")
+        for note in cast(list[str], projected["source_notes"]):
+            _p(body, note, "Footer")
+        if teacher:
+            for note in cast(list[str], projected["teacher_notes"]):
+                _p(body, note, "Footer")
+        page_section(body, reference001=not teacher)
+        return package_word(root, _styles(exercise_compact=teacher), page_header(str(header["subject"]), str(header["level"])),
+                            page_footer("Exercice • Version " + ("professeur" if teacher else "élève")))

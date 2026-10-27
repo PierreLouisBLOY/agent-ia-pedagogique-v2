@@ -14,6 +14,10 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     object_data,
 )
 from backend.modules.pedagogical_design.contracts.dto.p0_production import P0Production
+from backend.modules.work_orchestration.contracts.dto.p0_codesign_trace import (
+    SAVED_CODESIGN_CONTRACT,
+    validate_documentary,
+)
 from backend.modules.work_orchestration.contracts.dto.p0_production_read_view import (
     P0ProductionReadView,
 )
@@ -30,9 +34,10 @@ class SavedProduction:
     _typed_p0_bundle: P0Production | None = field(default=None, init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
+        codesign = self.data.get("contract_id") == SAVED_CODESIGN_CONTRACT
         data = object_data(self.data, {"contract_id", "view", "bundle", "reviews", "validations",
-                                      "origin", "provenance", "reservations"})
-        if data["contract_id"] not in {SAVED_CONTRACT, SAVED_P0_CONTRACT}:
+                                      "origin", "provenance", "reservations"} | ({"codesign"} if codesign else set()))
+        if data["contract_id"] not in {SAVED_CONTRACT, SAVED_P0_CONTRACT, SAVED_CODESIGN_CONTRACT}:
             raise ValueError("SAVED_CONTRACT")
         view_data = object_data(data["view"])
         p0_bundle: P0Production | None = None
@@ -70,6 +75,12 @@ class SavedProduction:
             ):
                 raise ValueError("SAVED_VERSION_MISMATCH")
             active_bundle_sha = p0_bundle.sha256
+            if codesign:
+                documentary = validate_documentary(data["codesign"], p0_bundle)
+                trace = object_data(documentary["trace"])
+                exact_reports = [report for report in items(trace["reports"], 2) if report["bundle_sha256"] == p0_bundle.sha256]
+                if len(exact_reports) != 1 or as_plain(data["reviews"]) != as_plain(exact_reports):
+                    raise ValueError("P0_CODESIGN_DOCUMENTARY_REPORT")
         for report_field in ("reviews", "validations"):
             for report in items(data[report_field], 32):
                 if (report.get("production_ref"), report.get("version_ref")) != (
@@ -109,14 +120,14 @@ class SavedProduction:
     @property
     def view(self) -> ProductionReadView | P0ProductionReadView:
         data = object_data(self.data["view"])
-        if self.data["contract_id"] == SAVED_P0_CONTRACT:
+        if self.data["contract_id"] in {SAVED_P0_CONTRACT, SAVED_CODESIGN_CONTRACT}:
             return P0ProductionReadView(data)
         return ProductionReadView(self.production_ref, self.version_ref,
             str(object_data(data["lineage"])["conversation_id"]), data)
 
     @property
     def bundle(self) -> AssessmentBundle | None:
-        if self.data["contract_id"] == SAVED_P0_CONTRACT:
+        if self.data["contract_id"] in {SAVED_P0_CONTRACT, SAVED_CODESIGN_CONTRACT}:
             return None
         return AssessmentBundle(object_data(self.data["bundle"])) if self.data["bundle"] else None
 

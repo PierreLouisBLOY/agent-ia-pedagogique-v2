@@ -40,6 +40,12 @@ def build_openai_request(
     request: GenerationPortRequest,
     model_profile: ModelProfileConfig,
 ) -> OpenAIResponsesRequest:
+    from backend.adapters.outbound.generation.openai.p0_codesign_contract import (
+        CONTRACT,
+        build_request,
+    )
+    if request.output_contract.get("contract_id") == CONTRACT:
+        return build_request(request, model_profile)
     from backend.adapters.outbound.generation.openai.harden_contract import (
         INSTRUCTIONS as HARDEN_INSTRUCTIONS,
     )

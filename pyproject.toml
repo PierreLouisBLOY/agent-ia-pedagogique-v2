@@ -11,8 +11,8 @@ calibration = ["anthropic>=1.2,<2"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["."]
-addopts = "-ra"
+pythonpath = [".", "tests"]
+addopts = "-ra --import-mode=importlib"
 
 [tool.ruff]
 target-version = "py312"

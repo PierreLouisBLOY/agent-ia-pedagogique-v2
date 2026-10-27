@@ -118,6 +118,14 @@ foreach ($taskKey in @('p0_rejected_profile', 'p0_rejected_inspection_plan', 'p0
         $arguments += @('--' + $taskKey.Replace('_', '-'), [string]$config.$taskKey)
     }
 }
+foreach ($taskKey in @('p0_normal_mode', 'p0_codesign_profile', 'p0_codesign_profile_sha256', 'p0_codesign_mode')) {
+    if ($keys -ccontains $taskKey) {
+        if ($config.$taskKey -isnot [string] -or -not $config.$taskKey) {
+            Stop-Launch 2 'CONFIG_INVALID: finite-chain configuration must be explicit.'
+        }
+        $arguments += @('--' + $taskKey.Replace('_', '-'), [string]$config.$taskKey)
+    }
+}
 
 $url = "http://$hostAddress`:$($config.port)/"
 [Console]::WriteLine("Starting V2 at $url")

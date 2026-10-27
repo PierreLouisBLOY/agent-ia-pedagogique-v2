@@ -11,7 +11,7 @@ from backend.modules.pedagogical_design.contracts.dto.p0_production import P0Pro
 
 class ValidateP0Command:
     def execute(
-        self, bundle: P0Production, *, parent: P0Production | None = None
+        self, bundle: P0Production, *, parent: P0Production | None = None,
     ) -> dict[str, object]:
         from backend.modules.pedagogical_design.contracts.dto.course_delivery import (
             validate_course_delivery,
@@ -46,6 +46,15 @@ class ValidateP0Command:
             report["institutional_resolution_sha256"] = fingerprint(resolution)
             report["dispatch_permitted"] = resolution["status"] == "RESOLVED_ADMITTED"
             report["pedagogical_acceptance"] = "NOT_PERFORMED"
+            if "exercise" in bundle.data:
+                from backend.modules.pedagogical_design.contracts.dto.program_authority import (
+                    alignment_axes,
+                )
+
+                report["exercise_policy"] = "P0-EXERCISE-CONTENT-1.0"
+                report["exercise_checks"] = ("SINGLE_QUESTION_FOCUS", "CAPABILITY_COVERAGE", "SOURCE_LINKS",
+                                             "GRADUATION_STRUCTURE", "ANSWER_LINKS", "STUDENT_TEACHER_SPLIT")
+                report["dispatch_permitted"] = alignment_axes(resolution)["institutional_alignment"] != "UNVERIFIED"
             if bundle.context.resource_type == "COURSE":
                 if "course_chapter" in bundle.data:
                     from backend.modules.pedagogical_design.contracts.dto.course_chapter import (

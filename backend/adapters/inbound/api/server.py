@@ -18,6 +18,10 @@ from backend.adapters.inbound.api.local_browser import (
     LocalBrowserHttpSecurityContract,
 )
 from backend.adapters.inbound.api.p0_creation import P0CreationEndpoint
+from backend.adapters.inbound.api.partial_workspace import (
+    PartialWorkspaceEndpoint,
+    is_partial_target,
+)
 from backend.adapters.inbound.api.production import ProductionEndpoint
 from backend.adapters.inbound.api.r3_review_modify import R3Endpoint
 from backend.adapters.inbound.api.r3_review_modify import error as r3_error
@@ -45,7 +49,11 @@ SOCKET_TIMEOUT_SECONDS: Final = 5.0
 _TOKEN = re.compile(rb"^[!#$%&'*+.^_`|~0-9A-Za-z-]+$")
 _METHOD = re.compile(rb"^[A-Z]{1,10}$")
 _MEDIA = {"index.html": "text/html; charset=utf-8",
-          "app.js": "text/javascript; charset=utf-8", "styles.css": "text/css; charset=utf-8"}
+          "app.js": "text/javascript; charset=utf-8",
+          "saved-course-edit.js": "text/javascript; charset=utf-8",
+          "normal-on.js": "text/javascript; charset=utf-8",
+          "local-catalogue.js": "text/javascript; charset=utf-8",
+          "styles.css": "text/css; charset=utf-8"}
 _CSP = "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; " \
        "base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
 _REASONS = {200: "OK", 400: "Bad Request", 403: "Forbidden", 404: "Not Found",
@@ -71,9 +79,13 @@ class LocalRead15Service:
         r3_endpoint: R3Endpoint | None = None,
         saved_endpoint: SavedProductionEndpoint | None = None,
         p0_endpoint: P0CreationEndpoint | None = None,
+        partial_endpoint: PartialWorkspaceEndpoint | None = None,
     ) -> None:
         if configuration.cors_enabled:
             raise ValueError("CORS must remain disabled for READ15-HTTP-LOCAL-1.0")
+        if partial_endpoint is not None and any((conversation_endpoint, production_endpoint,
+                harvest, r3_endpoint, p0_endpoint, search_endpoint)):
+            raise ValueError("PARTIAL_SAVED_ONLY_REQUIRED")
         if set(assets) != ASSET_NAMES or any(type(value) is not bytes for value in assets.values()):
             raise ValueError("asset inventory mismatch")
         self.configuration = configuration
@@ -83,6 +95,7 @@ class LocalRead15Service:
         self.r3_endpoint = r3_endpoint
         self.saved_endpoint = saved_endpoint
         self.p0_endpoint = p0_endpoint
+        self.partial_endpoint = partial_endpoint
         self.production_endpoint = production_endpoint
         self.harvest = harvest
         self.observability = observability
@@ -93,6 +106,14 @@ class LocalRead15Service:
         self, method: str, target: str, headers: Mapping[str, str], correlation_id: str,
         raw_body: bytes = b"",
     ) -> tuple[int, str, bytes, str]:
+        if is_partial_target(target):
+            partial = self.partial_endpoint
+            if partial is None:
+                return 404, "application/json; charset=utf-8", b'{"error":{"code":"PARTIAL_NOT_ENABLED"}}', "/{unmatched}"
+            code = self.security.authorize_command(method=method, headers=headers, nonce=partial.nonce)
+            if code:
+                return self.r2_error(code, correlation_id)
+            return partial.respond(method, target, raw_body, correlation_id)
         if is_p0_target(target):
             if self.p0_endpoint is None:
                 return self.r2_error("R2_NOT_ENABLED", correlation_id)
@@ -116,6 +137,8 @@ class LocalRead15Service:
         except RouteRejected as error:
             return self.error(error.code, correlation_id)
         if match.asset_name is not None:
+            if match.asset_name not in self.assets:
+                return self.error("ROUTE_NOT_FOUND", correlation_id)
             return 200, _MEDIA[match.asset_name], self.assets[match.asset_name], match.template
         if match.template == SEARCH_TEMPLATE:
             if (self.search_endpoint is None or match.search_text is None
@@ -379,7 +402,8 @@ class _LocalHandler(BaseHTTPRequestHandler):
             raise _InputRejected()
         # Preserve HEAD even for an error while reading its subsequent headers.
         self.command = verb.decode("ascii")
-        self._r2_request = is_conversation_target(target.decode("ascii")) or is_p0_target(target.decode("ascii"))
+        self._r2_request = (is_conversation_target(target.decode("ascii"))
+            or is_p0_target(target.decode("ascii")) or is_partial_target(target.decode("ascii")))
         headers: dict[str, str] = {}
         total = 0
         while True:

@@ -40,6 +40,7 @@ def build_openai_review_request(
     request: ReviewPortRequest,
     model_profile: ModelProfileConfig,
     reasoning_effort: OpenAIReasoningEffort | None = None,
+    service_tier: str | None = None,
 ) -> OpenAIResponsesRequest:
     try:
         payload = {
@@ -89,6 +90,7 @@ def build_openai_review_request(
         max_output_tokens=max_output_tokens,
         schema_name="technical_pedagogical_review",
         reasoning_effort=reasoning_effort,
+        service_tier=service_tier,
     )
 
 

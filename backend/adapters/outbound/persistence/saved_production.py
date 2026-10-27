@@ -147,11 +147,18 @@ class LocalSavedProductionStore:
                 and (bundle.data["contract_id"], chapter.get("contract_id")) in {
                     ("R6-P0-PRODUCTION-COURSE-2.0", "COURSE-CHAPTER-LINEAGE-3.0"),
                     ("R6-P0-PRODUCTION-COURSE-3.0", "COURSE-CHAPTER-LINEAGE-4.0"),
+                    ("R6-P0-PRODUCTION-LOCAL-CHAPTER-4.0", "COURSE-CHAPTER-ASSEMBLY-5.0"),
                 }
             )
-            if sum(k.startswith(record.production_ref + "/") for k in records) >= (
-                32 if illustrated or local_lineage else 3
-            ):
+            # One bounded finishing version for a local P0 exercise after the
+            # original, proposal and correction. No generation right is restored.
+            local_exercise = (
+                record.data["origin"] == "LOCAL_APPLICATION"
+                and bundle is not None
+                and bundle.context.resource_type == "EXERCISE"
+            )
+            version_limit = 32 if illustrated or local_lineage else 4 if local_exercise else 3
+            if sum(k.startswith(record.production_ref + "/") for k in records) >= version_limit:
                 raise ValueError("R4_VERSION_LIMIT")
             if len(records) >= 300:
                 raise ValueError("R4_STORE_FULL")

@@ -100,6 +100,7 @@ class OpenAIReviewAdapter:
         "_reasoning_effort",
         "_secret_resolver",
         "_transport_factory",
+        "_service_tier",
     )
 
     def __init__(
@@ -110,8 +111,12 @@ class OpenAIReviewAdapter:
         secret_resolver: ProviderSecretResolver,
         transport_factory: OpenAIResponsesTransportFactory,
         reasoning_effort: OpenAIReasoningEffort | None = None,
+        service_tier: str | None = None,
     ) -> None:
         _validate_configuration(provider_profile, model_profile)
+        if service_tier not in {None, "default"}:
+            raise ValueError("P0_CHAIN_REVIEW_TIER")
+        self._service_tier = service_tier
         if not isinstance(secret_resolver, ProviderSecretResolver):
             raise TypeError("secret_resolver must satisfy ProviderSecretResolver")
         if reasoning_effort is not None and type(reasoning_effort) is not OpenAIReasoningEffort:
@@ -140,6 +145,7 @@ class OpenAIReviewAdapter:
             request=request,
             model_profile=self._model_profile,
             reasoning_effort=self._reasoning_effort,
+            service_tier=self._service_tier,
         )
         try:
             secret = self._secret_resolver.resolve(self._provider_profile.credential_ref)

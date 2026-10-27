@@ -50,7 +50,8 @@ def bts_alignment(target: Read15RuntimeTarget, *, selection: dict[str, object] |
 
 def stmg_alignment(target: Read15RuntimeTarget, *, selection: dict[str, object] | None = None,
                    reference: dict[str, object] | None = None, matrix: bool = False,
-                   mode: str = "LEGACY") -> dict[str, object]:
+                  mode: str = "LEGACY", question_fingerprints: bool = False,
+                  focus_witness: bool = False) -> dict[str, object]:
     target.validate()
     connection = connect_sqlite(target.runtime_path, readonly=True, allowed_root=target.data_root)
     try:
@@ -58,9 +59,9 @@ def stmg_alignment(target: Read15RuntimeTarget, *, selection: dict[str, object] 
         if selection is not None:
             if reference is None:
                 raise ValueError("P0_INSTITUTIONAL_REFERENCE_REQUIRED")
-            result = inbound.resolve(selection, reference, mode=mode)
+            result = inbound.resolve(selection, reference, mode=mode, focus_witness=focus_witness)
         else:
-            result = inbound.matrix() if matrix else inbound.catalog()
+            result = inbound.matrix() if matrix else inbound.catalog(question_fingerprints=question_fingerprints)
     finally:
         connection.close()
     target.validate()

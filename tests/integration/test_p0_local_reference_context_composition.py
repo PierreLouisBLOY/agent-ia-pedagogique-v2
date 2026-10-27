@@ -49,8 +49,9 @@ def composed(monkeypatch, level="BTS_CG_YEAR_2", kind="METHOD"):
                 reads.append(notion_id)
                 return {"items": copy.deepcopy(passages)}
         yield Inbound()
-    def native_resolver(_, *, selection=None, reference=None):
+    def native_resolver(_, *, selection=None, reference=None, question_fingerprints=False):
         if selection is None:
+            assert type(question_fingerprints) is bool
             return {}
         native_calls.append(copy.deepcopy(reference))
         if reference["object_kind"] != "NOTION" or reference["object_ref"] != "notion:synthetic":

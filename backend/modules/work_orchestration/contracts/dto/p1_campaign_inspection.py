@@ -218,6 +218,11 @@ class P1CampaignInspectionView:
                 unknown_off_projection,
             )
             result = unknown_off_projection(data)
+        elif schema in {"P0-PILOT-COMMAND-INSPECTION-1.0", "P0-PILOT-COMMAND-INSPECTION-1.1"}:
+            from backend.modules.work_orchestration.contracts.dto.p1_pilot_command_inspection import (
+                pilot_command_projection,
+            )
+            result = pilot_command_projection(data)
         else:
             result = _observation(data) if schema == "P0-PRODUCT-REJECTED-OBSERVATION-1.0" else _snapshot(data)
         require_safe_structured_value(result, root_location="p1_inspection_view")

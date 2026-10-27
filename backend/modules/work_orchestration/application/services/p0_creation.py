@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from secrets import token_hex
+from threading import Lock
+from typing import cast
 
 from backend.modules.pedagogical_context.contracts.dto.p0_context import P0Context
 from backend.modules.pedagogical_design.application.commands.create_p0_candidate import (
@@ -27,6 +29,7 @@ from backend.modules.pedagogical_design.ports.outbound.p0_generation_controls im
     P0GenerationControlsPort,
 )
 from backend.modules.quality_evaluation.contracts.dto.p0_review_report import (
+    validate_p0_review_binding,
     validate_p0_review_fields,
 )
 from backend.modules.quality_evaluation.ports.outbound.p0_review import P0ReviewPort
@@ -37,12 +40,21 @@ from backend.modules.work_orchestration.application.services.p0_agentic import (
     quality_status,
 )
 from backend.modules.work_orchestration.contracts.dto.operation_identity import OperationIdentity
+from backend.modules.work_orchestration.contracts.dto.p0_codesign_trace import (
+    DOCUMENTARY_CONTRACT,
+    SAVED_CODESIGN_CONTRACT,
+    variant_witness,
+)
 from backend.modules.work_orchestration.contracts.dto.p0_production_read_view import (
     P0ProductionReadView,
 )
 from backend.modules.work_orchestration.contracts.dto.saved_production import (
     SAVED_P0_CONTRACT,
     SavedProduction,
+)
+from backend.modules.work_orchestration.ports.outbound.p0_codesign import (
+    P0CoDesignInterrupted,
+    P0CoDesignPort,
 )
 from backend.shared_kernel._safe_data import freeze_safe_mapping
 
@@ -51,17 +63,35 @@ class P0CreationService:
     def __init__(self, reference: Callable[[Mapping[str, object]], Mapping[str, object]],
                  *, generation: P0GenerationPort | None = None, review: P0ReviewPort | None = None,
                  institutional_resolver: Callable[[Mapping[str, object], Mapping[str, object]], Mapping[str, object]] | None = None,
+                 focused_institutional_resolver: Callable[[Mapping[str, object], Mapping[str, object]], Mapping[str, object]] | None = None,
+                 codesign: P0CoDesignPort | None = None,
                  exact_stmg_required: bool = False, exact_institutional_required: bool = False) -> None:
         self.reference = reference
         self.generation = generation
         self.review = review
+        self.codesign = codesign
+        self.codesign_consumed: set[str] = set()
+        self.codesign_traces: dict[str, Mapping[str, object]] = {}
+        self.codesign_versions: set[str] = set()
+        self.codesign_lock = Lock()
         self.institutional_resolver = institutional_resolver
+        self.focused_institutional_resolver = focused_institutional_resolver
         self.exact_stmg_required = exact_stmg_required
         self.exact_institutional_required = exact_institutional_required
         self.prepared: dict[str, Mapping[str, object]] = {}
         self.records: dict[str, P0Production] = {}
         self.evidence: dict[str, dict[str, str]] = {}
         self.commands: dict[str, tuple[str, dict[str, object]]] = {}
+        self.command_lock = Lock()
+        self.in_flight: set[str] = set()
+        self.codesign_commands: set[str] = set()
+        self.codesign_started: set[str] = set()
+        from backend.modules.work_orchestration.ports.outbound.p0_finite_consent import (
+            P0FiniteConsentPort,
+        )
+        self.finite_consent: P0FiniteConsentPort | None = None
+        self.fresh_codesign_evidence: Callable[[P0Production], Mapping[str, str]] | None = None
+        self.codesign_refreshed: set[str] = set()
         self.plans: dict[str, dict[str, object]] = {}
         self.packs: dict[str, dict[str, object]] = {}
         self.reports: dict[str, dict[str, object]] = {}
@@ -76,12 +106,17 @@ class P0CreationService:
 
     def execute(self, operation: str, body: Mapping[str, object]) -> dict[str, object]:
         fields = {
+            "local-propose": {"command_id", "preparation_ref", "preparation_sha256"},
             "prepare": {"command_id", "context", "reference"},
             "generate": {"command_id", "preparation_ref", "preparation_sha256"},
             "revise": {"command_id", "production_ref", "version_ref", "bundle_sha256", "edits"},
             "validate": {"command_id", "production_ref", "version_ref", "bundle_sha256"},
             "review": {"command_id", "production_ref", "version_ref", "bundle_sha256"},
             "correct": {"command_id", "production_ref", "version_ref", "bundle_sha256", "review_sha256", "edits"},
+            "codesign": {"command_id", "production_ref", "version_ref", "bundle_sha256", "direction", "objective", "evidence_query"},
+            "codesign-preview": {"command_id", "production_ref", "version_ref", "bundle_sha256", "direction", "objective", "evidence_query"},
+            "codesign-consent": {"command_id", "production_ref", "version_ref", "bundle_sha256", "direction", "objective", "evidence_query", "preview_sha256", "transfer_accepted", "cost_bound_accepted"},
+            "codesign-revoke": {"command_id", "preview_sha256"},
         }
         if operation not in fields:
             raise ValueError("P0_REQUEST_REJECTED")
@@ -90,25 +125,75 @@ class P0CreationService:
         if not isinstance(command, str) or len(command) != 32 or any(c not in "0123456789abcdef" for c in command):
             raise ValueError("P0_COMMAND_ID")
         identity = fingerprint({"operation": operation, "body": data})
-        prior = self.commands.get(command)
-        if prior:
-            if prior[0] != identity:
-                raise ValueError("P0_IDEMPOTENCY_CONFLICT")
-            return object_data(as_plain(prior[1]))
-        if len(self.commands) >= 256:
-            raise ValueError("P0_SESSION_FULL")
-        # Consumed before any boundary invocation. An uncertain outcome cannot replay.
-        self.commands[command] = (identity, {"state": "OUTCOME_UNKNOWN", "retry": 0})
+        with self.command_lock:
+            prior = self.commands.get(command)
+            if prior:
+                if prior[0] != identity:
+                    raise ValueError("P0_IDEMPOTENCY_CONFLICT")
+                if operation in {"codesign", "codesign-consent"} and command in self.in_flight:
+                    return {"state": "LOCAL_COMMAND_RUNNING", "command_id": command, "retry": 0}
+                return object_data(as_plain(prior[1]))
+            if len(self.commands) >= 256:
+                raise ValueError("P0_SESSION_FULL")
+            # Consumed before any boundary invocation, without retaining this
+            # observation lock while a provider/Application port is running.
+            self.commands[command] = (identity, {"state": "OUTCOME_UNKNOWN", "retry": 0})
+            self.in_flight.add(command)
+            if operation in {"codesign", "codesign-consent"}:
+                self.codesign_commands.add(command)
         try:
-            result = getattr(self, "_" + operation)(data)
+            result = getattr(self, "_" + operation.replace("-", "_"))(data)
         except ValueError as error:
-            self.commands[command] = (identity, {"state": "REFUSED", "code": str(error)})
+            with self.command_lock:
+                state = "LOCAL_RESULT_REJECTED" if command in self.codesign_started else "REFUSED"
+                self.commands[command] = (identity, {"state": state, "code": str(error), "retry": 0})
+                self.in_flight.discard(command)
             raise
         except Exception:
+            with self.command_lock:
+                self.in_flight.discard(command)
             # Never expose infrastructure exception text or retry a dispatch.
             raise ValueError("P0_OUTCOME_UNKNOWN") from None
-        self.commands[command] = (identity, result)
+        with self.command_lock:
+            self.commands[command] = (identity, result)
+            self.in_flight.discard(command)
         return object_data(as_plain(result))
+
+    def read_codesign_command(self, command: str) -> Mapping[str, object] | None:
+        with self.command_lock:
+            if command not in self.codesign_commands:
+                return None
+            if command in self.in_flight:
+                return {"command_id": command, "state": "LOCAL_COMMAND_RUNNING", "phase": "CO_DESIGN_NATIVE_CHAIN", "retry": 0}
+            result = object_data(as_plain(self.commands[command][1]))
+        return {"command_id": command, "state": "LOCAL_COMMAND_COMPLETED" if result.get("state") == "CODESIGN_CANDIDATE" else "LOCAL_COMMAND_STOPPED",
+                "phase": "LOCAL_RESULT_RETAINED", "result": result, "retry": 0}
+
+    def _local_propose(self, data: dict[str, object]) -> dict[str, object]:
+        from backend.modules.pedagogical_design.application.commands.propose_local_reading import (
+            ProposeLocalReading,
+        )
+
+        request = self.prepared.get(str(data["preparation_ref"]))
+        if request is None or fingerprint(request) != data["preparation_sha256"]:
+            raise ValueError("P0_PREPARATION_CHANGED")
+        if len(self.records) >= 256:
+            raise ValueError("P0_SESSION_FULL")
+        candidate = ProposeLocalReading().execute(request)
+        evidence = {str(k): str(v) for k, v in object_data(request["evidence"]).items()}
+        report = ValidateP0Command().execute(candidate)
+        with self.command_lock:
+            if self.prepared.get(str(data["preparation_ref"])) is not request:
+                raise ValueError("P0_PREPARATION_CHANGED")
+            del self.prepared[str(data["preparation_ref"])]
+        self.records[candidate.version_ref] = candidate
+        self.evidence[candidate.version_ref] = evidence
+        self.validations[candidate.version_ref] = report
+        # An immutable preparation creates at most one initial local version.
+        return {"state": "CANDIDATE", "view": as_plain(P0ProductionReadView.from_bundle(candidate).data),
+                "provider_attempts": 0, "promotion": "NOT_PERFORMED", "validation": report,
+                "proposal_scope": "EXACT_EXCERPT_CRITICAL_READING_ONLY", "agentic": self._memory(candidate)}
+
 
     def _prepare(self, data: dict[str, object]) -> dict[str, object]:
         if len(self.prepared) >= 64:
@@ -118,7 +203,13 @@ class P0CreationService:
         if context.institutional is not None:
             if self.institutional_resolver is None:
                 raise ValueError("P0_INSTITUTIONAL_RESOLVER_REQUIRED")
-            resolved = object_data(self.institutional_resolver(context.institutional, selection))
+            resolver = self.institutional_resolver
+            if context.data["contract_id"] in {"P0-CONTEXT-EXERCISE-1.1", "P0-CONTEXT-CASE-STUDY-1.0"}:
+                focused = self.focused_institutional_resolver
+                if focused is None:
+                    raise ValueError("EXERCISE_FOCUS_RESOLVER_REQUIRED")
+                resolver = focused
+            resolved = object_data(resolver(context.institutional, selection))
             if object_data(resolved.get("reference_scope", {})).get("status") == "CONTENT_GAP":
                 # Do not hand unscoped contextual content to planning/retrieval agents.
                 raise ValueError("P0_INSTITUTIONAL_SOURCE_CONTEXT_GAP")
@@ -167,7 +258,10 @@ class P0CreationService:
         if self.generation is None or not self.generation.authorize(request=request):
             return {"state": "AUTHORIZATION_REQUIRED", "provider_attempts": 0}
         # Remove the preparation before the single permitted dispatch, including failure.
-        del self.prepared[str(data["preparation_ref"])]
+        with self.command_lock:
+            if self.prepared.get(str(data["preparation_ref"])) is not request:
+                raise ValueError("P0_PREPARATION_CHANGED")
+            del self.prepared[str(data["preparation_ref"])]
         output = self.generation.generate(request=request)
         return self._receive_generated(request, output, recovered=False)
 
@@ -348,6 +442,8 @@ class P0CreationService:
                     "marking": as_plain(candidate.data["marking"])}
             if "course_chapter" in candidate.data:
                 result["course_chapter"] = candidate.teacher_projection()["course_chapter"]
+            if "exercise" in candidate.data:
+                result["exercise"] = candidate.teacher_projection()["exercise"]
             if "media_plan" in candidate.data:
                 result["media_assets"] = candidate.teacher_projection()["media_assets"]
             return result
@@ -402,7 +498,10 @@ class P0CreationService:
         reopened = parent.version_ref in self.local_reopened
         child = (ReviseSavedP0Candidate().execute(parent, output) if reopened else
                  ReviseP0Candidate().execute(parent, output, evidence=self.evidence[parent.version_ref]))
+        report = ValidateP0Command().execute(child, parent=parent)
         self.records[child.version_ref] = child
+        if not reopened:
+            self.validations[child.version_ref] = report
         self.evidence[child.version_ref] = dict(self.evidence[parent.version_ref])
         self.plans[child.version_ref] = effort_plan(P0Context(object_data(child.data["context"])), production=child.data)
         self.packs[child.version_ref] = dict(self.packs[parent.version_ref])
@@ -485,6 +584,198 @@ class P0CreationService:
         return {**child, "correction_mode": "EXPLICIT_LOCAL_EDITS", "revalidation": validation,
                 "quality": quality_status(self.plans[str(view["version_ref"])], production=self.records[str(view["version_ref"])].data)}
 
+    def _codesign(self, data: dict[str, object]) -> dict[str, object]:
+        """One explicit, separately authorized chain; historical quotas unchanged."""
+        parent = self._version(data)
+        if data["direction"] not in {"V2_TO_AI", "AI_TO_V2"}:
+            raise ValueError("P0_CODESIGN_DIRECTION")
+        from backend.modules.pedagogical_design.application.services.codesign_media import (
+            require_codesign_media_parent,
+        )
+        try:
+            require_codesign_media_parent(parent)
+        except ValueError as error:
+            return {"state": "BLOCKED", "code": str(error), "provider_attempts": 0}
+        objective = data["objective"]
+        if not isinstance(objective, str) or not objective.strip() or len(objective) > 2000:
+            raise ValueError("P0_CODESIGN_OBJECTIVE")
+        query = data["evidence_query"]
+        if query is None:
+            topics = parent.context.data["topics"]
+            assert isinstance(topics, (list, tuple))
+            query = " ".join(str(topic) for topic in topics)
+        if not isinstance(query, str) or not query.strip() or len(query) > 256:
+            raise ValueError("P0_CODESIGN_SEARCH_QUERY_REQUIRED")
+        root = self._root(parent)
+        if root.version_ref in self.codesign_consumed:
+            raise ValueError("P0_CODESIGN_ALREADY_CONSUMED")
+        if (parent.version_ref in self.local_reopened and parent.version_ref not in self.codesign_refreshed) or not self.evidence.get(parent.version_ref):
+            raise ValueError("P0_CODESIGN_FRESH_EVIDENCE_REQUIRED")
+        if self.exact_institutional_required or parent.context.institutional is not None:
+            parent.context.require_institutional_dispatch()
+        request = freeze_safe_mapping({"contract_id": "P0-CODESIGN-REQUEST-1.0",
+            "command_id": data["command_id"], "direction": data["direction"], "objective": objective,
+            "evidence_query": query,
+            "production": parent.mutable_copy(), "evidence": self.evidence[parent.version_ref],
+            "evidence_pack": self.packs[parent.version_ref], "plan": self.plans[parent.version_ref]})
+        if self.codesign is None or not self.codesign.authorize_chain(request=request):
+            return {"state": "AUTHORIZATION_REQUIRED", "code": "P0_CODESIGN_MULTI_OPERATION_AUTHORITY_REQUIRED",
+                    "provider_attempts": 0, "historical_create_grants": "UNCHANGED"}
+        staged: dict[str, P0Production] = {}
+        validations: dict[str, dict[str, object]] = {}
+
+        def validate_variant(raw: Mapping[str, object]) -> Mapping[str, object]:
+            child = P0Production(raw)
+            previous = staged.get(str(object_data(child.data["lineage"])["parent_version_ref"]), parent)
+            before_lineage, after_lineage = object_data(previous.data["lineage"]), object_data(child.data["lineage"])
+            renewable = {"source_run_id", "source_step_id", "source_request_id", "parent_version_ref"}
+            if (child.data["context"] != previous.data["context"] or child.data["references"] != previous.data["references"]
+                    or {k:v for k,v in before_lineage.items() if k not in renewable}
+                    != {k:v for k,v in after_lineage.items() if k not in renewable}):
+                raise ValueError("P0_CODESIGN_VARIANT_BINDING")
+            ReviseP0Candidate().execute(previous, raw, evidence=self.evidence[parent.version_ref])
+            if child.version_ref in self.records:
+                raise ValueError("P0_CODESIGN_VERSION_CONFLICT")
+            old = staged.get(child.version_ref)
+            if old is not None and old.sha256 != child.sha256:
+                raise ValueError("P0_CODESIGN_VERSION_CONFLICT")
+            report = ValidateP0Command().execute(child, parent=previous)
+            staged[child.version_ref], validations[child.version_ref] = child, report
+            return report
+
+        # Consumed before any agent effect. UNKNOWN cannot replenish the chain.
+        with self.codesign_lock:
+            if root.version_ref in self.codesign_consumed:
+                raise ValueError("P0_CODESIGN_ALREADY_CONSUMED")
+            self.codesign_consumed.add(root.version_ref)
+        with self.command_lock:
+            self.codesign_started.add(str(data["command_id"]))
+        def validate_review(report: Mapping[str, object]) -> None:
+            child = staged.get(str(report.get("version_ref")))
+            if child is None:
+                raise ValueError("P0_CODESIGN_REVIEW_BINDING")
+            validate_p0_review_binding(report, production_ref=child.production_ref, version_ref=child.version_ref,
+                bundle_sha256=child.sha256, evidence_ids=set(self.evidence[parent.version_ref]))
+        try:
+            technical = self.codesign.run(request=request, validate_variant=validate_variant, validate_review=validate_review)
+        except P0CoDesignInterrupted as interrupted:
+            trace = freeze_safe_mapping(interrupted.trace)
+            self.codesign_traces[parent.version_ref] = trace
+            return {"state": interrupted.state, "trace": as_plain(trace), "retry": 0,
+                    "code": "P0_CODESIGN_NATIVE_RUN_INCOMPLETE"}
+        result = object_data(as_plain(technical),
+            {"productions", "reports", "runs", "retrieval", "operations", "correction", "pedagogical_acceptance", "promotion"})
+        proposed = items(result["productions"], 2)
+        reports = items(result["reports"], 2)
+        if (not proposed or len(proposed) != len(reports) or len(proposed) != len(staged)
+                or result["pedagogical_acceptance"] != "NOT_PERFORMED" or result["promotion"] != "NOT_PERFORMED"):
+            raise ValueError("P0_CODESIGN_RESULT")
+        previous = parent
+        for raw, report in zip(proposed, reports, strict=True):
+            child = P0Production(raw)
+            if staged.get(child.version_ref) != child or object_data(child.data["lineage"])["parent_version_ref"] != previous.version_ref:
+                raise ValueError("P0_CODESIGN_LINEAGE")
+            validate_p0_review_fields(report)
+            used = report["evidence_refs_used"]
+            if (any(report.get(key) != value for key, value in (
+                    ("production_ref", child.production_ref), ("version_ref", child.version_ref),
+                    ("bundle_sha256", child.sha256), ("promotion", "NOT_PERFORMED")))
+                    or report["status"] != "completed"
+                    or not isinstance(used, (list, tuple)) or any(not isinstance(ref, str) for ref in used)
+                    or not set(used) <= set(self.evidence[parent.version_ref])):
+                raise ValueError("P0_CODESIGN_REVIEW_BINDING")
+            previous = child
+        # Adopt only after every returned variant/report has passed Application.
+        publications = []
+        for raw, report in zip(proposed, reports, strict=True):
+            child = P0Production(raw)
+            version = child.version_ref
+            self.records[version], self.validations[version], self.reports[version] = child, validations[version], report
+            self.evidence[version] = dict(self.evidence[parent.version_ref])
+            self.plans[version], self.packs[version] = effort_plan(child.context, production=child.data), dict(self.packs[parent.version_ref])
+            self.codesign_traces[version] = freeze_safe_mapping(result)
+            self.codesign_versions.add(version)
+            if self.publish_generated is not None:
+                try:
+                    publication = object_data(self.publish_generated(child.production_ref, version, child.sha256))
+                    if (publication.get("state") != "APPLICATION_SAVED"
+                            or publication.get("record_sha256") != self.saved_source(child.production_ref, version).sha256):
+                        raise ValueError("P0_CODESIGN_PUBLICATION_VERIFICATION")
+                    if self.saved_reader is not None:
+                        reopened = self.saved_reader(child.production_ref, version)
+                        if reopened.sha256 != publication["record_sha256"]:
+                            raise ValueError("P0_CODESIGN_PUBLICATION_VERIFICATION")
+                    publications.append(publication)
+                except Exception:
+                    return {"state": "PUBLICATION_OUTCOME_UNKNOWN", "view": as_plain(P0ProductionReadView.from_bundle(child).data),
+                            "publications_verified": publications, "trace": result, "retry": 0,
+                            "code": "P0_CODESIGN_SAVE_REQUIRES_PASSIVE_VERIFICATION"}
+        return {"state": "CODESIGN_CANDIDATE", "view": as_plain(P0ProductionReadView.from_bundle(previous).data),
+                "trace": result, "publications": publications, "retry": 0,
+                "promotion": "NOT_PERFORMED", "pedagogical_acceptance": "NOT_PERFORMED"}
+
+    def _codesign_preview(self, data: dict[str, object]) -> dict[str, object]:
+        parent = self._version(data)
+        if data["direction"] not in {"V2_TO_AI", "AI_TO_V2"} or not isinstance(data["objective"], str) or not data["objective"].strip() or len(data["objective"]) > 2000:
+            raise ValueError("P0_CODESIGN_OBJECTIVE")
+        from backend.modules.pedagogical_design.application.services.codesign_media import (
+            require_codesign_media_parent,
+        )
+        try:
+            require_codesign_media_parent(parent)
+        except ValueError as error:
+            return {"state": "BLOCKED", "code": str(error), "provider_attempts": 0}
+        if self.finite_consent is not None:
+            return dict(self.finite_consent.preview(self._finite_request(data)))
+        return {"state": "DISARMED", "contract_id": "P0-CODESIGN-PREVIEW-1.0",
+                "production_ref": parent.production_ref, "version_ref": parent.version_ref,
+                "bundle_sha256": parent.sha256, "direction": data["direction"], "objective": data["objective"],
+                "stages": ["AG02_ACTIVE_APPLICATION_SEARCH", "AG03_TRANSFORM" if data["direction"] == "V2_TO_AI" else "AG03_GENERATE",
+                    "APPLICATION_VALIDATE", "AG04_REVIEW", "AT_MOST_ONE_AG03_CORRECTION", "FRESH_AG04_REVIEW", "R4_SAVE_REOPEN_EXPORT"],
+                "maximum_semantic_operations": 4, "provider_attempts": 0, "authority": "NONE",
+                "required_decision": "EXACT_MULTI_OPERATION_BINDING_AND_CUMULATIVE_BUDGET",
+                "historical_create_permissions": "UNCHANGED", "cost_status": "NOT_QUALIFIED_FOR_THIS_CHAIN"}
+
+    def _finite_request(self, data: Mapping[str, object]) -> Mapping[str, object]:
+        parent = self._version(data)
+        if self.fresh_codesign_evidence is None:
+            raise ValueError("P0_CHAIN_FRESH_SOURCE_READER_REQUIRED")
+        evidence = dict(self.fresh_codesign_evidence(parent))
+        for reference in items(parent.data["references"], 8):
+            value = evidence.get(str(reference["evidence_id"]))
+            if not isinstance(value, str) or not value or fingerprint(value) == "":
+                raise ValueError("P0_CHAIN_FRESH_EVIDENCE_REQUIRED")
+            import hashlib
+            if hashlib.sha256(value.encode()).hexdigest() != reference["excerpt_sha256"]:
+                raise ValueError("P0_CHAIN_SOURCE_CHANGED")
+        self.evidence[parent.version_ref] = evidence
+        self.packs[parent.version_ref] = evidence_pack(parent.context, parent.data["references"], evidence)
+        self.plans[parent.version_ref] = effort_plan(parent.context, production=parent.data)
+        self.codesign_refreshed.add(parent.version_ref)
+        query = data["evidence_query"]
+        if query is None:
+            query = " ".join(str(topic) for topic in cast(tuple[object, ...], parent.context.data["topics"]))
+        if not isinstance(query, str) or not query.strip() or len(query) > 256:
+            raise ValueError("P0_CODESIGN_SEARCH_QUERY_REQUIRED")
+        return freeze_safe_mapping({"contract_id": "P0-CODESIGN-REQUEST-1.0", "command_id": data["command_id"],
+            "direction": data["direction"], "objective": data["objective"], "evidence_query": query,
+            "production": parent.mutable_copy(), "evidence": evidence, "evidence_pack": self.packs[parent.version_ref],
+            "plan": self.plans[parent.version_ref]})
+
+    def _codesign_consent(self, data: dict[str, object]) -> dict[str, object]:
+        if self.finite_consent is None:
+            raise ValueError("P0_CHAIN_CONSENT_NOT_BOUND")
+        request = self._finite_request(data)
+        core = {key: data[key] for key in ("command_id", "production_ref", "version_ref", "bundle_sha256", "direction", "objective", "evidence_query")}
+        # Normalize only the query default already exposed in the exact preview.
+        consent = {**data, "evidence_query": request["evidence_query"]}
+        return dict(self.finite_consent.finalize(request=request, consent=consent, run=lambda: self._codesign(core)))
+
+    def _codesign_revoke(self, data: dict[str, object]) -> dict[str, object]:
+        if self.finite_consent is None or not isinstance(data["preview_sha256"], str):
+            raise ValueError("P0_CHAIN_CONSENT_NOT_BOUND")
+        return dict(self.finite_consent.revoke(data["preview_sha256"]))
+
     def _root(self, candidate: P0Production) -> P0Production:
         while object_data(candidate.data["lineage"])["parent_version_ref"] in self.records:
             candidate = self.records[str(object_data(candidate.data["lineage"])["parent_version_ref"])]
@@ -494,6 +785,38 @@ class P0CreationService:
         candidate = self._version({"production_ref": production, "version_ref": version})
         if version in self.resumed:
             return self.resumed[version]
+        if version in self.codesign_versions:
+            trace = self.codesign_traces[version]
+            parent_ref = str(object_data(candidate.data["lineage"])["parent_version_ref"])
+            parent_record = self.saved_source(production, parent_ref)
+            if parent_record.p0_bundle is None:
+                raise ValueError("P0_CODESIGN_PARENT_BUNDLE_REQUIRED")
+            parent_sha = parent_record.p0_bundle.sha256
+            inherited = parent_record.data["reservations"]
+            if not isinstance(inherited, (list, tuple)):
+                raise ValueError("P0_SAVED_RESERVATIONS_INVALID")
+            reservations = list(inherited)
+            for reserve in ("TEACHER_ACCEPTANCE_NOT_PERFORMED", "DOCUMENTARY_TRACE_RESTORES_NO_AUTHORITY"):
+                if reserve not in reservations:
+                    reservations.append(reserve)
+            own = next((row for row in items(trace["operations"], 2) if row["bundle_sha256"] == candidate.sha256), None)
+            if own is None:
+                raise ValueError("P0_CODESIGN_OPERATION_REQUIRED")
+            own_controls = object_data(own["controls"])
+            if own_controls["guard_disposition"] != "ALLOW" or own_controls["warnings_json"] != "[]" or own_controls["uncertainties_json"] != "[]":
+                warning = "Avertissements AG03 conservés dans la trace V2 ; relecture professeur requise."
+                if warning not in reservations:
+                    reservations.append(warning)
+            if len(reservations) > 16:
+                raise ValueError("P0_SAVED_RESERVATIONS_FULL")
+            return SavedProduction({"contract_id": SAVED_CODESIGN_CONTRACT,
+                "view": as_plain(P0ProductionReadView.from_bundle(candidate).data), "bundle": candidate.mutable_copy(),
+                "reviews": [self.reports[version]], "validations": [self.validations[version]],
+                "origin": "LOCAL_APPLICATION", "provenance": {"CO_DESIGN_TRACE_SHA256": fingerprint(trace)},
+                "reservations": reservations,
+                "codesign": {"contract_id": DOCUMENTARY_CONTRACT, "trace": as_plain(trace),
+                    "parent_bundle_sha256": parent_sha, "parent_record_sha256": parent_record.sha256,
+                    "witness_sha256": variant_witness(candidate, parent_sha, parent_record.sha256, trace)}})
         if version in self.local_reopened:
             parent_version = str(object_data(candidate.data["lineage"])["parent_version_ref"])
             parent_record = self.saved_source(production, parent_version)

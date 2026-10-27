@@ -217,9 +217,11 @@ def build_local_read15(
     enable_review_modify: bool = False, r3_jobs: R3JobPort | None = None,
     saved_root: Path | None = None, create_saved: bool = False,
     p0_generation: P0GenerationPort | None = None,
-    p0_product_binder: Callable[[P0CreationService, P0CreationEndpoint], None] | None = None,
+    p0_product_binder: Callable[[P0CreationService, P0CreationEndpoint],
+        Callable[[Lot2SavedProductionInbound], None] | None] | None = None,
     observability_root: Path | None = None,
     word_profile: str = "diffusion-v5",
+    organization_capture_descriptor: Mapping[str, object] | None = None,
 ) -> LocalRead15Composition:
     """Receive an explicit existing target; never read ambient environment settings."""
     if generation_jobs is not None and not enable_conversation:
@@ -237,7 +239,8 @@ def build_local_read15(
     assets_root = _ROOT / "frontend"
     assets = {
         name: read_file_nofollow(
-            assets_root / name, allowed_root=assets_root, maximum_bytes=128 * 1_024
+            assets_root / name, allowed_root=assets_root,
+            maximum_bytes=(160 if name == "app.js" else 128) * 1_024
         )
         for name in sorted(ASSET_NAMES)
     }
@@ -245,6 +248,13 @@ def build_local_read15(
     conversation = build_conversation(jobs=generation_jobs) if enable_conversation else None
     r3 = build_r3(conversation, r3_jobs) if enable_review_modify and conversation else None
     p0, p0_endpoint = build_p0_creation(target, token_urlsafe(32), p0_generation)
+    if organization_capture_descriptor is not None:
+        from backend.infrastructure.composition.factories.organization_capture import (
+            organization_capture_reader,
+        )
+        organizations = organization_capture_reader(organization_capture_descriptor)
+        p0_endpoint.organization_capture_reader = organizations.inspect
+        p0_endpoint.organization_search = organizations.search
     saved = None
     if saved_root is not None:
         def source(production_ref: str, version_ref: str) -> SavedProduction:
@@ -271,10 +281,20 @@ def build_local_read15(
         if r3:
             r3.service.poll()
     try:
-        if isinstance(saved, Lot2SavedProductionInbound):
-            bind_confirmed_p0_publication(p0, saved, p0_generation)
+        post_bind = None
         if p0_product_binder is not None:
-            p0_product_binder(p0, p0_endpoint)
+            post_bind = p0_product_binder(p0, p0_endpoint)
+        if isinstance(p0.generation, P0ConfirmedGenerationRecoveryPort) and not isinstance(saved, Lot2SavedProductionInbound):
+            raise ValueError("P0_NORMAL_SAVED_LIBRARY_REQUIRED")
+        if isinstance(saved, Lot2SavedProductionInbound):
+            bind_confirmed_p0_publication(p0, saved, p0.generation,
+                deferred=p0_endpoint.pilot_effect_binding == "ON_DEMAND_UNARMED" or p0_endpoint.codesign_binding.startswith("FINITE_CHAIN"),
+                retain_unknown=p0_endpoint.normal_mode == "ENABLED")
+        if post_bind is not None:
+            if (p0_endpoint.pilot_effect_binding != "ON_DEMAND_UNARMED"
+                or not isinstance(saved, Lot2SavedProductionInbound)):
+                raise ValueError("P1_PILOT_ON_DEMAND_SAVED_LIBRARY_REQUIRED")
+            post_bind(saved)
         service = LocalRead15Service(
             configuration, _application_reader(target), observability, assets,
             search_endpoint=_application_searcher(target),
@@ -300,9 +320,12 @@ def build_local_read15(
 
 
 def bind_confirmed_p0_publication(p0: P0CreationService, saved: Lot2SavedProductionInbound,
-                                generation: P0GenerationPort | None) -> None:
+                                generation: P0GenerationPort | None,
+                                *, deferred: bool = False, retain_unknown: bool = False) -> None:
     """Explicit companion only; no receipt discovery in the ordinary local mode."""
-    if not isinstance(generation, P0ConfirmedGenerationRecoveryPort):
+    if deferred and generation is not None:
+        raise ValueError("P1_PILOT_DEFERRED_PUBLICATION_REQUIRES_UNARMED")
+    if not deferred and not isinstance(generation, P0ConfirmedGenerationRecoveryPort):
         return
 
     def publish(production: str, version: str, bundle_sha256: str) -> Mapping[str, object]:
@@ -322,11 +345,20 @@ def bind_confirmed_p0_publication(p0: P0CreationService, saved: Lot2SavedProduct
                 "record_sha256": record.sha256}
 
     p0.publish_generated = publish
-    if isinstance(generation, P0ConfirmedGenerationsRecoveryPort):
-        dispatches = generation.confirmed_dispatches()
-    else:
-        dispatch = generation.confirmed_dispatch()
-        dispatches = () if dispatch is None else (dispatch,)
+    if generation is None:
+        return
+    if not isinstance(generation, P0ConfirmedGenerationRecoveryPort):
+        raise ValueError("P1_PILOT_RECOVERY_PORT_REQUIRED")
+    try:
+        if isinstance(generation, P0ConfirmedGenerationsRecoveryPort):
+            dispatches = generation.confirmed_dispatches()
+        else:
+            dispatch = generation.confirmed_dispatch()
+            dispatches = () if dispatch is None else (dispatch,)
+    except ValueError as error:
+        if retain_unknown and str(error) in {"P0_RECOVERY_OUTCOME_UNKNOWN", "P0_CHAIN_RETAINED_UNCERTAINTY_STOP"}:
+            return  # Keep consultation, the slot and uncertainty; no reauthorization.
+        raise
     for dispatch in dispatches:
         p0.recover_confirmed_generation(dispatch)
 
@@ -335,27 +367,69 @@ def build_saved_application(root: Path, *, create: bool = False,
         source: Callable[[str, str], SavedProduction] | None = None,
         word_profile: str = "diffusion-v5") -> SavedProductionInbound:
     store = LocalSavedProductionStore(root, create=create)
-    return Lot2SavedProductionInbound(SavedProductionService(store), ReadProductionQuery(store),
-                                  ExportSavedCommand(R6ReadableWordWriter(profile=word_profile),
+    exporter = ExportSavedCommand(R6ReadableWordWriter(profile=word_profile),
                                       presentation=diffusion_v6_document if word_profile == "diffusion-v6" else diffusion_document,
-                                      product_projection=word_profile == "product-v7"), source=source)
+                                      product_projection=word_profile == "product-v7")
+    def compare_projection(record: SavedProduction, kind: str) -> Mapping[str, object]:
+        projected = exporter.preview(record, kind)
+        return {"title": projected.title, "blocks": [{"style": block.style, "text": block.text} for block in projected.blocks]}
+    return Lot2SavedProductionInbound(SavedProductionService(store, compare_projection=compare_projection),
+                                      ReadProductionQuery(store), exporter, source=source)
 
 
 def build_local_saved(configuration: LocalBrowserHttpConfiguration, root: Path, *,
                       create: bool = False,
                       source: Callable[[str, str], SavedProduction] | None = None,
-                      word_profile: str = "diffusion-v5") -> LocalRead15Composition:
+                      word_profile: str = "diffusion-v5",
+                      partial_manifest: Path | None = None,
+                      partial_manifest_sha256: str | None = None,
+                      partial_word_profile: str = "captured",
+                      register_format_reference: bool = False,
+                      chapter_manifest: Path | None = None,
+                      chapter_manifest_sha256: str | None = None) -> LocalRead15Composition:
     """Existing local app in R4-only mode: no library target, SQLite or generation job."""
+    if partial_word_profile != "captured" or (register_format_reference and chapter_manifest is None):
+        if partial_manifest is None or partial_manifest_sha256 is None:
+            raise ValueError("PARTIAL_EXPLICIT_SOURCE_REQUIRED")
+    if partial_manifest is not None or partial_manifest_sha256 is not None:
+        root = assert_local_data_root(root)
+        if root == _ROOT or _ROOT in root.parents:
+            raise ValueError("PARTIAL_OUTSIDE_SOURCE_REQUIRED")
+        if partial_manifest is None or partial_manifest_sha256 is None:
+            raise ValueError("PARTIAL_EXPLICIT_SOURCE_REQUIRED")
+        manifest_root = assert_local_data_root(partial_manifest.parent)
+        if manifest_root == _ROOT or _ROOT in manifest_root.parents:
+            raise ValueError("PARTIAL_OUTSIDE_SOURCE_REQUIRED")
+    chapter_selected = chapter_manifest is not None or chapter_manifest_sha256 is not None
+    if chapter_selected and (chapter_manifest is None or chapter_manifest_sha256 is None
+            or partial_manifest is not None or source is not None):
+        raise ValueError("ASSEMBLY_EXCLUSIVE_SOURCE_REQUIRED")
     saved = build_saved_application(root, create=create, source=source, word_profile=word_profile)
+    if chapter_selected:
+        assert chapter_manifest is not None and chapter_manifest_sha256 is not None
+        from backend.infrastructure.composition.factories.chapter_assembly import chapter_source
+        saved.source = chapter_source(chapter_manifest, chapter_manifest_sha256, root,
+            register=register_format_reference, read_saved=saved.service.read_local_p0)
+    partial = None
+    if partial_manifest is not None or partial_manifest_sha256 is not None:
+        if partial_manifest is None or partial_manifest_sha256 is None:
+            raise ValueError("PARTIAL_EXPLICIT_SOURCE_REQUIRED")
+        from backend.infrastructure.composition.factories.partial_workspace import (
+            build_partial_workspace,
+        )
+        partial = build_partial_workspace(partial_manifest, partial_manifest_sha256, root,
+            word_profile=partial_word_profile, register_reference=register_format_reference)
     assets_root = _ROOT / "frontend"
     assets = {name: read_file_nofollow(assets_root / name, allowed_root=assets_root,
-                                      maximum_bytes=128 * 1024) for name in sorted(ASSET_NAMES)}
+                                      maximum_bytes=(160 if name == "app.js" else 128) * 1024)
+              for name in sorted(ASSET_NAMES)}
     observability = build_local_observability_session(root)
     def unavailable(reference: str, correlation: str) -> UseCaseResult[object, object]:
         raise Read15ValidationRejected("READ15_REQUEST_REJECTED")
     try:
         service = LocalRead15Service(configuration, Read15Endpoint(unavailable), observability, assets,
-            saved_endpoint=SavedProductionEndpoint(saved.execute, nonce=token_urlsafe(32)))
+            saved_endpoint=SavedProductionEndpoint(saved.execute, nonce=token_urlsafe(32)),
+            partial_endpoint=partial)
         server = LocalRead15Server(service)
     except Exception:
         observability.shutdown()

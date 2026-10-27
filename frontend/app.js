@@ -1,5 +1,300 @@
 "use strict";
 
+// BEGIN PILOT PRESENTATION
+// Shared consent checks and the pilot preview are initialized before the main app.
+function p0IsOfficialResponsesEndpoint(endpoint) {
+  if (typeof endpoint !== "string" || endpoint.length > 256 ||
+      endpoint.includes("?") || endpoint.includes("#")) return false;
+  try {
+    const parsed = new URL(endpoint);
+    return parsed.protocol === "https:" && parsed.hostname === "api.openai.com" &&
+      parsed.pathname === "/v1/responses" && !parsed.port && !parsed.username &&
+      !parsed.password && !parsed.search && !parsed.hash && parsed.href === endpoint;
+  } catch { return false; }
+}
+function p0TransferDestination(result, preview) {
+  const destination = result?.transfer_destination;
+  const stable = preview?.schema === "P1-PILOT-STABLE-PREVIEW-1.0";
+  if (!destination || typeof destination !== "object" || Array.isArray(destination) ||
+      Object.keys(destination).sort().join("|") !==
+        (stable ? "endpoint|model|provider|recipe_sha256" : "endpoint|model|permission_sha256|provider") ||
+      destination.provider !== "OPENAI" || destination.model !== "gpt-5.6-terra" ||
+      !/^[0-9a-f]{64}$/.test(stable ? destination.recipe_sha256 || "" : destination.permission_sha256 || "") ||
+      (stable ? destination.recipe_sha256 !== preview?.recipe_sha256 :
+        destination.permission_sha256 !== preview?.permission_sha256) ||
+      !p0IsOfficialResponsesEndpoint(destination.endpoint)) return null;
+  return destination;
+}
+function p0CostBoundWithinCeiling(value) {
+  if (typeof value !== "string" || !/^0\.\d{1,18}$/.test(value)) return false;
+  // Compare exact decimal digits: rounding to Number could admit a value above 0.14.
+  const fraction = value.slice(2).padEnd(18, "0");
+  return fraction > "000000000000000000" && fraction <= "140000000000000000";
+}
+function p0ConsentMatches(result, prepared, now = Date.now()) {
+  const preview = result?.preview;
+  const stable = preview?.schema === "P1-PILOT-STABLE-PREVIEW-1.0";
+  if (!prepared || result.state !== "LOCAL_OPERATOR_CONSENT_REQUIRED" ||
+      result.provider_attempts !== 0 || result.review_state !== "NOT_RUN" ||
+      result.source_status !== "RESERVE" || result.consent_actor !== "LOCAL_OPERATOR_DELEGATED" ||
+      !/^[0-9a-f]{64}$/.test(result.preview_sha256 || "") ||
+      !["P0-PRODUCT-CONSENT-PREVIEW-1.0", "P1-PILOT-STABLE-PREVIEW-1.0"].includes(preview?.schema) ||
+      preview.preparation_ref !== prepared.preparation_ref || preview.preparation_sha256 !== prepared.preparation_sha256 ||
+      typeof preview.request_body_utf8 !== "string" || preview.request_body_utf8.length > 512 * 1024 ||
+      !/^[0-9a-f]{64}$/.test(preview.request_sha256 || "") ||
+      !p0TransferDestination(result, preview) ||
+      !Array.isArray(preview.source_receipts) || !preview.source_receipts.length ||
+      !p0CostBoundWithinCeiling(preview.cost_bound_usd) ||
+      !Number.isFinite(Date.parse(preview.expires_at_utc)) || now >= Date.parse(preview.expires_at_utc))
+    return false;
+  if (stable) {
+    const proof = preview.financial_evidence, parameters = preview.request_parameters;
+    let body;
+    try { body = JSON.parse(preview.request_body_utf8); } catch { return false; }
+    const keys = ["model", "max_output_tokens", "reasoning", "service_tier",
+      "store", "stream", "background", "tools", "tool_choice"];
+    if (!proof || proof.admission_status !== "OWNER_ADMITTED_EXACT_PILOT" ||
+        !/^[0-9a-f]{64}$/.test(proof.tariff_sha256 || "") ||
+        !/^[0-9a-f]{64}$/.test(proof.tokenizer_manifest_sha256 || "") ||
+        !/^[0-9a-f]{64}$/.test(proof.admission_sha256 || "") ||
+        proof.cost_bound_usd !== preview.cost_bound_usd ||
+        proof.input_upper_tokens !== 29857 || proof.max_output_tokens !== 4096 ||
+        proof.input_usd_per_million !== "2.00" || proof.input_multiplier !== "1.25" ||
+        proof.output_usd_per_million !== "12.00" ||
+        !parameters || keys.some(key => JSON.stringify(parameters[key]) !== JSON.stringify(body[key])))
+      return false;
+  }
+  return true;
+}
+
+function p0PilotLocalCountApplicable(result) {
+  return result?.request_sha256 === "58cf32a15f9b696f889855ac7831ade8d762439d6a49d2b144bc7ff14b90b044" &&
+    result?.request_bytes === 19857 && result?.model === "gpt-5.6-terra";
+}
+
+function p0PilotMoney7Units(value) {
+  if (typeof value !== "string" || !/^\d+(?:\.\d{1,7})?$/.test(value))
+    throw new Error("P1_PILOT_OFF_PREVIEW_BINDING");
+  const [whole, fraction = ""] = value.split(".");
+  const units = Number(whole) * 10000000 + Number(fraction.padEnd(7, "0"));
+  if (!Number.isSafeInteger(units)) throw new Error("P1_PILOT_OFF_PREVIEW_BINDING");
+  return units;
+}
+
+async function p0ShowPilotPreview(result, prepared, revision) {
+  const bodyOnly = result?.schema === "P1-PILOT-BODY-PROJECTION-OFF-1.0";
+  const guarded = result?.schema === "P1-PILOT-SAME-NEED-PREVIEW-OFF-1.0";
+  const candidate = result?.schema === "P1-PILOT-CANDIDATE-PREVIEW-OFF-1.0";
+  const fresh = (bodyOnly || candidate) && result?.historical_observation_status === "FRESH_APPLICATION_LOCKED";
+  const prior = candidate && result?.historical_observation_status === "PRIOR_APPLICATION_OBSERVATION";
+  if (!prepared || (!bodyOnly && !guarded && !candidate) ||
+      result.state !== (bodyOnly ? "OFF_BODY_ONLY_NO_EFFECT" : candidate ? "OFF_CANDIDATE_NO_EFFECT" : "OFF_PREVIEW_NO_EFFECT") ||
+      result.effect_permitted !== false ||
+      result.provider_calls !== 0 || result.new_slots !== 0 ||
+      result.operation !== "ONE_MANUAL_CREATE_REATTEMPT_OF_UNKNOWN" ||
+      result.parent_unknown_request_sha256 !== "176b136b4f80b11009d93713fa85e7805c851ad3c466b609a43e45c7fa84cf2b" ||
+      result.preparation_ref !== prepared.preparation_ref ||
+      result.preparation_sha256 !== prepared.preparation_sha256 ||
+      result.provider !== "OPENAI" || result.model !== "gpt-5.6-terra" ||
+      !p0IsOfficialResponsesEndpoint(result.endpoint) ||
+      !/^[0-9a-f]{64}$/.test(result.request_sha256 || "") ||
+      typeof result.request_body_utf8 !== "string" || result.request_body_utf8.length > 512 * 1024 ||
+      result.historical_slots !== 3 || result.historical_reserved_usd !== "0.2544660" ||
+      ((bodyOnly || candidate) && !/^[0-9a-f]{64}$/.test(result.runtime_sha256 || "")) ||
+      (candidate && (!/^[0-9a-f]{64}$/.test(result.context_sha256 || "") ||
+        !/^[0-9a-f]{64}$/.test(result.reference_set_sha256 || "") ||
+        result.policy_sha256 !== "d1ac715fa05ae5acc96d987178737f4a7694063048e68060124ef065ae938a72")) ||
+      (bodyOnly && !fresh && (result.historical_observation_status !== "PRIOR_OWNER_METADATA_NOT_RECHECKED" ||
+        result.new_cost_bound_usd !== null)) ||
+      ((fresh || prior) && (!/^[0-9a-f]{64}$/.test(result.read_scope_sha256 || "") ||
+        !/^[0-9a-f]{64}$/.test(result.historical_inspection_plan_sha256 || "") ||
+        result.local_input_upper_tokens !== result.request_bytes + 10000 ||
+        result.max_output_tokens !== 4096 || result.local_price_input_usd_per_million !== "2.50" ||
+        result.local_price_output_usd_per_million !== "12.00" ||
+        !/^0\.[0-9]{1,7}$/.test(result.new_cost_bound_usd || "") ||
+        !/^0\.[0-9]{1,7}$/.test(result.combined_reserved_ceiling_usd || ""))) ||
+      result.per_call_ceiling_usd !== "0.1400000" || result.cumulative_ceiling_usd !== "1.9600000" ||
+      result.cost_bound_status !== ((fresh || prior) ? "LOCAL_CANDIDATE_NOT_ADMITTED_FOR_SEND" :
+        "NOT_ESTABLISHED_FOR_NEW_WINDOW") ||
+      result.actual_billed_cost_status !== "NOT_ESTABLISHED" ||
+      result.new_window_status !== "NOT_GRANTED") throw new Error("P1_PILOT_OFF_PREVIEW_BINDING");
+  const bytes = new TextEncoder().encode(result.request_body_utf8);
+  if (bytes.length !== result.request_bytes) throw new Error("P1_PILOT_OFF_PREVIEW_BINDING");
+  if (candidate) {
+    let body;
+    try { body = JSON.parse(result.request_body_utf8); }
+    catch { throw new Error("P1_PILOT_OFF_PREVIEW_BINDING"); }
+    if (body?.model !== result.model || body?.service_tier !== "default" ||
+        body?.reasoning?.effort !== "low" || body?.max_output_tokens !== 4096 ||
+        body?.background !== false || body?.store !== false || body?.stream !== false ||
+        !Array.isArray(body?.tools) || body.tools.length !== 0 || body?.tool_choice !== "none")
+      throw new Error("P1_PILOT_OFF_PREVIEW_BINDING");
+  }
+  if (fresh || prior) {
+    const boundUnits = (bytes.length + 10000) * 25 + 4096 * 120;
+    if (p0PilotMoney7Units(result.new_cost_bound_usd) !== boundUnits ||
+        p0PilotMoney7Units(result.combined_reserved_ceiling_usd) !== 2544660 + boundUnits ||
+        Number.isNaN(Date.parse(result.historical_observed_at_utc || "")))
+      throw new Error("P1_PILOT_OFF_PREVIEW_BINDING");
+  }
+  const digest = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))]
+    .map(byte => byte.toString(16).padStart(2, "0")).join("");
+  if (digest !== result.request_sha256) throw new Error("P1_PILOT_OFF_PREVIEW_BINDING");
+  if (p0.prepared !== prepared || p0.contextRevision !== revision)
+    throw new Error("P1_PILOT_OFF_PREPARATION_CHANGED");
+  p0ClearConsent();
+  p0ClearPilotPreview();
+  p0Element("pilot-preview").hidden = false;
+  const summary = p0Element("pilot-preview-summary");
+  appendSearchText(summary, "p", "Même besoin pédagogique que la tentative UNKNOWN, nouvelle opération manuelle envisagée : aucun renvoi automatique.");
+  appendSearchText(summary, "p", "Destination envisagée : " + result.provider + " · " + result.model + " · " + result.endpoint);
+  appendSearchText(summary, "p", "Corps projeté : " + result.request_bytes + " octets · SHA-256 " + result.request_sha256 + ".");
+  appendSearchText(summary, "p", (bodyOnly && !fresh ? "Relevé antérieur non revérifié : trois réservations historiques, " :
+    "Trois réservations historiques conservées : ") + result.historical_reserved_usd +
+    " USD. Plafonds de conception : " + result.per_call_ceiling_usd + " USD par appel et " +
+    result.cumulative_ceiling_usd + " USD cumulés. " + (fresh || prior ?
+      (fresh ? "Relevé Application frais à " : "Relevé Application conservé du ") +
+      result.historical_observed_at_utc + ". Borne locale candidate : " +
+      result.new_cost_bound_usd + " USD ; cumul candidat " + result.combined_reserved_ceiling_usd +
+      " USD. Tarif et tokenizer non admis pour un envoi." :
+      "Borne de coût de ce corps non établie pour une nouvelle fenêtre."));
+  appendSearchText(summary, "p", "Risque résiduel de double exécution et de double coût. Aucun slot, grant, fenêtre ou consentement d’envoi actif ; aucun appel possible depuis cet aperçu.");
+  if (candidate) {
+    appendSearchText(summary, "h4", "Décision proposée pour un seul CREATE manuel — non activée");
+    appendSearchText(summary, "p", "Même besoin que le parent UNKNOWN " + result.parent_unknown_request_sha256 +
+      " : sa réponse et son coût facturé restent inconnus. Un nouveau CREATE pourrait produire et facturer deux fois le même cours. Son slot et sa réservation restent comptés ; aucun renvoi de la commande ou du grant anciens.");
+    appendSearchText(summary, "p", "Corps à transmettre : le JSON UTF-8 exact ci-dessous, " + result.request_bytes +
+      " octets, SHA-256 " + result.request_sha256 + ". Modèle gpt-5.6-terra, Responses API, service_tier default, raisonnement low, " +
+      "4 096 tokens de sortie maximum, sans outil. Contexte " + result.context_sha256 +
+      " ; références " + result.reference_set_sha256 + ".");
+    appendSearchText(summary, "p", "Preuves documentaires à admettre pour cette candidate : tarif public du modèle, " +
+      "2,00 USD par million de tokens en entrée et 12,00 USD en sortie ; écriture de cache à 1,25 fois le prix d’entrée, " +
+      "soit 2,50 USD. Aucune remise de lecture de cache n’est supposée. Le résolveur officiel tiktoken 0.14.0 " +
+      "associe la famille gpt-5 à o200k_base, dont l’empreinte publiée est " +
+      "446a9538cb6c348e3516120d7c08b09f57c36495e2acfffe59a5bf8b0cfb1a2d. " +
+      "Les sources publiques ne constituent pas une admission pour une nouvelle fenêtre ; le relevé technique local exact est indiqué séparément lorsqu’il est disponible.");
+    if (p0PilotLocalCountApplicable(result)) {
+      appendSearchText(summary, "p", "Relevé technique local du 20 octobre : tiktoken 0.14.0 installé dans l’environnement isolé " +
+        "(manifeste SHA-256 4fa1158b4f1074ad6e9ab5a0129ac166d6c7ae7f6f5932f31e3ff90ae4a04fec), " +
+        "résolveur gpt-5.6-terra → o200k_base, 4 396 tokens de chaînes et clefs, 5 296 tokens du JSON sérialisé. " +
+        "Selon le préflight local, 15 296 tokens d’entrée avec réserve structurelle et 4 096 de sortie " +
+        "donnent une borne calculée de 0,0873920 USD ; sur le relevé historique daté, le cumul projeté serait " +
+        "0,3418580 USD. Le service V2 courant ne contient pas tiktoken. Ces éléments ne sont pas admis pour un envoi ; " +
+        "la borne documentaire plus prudente de 0,1237945 USD reste conservée jusqu’à décision et préflight frais.");
+    }
+    appendSearchText(summary, "p", "Borne locale conservatrice : (" + result.request_bytes + " + 10 000) × 2,50 / 1 000 000 " +
+      "+ 4 096 × 12 / 1 000 000 = " + result.new_cost_bound_usd + " USD. Trois réservations historiques de " +
+      result.historical_reserved_usd + " USD + cette seule borne = " + result.combined_reserved_ceiling_usd +
+      " USD projetés. Le relevé Application date du " + result.historical_observed_at_utc +
+      " ; il ne vaut pas préflight frais. Coût réellement facturé : non établi.");
+    appendSearchText(summary, "p", "Fenêtre envisagée : 60 minutes au maximum, avec début et fin exacts à fixer seulement " +
+      "après revue du raccordement et décision propriétaire. Aucune fenêtre n’est actuellement accordée ou démarrée.");
+    appendSearchText(summary, "p", "Décisions futures distinctes : admission explicite des preuves tarif/tokenizer pour ce corps, " +
+      "autorité d’un seul CREATE liée à UNKNOWN, puis consentements frais au transfert de ce JSON à OpenAI, " +
+      "au coût maximal et au risque de double exécution et de double coût. Avant tout effet : vérifier à nouveau " +
+      "candidate, sources, package, preuves et cumul sous le LOCK ; arrêter sur divergence, expiration ou issue incertaine, sans second envoi.");
+    appendSearchText(summary, "p", p0PilotCandidateBinding === "PILOT_EFFECT_CANDIDATE" ?
+      "Cet aperçu conservé est OFF. La session expose une voie conditionnelle de consentement ; elle exige " +
+      "une autorité active, les admissions et un préflight frais avant tout effet." :
+      "Raccordement d’envoi de cette session : absent. La composition candidate est OFF, " +
+      "sans génération ni route de consentement active. L’aperçu ne permet aucune réservation ni aucun CREATE.");
+  }
+  p0Element("pilot-preview-body").textContent = result.request_body_utf8;
+  p0Element("pilot-preview-identities").textContent = JSON.stringify({...result, request_body_utf8:undefined}, null, 2);
+}
+let p0PilotPreviewBinding = "NONE";
+let p0PilotCandidateBinding = "NONE";
+function p0PilotPreviewMetadata(metadata) {
+  const binding = metadata.pilot_preview_binding || "NONE";
+  const candidate = metadata.pilot_candidate_binding || "NONE";
+  if (!["NONE", "OFF_PREVIEW_ONLY"].includes(binding) ||
+      !["NONE", "OFF_RECOVERABLE", "PILOT_EFFECT_CANDIDATE"].includes(candidate) ||
+      (candidate === "OFF_RECOVERABLE" && binding !== "OFF_PREVIEW_ONLY") ||
+      (candidate === "PILOT_EFFECT_CANDIDATE" &&
+        (binding !== "NONE" || metadata.normal_consent_binding !== "EXPLICIT_PRODUCT_PERMISSION" ||
+          !((metadata.live_binding === "EXPLICIT_PORT" &&
+            metadata.pilot_effect_binding === "EXPLICIT_CONDITIONAL_AUTHORITY") ||
+            (metadata.live_binding === "NONE" &&
+              metadata.pilot_effect_binding === "ON_DEMAND_UNARMED")))) ||
+      (binding === "OFF_PREVIEW_ONLY" &&
+        (metadata.live_binding !== "NONE" || metadata.normal_consent_binding !== "NONE")))
+    throw new Error("P1_PILOT_OFF_METADATA_BINDING");
+  p0PilotPreviewBinding = binding;
+  p0PilotCandidateBinding = candidate;
+  if (candidate === "OFF_RECOVERABLE" || candidate === "PILOT_EFFECT_CANDIDATE")
+    queueMicrotask(() => p0PilotRestore());
+}
+function p0PilotPreviewButtonText(normalText) {
+  return p0PilotPreviewBinding === "OFF_PREVIEW_ONLY" ? "Voir l’aperçu local sans envoi" : normalText;
+}
+function p0ClearPilotPreview() {
+  p0Element("pilot-preview").hidden = true;
+  for (const id of ["pilot-preview-summary", "pilot-preview-body", "pilot-preview-identities"])
+    p0Element(id).replaceChildren();
+}
+async function p0PilotPreviewFromPrepared() {
+  const prepared = p0.prepared, revision = p0.contextRevision;
+  try {
+    const payload = {command_id:p0Command(), preparation_ref:prepared.preparation_ref,
+      preparation_sha256:prepared.preparation_sha256};
+    if (p0PilotCandidateBinding === "OFF_RECOVERABLE")
+      payload.demand = uxRequests.at(-1) || p0Element("objectives").value.trim();
+    const result = await p0Fetch("/api/v2/p0/pilot-preview", payload);
+    if (p0.prepared !== prepared || p0.contextRevision !== revision)
+      throw new Error("P1_PILOT_OFF_PREPARATION_CHANGED");
+    await p0ShowPilotPreview(result, prepared, revision);
+    if (p0.prepared !== prepared || p0.contextRevision !== revision)
+      throw new Error("P1_PILOT_OFF_PREPARATION_CHANGED");
+    p0Element("status").textContent = result.historical_observation_status === "FRESH_APPLICATION_LOCKED" ?
+      "Aperçu local chiffré affiché. Borne candidate seulement ; aucun envoi possible." :
+      "Aperçu local affiché. Coût et nouvelle autorité non établis : aucun envoi possible.";
+  } catch (error) { p0ClearPilotPreview(); throw error; }
+}
+
+async function p0PilotRestore() {
+  let installed = null;
+  const revision = p0.contextRevision;
+  try {
+    const result = await p0Fetch("/api/v2/p0/pilot-candidate");
+    if (p0.contextRevision !== revision) return;
+    if (result.state === "NO_CANDIDATE") return;
+    if (p0.prepared) return;
+    if (result.state !== "OFF_CANDIDATE_RESTORED" || typeof result.demand !== "string" ||
+        !result.prepared || !result.preview) throw new Error("P0_PILOT_CANDIDATE_RESTORE_BINDING");
+    const prepared = result.prepared;
+    p0.prepared = prepared;
+    installed = prepared;
+    await p0ShowPilotPreview(result.preview, prepared, revision);
+    uxShow("prepare");
+    uxMessage("user", result.demand);
+    uxMessage("assistant", "Candidate OFF conservée et rouverte. Le relevé daté n’est pas un préflight frais.");
+    p0Element("preparation").replaceChildren();
+    appendSearchText(p0Element("preparation"), "p", "Candidate OFF récupérée : contexte et références exacts conservés.");
+    const details = document.createElement("details");
+    appendSearchText(details, "summary", "Contexte exact, sources et provenance");
+    appendSearchText(details, "pre", JSON.stringify({context:prepared.context, references:prepared.references}, null, 2));
+    p0Element("preparation").append(details);
+    uxPreparation(prepared);
+    if (p0PilotCandidateBinding !== "PILOT_EFFECT_CANDIDATE") p0.prepared = null;
+    p0Controls();
+    p0Element("status").textContent = p0PilotCandidateBinding === "PILOT_EFFECT_CANDIDATE" ?
+      (p0.pilotEffectBinding === "ON_DEMAND_UNARMED" ?
+        "Candidate exacte récupérée. L’aperçu ne démarre aucune fenêtre d’envoi." :
+        "Candidate exacte récupérée. Un aperçu de consentement exige une autorité et un préflight frais.") :
+      "Aperçu OFF récupéré. Relevé daté seulement ; aucun envoi possible.";
+  } catch (error) {
+    if (installed && p0.prepared === installed) {
+      p0.prepared = null;
+      p0ClearPilotPreview();
+      p0Controls();
+    }
+    if (!p0.prepared) p0Element("status").textContent =
+      "Reprise de la candidate OFF refusée : " + (error.message || "P0_PILOT_CANDIDATE_RESTORE_FAILURE");
+  }
+}
+
+// END PILOT PRESENTATION
+
 const form = document.getElementById("resource-form");
 const referenceInput = document.getElementById("resource-ref");
 const button = document.getElementById("submit-button");
@@ -272,7 +567,7 @@ function updateConversation(view) {
 }
 
 async function localBoundedRequest(path, options, consume, timeoutMs = 10000) {
-  if (![10000, 60000, 150000].includes(timeoutMs)) throw new Error("LOCAL_REQUEST_TIMEOUT_POLICY");
+  if (![10000, 60000, 150000, 900000].includes(timeoutMs)) throw new Error("LOCAL_REQUEST_TIMEOUT_POLICY");
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -589,6 +884,7 @@ function r4Controls() {
       (["r4-validate", "r4-promote"].includes(id) &&
        (r4Uncertain || r4Record.record.origin !== "LOCAL_APPLICATION"));
   document.getElementById("r4-save").disabled = r4Busy || r4Uncertain || !r4Nonce;
+  if (typeof r4LocalEditControls === "function") r4LocalEditControls();
 }
 async function r4Fetch(path, body = null, binary = false) {
   const options = {method: body ? "POST" : "GET", credentials: "omit", cache: "no-store",
@@ -649,6 +945,7 @@ async function r4Open() {
   if (opened.record?.view?.production_ref !== refs[0] || opened.record?.view?.version_ref !== refs[1] ||
       (expectedHash && opened.record_sha256 !== expectedHash)) throw new Error("R4_SAVED_IDENTITY_CHANGED");
   r4Record = opened;
+  if (typeof r4LocalOpened === "function") r4LocalOpened();
   const details = document.getElementById("r4-details");
   details.replaceChildren();
   appendSearchText(details, "p", r4Record.status === "PROMOTED" ? "Promotion explicite enregistrée" : "CANDIDATE — NON VALIDÉE");
@@ -694,7 +991,7 @@ function classroomPreview(target, blocks, assets = []) {
     if (following.split("\n").some(line => /^#+\s/.test(line) &&
         line.replace(/^#+\s*/, "").trim().toLocaleLowerCase("fr").startsWith(
           blocks[index].text.trim().toLocaleLowerCase("fr")))) index++;
-    if (asset.preferred_position === "AFTER_DOCUMENT" || asset.preferred_position === "AFTER_CONTEXT") {
+    if (asset.preferred_position === "AFTER_DOCUMENT" || asset.preferred_position === "AFTER_CONTEXT" || asset.preferred_position === "AFTER_CONCEPT") {
       while (index + 1 < blocks.length && !/^Heading/.test(blocks[index + 1].style)) index++;
     }
     insertions.set(index, [...(insertions.get(index) || []), asset]);
@@ -761,7 +1058,9 @@ document.getElementById("r4-preview").addEventListener("click", () => r4Run(asyn
   const target = document.getElementById("r4-preview-content");
   target.replaceChildren();
   appendSearchText(target, "h3", data.title);
-  classroomPreview(target, data.blocks, data.media_assets || data.course_chapter?.media_assets || []);
+  const chapter=data.course_chapter;
+  const blocks=chapter?.assembly ? (kind==="correction" ? uxTeacherBlocks(null,{course_chapter:chapter},kind) : uxCourseBlocks(chapter)) : data.blocks;
+  classroomPreview(target, blocks, data.media_assets || chapter?.media_assets || []);
 }));
 document.getElementById("r4-download").addEventListener("click", () => r4Run(async () => {
   const saved = r4Record;
@@ -772,7 +1071,7 @@ document.getElementById("r4-download").addEventListener("click", () => r4Run(asy
   const url = URL.createObjectURL(data);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = kind + "-" + (r4Record.record.view.title || "preparation").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9-]/g, "-").replace(/-+/g, "-").slice(0, 80) + ".docx";
+  anchor.download = kind + "-" + (r4Record.record.view.title || "preparation").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9-]/g, "-").replace(/-+/g, "-").slice(0, 80) + "-" + r4Record.record.view.version_ref.slice(-8) + ".docx";
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }));
@@ -794,17 +1093,22 @@ r4Run(r4Refresh);
 // P0 companion: all families use the same Application lifecycle and exact versions.
 const p0 = {nonce: null, references: [], prepared: null, view: null, teacher: null, consent: null,
   busy: false, uncertain: false, contextRevision: 0, editInputs: [], connected: false,
-  liveBinding: "NONE", normalConsentBinding: "NONE", mediaBinding: "NONE",
+  liveBinding: "NONE", normalConsentBinding: "NONE", pilotEffectBinding: "NONE", mediaBinding: "NONE",
   localReferenceContextBinding: "NONE", localReferenceContexts: [], workflowAudit: null, workflowSaved: null};
 let p0ConnectionPromise = null;
 const p0Element = id => document.getElementById("p0-" + id);
 function p0Controls() {
+  const localProposal = document.getElementById("p0-local-propose");
+  if (localProposal) localProposal.disabled = p0.busy || p0.uncertain || !p0.prepared;
   for (const input of p0.editInputs || []) input.disabled = p0.busy;
   p0Element("prepare").disabled = p0.busy || p0.uncertain || !p0.nonce;
-  p0Element("generate").disabled = p0.busy || p0.uncertain || !p0.nonce || !p0.prepared || p0.liveBinding === "NONE" ||
+  p0Element("generate").disabled = p0.busy || p0.uncertain || !p0.nonce || !p0.prepared ||
+    (p0.liveBinding === "NONE" && p0PilotPreviewBinding !== "OFF_PREVIEW_ONLY" &&
+      p0.pilotEffectBinding !== "ON_DEMAND_UNARMED") ||
     p0.prepared?.context?.institutional_resolution?.status === "CONTENT_GAP";
   p0Element("consent-send").disabled = p0.busy || p0.uncertain || !p0.nonce || !p0.consent ||
     !p0Element("consent-transfer").checked || !p0Element("consent-cost").checked ||
+    (p0.pilotEffectBinding !== "NONE" && !p0Element("consent-double-risk").checked) ||
     !p0ConsentMatches(p0.consent, p0.prepared);
   for (const id of ["teacher", "revise", "validate", "save"])
     p0Element(id).disabled = p0.busy || p0.uncertain || !p0.view;
@@ -817,7 +1121,7 @@ function p0Controls() {
       (id === "correction" && !p0.view.questions.length && !p0.view.course_chapter) ||
       (id === "marking" && p0.view.pedagogical_context.resource_type !== "ASSESSMENT") ||
       (["export", "check"].includes(id) && !!p0.dirty);
-  p0Workflow();
+  p0Workflow(); p0NormalControls();
 }
 function p0WorkflowKey(view = p0.view) {
   if (!view?.production_ref || !view?.version_ref || !view?.bundle_sha256) return null;
@@ -891,11 +1195,12 @@ async function p0Fetch(path, body = null, contract = "R6-P0-HTTP-LOCAL-1.0") {
     throw error;
   }
   return envelope.data;
-  }, path === "/api/v2/p0/generate" || path === "/api/v2/p0/consent-generate" || path === "/api/v2/p0/consent-preview" ? 150000 :
+  }, path === "/api/v2/p0/pilot-preview" && p0PilotPreviewBinding === "OFF_PREVIEW_ONLY" ? 900000 :
+    path === "/api/v2/p0/codesign-preview" || path === "/api/v2/p0/generate" || path === "/api/v2/p0/consent-generate" || path === "/api/v2/p0/consent-preview" ? 150000 :
     path === "/api/v2/p0" || path === "/api/v2/p0/prepare" ||
     path === "/api/v2/p0/media" || /^\/api\/v2\/p0\/(versions\/|notion-evidence\?)/.test(path) ? 60000 : 10000);
   } catch (error) {
-    if (path === "/api/v2/p0/prepare" && /^[0-9a-f]{32}$/.test(body?.command_id))
+    if (["/api/v2/p0/prepare", "/api/v2/p0/consent-generate"].includes(path) && /^[0-9a-f]{32}$/.test(body?.command_id))
       error.localCommandId = body.command_id;
     throw error;
   }
@@ -911,7 +1216,7 @@ async function p0Run(action, mutation = false, state = "loading") {
     p0Element("status").dataset.state = "error";
     p0Element("status").textContent = error.localPrecondition ?
       "Connexion locale indisponible. Aucun envoi de commande ; reconnectez-vous explicitement avant de reprendre." :
-      error.localTimedOut && !mutation ? "La consultation locale a dépassé son délai. Aucun envoi de commande ; reprenez la consultation explicitement." :
+      error.localTimedOut && !mutation ? "La consultation locale a dépassé son délai. Aucun appel fournisseur ; reprenez la consultation." :
       (error.localTimedOut && mutation ? "Le délai local est dépassé ; le résultat de la commande reste à vérifier" :
         "Action non confirmée : " + error.message) +
       (p0.uncertain ? ". Aucun renvoi automatique ; vérifiez la version avant de reprendre." :
@@ -979,6 +1284,23 @@ function p0Context() {
     context.contract_id = format === "CHAPTER" ? "P0-CONTEXT-COURSE-4.0" : "P0-CONTEXT-COURSE-3.0";
     context.course_format = format;
   }
+  if (family === "EXERCISE" && !["SIMPLE", "STRUCTURED", "CASE_STUDY"].includes(p0Element("exercise-format").value))
+    throw Object.assign(new Error("EXERCISE_FORMAT_REQUIRED"), {confirmedRefusal:true});
+  if (family === "EXERCISE" && ["STRUCTURED", "CASE_STUDY"].includes(p0Element("exercise-format").value)) {
+    const frame = p0InstitutionalFrame();
+    const question = frame?.questions?.find(q => q.question_ref === p0Element("program-question").value);
+    const component = p0Element("exercise-focus").value;
+    const justification = p0Element("exercise-justification").value.trim();
+    const parts = p0ExerciseQuestionParts(question?.label);
+    if (!context.level.endsWith("STMG") || !question || !/^[a-f0-9]{64}$/.test(question.source_question_sha256 || "") ||
+        parts.filter(p => p === component).length !== 1 || !justification)
+      throw Object.assign(new Error("EXERCISE_EXPLICIT_FOCUS_REQUIRED"), {confirmedRefusal:true});
+    context.contract_id = p0Element("exercise-format").value === "CASE_STUDY" ? "P0-CONTEXT-CASE-STUDY-1.0" : "P0-CONTEXT-EXERCISE-1.1";
+    context.exercise_focus_justification = justification;
+    context.exercise_focus_selection = {source_question_ref:question.question_ref,
+      source_question_sha256:question.source_question_sha256, local_question_label:component,
+      authority:"LOCAL_PEDAGOGICAL_SELECTION_NO_NARROWER_OFFICIAL_CLAIM"};
+  }
   return context;
 }
 function p0CourseFormatOptions() {
@@ -993,6 +1315,7 @@ function p0CourseFormatOptions() {
   p0Element("course-format-note").textContent = p0Element("level").value.startsWith("BTS_") ?
     "Le chapitre riche est actuellement disponible en STMG. Pour ce contexte BTS, choisissez le cours expliqué." :
     "Le chapitre riche propose des documents, activités et espaces de réponse avec un corrigé séparé. Le cours expliqué expose les notions et leur application.";
+  p0ExerciseFocusOptions();
 }
 function p0InstitutionalFrame() {
   if (p0Element("level").value.startsWith("BTS_"))
@@ -1068,6 +1391,7 @@ function p0InstitutionalCapacityOptions() {
     (question && !question.theme_ref ? " Thème non renseigné dans la source : la question est sélectionnable, mais la génération reste bloquée." : "");
   if (p0Element("level").value.startsWith("BTS_")) p0Element("program-status").textContent =
     "Le processus, l’activité et les compétences seront vérifiés dans le référentiel exact. L’année BTS est une progression locale ; elle n’est pas prescrite par ce référentiel.";
+  p0ExerciseFocusOptions();
 }
 p0Element("level").addEventListener("change", p0InstitutionalOptions);
 p0Element("frame").addEventListener("change", p0InstitutionalQuestionOptions);
@@ -1079,6 +1403,7 @@ p0Element("family").addEventListener("change", () => {
   for (const id of ["duration", "points"]) p0Element(id).required = assessment;
 });
 p0Element("course-format").addEventListener("change", p0CourseFormatOptions);
+p0Element("exercise-format").addEventListener("change", p0ExerciseFocusOptions);
 function p0Invalidate() {
   p0.contextRevision += 1;
   p0.prepared = null; p0ClearConsent(); p0Controls();
@@ -1407,6 +1732,7 @@ function p0Render(view, quality = null) {
   p0Element("teacher-content").replaceChildren();
   appendSearchText(region, "p", "Préparation à relire avant usage pédagogique.");
   uxProductionCard(view);
+  p0CoDesignControls();
   p0MediaOptions(view);
   p0Field(region, "p0-edit-title", "Titre", view.title, false);
   if (view.course_chapter) { p0CourseFields(region, view.course_chapter); return; }
@@ -1431,48 +1757,16 @@ function p0DisplayedVersion(target) {
 }
 function p0ClearConsent() {
   p0.consent = null; p0Element("consent").hidden = true;
-  p0Element("consent-transfer").checked = p0Element("consent-cost").checked = false;
+  p0ClearPilotPreview();
+  p0Element("consent-transfer").checked = p0Element("consent-cost").checked =
+    p0Element("consent-double-risk").checked = false;
+  p0Element("consent-double-risk-label").hidden = p0.pilotEffectBinding === "NONE";
+  p0Element("consent-double-risk-text").textContent = p0.pilotRecoveryIncident ?
+    (p0.pilotRecoveryIncident === "2f1ef780598e469fafc94f9f4ba142c6" ?
+      " Je comprends que UNKNOWN, 406A et 2f1e ont pu produire des effets et des coûts non observés. Cette nouvelle création peut s’y ajouter ; toutes leurs réservations restent conservées." :
+    " Je comprends que le parent UNKNOWN et la commande 406A ont pu produire des effets et des coûts non observés. Cette nouvelle création peut s’y ajouter ; aucune réservation passée n’est libérée.") :
+    " Je comprends que la tentative UNKNOWN a pu réussir et être facturée : cette nouvelle création du même cours peut produire et coûter deux fois.";
   for (const id of ["consent-summary", "consent-body", "consent-identities"]) p0Element(id).replaceChildren();
-}
-function p0TransferDestination(result, preview) {
-  const destination = result?.transfer_destination;
-  if (!destination || typeof destination !== "object" || Array.isArray(destination) ||
-      Object.keys(destination).sort().join("|") !== "endpoint|model|permission_sha256|provider" ||
-      destination.provider !== "OPENAI" || destination.model !== "gpt-5.6-terra" ||
-      !/^[0-9a-f]{64}$/.test(destination.permission_sha256 || "") ||
-      destination.permission_sha256 !== preview?.permission_sha256 ||
-      typeof destination.endpoint !== "string" || destination.endpoint.length > 256 ||
-      destination.endpoint.includes("?") || destination.endpoint.includes("#")) return null;
-  try {
-    const parsed = new URL(destination.endpoint);
-    if (parsed.protocol !== "https:" || parsed.hostname !== "api.openai.com" ||
-        parsed.pathname !== "/v1/responses" || parsed.port || parsed.username || parsed.password ||
-        parsed.search || parsed.hash || parsed.href !== destination.endpoint) return null;
-  } catch { return null; }
-  return destination;
-}
-function p0CostBoundWithinCeiling(value) {
-  if (typeof value !== "string" || !/^0\.\d{1,18}$/.test(value)) return false;
-  // Compare exact decimal digits: rounding to Number could admit a value above 0.14.
-  const fraction = value.slice(2).padEnd(18, "0");
-  return fraction > "000000000000000000" && fraction <= "140000000000000000";
-}
-function p0ConsentMatches(result, prepared, now = Date.now()) {
-  const preview = result?.preview;
-  if (!prepared || result.state !== "LOCAL_OPERATOR_CONSENT_REQUIRED" ||
-      result.provider_attempts !== 0 || result.review_state !== "NOT_RUN" ||
-      result.source_status !== "RESERVE" || result.consent_actor !== "LOCAL_OPERATOR_DELEGATED" ||
-      !/^[0-9a-f]{64}$/.test(result.preview_sha256 || "") ||
-      preview?.schema !== "P0-PRODUCT-CONSENT-PREVIEW-1.0" ||
-      preview.preparation_ref !== prepared.preparation_ref || preview.preparation_sha256 !== prepared.preparation_sha256 ||
-      typeof preview.request_body_utf8 !== "string" || preview.request_body_utf8.length > 512 * 1024 ||
-      !/^[0-9a-f]{64}$/.test(preview.request_sha256 || "") ||
-      !p0TransferDestination(result, preview) ||
-      !Array.isArray(preview.source_receipts) || !preview.source_receipts.length ||
-      !p0CostBoundWithinCeiling(preview.cost_bound_usd) ||
-      !Number.isFinite(Date.parse(preview.expires_at_utc)) || now >= Date.parse(preview.expires_at_utc))
-    return false;
-  return true;
 }
 function p0ConsentPreview(result, prepared) {
   if (!p0ConsentMatches(result, prepared)) throw new Error("P0_CONSENT_PREVIEW_BINDING");
@@ -1484,17 +1778,37 @@ function p0ConsentPreview(result, prepared) {
   const summary = p0Element("consent-summary");
   const destination = p0TransferDestination(result, preview);
   appendSearchText(summary, "p", "OpenAI · " + destination.model + " · " + destination.endpoint);
-  appendSearchText(summary, "p", "Coût maximal de cette création : " + preview.cost_bound_usd +
-    " USD. Budget disponible : " + result.remaining_budget_usd + " USD · " + result.remaining_calls + " création(s) restante(s).");
-  appendSearchText(summary, "p", "Contenu transmis : " + preview.request_bytes + " octets. Accord valable jusqu’au " +
-    new Date(preview.expires_at_utc).toLocaleString("fr-FR") + ".");
+  appendSearchText(summary, "p", preview.schema === "P1-PILOT-STABLE-PREVIEW-1.0" ?
+    "Coût maximal de cette création : " + preview.cost_bound_usd +
+      " USD. Le budget et les réservations seront relus sous LOCK après la confirmation finale." :
+    "Coût maximal de cette création : " + preview.cost_bound_usd +
+      " USD. Budget disponible : " + result.remaining_budget_usd + " USD · " +
+      result.remaining_calls + " création(s) restante(s).");
+  appendSearchText(summary, "p", "Contenu envisagé : " + preview.request_bytes + " octets. " +
+    (preview.schema === "P1-PILOT-STABLE-PREVIEW-1.0" ?
+      "Cet aperçu est valable jusqu’au " + new Date(preview.expires_at_utc).toLocaleString("fr-FR") +
+      " ; la fenêtre technique de 60 minutes ne commence qu’à votre confirmation finale." :
+      "Accord valable jusqu’au " + new Date(preview.expires_at_utc).toLocaleString("fr-FR") + "."));
   appendSearchText(summary, "p", "Sources sélectionnées pour cette demande :");
   for (const receipt of preview.source_receipts)
     appendSearchText(summary, "p", JSON.stringify(receipt));
+  if (preview.schema === "P1-PILOT-STABLE-PREVIEW-1.0") {
+    appendSearchText(summary, "p", "Paramètres exacts : " + JSON.stringify(preview.request_parameters));
+    appendSearchText(summary, "p", "Éléments financiers liés à cet aperçu : " +
+      JSON.stringify(preview.financial_evidence) +
+      ". Leur admission applicable et le cumul devront être vérifiés avant tout effet sous LOCK.");
+  }
   appendSearchText(summary, "p", "Une seule tentative, aucun renvoi automatique. Revue indépendante non exécutée ; relecture enseignante nécessaire.");
-  appendSearchText(summary, "p", "La première création de cette session peut demander la clé dans le terminal du lanceur. Aucun caractère ne s’affiche pendant la saisie : collez la clé à cette invite, puis appuyez sur Entrée. Ne la saisissez jamais dans le navigateur ni à l’invite PowerShell.");
+  if (p0.pilotEffectBinding !== "NONE") appendSearchText(summary, "p",
+    p0.pilotRecoveryIncident ?
+      (p0.pilotRecoveryIncident === "2f1ef780598e469fafc94f9f4ba142c6" ?
+      "Cette création est liée aux trois antécédents incertains UNKNOWN, 406A et 2f1e (" :
+      "Cette création est liée au parent UNKNOWN et à 406A (") + p0.pilotRecoveryIncident + "). Leurs résultats et coûts facturés restent inconnus ; la nouvelle tentative peut s’ajouter à plusieurs exécutions et coûts. Toutes les réservations restent comptées." :
+      "Cette création manuelle du même cours est liée à la tentative UNKNOWN : sa réponse et son coût facturé restent inconnus. Vous pouvez recevoir et payer deux fois le cours. La réservation du parent reste comptée.");
+
   p0Element("consent-body").textContent = preview.request_body_utf8;
   p0Element("consent-identities").textContent = JSON.stringify({...preview, request_body_utf8:undefined}, null, 2);
+  p0NormalEnhance();
 }
 function p0GeneratedResult(result) {
   if (result.state !== "CANDIDATE") throw Object.assign(new Error("P0_GENERATION_NOT_CONFIRMED"), {confirmedRefusal:true});
@@ -1504,11 +1818,25 @@ function p0GeneratedResult(result) {
     "Candidate reçue. Relisez et sauvegardez la version exacte ; aucune promotion effectuée.";
 }
 p0Element("generate").addEventListener("click", () => p0Run(async () => {
+  if (p0NormalIsProposal()) return p0ShowNormalProposal();
+  if (p0PilotPreviewBinding === "OFF_PREVIEW_ONLY") return p0PilotPreviewFromPrepared();
   if (p0.normalConsentBinding === "EXPLICIT_PRODUCT_PERMISSION") {
     const prepared = p0.prepared;
     const result = await p0Fetch("/api/v2/p0/consent-preview", {command_id:p0Command(),
       preparation_ref:prepared.preparation_ref, preparation_sha256:prepared.preparation_sha256});
     if (p0.prepared !== prepared) throw new Error("P0_CONSENT_PREPARATION_CHANGED");
+    if (p0.pilotEffectBinding === "EXPLICIT_CONDITIONAL_AUTHORITY" ||
+        p0.pilotEffectBinding === "ON_DEMAND_UNARMED") {
+      const preview = result?.preview;
+      if (typeof preview?.request_body_utf8 !== "string" ||
+          !/^[0-9a-f]{64}$/.test(preview.request_sha256 || ""))
+        throw new Error("P1_PILOT_EFFECT_PREVIEW_BINDING");
+      const bytes = new TextEncoder().encode(preview.request_body_utf8);
+      const digest = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))]
+        .map(byte => byte.toString(16).padStart(2, "0")).join("");
+      if (bytes.length !== preview.request_bytes || digest !== preview.request_sha256 ||
+          p0.prepared !== prepared) throw new Error("P1_PILOT_EFFECT_PREVIEW_BINDING");
+    }
     p0ConsentPreview(result, prepared);
     p0Element("status").textContent = "Vérifiez le contenu et le coût maximal, puis confirmez cet envoi dans l’application.";
     return;
@@ -1519,19 +1847,50 @@ p0Element("generate").addEventListener("click", () => p0Run(async () => {
     p0GeneratedResult(result);
   } else { p0Element("status").dataset.state = "unavailable";
     p0Element("status").textContent = "Génération indisponible : autorisation requise. Aucun transport fournisseur n’est lié à cette composition hors ligne."; }
-}, p0.normalConsentBinding !== "EXPLICIT_PRODUCT_PERMISSION", "generating"));
-for (const id of ["consent-transfer", "consent-cost"]) p0Element(id).addEventListener("change", p0Controls);
+}, p0NormalIsProposal() || p0PilotPreviewBinding === "OFF_PREVIEW_ONLY" ? false :
+  p0.normalConsentBinding !== "EXPLICIT_PRODUCT_PERMISSION", "generating"));
+for (const id of ["consent-transfer", "consent-cost", "consent-double-risk"])
+  p0Element(id).addEventListener("change", p0Controls);
 p0Element("consent-cancel").addEventListener("click", () => {p0ClearConsent(); p0Controls();});
+const p0RetainedFollowupId = sessionStorage.getItem("v2.pilot.command.followup");
+if (/^[0-9a-f]{32}$/.test(p0RetainedFollowupId || "")) {
+  p0.uncertain = true;
+  p0Element("follow-command").hidden = false;
+}
+p0Element("follow-command").addEventListener("click", () => p0Run(async () => {
+  const command = sessionStorage.getItem("v2.pilot.command.followup");
+  if (!/^[0-9a-f]{32}$/.test(command || "")) throw new Error("P1_PILOT_FOLLOWUP_IDENTITY_REQUIRED");
+  const result = await p0FollowPilotCommand(command);
+  p0GeneratedResult(result);
+  p0.uncertain = false;
+  sessionStorage.removeItem("v2.pilot.command.followup");
+  p0Element("follow-command").hidden = true;
+}));
 p0Element("consent-send").addEventListener("click", () => p0Run(async () => {
   const consent = p0.consent, prepared = p0.prepared;
-  if (!p0ConsentMatches(consent, prepared) || !p0Element("consent-transfer").checked || !p0Element("consent-cost").checked)
+  if (!p0ConsentMatches(consent, prepared) || !p0Element("consent-transfer").checked ||
+      !p0Element("consent-cost").checked ||
+      (p0.pilotEffectBinding !== "NONE" && !p0Element("consent-double-risk").checked))
     throw Object.assign(new Error("P0_CONSENT_REQUIRED"), {confirmedRefusal:true});
   p0ClearConsent();
-  p0Element("status").textContent = "Création en cours. Si le terminal du lanceur demande la clé, saisissez-la à cette invite masquée, puis Entrée.";
-  const result = await p0Fetch("/api/v2/p0/consent-generate", {command_id:p0Command(),
+  p0Element("status").textContent = "Création en cours ; configuration locale du backend, sans clé dans le navigateur.";
+  const decision = {command_id:p0Command(),
     preparation_ref:prepared.preparation_ref, preparation_sha256:prepared.preparation_sha256,
-    preview_sha256:consent.preview_sha256, transfer_accepted:true, cost_bound_accepted:true});
+    preview_sha256:consent.preview_sha256, transfer_accepted:true, cost_bound_accepted:true};
+  if (p0.pilotEffectBinding !== "NONE") decision.double_execution_cost_risk_accepted = true;
+  if (p0NormalFollowup() || p0.pilotRecoveryIncident === "2f1ef780598e469fafc94f9f4ba142c6") {
+    sessionStorage.setItem("v2.pilot.command.followup", decision.command_id);
+    p0Element("follow-command").hidden = false;
+  }
+  let result = await p0Fetch("/api/v2/p0/consent-generate", decision);
+  if (result?.state === "LOCAL_COMMAND_RUNNING" || result?.state === "LOCAL_COMMAND_COMPLETED" ||
+      result?.state === "LOCAL_COMMAND_UNCERTAIN") {
+    if (result.command_id !== decision.command_id) throw new Error("P1_PILOT_FOLLOWUP_IDENTITY_REQUIRED");
+    result = await p0FollowPilotCommand(decision.command_id);
+  }
   p0GeneratedResult(result);
+  sessionStorage.removeItem("v2.pilot.command.followup");
+  p0Element("follow-command").hidden = true;
 }, true, "generating"));
 p0Element("teacher").addEventListener("click", () => p0Run(async () => {
   if (p0.dirty) throw Object.assign(new Error("Conservez votre modification avant de recharger les réponses professeur"), {confirmedRefusal:true});
@@ -1606,7 +1965,9 @@ async function p0EnsureConnected() {
 async function p0Connect() {
   if (p0ConnectionPromise) return p0ConnectionPromise;
   p0.connected = false; p0.nonce = null;
-  p0.liveBinding = "NONE"; p0.normalConsentBinding = "NONE"; p0.mediaBinding = "NONE";
+  p0.liveBinding = "NONE"; p0.normalConsentBinding = "NONE"; p0.pilotEffectBinding = "NONE";
+  p0.pilotRecoveryIncident = null;
+  p0PilotPreviewBinding = "NONE"; p0.mediaBinding = "NONE";
   p0.localReferenceContextBinding = "NONE"; p0.localReferenceContexts = [];
   p0Element("generate").textContent = "Génération indisponible : connexion locale à établir";
   p0ConnectionPromise = (async () => {
@@ -1616,6 +1977,13 @@ async function p0Connect() {
         !Array.isArray(metadata.references) || !metadata.references.every(ref => ref && typeof ref.title === "string") ||
         !["NONE", "EXPLICIT_PORT"].includes(metadata.live_binding) ||
         !["NONE", "EXPLICIT_PRODUCT_PERMISSION"].includes(metadata.normal_consent_binding || "NONE") ||
+        !["NONE", "EXPLICIT_CONDITIONAL_AUTHORITY", "ON_DEMAND_UNARMED"].includes(metadata.pilot_effect_binding || "NONE") ||
+        (metadata.pilot_recovery_incident !== undefined &&
+          (metadata.pilot_effect_binding !== "ON_DEMAND_UNARMED" ||
+            !["406a9f51b4de4121ba91f9b410a9de4c", "2f1ef780598e469fafc94f9f4ba142c6"].includes(metadata.pilot_recovery_incident))) ||
+        (metadata.pilot_command_followup !== undefined &&
+          (metadata.pilot_command_followup !== "EXPLICIT_SINGLE_COMMAND_FOLLOWUP" ||
+            metadata.pilot_recovery_incident !== "2f1ef780598e469fafc94f9f4ba142c6")) ||
         !["NONE", "LOCAL_DIAGRAM_OR_NO_MEDIA"].includes(metadata.media_binding) ||
         !["NONE", "EXPLICIT_OWNER_LOCAL_CONTEXT"].includes(metadata.local_reference_context_binding || "NONE"))
       throw new Error("P0_LOCAL_METADATA_REJECTED");
@@ -1624,14 +1992,18 @@ async function p0Connect() {
     if ((localBinding === "NONE" && localContexts.length) ||
         (localBinding === "EXPLICIT_OWNER_LOCAL_CONTEXT" && metadata.normal_consent_binding !== "EXPLICIT_PRODUCT_PERMISSION"))
       throw new Error("P0_LOCAL_REFERENCE_METADATA_REJECTED");
+    p0PilotPreviewMetadata(metadata); p0NormalConfigure(metadata);
     p0.references = metadata.references; p0.institutionalCatalog = metadata.institutional_catalog;
     p0InstitutionalOptions();
     p0.liveBinding = metadata.live_binding;
     p0.normalConsentBinding = metadata.normal_consent_binding || "NONE";
+    p0.pilotEffectBinding = metadata.pilot_effect_binding || "NONE";
+    p0.pilotRecoveryIncident = metadata.pilot_recovery_incident || null;
     p0.mediaBinding = metadata.media_binding;
     p0.localReferenceContextBinding = localBinding; p0.localReferenceContexts = localContexts;
-    p0Element("generate").textContent = metadata.live_binding === "NONE" ? "Génération indisponible dans cette composition" :
-      p0.normalConsentBinding === "EXPLICIT_PRODUCT_PERMISSION" ? "Examiner l’envoi et son coût" : "Demander la génération autorisée";
+    p0Element("generate").textContent = p0PilotPreviewButtonText(p0.normalConsentBinding === "EXPLICIT_PRODUCT_PERMISSION" ?
+      "Examiner l’envoi et son coût" : metadata.live_binding === "NONE" ?
+        "Génération indisponible dans cette composition" : "Demander la génération autorisée");
     p0Element("reference").replaceChildren();
     const empty = document.createElement("option"); empty.value = ""; empty.textContent = "Choisir une référence";
     p0Element("reference").append(empty);
@@ -1755,6 +2127,8 @@ function uxProductionCard(view) {
 function uxCourseBlocks(chapter) {
   const blocks = [{style:"Heading1",text:chapter.context.title,anchor_ref:"CONTEXT"},
     {style:"Normal",text:chapter.context.text}];
+  const a=chapter.assembly;
+  if(a) blocks.push({style:"Normal",text:a.thread.notice});
   const documents = new Map(chapter.documents.map(item=>[item.id,item]));
   const questions = new Map(chapter.questions.map(item=>[item.id,item]));
   const concepts = new Map(chapter.concepts.map(item=>[item.id,item]));
@@ -1767,21 +2141,25 @@ function uxCourseBlocks(chapter) {
     blocks.push({style:"Heading2",text:item.title,anchor_ref:ref},{style:"Normal",text:item.text});
     if (item.table) blocks.push({style:"Normal",text:"",table:item.table});
   };
+  const formalize=part=>part.concept_ids.forEach(ref=>{const item=concepts.get(ref);if(!item) throw new Error("P0_COURSE_VIEW_BINDING");
+    blocks.push({style:"Heading2",text:item.notion,anchor_ref:ref},{style:"Normal",text:item.definition},
+      {style:"Normal",text:item.explanation},{style:"Normal",text:item.example});
+    if(a) blocks.push({style:"Normal",text:a.concept_vigilance.find(v=>v.id===ref).text});});
   chapter.parts.forEach(part=>{
     blocks.push({style:"Heading1",text:part.title});
+    const meta=a?.parts.find(m=>m.id===part.id), early=meta?.formalization.position==="BEFORE_ACTIVITY";
+    if(meta) blocks.push({style:"Normal",text:meta.transition});
+    if(early) formalize(part);
     part.document_ids.forEach(document);
-    for (const role of ["observation", "analysis"]) {
-      blocks.push({style:"Heading2",text:role === "observation" ? "Observer" : "Analyser"});
-      part[role].forEach(question);
-    }
-    part.concept_ids.forEach(ref=>{const item=concepts.get(ref);if (!item) throw new Error("P0_COURSE_VIEW_BINDING");
-      blocks.push({style:"Heading2",text:item.notion,anchor_ref:ref},{style:"Normal",text:item.definition},
-        {style:"Normal",text:item.explanation},{style:"Normal",text:item.example});});
+    for(const role of ["observation","analysis"]){
+      blocks.push({style:"Heading2",text:role==="observation"?"Observer":"Analyser"});part[role].forEach(question);}
+    if(!early) formalize(part);
     blocks.push({style:"Heading2",text:"Réinvestir"});part.reinvestment.forEach(question);
   });
+  if(a) blocks.push({style:"Heading1",text:"À retenir"},{style:"Normal",text:chapter.synthesis});
   blocks.push({style:"Heading1",text:"Tester ses connaissances"});chapter.knowledge_check.forEach(question);
-  blocks.push({style:"Heading1",text:"À retenir"},{style:"Normal",text:chapter.synthesis},
-    {style:"Heading1",text:chapter.transfer.title});
+  if(!a) blocks.push({style:"Heading1",text:"À retenir"},{style:"Normal",text:chapter.synthesis});
+  blocks.push({style:"Heading1",text:chapter.transfer.title});
   chapter.transfer.document_ids.forEach(document);chapter.transfer.question_ids.forEach(question);
   return blocks;
 }
@@ -1790,9 +2168,12 @@ function uxMediaAssets(region, assets) {
     if (asset.mime_type !== "image/png" || !/^iVBORw0KGgo/.test(asset.bytes_base64) ||
         asset.bytes_base64.length > 1500000 || !/^[0-9a-f]{64}$/.test(asset.png_sha256))
       throw new Error("P0_MEDIA_VIEW_REJECTED");
-    const figure = document.createElement("figure"); const image = document.createElement("img");
-    image.src = "data:image/png;base64," + asset.bytes_base64; image.alt = asset.alt_text;
+    const figure = document.createElement("figure"), image = document.createElement("canvas");
+    image.setAttribute("role", "img"); image.setAttribute("aria-label", asset.alt_text);
     image.width = asset.width; image.height = asset.height;
+    createImageBitmap(new Blob([Uint8Array.from(atob(asset.bytes_base64), c=>c.charCodeAt(0))], {type:"image/png"})).then(bitmap=>{
+      image.getContext("2d").drawImage(bitmap,0,0); bitmap.close();
+    }).catch(()=>image.replaceWith(document.createTextNode(asset.alt_text+" — visuel indisponible")));
     figure.append(image); appendSearchText(figure, "figcaption", asset.caption); region.append(figure);
   });
 }
@@ -1816,15 +2197,16 @@ function uxTeacherBlocks(view, teacher, kind) {
   if (chapter) {
     if (kind!=="correction") throw new Error("P0_COURSE_MARKING_NOT_AVAILABLE");
     const answers=new Map(chapter.teacher_answers.map(answer=>[answer.id,answer]));
-    const blocks=uxCourseBlocks(chapter), result=[];
-    for (const block of blocks) {
-      result.push(block);
-      if (answers.has(block.anchor_ref)) {
-        const answer=answers.get(block.anchor_ref);
-        result.push({style:"Normal",text:answer.expected_answer},{style:"Normal",text:answer.rationale},
-          {style:"Normal",text:"Point de vigilance : "+answer.vigilance},{style:"Normal",text:"Remédiation : "+answer.remediation});
-      }
-    }
+    const blocks=uxCourseBlocks(chapter), result=[];let pending=null;
+    const answer=a=>{result.push({style:"Normal",text:a.expected_answer},{style:"Normal",text:a.rationale},
+      {style:"Normal",text:"Point de vigilance : "+a.vigilance},{style:"Normal",text:"Remédiation : "+a.remediation});
+      const criterion=chapter.assembly?.answer_criteria.find(c=>c.id===a.id);
+      if(criterion) result.push({style:"Normal",text:"Critères : "+criterion.criteria});};
+    for(const block of blocks){result.push(block);
+      if(answers.has(block.anchor_ref)){if(chapter.assembly) pending=answers.get(block.anchor_ref);else answer(answers.get(block.anchor_ref));}
+      else if(pending&&block.style==="Normal"){answer(pending);pending=null;}}
+    if(chapter.assembly) for(const source of chapter.assembly.sources) result.push({style:"Heading2",text:source.title},
+      {style:"Normal",text:[source.publisher,source.consulted_on,source.url,source.fact,source.locator,source.rights].filter(Boolean).join("\n")});
     return result;
   }
   const blocks=view.sections.flatMap(section=>[{style:"Heading1",text:section.heading,anchor_ref:section.section_id},
@@ -1939,6 +2321,10 @@ if (window.matchMedia("(max-width:1180px)").matches) document.getElementById("so
 
 // Persistent content is always read via Application. These are presentation pointers only.
 function uxDraftConfirm() {
+  if (window.r4LocalDirty?.()) {
+    if (!window.confirm("Abandonner la copie non sauvegardée ?")) return false;
+    r4LocalOpened();
+  }
   if (!p0.dirty) return true;
   if (!window.confirm("Des modifications ne sont pas encore conservées. Les abandonner pour changer de vue ou de document ?")) return false;
   p0.dirty = false;
@@ -2037,3 +2423,96 @@ async function p0ResumeSaved() {
   } finally { r4ResumePending = false; r4Controls(); }
 }
 document.getElementById("r4-resume").addEventListener("click", p0ResumeSaved);
+
+// Local partial captures never enter the generation or promotion workflow.
+async function initPartialCapture() {
+  const base = "/api/v2/captured-partial";
+  const add = (parent,tag,text) => { appendSearchText(parent,tag,text); return parent.lastElementChild; };
+  let state, busy = false;
+  const options = () => ({credentials:"omit", cache:"no-store", redirect:"error",
+    headers:{"X-Local-Intent":"conversation-v1"}});
+  const first = await fetch(base, options());
+  if (first.status === 404) return;
+  if (!first.ok) return;
+  state = (await first.json()).data;
+  if (state?.status !== "PARTIAL_UNVALIDATED" || state.effect_permitted !== false) return;
+  const panel = document.createElement("section"); panel.id = "partial-capture"; panel.className = "surface";
+  const title = add(panel,"h2","Capture récupérée du cours de Première STMG");
+  title.tabIndex = -1;
+  appendSearchText(panel,"p","BROUILLON PARTIEL NON VALIDÉ — aucun nouvel envoi. La capture originale est conservée.");
+  const identity = add(panel,"p", "Commande " + state.command_id + " · " + state.source_bytes + " octets · SHA256 " + state.source_sha256);
+  identity.className = "muted";
+    if (state.revision) {
+      appendSearchText(panel,"p","Révision locale " + state.revision.revision_id +
+        " — corrections tracées et nouveaux compléments enseignants non validés. La capture reste inchangée.");
+    }
+  const status = add(panel,"p",""); status.setAttribute("role","status");
+  const actions = document.createElement("div"); actions.className = "card-actions"; panel.append(actions);
+  const buttons = [];
+  function controls() {
+    status.textContent = state.saved ? "Version dérivée sauvegardée. Réouverture et exports disponibles." :
+      "Capture ouverte. Sauvegardez la version dérivée avant d’exporter.";
+    for (const [button,needsSave] of buttons) button.disabled = busy || (needsSave && !state.saved);
+  }
+  async function request(path, body = null) {
+    const opts = options();
+    if (body) Object.assign(opts, {method:"POST",body:JSON.stringify(body),headers:{...opts.headers,
+      "Content-Type":"application/json; charset=utf-8","X-R2-Nonce":state.transport_nonce}});
+    const response = await fetch(base + path,opts);
+    if (!response.ok) throw new Error("Lecture ou sauvegarde locale refusée. Les sources sont conservées.");
+    return response;
+  }
+  async function run(action) {
+    if (busy) return; busy = true; controls();
+    try { await action(); controls(); }
+    catch(error) { status.textContent = error.message; }
+    finally { busy = false; for(const [button,needsSave] of buttons) button.disabled = needsSave && !state.saved; }
+  }
+  function button(label,action,needsSave=false) {
+    const node = document.createElement("button"); node.type="button"; node.textContent=label;
+    node.addEventListener("click",()=>run(action)); actions.append(node); buttons.push([node,needsSave]);
+  }
+  const preview = document.createElement("article"); preview.className="classroom-document";
+  async function show(kind) {
+    const doc = (await (await request("/preview/" + kind)).json()).data;
+    preview.replaceChildren();
+    appendSearchText(preview,"h2",doc.title);
+    const blocks=[];
+    doc.blocks.forEach((block,index)=>{
+      blocks.push(block);
+      for(const table of doc.tables.filter(t=>t.after_block_index===index))
+        blocks.push({style:"Normal",text:"",table:{columns:table.rows[0],rows:table.rows.slice(1)}});
+    });
+    classroomPreview(preview,blocks);
+  }
+  button("Ouvrir la version élève",()=>show("student"));
+  button("Voir le corrigé partiel",()=>show("correction"));
+  button("Sauvegarder cette version dérivée",async()=>{
+    const data=(await (await request("/save",{source_sha256:state.source_sha256,projection_sha256:state.projection_sha256})).json()).data;
+    if(data.version_ref!==state.version_ref || data.source_sha256!==state.source_sha256 || !data.saved)
+      throw new Error("Identité de sauvegarde divergente.");
+    state={...state,...data};
+  });
+  button("Rouvrir la version sauvegardée",async()=>{
+    const data=(await (await request("")).json()).data;
+    if(!data.saved || data.version_ref!==state.version_ref) throw new Error("Version sauvegardée divergente.");
+    state=data; await show("student");
+  },true);
+  for(const [kind,name] of [["student","élève"],["correction","enseignant"]])
+    button("Exporter " + name + " en Word",async()=>{
+      const response=await request("/word/"+kind), url=URL.createObjectURL(await response.blob());
+      const link=document.createElement("a"); link.href=url; link.download="Cours_STMG_09ce_"+kind+"_brouillon.docx";
+      link.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    },true);
+  const review=document.createElement("details"); panel.append(review);
+  appendSearchText(review,"summary","Points à examiner par l’enseignant");
+  for(const text of ["Typologie entreprise, association et organisation publique à expliciter.",
+    "Formulation de la propriété associative et rôle des adhérents à vérifier.",
+    "Progression D4, renvois A/B/C et D1–D3, consignes et réponses à relire.",
+    "Corrigé : trois réponses complètes, quatrième interrompue, cinquième et sixième non capturées."])
+    appendSearchText(review,"p",text);
+  panel.append(preview); document.getElementById("productions-view").prepend(panel);
+  controls(); uxShow("productions"); await show("student"); title.focus();
+}
+initPartialCapture().catch(()=>{appendSearchText(document.getElementById("productions-view"),"p",
+  "La capture partielle est indisponible. Aucun envoi ou changement de source n’a été effectué.");});

@@ -75,6 +75,7 @@ class P0CreationService:
         self.codesign_versions: set[str] = set()
         self.codesign_lock = Lock()
         self.institutional_resolver = institutional_resolver
+        self.institutional_context_admission: Callable[[Mapping[str, object], Mapping[str, object]], Mapping[str, object]] | None = None
         self.focused_institutional_resolver = focused_institutional_resolver
         self.exact_stmg_required = exact_stmg_required
         self.exact_institutional_required = exact_institutional_required
@@ -103,6 +104,8 @@ class P0CreationService:
         self.local_reopened: set[str] = set()
         self.publish_generated: Callable[[str, str, str], Mapping[str, object]] | None = None
         self.generation_controls: dict[str, dict[str, object]] = {}
+        self.course_thread_reader: Callable[[Mapping[str, object]], Mapping[str, object]] | None = None
+        self.documentary_selection: Callable[[Mapping[str, object]], Mapping[str, object]] | None = None
 
     def execute(self, operation: str, body: Mapping[str, object]) -> dict[str, object]:
         fields = {
@@ -120,6 +123,10 @@ class P0CreationService:
         }
         if operation not in fields:
             raise ValueError("P0_REQUEST_REJECTED")
+        if operation == "prepare" and "organization_selection" in body:
+            fields[operation] |= {"organization_selection"}
+        if operation == "prepare" and "documentary_selection" in body:
+            fields[operation] |= {"documentary_selection"}
         data = object_data(body, fields[operation])
         command = data["command_id"]
         if not isinstance(command, str) or len(command) != 32 or any(c not in "0123456789abcdef" for c in command):
@@ -210,6 +217,8 @@ class P0CreationService:
                     raise ValueError("EXERCISE_FOCUS_RESOLVER_REQUIRED")
                 resolver = focused
             resolved = object_data(resolver(context.institutional, selection))
+            if self.institutional_context_admission is not None:
+                resolved = object_data(self.institutional_context_admission(context.as_dict(), resolved))
             if object_data(resolved.get("reference_scope", {})).get("status") == "CONTENT_GAP":
                 # Do not hand unscoped contextual content to planning/retrieval agents.
                 raise ValueError("P0_INSTITUTIONAL_SOURCE_CONTEXT_GAP")
@@ -228,11 +237,56 @@ class P0CreationService:
         excerpt = loaded["excerpt"]
         if not isinstance(excerpt, str) or not excerpt:
             raise ValueError("P0_EVIDENCE_INSUFFICIENT")
+        references = [reference]
+        evidence = {str(reference["evidence_id"]): excerpt}
+        if "documentary_selection" in data:
+            from backend.modules.pedagogical_context.contracts.dto.real_course_thread import (
+                RealCourseThread,
+            )
+
+            if ("organization_selection" in data or context.data["contract_id"] != "P0-CONTEXT-COURSE-4.0"
+                    or context.course_format != "CHAPTER" or not str(context.data["level"]).endswith("STMG")
+                    or context.data.get("institutional_resolution") is None):
+                raise ValueError("DOCUMENTARY_STMG_CHAPTER_REQUIRED")
+            if self.documentary_selection is None:
+                raise ValueError("DOCUMENTARY_LIBRARY_NOT_CONFIGURED")
+            thread = RealCourseThread(self.documentary_selection(object_data(data["documentary_selection"])))
+            confirmed = context.as_dict()
+            resolved = object_data(confirmed["institutional_resolution"])
+            resolved["course_thread"] = thread.as_dict()
+            confirmed["institutional_resolution"] = resolved
+            context = P0Context(confirmed)
+            references.extend(thread.references())
+            evidence.update(thread.evidence())
+        if "organization_selection" in data:
+            from backend.modules.pedagogical_context.contracts.dto.real_course_thread import (
+                RealCourseThread,
+            )
+
+            if context.data["contract_id"] != "P0-CONTEXT-COURSE-4.0" or context.course_format != "CHAPTER":
+                raise ValueError("P0_REAL_ORGANIZATION_CHAPTER_REQUIRED")
+            if self.course_thread_reader is None:
+                raise ValueError("P0_REAL_ORGANIZATION_NOT_CONFIGURED")
+            choice = object_data(data["organization_selection"], {"organization_id", "dossier_sha256"})
+            thread = RealCourseThread(self.course_thread_reader(choice))
+            if thread.organization_id != choice["organization_id"] or thread.sha256 != choice["dossier_sha256"]:
+                raise ValueError("P0_REAL_ORGANIZATION_CHANGED")
+            selected_notions = set(cast(tuple[str, ...], object_data(context.data["institutional"])["notion_refs"]))
+            if not any(selected_notions & set(cast(tuple[str, ...], d["notion_refs"]))
+                       for d in items(thread.data["documents"])):
+                raise ValueError("P0_REAL_ORGANIZATION_NOTION_GAP")
+            confirmed = context.as_dict()
+            resolved = object_data(confirmed["institutional_resolution"])
+            resolved["course_thread"] = thread.as_dict()
+            confirmed["institutional_resolution"] = resolved
+            context = P0Context(confirmed)
+            references.extend(thread.references())
+            evidence.update(thread.evidence())
         ref = "prep:" + token_hex(16)
         request = {
             "contract_id": "R6-P0-DISPATCH-1.0", "context": context.as_dict(),
-            "context_sha256": context.sha256, "references": [reference],
-            "evidence": {str(reference["evidence_id"]): excerpt},
+            "context_sha256": context.sha256, "references": references,
+            "evidence": evidence,
             "production_ref": "prod:" + token_hex(16), "version_ref": "ver:" + token_hex(16),
             "lineage": {"source_run_id": "run:" + token_hex(16), "source_step_id": "step:" + token_hex(16),
                 "evidence_set_ref": "evidence:" + token_hex(16), "source_request_id": "req:" + token_hex(16),
@@ -245,7 +299,7 @@ class P0CreationService:
         self.plans[str(request["version_ref"])], self.packs[str(request["version_ref"])] = plan, pack
         return {"state": "PREPARATION_READY", "authorization": "REQUIRED",
                 "preparation_ref": ref, "preparation_sha256": fingerprint(request),
-                "context": context.as_dict(), "references": [reference], "provider_attempts": 0,
+                "context": context.as_dict(), "references": references, "provider_attempts": 0,
                 "agentic": {"plan": plan, "evidence_pack": pack, "quality": quality_status(plan)}}
 
     def _generate(self, data: dict[str, object]) -> dict[str, object]:

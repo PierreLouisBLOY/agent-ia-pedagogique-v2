@@ -1316,6 +1316,8 @@ function p0CourseFormatOptions() {
     "Le chapitre riche est actuellement disponible en STMG. Pour ce contexte BTS, choisissez le cours expliqué." :
     "Le chapitre riche propose des documents, activités et espaces de réponse avec un corrigé séparé. Le cours expliqué expose les notions et leur application.";
   p0ExerciseFocusOptions();
+  p0RealOrganizationOptions();
+  p0DocumentaryOptions();
 }
 function p0InstitutionalFrame() {
   if (p0Element("level").value.startsWith("BTS_"))
@@ -1575,7 +1577,12 @@ p0Element("form").addEventListener("submit", event => {
     const reference = notion && passage ? {notion_id: notion, passage_ref: passage} : query && passage ? {query, passage_ref: passage} :
       {resource_ref: selected.resource_ref, resource_version_ref: selected.resource_version_ref};
     const revision = p0.contextRevision;
-    const prepared = await p0Fetch("/api/v2/p0/prepare", {command_id: p0Command(), context: p0Context(), reference});
+    const body={command_id:p0Command(),context:p0Context(),reference};
+    const organization=p0RealOrganizationSelection(body.context);
+    if(organization) body.organization_selection=organization;
+    const documentary=p0DocumentarySelection(body.context);
+    if(documentary) body.documentary_selection=documentary;
+    const prepared = await p0Fetch("/api/v2/p0/prepare", body);
     if (revision !== p0.contextRevision) {
       p0Element("status").textContent = "Le contexte a changé pendant la préparation. Confirmez la demande actuelle avant de continuer.";
       return;
@@ -1591,7 +1598,7 @@ p0Element("form").addEventListener("submit", event => {
     uxPreparation(p0.prepared);
     p0Element("status").textContent = p0.prepared.context.institutional_resolution?.status === "CONTENT_GAP" ?
       "Préparation enregistrée avec lacunes institutionnelles. Génération bloquée ; consultez Sources & contexte." :
-      "Préparation prête. Autorisation de génération requise ; aucun appel fournisseur effectué.";
+      (p0ManualIsActive() ? "Préparation prête. Cliquez sur Générer avec OpenAI pour cet essai payant." : "Préparation prête. Autorisation de génération requise ; aucun appel fournisseur effectué.");
   }, true);
 });
 function p0Field(parent, id, label, value, multiline = true) {
@@ -1818,6 +1825,7 @@ function p0GeneratedResult(result) {
     "Candidate reçue. Relisez et sauvegardez la version exacte ; aucune promotion effectuée.";
 }
 p0Element("generate").addEventListener("click", () => p0Run(async () => {
+  if (p0ManualIsActive()) return p0ManualGenerate();
   if (p0NormalIsProposal()) return p0ShowNormalProposal();
   if (p0PilotPreviewBinding === "OFF_PREVIEW_ONLY") return p0PilotPreviewFromPrepared();
   if (p0.normalConsentBinding === "EXPLICIT_PRODUCT_PERMISSION") {
@@ -1858,6 +1866,7 @@ if (/^[0-9a-f]{32}$/.test(p0RetainedFollowupId || "")) {
   p0Element("follow-command").hidden = false;
 }
 p0Element("follow-command").addEventListener("click", () => p0Run(async () => {
+  if (p0ManualHasRetainedCommand()) return p0ManualReadRetained();
   const command = sessionStorage.getItem("v2.pilot.command.followup");
   if (!/^[0-9a-f]{32}$/.test(command || "")) throw new Error("P1_PILOT_FOLLOWUP_IDENTITY_REQUIRED");
   const result = await p0FollowPilotCommand(command);
@@ -1994,6 +2003,8 @@ async function p0Connect() {
       throw new Error("P0_LOCAL_REFERENCE_METADATA_REJECTED");
     p0PilotPreviewMetadata(metadata); p0NormalConfigure(metadata);
     p0.references = metadata.references; p0.institutionalCatalog = metadata.institutional_catalog;
+    p0.courseOrganizations=metadata.course_organizations || [];
+    p0DocumentaryConfigure(metadata.documentary_library || null);
     p0InstitutionalOptions();
     p0.liveBinding = metadata.live_binding;
     p0.normalConsentBinding = metadata.normal_consent_binding || "NONE";
@@ -2012,7 +2023,7 @@ async function p0Connect() {
       option.textContent = ref.title; p0Element("reference").append(option);
     });
     p0.nonce = metadata.transport_nonce; p0.connected = true;
-    p0Element("status").textContent = "Contexte prêt à renseigner. Aucune génération autorisée.";
+    p0Element("status").textContent = p0ManualIsActive() ? "Mode essai actif. Préparez votre demande ; chaque génération reste manuelle." : "Contexte prêt à renseigner. Aucune génération autorisée.";
   })();
   try { return await p0ConnectionPromise; }
   finally { p0ConnectionPromise = null; }
@@ -2124,45 +2135,7 @@ function uxProductionCard(view) {
   document.getElementById("drawer-identities").textContent = JSON.stringify({production_ref: view.production_ref, version_ref: view.version_ref, bundle_sha256: view.bundle_sha256, references: view.references}, null, 2);
   document.getElementById("production-edit-panel").open = false;
 }
-function uxCourseBlocks(chapter) {
-  const blocks = [{style:"Heading1",text:chapter.context.title,anchor_ref:"CONTEXT"},
-    {style:"Normal",text:chapter.context.text}];
-  const a=chapter.assembly;
-  if(a) blocks.push({style:"Normal",text:a.thread.notice});
-  const documents = new Map(chapter.documents.map(item=>[item.id,item]));
-  const questions = new Map(chapter.questions.map(item=>[item.id,item]));
-  const concepts = new Map(chapter.concepts.map(item=>[item.id,item]));
-  const question = ref => {const item=questions.get(ref);if (!item) throw new Error("P0_COURSE_VIEW_BINDING");
-    blocks.push({style:"Heading2",text:"Question "+item.number,anchor_ref:ref},{style:"Normal",text:item.prompt});
-    if (item.response.table) blocks.push({style:"Normal",text:"",table:item.response.table});
-    else blocks.push({style:"Normal",text:Array(item.response.lines).fill("………………………………………………………………").join("\n")});
-  };
-  const document = ref => {const item=documents.get(ref);if (!item) throw new Error("P0_COURSE_VIEW_BINDING");
-    blocks.push({style:"Heading2",text:item.title,anchor_ref:ref},{style:"Normal",text:item.text});
-    if (item.table) blocks.push({style:"Normal",text:"",table:item.table});
-  };
-  const formalize=part=>part.concept_ids.forEach(ref=>{const item=concepts.get(ref);if(!item) throw new Error("P0_COURSE_VIEW_BINDING");
-    blocks.push({style:"Heading2",text:item.notion,anchor_ref:ref},{style:"Normal",text:item.definition},
-      {style:"Normal",text:item.explanation},{style:"Normal",text:item.example});
-    if(a) blocks.push({style:"Normal",text:a.concept_vigilance.find(v=>v.id===ref).text});});
-  chapter.parts.forEach(part=>{
-    blocks.push({style:"Heading1",text:part.title});
-    const meta=a?.parts.find(m=>m.id===part.id), early=meta?.formalization.position==="BEFORE_ACTIVITY";
-    if(meta) blocks.push({style:"Normal",text:meta.transition});
-    if(early) formalize(part);
-    part.document_ids.forEach(document);
-    for(const role of ["observation","analysis"]){
-      blocks.push({style:"Heading2",text:role==="observation"?"Observer":"Analyser"});part[role].forEach(question);}
-    if(!early) formalize(part);
-    blocks.push({style:"Heading2",text:"Réinvestir"});part.reinvestment.forEach(question);
-  });
-  if(a) blocks.push({style:"Heading1",text:"À retenir"},{style:"Normal",text:chapter.synthesis});
-  blocks.push({style:"Heading1",text:"Tester ses connaissances"});chapter.knowledge_check.forEach(question);
-  if(!a) blocks.push({style:"Heading1",text:"À retenir"},{style:"Normal",text:chapter.synthesis});
-  blocks.push({style:"Heading1",text:chapter.transfer.title});
-  chapter.transfer.document_ids.forEach(document);chapter.transfer.question_ids.forEach(question);
-  return blocks;
-}
+
 function uxMediaAssets(region, assets) {
   assets.forEach(asset => {
     if (asset.mime_type !== "image/png" || !/^iVBORw0KGgo/.test(asset.bytes_base64) ||

@@ -185,11 +185,33 @@ def evidence_pack(context: P0Context, references: object, evidence: Mapping[str,
         pack["content_gaps"] = resolution["gaps"]
         pack["source_status"] = "SOURCES_INSUFFISANTES" if resolution["gaps"] else "SOURCES_OK"
         pack["source_status_scope"] = "EXACT_PROGRAMME_AND_SELECTED_REFERENCE"
+        from backend.modules.pedagogical_context.contracts.dto.real_course_thread import (
+            thread_from_context,
+        )
+        from backend.modules.pedagogical_design.contracts.dto.program_authority import (
+            bounded_institutional_evidence,
+        )
+        from backend.modules.resource_library.contracts.dto.documentary_course_thread import (
+            DOCUMENTARY_THREAD,
+        )
+
+        thread = thread_from_context(context.data)
+        if thread is not None and thread.data["contract_id"] == DOCUMENTARY_THREAD:
+            # Keep the complete, validated proof in immutable Application context.
+            # Working memory commits it by hash and reuses the existing content-only view.
+            pack["institutional_resolution"] = bounded_institutional_evidence(resolution)
+            pack["documentary_selection"] = {**thread.summary(),
+                "archive_sha256": thread.data["archive_sha256"], "snapshot_sha256": thread.data["snapshot_sha256"],
+                "document_ids": [d["id"] for d in items(thread.data["documents"], 6)],
+                "full_resolution_sha256": fingerprint(resolution)}
     if len(encoded(pack)) > 32 * 1024:
         raise ValueError("P0_EVIDENCE_PACK_SIZE")
     if context.institutional is not None:
-        pack.update(authority_layers(context.data["institutional_resolution"], passages,
-            context.data.get("local_progression")))
+        layers = authority_layers(context.data["institutional_resolution"], passages, context.data.get("local_progression"))
+        if "documentary_selection" in pack and layers["institutional_evidence"]:
+            # Admission was evaluated above on the full resolution, never on its projection.
+            layers["institutional_evidence"] = [pack["institutional_resolution"]]
+        pack.update(layers)
         if len(encoded(pack)) > 32 * 1024:
             raise ValueError("P0_EVIDENCE_PACK_SIZE")
     return object_data(as_plain(freeze_safe_mapping(pack)))

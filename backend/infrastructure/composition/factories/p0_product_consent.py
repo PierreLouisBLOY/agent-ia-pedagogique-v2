@@ -24,7 +24,8 @@ if TYPE_CHECKING:
 
 def product_source_reader(*, target: "Read15RuntimeTarget",
                           admission: ReadP0SourceAdmission | ReadP0LocalReferenceContext,
-                          institutional_resolver: Callable[[Mapping[str, object], Mapping[str, object]], Mapping[str, object]] | None = None
+                          institutional_resolver: Callable[[Mapping[str, object], Mapping[str, object]], Mapping[str, object]] | None = None,
+                          course_thread_reader: Callable[[Mapping[str, object]], Mapping[str, object]] | None = None
                           ) -> Callable[[Mapping[str, object]], list[dict[str, object]]]:
     """The same Application source admission for normal and pilot consent."""
     def sources(request: Mapping[str, object]) -> list[dict[str, object]]:
@@ -44,7 +45,14 @@ def product_source_reader(*, target: "Read15RuntimeTarget",
         if not isinstance(notions, (list, tuple)) or not notions:
             raise ValueError("P0_SOURCE_INSTITUTIONAL_ADMISSION_REQUIRED")
         refs = items(request["references"], 8)
-        if len(refs) != 1:
+        from backend.modules.pedagogical_context.contracts.dto.real_course_thread import (
+            RealCourseThread,
+            thread_from_context,
+        )
+
+        thread = thread_from_context(context)
+        public_refs = thread.references() if thread is not None else []
+        if len(refs) != 1 + len(public_refs) or refs[1:] != tuple(public_refs):
             raise ValueError("P0_PRODUCT_SINGLE_SELECTED_SOURCE_REQUIRED")
         ref = refs[0]
         matched = []
@@ -68,6 +76,15 @@ def product_source_reader(*, target: "Read15RuntimeTarget",
         else:
             resolved = (resolver(target, selection=selection, reference=attested) if institutional_resolver is None else
                 institutional_resolver(selection, {"notion_id": passage["notion_ref"], "passage_ref": passage["passage_ref"]}))
+        if thread is not None:
+            if course_thread_reader is None:
+                raise ValueError("P0_REAL_ORGANIZATION_REVALIDATOR_REQUIRED")
+            current = RealCourseThread(course_thread_reader({"organization_id": thread.organization_id,
+                                                           "dossier_sha256": thread.sha256}))
+            if current.sha256 != thread.sha256:
+                raise ValueError("P0_REAL_ORGANIZATION_CHANGED")
+            resolved = {**resolved, "course_thread": current.as_dict()}
+            matched.extend(current.passages())
         return admission.execute(request=request, passages=matched, resolution=resolved)
 
     return sources
@@ -87,7 +104,7 @@ def bind_product_consent(service: P0CreationService, endpoint: P0CreationEndpoin
         return value
 
     sources = product_source_reader(target=target, admission=admission,
-        institutional_resolver=institutional_resolver)
+        institutional_resolver=institutional_resolver, course_thread_reader=service.course_thread_reader)
     consent = P0ConsentService(prepared_reader=prepared, admission_reader=sources, permission=generation,
         generate=lambda command: service.execute("generate", command))
     endpoint.consent_execute = consent.execute

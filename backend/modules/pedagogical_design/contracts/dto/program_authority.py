@@ -94,10 +94,11 @@ def bounded_institutional_evidence(resolution: object) -> dict[str, object]:
         value = selected(row, ("id", "notion_ref", "element_ref", "disposition",
             "notion_id", "framework_element_id", "attachment_type"))
         value["full_attachment_sha256"] = fingerprint(row)
-        if row.get("disposition") == "VERIFIED_IMPLICIT":
+        if row.get("disposition") in {"VERIFIED_IMPLICIT", "OWNER_LOCAL_ADMITTED"}:
             value["justification"] = row["justification"]
         links.append(value)
     return {
+        **({"local_attachment_admission":as_plain(data["local_attachment_admission"])} if "local_attachment_admission" in data else {}),
         "contract_id": "BOUNDED-INSTITUTIONAL-EVIDENCE-1.0", "full_resolution_sha256": fingerprint(data),
         "status": data["status"], "program_ref": data["program_ref"], "program_version": data["program_version"],
         "version_label": data["version_label"], "qualification_sha256": data.get("qualification_sha256"),

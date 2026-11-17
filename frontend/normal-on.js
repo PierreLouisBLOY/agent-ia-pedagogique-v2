@@ -1,6 +1,83 @@
 "use strict";
 // Same P0 screen and Application routes; no provider, secret or extra store here.
 let p0NormalMode = "NONE";
+let p0ManualSession = null;
+function p0ManualIsActive() { return p0ManualSession?.enabled === true; }
+function p0ManualHasRetainedCommand() {
+  return p0ManualSession !== null && /^[a-f0-9]{32}$/.test(sessionStorage.getItem('v2.manual.command') || '');
+}
+function p0ManualConfigure(metadata) {
+  const session = metadata.manual_test_session;
+  if (!session) return;
+  if (Number(session.budget_usd) !== 5 || session.retry !== 0 || session.model !== 'gpt-5.6-terra')
+    throw new Error('P0_MANUAL_TEST_METADATA');
+  p0ManualSession = session;
+  const note = document.querySelector('#prepare-view .composer-note');
+  if (note) note.textContent = 'Mode essai : confirmez le contexte, puis générez en un clic dans le budget de session.';
+  let banner = document.getElementById('manual-test-banner');
+  if (!banner) {
+    banner = document.createElement('section'); banner.id = 'manual-test-banner'; banner.className = 'surface';
+    const description = document.createElement('p'); description.id = 'manual-test-budget'; banner.append(description);
+    const stop = document.createElement('button'); stop.type = 'button'; stop.textContent = 'Arrêter les essais fournisseur';
+    stop.onclick = () => p0Run(async () => {
+      await p0Fetch('/api/v2/p0/manual-stop', {});
+      p0ManualSession.enabled = false; p0Controls();
+      document.getElementById('manual-test-budget').textContent = 'Essais arrêtés. Les commandes, réponses et réservations restent conservées.';
+    });
+    banner.append(stop); document.getElementById('main-content').prepend(banner);
+  }
+  document.getElementById('manual-test-budget').textContent =
+    'Mode essai OpenAI — budget de session : 5 USD. Bornes réservées : ' + session.reserved_usd +
+    ' USD ; disponible : ' + session.remaining_usd +
+    ' USD. Chaque clic lance un appel payant, sans retry automatique. Le budget reste conservé après redémarrage ; les réservations ne sont pas des factures.';
+  if (p0ManualHasRetainedCommand()) p0Element('follow-command').hidden = false;
+}
+function p0ManualControls() {
+  if (!p0ManualSession) return;
+  p0Element('generate').textContent = 'Générer avec OpenAI · mode essai';
+  p0Element('generate').disabled ||= !p0ManualIsActive() || Number(p0ManualSession.remaining_usd) <= 0;
+}
+async function p0ManualRefreshBudget() {
+  try { p0ManualConfigure(await p0Fetch('/api/v2/p0')); } catch (_) { /* No automatic submission. */ }
+}
+function p0ManualDisplayStatus(status) {
+  if (status.state === 'LOCAL_COMMAND_COMPLETED' && status.result?.state === 'CANDIDATE') {
+    p0GeneratedResult(status.result);
+    sessionStorage.removeItem('v2.manual.command'); p0Element('follow-command').hidden = true;
+  } else if (status.state === 'LOCAL_COMMAND_COMPLETED' && status.phase === 'APPLICATION_SAVED') {
+    p0Element('status').textContent = 'Ressource conservée. Rouvrez-la dans Mes productions ; aucun nouvel envoi.';
+  } else {
+    const diagnostic = status.provider_diagnostic || {};
+    const details = [diagnostic.http_status, diagnostic.code, diagnostic.param, diagnostic.request_id].filter(x=>x!==undefined).join(' · ');
+    p0Element('status').textContent = 'Commande ' + status.command_id + ' : ' + (status.code || status.phase || status.state) +
+      (details ? ' · ' + details : '') + '. Aucun renvoi. La commande et son budget restent conservés ; vous pouvez préparer un nouvel essai manuel.';
+  }
+}
+async function p0ManualReadRetained() {
+  const id = sessionStorage.getItem('v2.manual.command');
+  const status = await p0Fetch('/api/v2/p0/commands/' + id);
+  if (status.command_id !== id) throw new Error('P0_MANUAL_TEST_FOLLOWUP_BINDING');
+  p0ManualDisplayStatus(status);
+  if (status.state !== 'LOCAL_COMMAND_RUNNING') p0.uncertain = false;
+  await p0ManualRefreshBudget();
+}
+async function p0ManualGenerate() {
+  const prepared = p0.prepared;
+  if (!prepared || !p0ManualIsActive()) throw new Error('P0_MANUAL_TEST_NOT_READY');
+  const id = p0Command();
+  sessionStorage.setItem('v2.manual.command', id); p0Element('follow-command').hidden = false;
+  p0.prepared = null;
+  let status = await p0Fetch('/api/v2/p0/generate', {command_id:id,
+    preparation_ref:prepared.preparation_ref, preparation_sha256:prepared.preparation_sha256});
+  while (status.state === 'LOCAL_COMMAND_RUNNING') {
+    if (status.command_id !== id) throw new Error('P0_MANUAL_TEST_FOLLOWUP_BINDING');
+    p0Element('status').textContent = 'Création en cours · ' + (status.phase || status.state) + ' · commande ' + id + '. Aucun second envoi.';
+    await new Promise(resolve=>setTimeout(resolve,750));
+    status = await p0Fetch('/api/v2/p0/commands/' + id);
+  }
+  p0ManualDisplayStatus(status);
+  await p0ManualRefreshBudget();
+}
 let p0NormalAsync = false;
 let p0FiniteBinding = "DISARMED_NO_MULTI_OPERATION_AUTHORITY";
 let p0FinitePreview = null;
@@ -11,6 +88,7 @@ function p0FiniteRemember(command) {
   p0Element("finite-follow-status").textContent = "Commande " + command + " conservée pour consultation ; aucun renvoi automatique.";
 }
 function p0NormalConfigure(metadata) {
+  p0ManualConfigure(metadata);
   p0FiniteBinding = metadata.codesign_binding || "DISARMED_NO_MULTI_OPERATION_AUTHORITY";
   let retained = null;
   try { retained = sessionStorage.getItem("v2.finite.command"); } catch (_) { /* Storage is optional, never authority. */ }
@@ -131,6 +209,7 @@ function p0CoDesignControls() {
 }
 function p0NormalFollowup() { return p0NormalAsync; }
 function p0NormalControls() {
+  p0ManualControls();
   if (p0NormalMode === "NONE") return;
   if (p0NormalMode === "FINITE_CHAIN_ONLY") {
     p0Element("generate").disabled = true;

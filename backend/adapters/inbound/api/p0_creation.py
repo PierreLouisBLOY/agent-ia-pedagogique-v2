@@ -48,6 +48,13 @@ class P0CreationEndpoint:
         self.codesign_profile: Mapping[str, object] | None = None
         self.organization_capture_reader: Callable[[str], dict[str, object]] | None = None
         self.organization_search: Callable[[dict[str, object]], dict[str, object]] | None = None
+        self.manual_test_start: Callable[[Mapping[str, object]], dict[str, object]] | None = None
+        self.manual_test_read: Callable[[str], dict[str, object]] | None = None
+        self.manual_test_stop: Callable[[Mapping[str, object]], dict[str, object]] | None = None
+        self.manual_test_metadata: Callable[[], dict[str, object]] | None = None
+        self.course_organization_catalogue: Callable[[], list[dict[str, object]]] | None = None
+        self.documentary_catalogue: Callable[[], dict[str, object]] | None = None
+        self.documentary_read: Callable[[str], dict[str, object]] | None = None
 
     def respond(self, method: str, target: str, raw: bytes, correlation: str) -> tuple[int, str, bytes, str]:
         status, template = 200, "/{unmatched}"
@@ -58,7 +65,11 @@ class P0CreationEndpoint:
                     raise ValueError("P0_REFERENCE_NOT_ENABLED")
                 return P0NotionEvidenceEndpoint(self.exact_notion_reader).respond(method, target, raw, correlation)
             operation, production, version, teacher, template = resolve_p0_route(method, target)
-            if operation == "organization-capture":
+            if operation == "documentary-read":
+                if raw or self.documentary_read is None:
+                    raise ValueError("DOCUMENTARY_LIBRARY_NOT_CONFIGURED")
+                result = self.documentary_read(production)
+            elif operation == "organization-capture":
                 if raw:
                     raise ValueError("P0_REQUEST_REJECTED")
                 if self.organization_capture_reader is None:
@@ -66,6 +77,10 @@ class P0CreationEndpoint:
                 result = self.organization_capture_reader(production)
             elif operation == "command-followup":
                 observed: Mapping[str, object] | None = None
+                if self.manual_test_read is not None:
+                    value = self.manual_test_read(production)
+                    if value.get('state') != 'LOCAL_COMMAND_FOLLOWUP_UNAVAILABLE':
+                        observed = value
                 if self.normal_command_followup is not None and self.normal_command_followup.handles(production):
                     observed = self.normal_command_followup.read(production)
                 if observed is None and self.codesign_command_followup is not None:
@@ -88,7 +103,12 @@ class P0CreationEndpoint:
                 result["media_binding"] = "LOCAL_DIAGRAM_OR_NO_MEDIA" if self.media_endpoint is not None else "NONE"
                 if self.organization_capture_reader is not None:
                     result["organization_capture_binding"] = "PINNED_LOCAL_PROPOSALS_READ_ONLY"
+                result["course_organizations"] = ([] if self.course_organization_catalogue is None
+                    else self.course_organization_catalogue())
+                result["documentary_library"] = None if self.documentary_catalogue is None else self.documentary_catalogue()
                 result["codesign_binding"] = self.codesign_binding
+                if self.manual_test_metadata is not None:
+                    result['manual_test_session'] = self.manual_test_metadata()
                 if self.codesign_profile is not None:
                     result["codesign_profile"] = dict(self.codesign_profile)
                 result["normal_consent_binding"] = "EXPLICIT_PRODUCT_PERMISSION" if self.consent_execute is not None else "NONE"
@@ -130,7 +150,14 @@ class P0CreationEndpoint:
                     parse_constant=lambda _: (_ for _ in ()).throw(ValueError("P0_REQUEST_REJECTED")))
                 if not isinstance(data, dict):
                     raise ValueError("P0_REQUEST_REJECTED")
-                if operation == "organization-search":
+                if operation == 'manual-stop':
+                    if self.manual_test_stop is None:
+                        raise ValueError('P0_MANUAL_TEST_NOT_ENABLED')
+                    result = self.manual_test_stop(data)
+                elif operation == 'generate' and self.manual_test_start is not None:
+                    result = self.manual_test_start(data)
+                    status = 202
+                elif operation == "organization-search":
                     if self.organization_search is None:
                         raise ValueError("P0_ORGANIZATION_SEARCH_INDEX_NOT_CONFIGURED")
                     result = self.organization_search(data)

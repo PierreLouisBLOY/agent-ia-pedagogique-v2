@@ -244,7 +244,13 @@ class P0Production:
             ProductionMediaPlan(object_data(data["media_plan"])).bind(data)
         if is_chapter:
             chapter = CourseChapter(object_data(data["course_chapter"]))
-            if (data["contract_id"] == COURSE_NOTION_PRODUCTION_CONTRACT) != (chapter.data["contract_id"] == COURSE_NOTION_LINEAGE_CONTRACT):
+            from backend.modules.pedagogical_context.contracts.dto.real_course_thread import (
+                REAL_CHAPTER,
+                thread_from_context,
+                validate_real_course,
+            )
+
+            if (data["contract_id"] == COURSE_NOTION_PRODUCTION_CONTRACT) != (chapter.data["contract_id"] in {COURSE_NOTION_LINEAGE_CONTRACT, REAL_CHAPTER}):
                 raise ValueError("P0_NOTION_COURSE_PRODUCTION_BINDING")
             from backend.modules.pedagogical_design.contracts.dto.chapter_assembly import (
                 ASSEMBLY_CHAPTER_CONTRACT,
@@ -253,6 +259,11 @@ class P0Production:
                 raise ValueError("ASSEMBLY_PRODUCTION_BINDING")
             chapter.bind_production(str(data["production_ref"]))
             chapter.bind_context(context)
+            if chapter.data["contract_id"] == REAL_CHAPTER:
+                thread = thread_from_context(context.data)
+                if thread is None:
+                    raise ValueError("COURSE_REAL_CONTEXT_BINDING")
+                validate_real_course(thread, chapter.data, data["references"])
             if as_plain(data["sections"]) != chapter.sections() or data["title"] != chapter.data["title"]:
                 raise ValueError("COURSE_STUDENT_PROJECTION_BINDING")
         lineage = object_data(data["lineage"], _LINEAGE_FIELDS)

@@ -1,5 +1,5 @@
 "use strict";
-// Independent review: actual shipped rendering functions; explicit synthetic DOM/data only.
+// Regression checks of shipped rendering functions; explicit synthetic DOM/data only.
 const fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
 const assert=require("node:assert/strict"),{test}=require("node:test");
 const source=fs.readFileSync(path.join(__dirname,"../../frontend/app.js"),"utf8");
@@ -7,11 +7,11 @@ const between=(start,end)=>source.slice(source.indexOf(start),source.indexOf(end
 function harness(){
   const node=tag=>({tag,children:[],append(...items){this.children.push(...items);},
     set textContent(value){this.children=[String(value)];}});
-  const ctx={document:{createElement:node,createTextNode:text=>String(text)},
+  const ctx={document:{createElement:node,createTextNode:text=>String(text),addEventListener(){}},
     uxMediaAssets:(region,assets)=>assets.forEach(asset=>region.append({tag:"figure",children:[asset.visual_id]}))};
   vm.createContext(ctx);
   vm.runInContext(between("function classroomPreview(",'document.getElementById("r4-preview").addEventListener'),ctx);
-  vm.runInContext(between("function uxCourseBlocks(","function uxMediaAssets("),ctx);
+  vm.runInContext(fs.readFileSync(path.join(__dirname,"../../frontend/real-course.js"),"utf8"),ctx);
   vm.runInContext(between("function uxTeacherBlocks(","function uxSavedCard("),ctx);
   return {ctx,node};
 }
@@ -73,3 +73,28 @@ test("generic correction and marking preserve question anchors without mutating 
   assert.equal(JSON.stringify(view),before);
   assert.throws(()=>ctx.uxTeacherBlocks(view,{corrections:[]},"correction"),/P0_TEACHER_VIEW_BINDING/);
 });
+
+for(const position of ["AFTER_DOCUMENTS","AFTER_OBSERVATION","AFTER_ANALYSIS"]){
+  test("progressive COURSE preserves "+position+" and both transfer activities",()=>{
+    const {ctx,node}=harness(),input=chapter();
+    input.parts[0].formalization=position;
+    input.transfer=[input.transfer,{title:"Seconde activité",document_ids:[],question_ids:["Q6"]}];
+    input.questions.push({id:"Q6",number:6,prompt:"CONSIGNE_6",response:{lines:2,table:null}});
+    input.teacher_answers.push({id:"Q6",expected_answer:"REPONSE_PROF_6",rationale:"RAISON_PROF_6",vigilance:"VIGILANCE_PROF_6",remediation:"AIDE_PROF_6"});
+    const before=JSON.stringify(input),blocks=ctx.uxCourseBlocks(input);
+    const at=ref=>blocks.findIndex(block=>block.anchor_ref===ref);
+    assert(at("D1")<at("N1"));
+    assert(position==="AFTER_DOCUMENTS"?at("N1")<at("Q1"):at("Q1")<at("N1"));
+    assert(position==="AFTER_ANALYSIS"?at("Q2")<at("N1"):at("N1")<at("Q2"));
+    assert(at("N1")<at("Q3"));
+    assert.deepEqual(Array.from(blocks.filter(block=>/^Q/.test(block.anchor_ref||"")).map(block=>block.anchor_ref)),["Q1","Q2","Q3","Q4","Q5","Q6"]);
+    assert(blocks.findIndex(block=>block.text==="SYNTHESE_ELEVE")<at("Q4"));
+    const student=node("article"),teacher=node("article");
+    ctx.classroomPreview(student,blocks);
+    ctx.classroomPreview(teacher,ctx.uxTeacherBlocks({course_chapter:input},{course_chapter:input},"correction"));
+    assert(flatten(student).includes("Seconde activité"));
+    assert.doesNotMatch(flatten(student),/REPONSE_PROF|RAISON_PROF|VIGILANCE_PROF|AIDE_PROF/);
+    assert(flatten(teacher).includes("REPONSE_PROF_6"));
+    assert.equal(JSON.stringify(input),before);
+  });
+}

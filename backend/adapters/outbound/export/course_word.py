@@ -25,6 +25,7 @@ from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import i
 from backend.modules.pedagogical_design.contracts.dto.chapter_assembly import (
     ASSEMBLY_CHAPTER_CONTRACT,
 )
+from backend.modules.pedagogical_design.contracts.dto.course_chapter import transfer_activities
 
 
 class CourseOOXMLWordWriter:
@@ -75,6 +76,10 @@ class CourseOOXMLWordWriter:
         story = object_data(chapter["context"])
         _p(body, "Contexte — " + str(story["title"]), "Heading2")
         _p(body, str(story["text"]))
+        if "organization_thread" in chapter:
+            thread = object_data(chapter["organization_thread"])
+            _p(body, "Organisation réelle — " + str(thread["organization_label"]), "DocumentTitle")
+            _p(body, str(thread["notice"]), "DocumentText")
         if assembled:
             _p(body, str(object_data(assembly["thread"])["notice"]), "DocumentText")
         media_at("CONTEXT", "AFTER_CONTEXT")
@@ -117,29 +122,35 @@ class CourseOOXMLWordWriter:
             for ref in cast(tuple[str, ...], part["document_ids"]):
                 _document(body, docs[ref], doc_numbers[ref], grouped=assembled)
                 media_at(ref, "AFTER_DOCUMENT")
+            position = part.get("formalization", "AFTER_ANALYSIS")
+            if position == "AFTER_DOCUMENTS":
+                conceptualize(part)
             for role in ("observation", "analysis"):
                 for ref in cast(tuple[str, ...], part[role]):
                     _question(body, questions[ref], answers.get(ref), keep_responses=enriched or assembled)
-            if not early:
+                if role == "observation" and position == "AFTER_OBSERVATION":
+                    conceptualize(part)
+            if not early and position == "AFTER_ANALYSIS":
                 conceptualize(part)
             for ref in cast(tuple[str, ...], part["reinvestment"]):
                 _question(body, questions[ref], answers.get(ref), keep_responses=enriched or assembled)
-        if assembled:
+        activities = transfer_activities(chapter["transfer"])
+        if assembled or len(activities) == 2:
             _p(body, "À retenir", "Heading1")
             _p(body, str(chapter["synthesis"]), "ConceptText")
         _p(body, "Tester ses connaissances", "Heading1", before=not flowing_teacher and not enriched and not assembled)
         for ref in cast(tuple[str, ...], chapter["knowledge_check"]):
             _question(body, questions[ref], answers.get(ref), keep_responses=enriched or assembled)
-        if not assembled:
+        if not assembled and len(activities) == 1:
             _p(body, "À retenir", "Heading2")
             _p(body, str(chapter["synthesis"]), "ConceptText")
-        transfer = object_data(chapter["transfer"])
-        _p(body, str(transfer["title"]), "Heading1", before=not flowing_teacher and not assembled)
-        for ref in cast(tuple[str, ...], transfer["document_ids"]):
-            _document(body, docs[ref], doc_numbers[ref], grouped=assembled)
-            media_at(ref, "AFTER_DOCUMENT")
-        for ref in cast(tuple[str, ...], transfer["question_ids"]):
-            _question(body, questions[ref], answers.get(ref), keep_responses=enriched or assembled)
+        for transfer in activities:
+            _p(body, str(transfer["title"]), "Heading1", before=not flowing_teacher and not assembled)
+            for ref in cast(tuple[str, ...], transfer["document_ids"]):
+                _document(body, docs[ref], doc_numbers[ref], grouped=assembled)
+                media_at(ref, "AFTER_DOCUMENT")
+            for ref in cast(tuple[str, ...], transfer["question_ids"]):
+                _question(body, questions[ref], answers.get(ref), keep_responses=enriched or assembled)
         if assembled and teacher:
             _p(body, "Sources et choix pédagogiques", "Heading1")
             for source in items(assembly["sources"]):
@@ -149,6 +160,12 @@ class CourseOOXMLWordWriter:
                     _p(body, str(source["url"]), "DocumentText")
             for source in items(assembly["document_sources"]):
                 _p(body, "Document " + str(doc_numbers[str(source["id"])]) + " — " + str(source["nature"]) + " — " + str(source["limits"]), "DocumentText")
+        if "organization_thread" in chapter:
+            _p(body, "Sources documentaires du fil conducteur", "Heading1")
+            for source in items(object_data(chapter["organization_thread"])["sources"], 8):
+                _p(body, str(source["title"]) + " — " + str(source["publisher"]), "DocumentTitle")
+                _p(body, str(source["source_url"]) + "\nConsulté le " + str(source["retrieved_on"])
+                   + "\nRéutilisation : " + str(source["rights"]), "DocumentText")
         page_section(body, reference001=assembled and not teacher)
         header_node = page_header(str(header["subject_label"]), str(header["level_label"]))
         footer_node = page_footer("Chapitre " + str(chapter["chapter_number"]) + " • Version " + ("professeur" if teacher else "élève"))

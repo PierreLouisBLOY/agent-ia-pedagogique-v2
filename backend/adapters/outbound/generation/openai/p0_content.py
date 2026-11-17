@@ -78,6 +78,8 @@ RICH_COURSE_INSTRUCTIONS = (
     "Fournissez au moins un document function=METHOD, non vide, réellement lié à une partie, "
     "qui explique une démarche applicable. Ne laissez pas à un autre agent le soin d'ajouter le contenu manquant. "
     "Questions numérotées sans rupture ; liens documents/questions/concepts/capacités exacts. "
+    "Chaque ligne de tableau contient exactement une cellule par en-tête, dans le même ordre. "
+    "Dans les tableaux à compléter, les cellules de réponse restent vides, sans cellule supplémentaire. "
     "Utilisez seulement les alias C1... de course_capabilities. Une notion de concept appartient aux topics confirmés. "
     "Une situation construite ou hypothèse doit être signalée clairement à l'endroit pertinent, "
     "sans imposer FICTIVES dans chaque titre ni présenter une invention comme un fait réel. "
@@ -139,7 +141,11 @@ def content_schema(*, legacy_section_ids: bool = False) -> dict[str, object]:
 
 
 def build_p0_content_request(request: Mapping[str, object], *,
-                             legacy_section_ids: bool = False) -> OpenAIResponsesRequest:
+                             legacy_section_ids: bool = False,
+                             progressive_chapters: bool = False,
+                             max_input_bytes: int = 12288) -> OpenAIResponsesRequest:
+    if type(max_input_bytes) is not int or not 12288 <= max_input_bytes <= 65536:
+        raise ValueError("P0_PROVIDER_INPUT_LIMIT")
     data = object_data(as_plain(request), _DISPATCH_FIELDS)
     if data["contract_id"] != "R6-P0-DISPATCH-1.0":
         raise ValueError("P0_DISPATCH_CONTRACT")
@@ -158,6 +164,11 @@ def build_p0_content_request(request: Mapping[str, object], *,
                "references": as_plain(references), "evidence": evidence}
     rich = context.course_format == "CHAPTER"
     notion_course = context.data["contract_id"] == P0_NOTION_COURSE_CONTEXT_CONTRACT
+    from backend.modules.pedagogical_context.contracts.dto.real_course_thread import (
+        thread_from_context,
+    )
+
+    real_thread = thread_from_context(context.data)
     structured_exercise = context.data["contract_id"] in EXERCISE_CONTEXTS
     instructions = RICH_NOTION_COURSE_INSTRUCTIONS if notion_course else RICH_COURSE_INSTRUCTIONS if rich else _LEGACY_INSTRUCTIONS if legacy_section_ids else INSTRUCTIONS
     if structured_exercise:
@@ -186,6 +197,21 @@ def build_p0_content_request(request: Mapping[str, object], *,
             payload["contract_id"] = "R6-P0-COURSE-CONTENT-INPUT-3.0"
             payload["course_notions"] = [{"id": row["id"], "label": row["label"]}
                                          for row in course_notion_rows(context)]
+        if real_thread is not None:
+            payload["contract_id"] = "P0-COURSE-REAL-INPUT-1.0"
+            payload["organization_thread"] = {
+                **real_thread.summary(), "fiction_notice": real_thread.fiction_notice,
+                "source_documents": [{"evidence_id": ref["evidence_id"], "title": row["title"]}
+                    for ref, row in zip(real_thread.references()[1:], real_thread.source_rows()[1:], strict=True)]}
+            instructions += (
+                " L'organisation du fil conducteur est celle de organization_thread, sans substitution. "
+                "context.organization_id reprend son identité exacte ; context.title reprend son nom exact. "
+                "Livrez chaque source_documents comme document SUPPLIED_REFERENCE : text reprend exactement "
+                "l'extrait evidence correspondant et table=null. Reliez ces documents à des parties. "
+                "Les faits sourcés restent distincts des inférences. Tout document LOCAL_FICTION commence "
+                "exactement par fiction_notice ; n'attribuez aucune scène ni pratique inventée à l'organisation "
+                "comme fait avéré. Une identité d'entreprise ne prouve pas ses pratiques internes. "
+                "N'inventez aucune URL, citation, source ou validation ; les droits des sources sont conservés localement.")
     if context.institutional is not None:
         context.require_institutional_dispatch()
         instructions += (" Appliquez uniquement le programme, la version, la composante, la question et les capacités confirmés. "
@@ -222,15 +248,32 @@ def build_p0_content_request(request: Mapping[str, object], *,
                              "puis une synthèse. Adaptez la profondeur au contexte ; aucune limite de pages ni fiche abrégée implicite. "
                              "Les applications du cours peuvent être expliquées ; questions/corrections/marking restent vides.")
     text = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
-    if len(text.encode()) > 12288:
+    if len(text.encode()) > max_input_bytes:
         raise ValueError("P0_PROVIDER_INPUT_SIZE")
     if rich:
         from backend.adapters.outbound.generation.openai.p0_course_content_schema import (
             rich_course_content_schema,
             rich_course_notion_content_schema,
+            rich_course_real_content_schema,
         )
 
-        schema = rich_course_notion_content_schema() if notion_course else rich_course_content_schema()
+        if progressive_chapters:
+            instructions += (
+                " Ouvrez par une situation introductive qui caractérise l’organisation et donne une tâche à l’élève. "
+                "Construisez ensuite des séquences successives autour de groupes de une à trois notions liées. "
+                "Pour chaque partie, présentez un ou deux documents qui permettent de découvrir ces notions, "
+                "utilisez formalization pour placer le repère notionnel après les documents, après la première observation "
+                "ou après l’analyse selon le besoin. Faites justifier les réponses puis réinvestir les notions. "
+                "Répartissez les notions entre les parties, chacune enseignée une fois. Au-delà de trois notions, "
+                "prévoyez au moins deux parties. Reliez les questions aux documents disponibles à ce stade. "
+                "Les listes de questions contiennent exclusivement des identifiants Q1 à Q60. "
+                "Numérotez dans l’ordre de lecture. Terminez par une synthèse, un test de connaissances, puis "
+                "exactement deux activités autonomes dans transfer, chacune avec son titre, sa situation, ses "
+                "documents et ses propres questions. La seconde transfère la démarche dans un autre contexte."
+            )
+        schema = (rich_course_real_content_schema(progressive=progressive_chapters) if real_thread is not None else
+                  rich_course_notion_content_schema(progressive=progressive_chapters) if notion_course else
+                  rich_course_content_schema(progressive=progressive_chapters))
     elif structured_exercise:
         from backend.adapters.outbound.generation.openai.p0_exercise_schema import (
             exercise_content_schema,

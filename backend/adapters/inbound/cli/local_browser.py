@@ -61,6 +61,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--create-saved", action="store_true", help="Créer une racine R4 neuve uniquement")
     parser.add_argument("--observability-root", type=Path, help="Dossier local de traces explicitement désigné")
     parser.add_argument("--saved-only", action="store_true", help="Ouvrir R4 sans bibliothèque ni fournisseur")
+    parser.add_argument('--manual-provider-tests', action='store_true',
+                        help='Essais manuels OpenAI, budget persistant de session 5 USD, sans profil P1')
+    parser.add_argument('--manual-test-receipts', type=Path,
+                        help='Racine technique neuve dédiée aux seuls essais manuels')
+    parser.add_argument("--manual-local-admission", type=Path)
+    parser.add_argument("--manual-local-admission-sha256")
     parser.add_argument("--chapter-manifest", type=Path, help="Blueprint original local épinglé, saved-only sans fournisseur")
     parser.add_argument("--chapter-manifest-sha256")
     parser.add_argument("--partial-manifest", type=Path, help="Capture locale partielle épinglée, saved-only exclusivement")
@@ -107,7 +113,31 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--p0-pilot-on-demand-profile-sha256")
     parser.add_argument("--organization-captures", type=Path)
     parser.add_argument("--organization-captures-sha256")
+    parser.add_argument("--documentary-library", type=Path)
+    parser.add_argument("--documentary-data-root", type=Path)
+    parser.add_argument("--documentary-database-sha256")
+    parser.add_argument("--documentary-archive-sha256")
+    parser.add_argument("--documentary-snapshot-sha256")
     args = parser.parse_args(argv)
+    documentary = any(value is not None for name, value in vars(args).items() if name.startswith("documentary_"))
+    if documentary and (args.saved_only or not _drive_literal(args.documentary_library)
+            or not _drive_literal(args.documentary_data_root)
+            or any(not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None for value in
+                (args.documentary_database_sha256, args.documentary_archive_sha256, args.documentary_snapshot_sha256))):
+        print("DOCUMENTARY_EXACT_DESCRIPTOR_REQUIRED")
+        return 1
+    if (args.manual_local_admission is not None or args.manual_local_admission_sha256 is not None) and not args.manual_provider_tests:
+        print("OWNER_LOCAL_CHAPTER_MANUAL_MODE_REQUIRED")
+        return 1
+    if (args.manual_provider_tests or args.manual_test_receipts is not None) and (
+            not args.manual_provider_tests or not _drive_literal(args.manual_test_receipts)
+            or args.saved_root is None or args.word_profile != 'product-v7'
+            or any(value for name, value in vars(args).items() if name.startswith(('p0_', 'r5_'))
+                   and not (name == 'p0_codesign_mode' and value == 'disabled'))
+            or any((args.saved_only, args.create_saved, args.enable_conversation,
+                    args.enable_review_modify, args.live_authorization))):
+        print('P0_MANUAL_TEST_EXCLUSIVE_SELECTION_REQUIRED')
+        return 1
     if args.organization_captures is not None or args.organization_captures_sha256 is not None:
         if (args.saved_only or not _drive_literal(args.organization_captures)
                 or not isinstance(args.organization_captures_sha256,str)
@@ -268,6 +298,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     jobs = None
     secret_value = ""
     normal: _ProductComposition | None = None
+    if args.manual_provider_tests:
+        from backend.infrastructure.composition.factories.p0_manual_tests import (
+            ManualTestComposition,
+        )
+
+        try:
+            normal = ManualTestComposition(receipt_root=cast(Path, args.manual_test_receipts),
+                saved_root=cast(Path, args.saved_root), local_admission_path=args.manual_local_admission,
+                local_admission_sha256=args.manual_local_admission_sha256)
+        except Exception:
+            print('P0_MANUAL_TEST_CONFIGURATION_REJECTED')
+            return 1
     if args.r5_scope is not None:
         try:
             from backend.infrastructure.composition.factories.r5_generation import (
@@ -474,6 +516,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             observability_root=args.observability_root,
             organization_capture_descriptor=None if args.organization_captures is None else
                 {"path":str(args.organization_captures), "sha256":args.organization_captures_sha256},
+            documentary_library_descriptor=None if not documentary else {
+                "database": str(args.documentary_library), "data_root": str(args.documentary_data_root),
+                "database_sha256": args.documentary_database_sha256, "archive_sha256": args.documentary_archive_sha256,
+                "snapshot_sha256": args.documentary_snapshot_sha256},
             p0_generation=(None if args.p0_pilot_effect_profile is not None
                 or args.p0_pilot_on_demand_profile is not None else
                 normal.generation if normal is not None else None),

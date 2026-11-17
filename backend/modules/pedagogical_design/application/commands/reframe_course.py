@@ -43,7 +43,11 @@ class ReframeCourseCommand:
 
             chapter = CourseChapter(course_chapter)
             chapter.bind_context(context)
-            production_contract = (COURSE_NOTION_PRODUCTION_CONTRACT if chapter.data["contract_id"] == COURSE_NOTION_LINEAGE_CONTRACT
+            from backend.modules.pedagogical_context.contracts.dto.real_course_thread import (
+                REAL_CHAPTER,
+            )
+
+            production_contract = (COURSE_NOTION_PRODUCTION_CONTRACT if chapter.data["contract_id"] in {COURSE_NOTION_LINEAGE_CONTRACT, REAL_CHAPTER}
                                    else COURSE_PRODUCTION_CONTRACT)
             data.update({"contract_id": production_contract, "course_chapter": as_plain(chapter.data)})
             sections = chapter.sections()

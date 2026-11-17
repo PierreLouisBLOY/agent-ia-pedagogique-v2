@@ -65,7 +65,14 @@ class ReadP0SourceAdmission:
         scope = object_data(resolution.get("reference_scope", {}))
         evidence = object_data(request["evidence"])
         result = []
+        from backend.modules.pedagogical_context.contracts.dto.real_course_thread import (
+            thread_from_context,
+        )
+
+        thread = thread_from_context(object_data(request["context"]))
+        public_refs = [] if thread is None else thread.references()
         for ref in items(request["references"], 8):
+            public = ref in public_refs
             selected = [p for p in passages if all(p.get(k) == ref[target] for k, target in (
                 ("object_ref", "source_ref"), ("passage_ref", "locator"), ("version_or_checksum", "checksum_or_version")))]
             if len(selected) != 1:
@@ -76,7 +83,7 @@ class ReadP0SourceAdmission:
             if entry is None:
                 raise ValueError("P0_SOURCE_NOT_IN_ADOPTED_MANIFEST")
             text = evidence.get(str(ref["evidence_id"]))
-            if (passage.get("object_kind") not in {"NOTION", "PEDAGOGICAL_CONTENT", "METHOD"}
+            if (passage.get("object_kind") not in ({"PUBLIC_ORGANIZATION_DOCUMENT"} if public else {"NOTION", "PEDAGOGICAL_CONTENT", "METHOD"})
                     or passage.get("excerpt_truncated") is not False or not isinstance(text, str) or not text
                     or passage.get("excerpt") != text or len(text) > 4000
                     or any(passage.get(flag) is True for flag in ("is_private_evidence", "is_oracle", "is_teacher_reference"))):
@@ -89,15 +96,18 @@ class ReadP0SourceAdmission:
                 "excerpt_sha256": excerpt_sha, "provenance": as_plain(passage.get("provenance", {})),
                 "source_status": as_plain(passage.get("source_status", {})), "available_authority": authority,
                 "authority_basis": passage.get("authority_basis", "NOT_ATTESTED_BY_APPLICATION")}
-            if (any(as_plain(entry[k]) != v for k, v in actual.items()) or ref["excerpt_sha256"] != excerpt_sha
-                    or any(scope.get(k) != ref[target] for k, target in (
-                        ("object_ref", "source_ref"), ("passage_ref", "locator"), ("version_or_checksum", "checksum_or_version")))):
+            scope_changed = not public and any(scope.get(k) != ref[target] for k, target in (
+                ("object_ref", "source_ref"), ("passage_ref", "locator"),
+                ("version_or_checksum", "checksum_or_version")))
+            if (any(as_plain(entry[k]) != v for k, v in actual.items())
+                    or ref["excerpt_sha256"] != excerpt_sha or scope_changed):
                 raise ValueError("P0_SOURCE_ADMISSION_CHANGED")
             result.append({"schema": "P0-SOURCE-ADMISSION-RECEIPT-1.0", "reference": as_plain(ref),
                 "available_authority": authority, "provenance": actual["provenance"], "source_status": actual["source_status"],
                 "admission_manifest_sha256": self.manifest_sha256, "admission_scope_sha256": entry["admission_scope_sha256"],
                 "owner_admission_sha256": self.owner_sha256, "institutional_resolution_sha256": fingerprint(resolution),
-                "source_scope_status": scope["status"], "transmission_admission": "OWNER_ADMITTED_LOCAL_CONTENT_ONLY"})
+                "source_scope_status": "EXACT_CONTEXT_ADMITTED" if public else scope["status"],
+                "transmission_admission": "OWNER_ADMITTED_LOCAL_CONTENT_ONLY"})
         if not result:
             raise ValueError("P0_SOURCE_RECEIPTS_REQUIRED")
         return result

@@ -23,6 +23,7 @@ from backend.adapters.outbound.openai.contracts import (
     OpenAITransportError,
     OpenAITransportErrorCode,
 )
+from backend.adapters.outbound.openai.parameters import response_parameters
 from backend.adapters.outbound.openai.schema import (
     OpenAIProviderSchemaError,
     validate_openai_strict_schema,
@@ -85,40 +86,26 @@ class OpenAISDKResponsesTransport:
             validate_openai_strict_schema(request.output_schema)
         except OpenAIProviderSchemaError:
             raise OpenAITransportError(OpenAITransportErrorCode.INVALID_REQUEST) from None
-        parameters = cast(
-            ResponseCreateParamsNonStreaming,
-            {
-                "background": False,
-                "input": request.input_json,
-                "instructions": request.instructions,
-                "max_output_tokens": request.max_output_tokens,
-                "model": request.model,
-                "store": False,
-                "stream": False,
-                "text": {
-                    "format": {
-                        "name": request.schema_name,
-                        "schema": request.output_schema,
-                        "strict": True,
-                        "type": "json_schema",
-                    }
-                },
-                "tool_choice": "none",
-                "tools": [],
-            },
-        )
-        if request.reasoning_effort is not None:
-            parameters["reasoning"] = {"effort": request.reasoning_effort.value}
-        if request.service_tier is not None:
-            if request.service_tier != "default":
-                raise OpenAITransportError(OpenAITransportErrorCode.INVALID_REQUEST)
-            parameters["service_tier"] = "default"
+        parameters = cast(ResponseCreateParamsNonStreaming, response_parameters(request))
         if self.__r2 and request.service_tier != "default":
             raise OpenAITransportError(OpenAITransportErrorCode.INVALID_REQUEST)
         try:
             raw_response = self.__client.responses.create(**parameters)
         except openai.OpenAIError as error:
-            raise OpenAITransportError(_openai_error_code(error)) from None
+            # Closed metadata only: never retain the SDK message, body or key.
+            import re
+
+            diagnostic: dict[str, str | int] = {}
+            if isinstance(error, openai.APIStatusError):
+                diagnostic["http_status"] = error.status_code
+                request_id = getattr(error, "request_id", None)
+                if isinstance(request_id, str) and re.fullmatch(r"[A-Za-z0-9_-]{1,120}", request_id):
+                    diagnostic["request_id"] = request_id
+            for name in ("code", "type", "param"):
+                value = getattr(error, name, None)
+                if isinstance(value, str) and not value.startswith("sk-") and re.fullmatch(r"[A-Za-z0-9_.\[\]-]{1,160}", value):
+                    diagnostic[name] = value
+            raise OpenAITransportError(_openai_error_code(error), diagnostic=diagnostic) from None
         finally:
             if self.__r2:
                 self.__client.close()

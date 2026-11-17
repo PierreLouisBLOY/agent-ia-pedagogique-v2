@@ -222,6 +222,7 @@ def build_local_read15(
     observability_root: Path | None = None,
     word_profile: str = "diffusion-v5",
     organization_capture_descriptor: Mapping[str, object] | None = None,
+    documentary_library_descriptor: Mapping[str, object] | None = None,
 ) -> LocalRead15Composition:
     """Receive an explicit existing target; never read ambient environment settings."""
     if generation_jobs is not None and not enable_conversation:
@@ -240,7 +241,7 @@ def build_local_read15(
     assets = {
         name: read_file_nofollow(
             assets_root / name, allowed_root=assets_root,
-            maximum_bytes=(160 if name == "app.js" else 128) * 1_024
+            maximum_bytes=(176 if name == "app.js" else 128) * 1_024
         )
         for name in sorted(ASSET_NAMES)
     }
@@ -255,6 +256,26 @@ def build_local_read15(
         organizations = organization_capture_reader(organization_capture_descriptor)
         p0_endpoint.organization_capture_reader = organizations.inspect
         p0_endpoint.organization_search = organizations.search
+        p0_endpoint.course_organization_catalogue = organizations.course_threads.catalogue
+        p0.course_thread_reader = organizations.course_threads.read
+    if documentary_library_descriptor is not None:
+        from backend.infrastructure.composition.factories.documentary_course_selection import (
+            build_documentary_course_selection,
+        )
+        documentary = build_documentary_course_selection(documentary_library_descriptor)
+        p0.documentary_selection = documentary.select
+        p0_endpoint.documentary_catalogue = documentary.catalogue
+        p0_endpoint.documentary_read = documentary.inspect
+        historical_reader = p0.course_thread_reader
+
+        def read_thread(choice: Mapping[str, object]) -> Mapping[str, object]:
+            if str(choice.get("organization_id", "")).startswith("documentary:"):
+                return documentary.read(choice)
+            if historical_reader is None:
+                raise ValueError("P0_REAL_ORGANIZATION_NOT_CONFIGURED")
+            return historical_reader(choice)
+
+        p0.course_thread_reader = read_thread
     saved = None
     if saved_root is not None:
         def source(production_ref: str, version_ref: str) -> SavedProduction:
@@ -421,7 +442,7 @@ def build_local_saved(configuration: LocalBrowserHttpConfiguration, root: Path, 
             word_profile=partial_word_profile, register_reference=register_format_reference)
     assets_root = _ROOT / "frontend"
     assets = {name: read_file_nofollow(assets_root / name, allowed_root=assets_root,
-                                      maximum_bytes=(160 if name == "app.js" else 128) * 1024)
+                                      maximum_bytes=(176 if name == "app.js" else 128) * 1024)
               for name in sorted(ASSET_NAMES)}
     observability = build_local_observability_session(root)
     def unavailable(reference: str, correlation: str) -> UseCaseResult[object, object]:

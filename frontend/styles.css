@@ -256,3 +256,16 @@ main { width:auto;max-width:none;margin:0;padding:30px; }
 #partial-capture article table { width:100%; border-collapse:collapse; margin:1rem 0; table-layout:fixed; }
 #partial-capture article th, #partial-capture article td { border:1px solid #d9d9d9; padding:.65rem; overflow-wrap:anywhere; text-align:left; }
 #partial-capture article th { background:#eaf2f8; }
+
+/* Documentary selection spans the preparation grid; checkboxes stay compact. */
+#p0-course-format-panel { grid-column:1 / -1; }
+#p0-documentary-panel { min-width:0; width:100%; margin:1rem 0; padding:1rem; border:1px solid var(--line); border-radius:10px; }
+#p0-documentary-panel legend { padding:0 .4rem; font-weight:650; }
+#p0-documentary-panel > label:first-of-type, #p0-documentary-documents label { display:flex; flex-direction:row; align-items:flex-start; gap:.6rem; }
+#p0-documentary-panel input[type="checkbox"] { flex:0 0 auto; width:1rem; min-height:1rem; height:1rem; margin:.2rem 0; padding:0; }
+#p0-documentary-documents > div { display:flex; align-items:flex-start; gap:.8rem; padding:.6rem 0; border-bottom:1px solid var(--line); }
+#p0-documentary-documents label { flex:1; min-width:0; line-height:1.5; }
+#p0-documentary-documents button { flex:0 0 auto; padding:.4rem .8rem; white-space:nowrap; }
+#p0-documentary-read { display:grid; gap:.8rem; margin-top:1rem; overflow-wrap:anywhere; }
+#p0-documentary-panel > p { margin:.7rem 0; }
+#p0-documentary-panel select { margin:.5rem 0; }

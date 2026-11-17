@@ -58,8 +58,10 @@ ROUTE_SPECS: Final = (
 )
 LOCAL_EDIT_ASSET_SPECS: Final = ((("GET", "HEAD"), "/assets/saved-course-edit.js", "saved-course-edit.js"),
     (("GET", "HEAD"), "/assets/normal-on.js", "normal-on.js"),
-    (("GET", "HEAD"), "/assets/local-catalogue.js", "local-catalogue.js"))
-ASSET_NAMES: Final = frozenset({"index.html", "app.js", "styles.css", "saved-course-edit.js", "normal-on.js", "local-catalogue.js"})
+    (("GET", "HEAD"), "/assets/local-catalogue.js", "local-catalogue.js"),
+    (("GET", "HEAD"), "/assets/real-course.js", "real-course.js"),
+    (("GET", "HEAD"), "/assets/documentary-library.js", "documentary-library.js"))
+ASSET_NAMES: Final = frozenset({"index.html", "app.js", "styles.css", "saved-course-edit.js", "normal-on.js", "local-catalogue.js", "real-course.js", "documentary-library.js"})
 MAX_TARGET_BYTES: Final = 8 * 1_024
 CAPTURED_PARTIAL_ROOT: Final = "/api/v2/captured-partial"
 CAPTURED_PARTIAL_ROUTE_PATTERN: Final = re.compile(
@@ -75,6 +77,7 @@ P0_ROUTE_SPECS: Final = (("GET", P0_ROOT),
     ("GET", P0_ROOT + "/versions/{production_ref}/{version_ref}/teacher"))
 P0_INTENTION_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/intention"),)
 P0_LOCAL_PROPOSAL_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/local-propose"),)
+P0_MANUAL_TEST_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/manual-stop"),)
 P0_ORGANIZATION_CAPTURE_ROUTE_SPECS: Final = (("GET", P0_ROOT + "/organizations/{organization_id}"),)
 P0_ORGANIZATION_SEARCH_ROUTE_SPECS: Final = (("POST", P0_ROOT + "/organization-search"),)
 P0_CODESIGN_ROUTE_SPECS: Final = tuple(("POST", P0_ROOT + "/" + op) for op in ("codesign-preview", "codesign", "codesign-consent", "codesign-revoke"))
@@ -96,6 +99,8 @@ def is_p0_target(target: str) -> bool:
 
 
 def resolve_p0_route(method: str, target: str) -> tuple[str, str, str, bool, str]:
+    if method == "GET" and re.fullmatch(P0_ROOT + r"/documentary-library/[DO][0-9]{2}", target):
+        return "documentary-read", target.rsplit("/", 1)[1], "", False, P0_ROOT + "/documentary-library/{document_id}"
     if (method, target) in P0_ORGANIZATION_SEARCH_ROUTE_SPECS:
         return "organization-search", "", "", False, target
     if method == "GET" and re.fullmatch(P0_ROOT + r"/organizations/(siren:[0-9]{9})", target):
@@ -110,7 +115,7 @@ def resolve_p0_route(method: str, target: str) -> tuple[str, str, str, bool, str
         return "metadata", "", "", False, target
     if method == "GET" and target == P0_ROOT + "/pilot-candidate":
         return "pilot-candidate", "", "", False, target
-    if method == "POST" and (method, target) in P0_ROUTE_SPECS + P0_INTENTION_ROUTE_SPECS + P0_LOCAL_PROPOSAL_ROUTE_SPECS + P0_MEDIA_ROUTE_SPECS + P0_CONSENT_ROUTE_SPECS + P0_PILOT_PREVIEW_ROUTE_SPECS + P0_PILOT_REVOCATION_ROUTE_SPECS + P0_CODESIGN_ROUTE_SPECS:
+    if method == "POST" and (method, target) in P0_ROUTE_SPECS + P0_INTENTION_ROUTE_SPECS + P0_LOCAL_PROPOSAL_ROUTE_SPECS + P0_MANUAL_TEST_ROUTE_SPECS + P0_MEDIA_ROUTE_SPECS + P0_CONSENT_ROUTE_SPECS + P0_PILOT_PREVIEW_ROUTE_SPECS + P0_PILOT_REVOCATION_ROUTE_SPECS + P0_CODESIGN_ROUTE_SPECS:
         return target.rsplit("/", 1)[1], "", "", False, target
     if method == "GET" and (match := _P0_VERSION.fullmatch(target)):
         return "version", match[1], match[2], bool(match[3]), P0_ROUTE_SPECS[-1 if match[3] else -2][1]

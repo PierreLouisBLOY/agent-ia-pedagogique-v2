@@ -6,6 +6,8 @@
   <title>Projet V2 — Atelier pédagogique</title>
   <link rel="stylesheet" href="/assets/styles.css">
   <script src="/assets/normal-on.js" defer></script>
+  <script src="/assets/real-course.js" defer></script>
+  <script src="/assets/documentary-library.js" defer></script>
   <script src="/assets/app.js" defer></script>
   <script src="/assets/saved-course-edit.js" defer></script>
 </head>
@@ -55,6 +57,21 @@
           <label for="p0-course-format">Format du cours</label>
           <select id="p0-course-format"><option value="CHAPTER">Chapitre riche — documents, activités et corrigé séparé</option><option value="EXPLAINED">Cours expliqué — notions, méthode et application guidée</option></select>
           <p id="p0-course-format-note"></p>
+          <fieldset id="p0-documentary-panel" hidden><legend>Bibliothèque documentaire séparée</legend>
+            <label><input id="p0-documentary-enabled" type="checkbox" checked> Utiliser les fiches Decathlon / Orange</label>
+            <p>Synthèses pédagogiques locales de sources publiques, non validées. Choisissez de une à six fiches du même groupe. Les sources du programme restent distinctes. La sélection ne déclenche aucun envoi.</p>
+            <label for="p0-documentary-organization">Organisation étudiée</label>
+            <select id="p0-documentary-organization"><option value="">Choisir Decathlon ou Orange</option></select>
+            <div id="p0-documentary-documents"></div><div id="p0-documentary-read" aria-live="polite"></div>
+          </fieldset>
+          <div id="p0-real-organization-panel" hidden>
+            <label><input id="p0-real-organization" type="checkbox" checked> Utiliser une organisation réelle comme fil conducteur</label>
+            <label for="p0-organization">Organisation documentée</label>
+            <select id="p0-organization"><option value="">Choisir une organisation documentée</option></select>
+            <button id="p0-organization-suggest" type="button">Proposer depuis mes sources</button>
+            <button id="p0-organization-inspect" type="button">Consulter les documents</button>
+            <p id="p0-organization-note"></p><div id="p0-organization-sources"></div>
+          </div>
         </div>
         <div id="p0-exercise-format-panel" hidden>
           <label for="p0-exercise-format">Format de l'exercice</label>

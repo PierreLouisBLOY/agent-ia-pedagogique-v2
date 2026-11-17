@@ -10,6 +10,11 @@ from backend.modules.pedagogical_context.contracts.dto.p0_context import (
     P0_NOTION_COURSE_CONTEXT_CONTRACT,
     P0Context,
 )
+from backend.modules.pedagogical_context.contracts.dto.real_course_thread import (
+    REAL_CHAPTER,
+    RealCourseThread,
+    thread_from_context,
+)
 from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import (
     as_plain,
     encoded,
@@ -22,6 +27,7 @@ from backend.modules.pedagogical_design.contracts.dto.chapter_assembly import (
     assembly_projection,
     validate_assembly,
 )
+from backend.modules.pedagogical_design.contracts.dto.course_table import validate_course_table
 from backend.modules.pedagogical_design.contracts.dto.learning_links import (
     require_ordered_answers,
     require_provenance_kind,
@@ -71,20 +77,18 @@ def _rows(value: object, fields: set[str], *, maximum: int = 30) -> tuple[dict[s
     return result
 
 
+def transfer_activities(value: object) -> tuple[dict[str, object], ...]:
+    fields = {"title", "document_ids", "question_ids"}
+    if isinstance(value, Mapping):
+        return (object_data(value, fields),)
+    activities = items(value, 2)
+    if len(activities) != 2:
+        raise ValueError("COURSE_PROGRESSIVE_ACTIVITIES_REQUIRED")
+    return tuple(object_data(activity, fields) for activity in activities)
+
+
 def _table(value: object) -> None:
-    if value is None:
-        return
-    data = object_data(value, {"columns", "rows"})
-    columns = _strings(data["columns"], 5)
-    rows = data["rows"]
-    if not isinstance(rows, (tuple, list)) or not 1 <= len(rows) <= 20:
-        raise ValueError("COURSE_CHAPTER_TABLE")
-    for row in rows:
-        if not isinstance(row, (tuple, list)) or len(row) != len(columns):
-            raise ValueError("COURSE_CHAPTER_TABLE")
-        for cell in row:
-            if not isinstance(cell, str) or len(cell) > 1500:
-                raise ValueError("COURSE_CHAPTER_TABLE")
+    validate_course_table(value)
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,10 +98,11 @@ class CourseChapter:
     def __post_init__(self) -> None:
         assembly = self.data.get("contract_id") == ASSEMBLY_CHAPTER_CONTRACT
         illustrated = self.data.get("contract_id") == COURSE_MEDIA_CONTRACT or (assembly and "visual_briefs" in self.data)
-        fields = _FIELDS | ({"assembly"} if assembly else set()) | ({"visual_briefs", "media_assets"} if illustrated else set())
+        real = self.data.get("contract_id") == REAL_CHAPTER
+        fields = _FIELDS | ({"assembly"} if assembly else set()) | ({"organization_thread"} if real else set()) | ({"visual_briefs", "media_assets"} if illustrated else set())
         data = object_data(self.data, fields)
         if data["contract_id"] not in {
-            COURSE_CHAPTER_CONTRACT, COURSE_MEDIA_CONTRACT, COURSE_LINEAGE_CONTRACT, COURSE_NOTION_LINEAGE_CONTRACT, ASSEMBLY_CHAPTER_CONTRACT
+            COURSE_CHAPTER_CONTRACT, COURSE_MEDIA_CONTRACT, COURSE_LINEAGE_CONTRACT, COURSE_NOTION_LINEAGE_CONTRACT, ASSEMBLY_CHAPTER_CONTRACT, REAL_CHAPTER
         }:
             raise ValueError("COURSE_CHAPTER_CONTRACT")
         if type(data["chapter_number"]) is not int or not 1 <= data["chapter_number"] <= 99:
@@ -114,6 +119,8 @@ class CourseChapter:
             if row["authority_status"] not in {"ADMITTED_A_EXACT_SCOPE", "PUBLIC_SOURCE_VERIFIED_NOT_RUNTIME_ADMITTED", "LOCAL_PROPOSED"}:
                 raise ValueError("COURSE_CAPABILITY_AUTHORITY")
         _strings(data["notions"])
+        if real:
+            RealCourseThread(object_data(data["organization_thread"]))
         story = object_data(data["context"], {"title", "text"})
         nonempty(story["title"], 200)
         nonempty(story["text"], 8000)
@@ -146,24 +153,65 @@ class CourseChapter:
                 raise ValueError("COURSE_RESPONSE_SPACE")
         question_ids = {str(q["id"]) for q in questions}
         concept_ids = {str(c["id"]) for c in concepts}
-        parts = _rows(data["parts"], {"id", "title", "document_ids", "observation", "analysis", "concept_ids", "reinvestment"}, maximum=8)
+        progressive = isinstance(data["transfer"], (tuple, list))
+        part_fields = {"id", "title", "document_ids", "observation", "analysis", "concept_ids", "reinvestment"}
+        if progressive:
+            part_fields.add("formalization")
+        parts = _rows(data["parts"], part_fields, maximum=8)
+        if progressive and (assembly or illustrated):
+            raise ValueError("COURSE_PROGRESSIVE_FORMAT")
         activity_ids: list[str] = []
+        introduced: list[str] = []
+        available_documents: set[str] = set()
+        question_documents = {str(q["id"]): set(_strings(q["document_ids"], required=False)) for q in questions}
         for row in parts:
             nonempty(row["title"], 200)
             if not set(_strings(row["document_ids"])) <= doc_ids or not set(_strings(row["concept_ids"])) <= concept_ids:
                 raise ValueError("COURSE_PART_LINK")
+            part_docs = set(_strings(row["document_ids"]))
+            available_documents.update(part_docs)
+            if progressive:
+                if row["formalization"] not in ("AFTER_DOCUMENTS", "AFTER_OBSERVATION", "AFTER_ANALYSIS"):
+                    raise ValueError("COURSE_PROGRESSIVE_FORMALIZATION")
+                if not any(question_documents.get(q, set()) & part_docs for q in _strings(row["observation"])):
+                    raise ValueError("COURSE_PROGRESSIVE_OBSERVATION_SUPPORT")
+                introduced.extend(_strings(row["concept_ids"], 3))
+                if len(part_docs) > 2:
+                    raise ValueError("COURSE_PROGRESSIVE_DOCUMENT_LIMIT")
             for role in ("observation", "analysis", "reinvestment"):
                 refs = _strings(row[role], required=not assembly)
                 if not set(refs) <= question_ids:
                     raise ValueError("COURSE_QUESTION_LINK")
+                if progressive and any(not question_documents[q] <= available_documents for q in refs):
+                    raise ValueError("COURSE_PROGRESSIVE_DOCUMENT_ORDER")
                 activity_ids.extend(refs)
         knowledge = _strings(data["knowledge_check"])
-        transfer = object_data(data["transfer"], {"title", "document_ids", "question_ids"})
-        nonempty(transfer["title"], 200)
-        if not set(_strings(transfer["document_ids"])) <= doc_ids:
-            raise ValueError("COURSE_DOCUMENT_LINK")
         activity_ids.extend(knowledge)
-        activity_ids.extend(_strings(transfer["question_ids"]))
+        activities = transfer_activities(data["transfer"])
+        for transfer in activities:
+            nonempty(transfer["title"], 200)
+            support = set(_strings(transfer["document_ids"]))
+            if not support <= doc_ids:
+                raise ValueError("COURSE_DOCUMENT_LINK")
+            refs = _strings(transfer["question_ids"])
+            if progressive and any(not question_documents.get(q) or not question_documents[q] <= support for q in refs):
+                raise ValueError("COURSE_PROGRESSIVE_ACTIVITY_SUPPORT")
+            activity_ids.extend(refs)
+        if progressive:
+            if any(q["id"] != f"Q{i}" for i, q in enumerate(questions, 1)):
+                raise ValueError("COURSE_PROGRESSIVE_QUESTION_ID")
+            notions = set(_strings(data["notions"]))
+            if len(notions) > 3 and len(parts) < 2:
+                raise ValueError("COURSE_PROGRESSIVE_PARTS_REQUIRED")
+            if {str(concept["notion"]) for concept in concepts} != notions:
+                raise ValueError("COURSE_PROGRESSIVE_NOTION_COVERAGE")
+            if any(not question_documents.get(q, set()) <= available_documents for q in knowledge):
+                raise ValueError("COURSE_PROGRESSIVE_DOCUMENT_ORDER")
+            require_unique_coverage(introduced, concept_ids, code="COURSE_PROGRESSIVE_CONCEPT_COVERAGE")
+            if activity_ids != [str(q["id"]) for q in questions]:
+                raise ValueError("COURSE_PROGRESSIVE_QUESTION_ORDER")
+            if activities[0]["title"] == activities[1]["title"]:
+                raise ValueError("COURSE_PROGRESSIVE_ACTIVITY_TITLE")
         require_unique_coverage(activity_ids, question_ids, code="COURSE_QUESTION_COVERAGE")
         nonempty(data["synthesis"], 8000)
         answers = _rows(data["teacher_answers"], {"id", "expected_answer", "rationale", "vigilance", "remediation"}, maximum=60)
@@ -195,7 +243,12 @@ class CourseChapter:
     def bind_context(self, context: P0Context) -> None:
         if context.resource_type != "COURSE" or context.institutional is None:
             raise ValueError("COURSE_CONTEXT_REQUIRED")
-        notion_chapter = self.data["contract_id"] == COURSE_NOTION_LINEAGE_CONTRACT
+        notion_chapter = self.data["contract_id"] in {COURSE_NOTION_LINEAGE_CONTRACT, REAL_CHAPTER}
+        thread = thread_from_context(context.data)
+        if (self.data["contract_id"] == REAL_CHAPTER) != (thread is not None):
+            raise ValueError("COURSE_REAL_CONTEXT_BINDING")
+        if thread is not None and as_plain(self.data["organization_thread"]) != thread.as_dict():
+            raise ValueError("COURSE_REAL_ORGANIZATION_CHANGED")
         if notion_chapter != (context.data["contract_id"] == P0_NOTION_COURSE_CONTEXT_CONTRACT):
             raise ValueError("COURSE_NOTION_CONTEXT_BINDING")
         if notion_chapter and str(self.data["chapter_number"]) != object_data(context.data["local_progression"])["chapter"]:
@@ -262,6 +315,8 @@ class CourseChapter:
             data["media_assets"] = [p.asset.projection(p.brief) for p in self.media(teacher=teacher)]
         if "assembly" in data:
             data["assembly"] = assembly_projection(data["assembly"], teacher=teacher)
+        if "organization_thread" in data:
+            data["organization_thread"] = RealCourseThread(object_data(data["organization_thread"])).public_projection()
         if not teacher:
             data.pop("teacher_answers")
         return data
@@ -298,6 +353,12 @@ class CourseChapter:
                    "text": str(object_data(self.data["context"])["text"])}]
         if "assembly" in self.data:
             result[1]["text"] = str(result[1]["text"]) + "\n\n" + str(object_data(object_data(self.data["assembly"])["thread"])["notice"])
+        if "organization_thread" in self.data:
+            thread = RealCourseThread(object_data(self.data["organization_thread"]))
+            credits = "\n".join(str(s["title"]) + " — " + str(s["publisher"]) + " — "
+                                + str(s["retrieved_on"]) + " — " + str(s["source_url"]) + " — " + str(s["rights"])
+                                for s in thread.source_rows())
+            result[1]["text"] = str(result[1]["text"]) + "\n\nOrganisation réelle : " + thread.label + "\n" + credits
         documents = {str(d["id"]): d for d in items(self.data["documents"])}
         questions = {str(q["id"]): q for q in items(self.data["questions"])}
         concepts = {str(c["id"]): c for c in items(self.data["concepts"])}
@@ -313,12 +374,18 @@ class CourseChapter:
                     table = object_data(doc["table"])
                     lines.append(" | ".join(_strings(table["columns"], 5)))
                     lines.extend(" | ".join(cast(tuple[str, ...], row)) for row in cast(tuple[object, ...], table["rows"]))
+            doc_end = len(lines)
             for ref in (*cast(tuple[str, ...], part["observation"]), *cast(tuple[str, ...], part["analysis"])):
                 q = questions[ref]
                 lines.append(str(q["number"]) + ". " + str(q["prompt"]))
+            concept_start = len(lines)
             for ref in cast(tuple[str, ...], part["concept_ids"]):
                 c = concepts[ref]
                 lines.extend(("Notion — " + str(c["notion"]), str(c["definition"]), str(c["explanation"]), str(c["example"])))
+            position = part.get("formalization")
+            if position in ("AFTER_DOCUMENTS", "AFTER_OBSERVATION"):
+                insert_at = doc_end + (len(cast(tuple[str, ...], part["observation"])) if position == "AFTER_OBSERVATION" else 0)
+                lines[insert_at:] = lines[concept_start:] + lines[insert_at:concept_start]
             for ref in cast(tuple[str, ...], part["reinvestment"]):
                 q = questions[ref]
                 lines.append(str(q["number"]) + ". " + str(q["prompt"]))
@@ -331,12 +398,15 @@ class CourseChapter:
             result.append({"section_id": "S_" + str(part["id"]), "heading": part["title"], "text": "\n\n".join(lines)})
         result.append({"section_id": "S_KNOWLEDGE", "heading": "Tester ses connaissances", "text":
             "\n".join(str(questions[q]["number"]) + ". " + str(questions[q]["prompt"]) for q in cast(tuple[str, ...], self.data["knowledge_check"]))})
-        transfer = object_data(self.data["transfer"])
-        result.append({"section_id": "S_TRANSFER", "heading": transfer["title"], "text":
-            "\n\n".join([str(documents[d]["text"]) for d in cast(tuple[str, ...], transfer["document_ids"])] +
-                [str(questions[q]["number"]) + ". " + str(questions[q]["prompt"]) for q in cast(tuple[str, ...], transfer["question_ids"])])})
+        activities = transfer_activities(self.data["transfer"])
+        for index, transfer in enumerate(activities, 1):
+            paragraphs = [str(documents[d]["text"]) for d in cast(tuple[str, ...], transfer["document_ids"])]
+            paragraphs.extend(str(questions[q]["number"]) + ". " + str(questions[q]["prompt"])
+                              for q in cast(tuple[str, ...], transfer["question_ids"]))
+            result.append({"section_id": "S_TRANSFER" if len(activities) == 1 else f"S_ACTIVITY_{index}",
+                           "heading": transfer["title"], "text": "\n\n".join(paragraphs)})
         result.append({"section_id": "S_SYNTHESIS", "heading": "À retenir", "text": self.data["synthesis"]})
-        if "assembly" in self.data:
+        if "assembly" in self.data or len(activities) == 2:
             synthesis = result.pop()
-            result.insert(len(result)-2, synthesis)
+            result.insert(len(result)-1-len(activities), synthesis)
         return result

@@ -51,8 +51,18 @@ class OpenAITransportError(RuntimeError):
 
     code: OpenAITransportErrorCode
 
-    def __init__(self, code: OpenAITransportErrorCode) -> None:
+    def __init__(self, code: OpenAITransportErrorCode, *, diagnostic: dict[str, str | int] | None = None) -> None:
+        import re
+
         self.code = code
+        self.diagnostic: dict[str, str | int] = {}
+        for name, value in (diagnostic or {}).items():
+            if name == 'http_status' and type(value) is int and 100 <= value <= 599:
+                self.diagnostic[name] = value
+            elif name in {'code', 'type', 'param', 'request_id'} and isinstance(value, str):
+                pattern = r'(?:req_[A-Za-z0-9_-]{1,100}|[0-9a-fA-F-]{36})' if name == 'request_id' else r'[A-Za-z0-9_.\[\]-]{1,160}'
+                if 'sk-' not in value.lower() and re.fullmatch(pattern, value):
+                    self.diagnostic[name] = value
         super().__init__(code.value)
 
 

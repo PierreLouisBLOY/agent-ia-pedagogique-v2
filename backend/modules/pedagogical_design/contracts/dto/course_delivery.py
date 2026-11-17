@@ -41,14 +41,23 @@ def validate_course_delivery(context: P0Context, chapter_data: object, reference
             raise ValueError("P0_UNREQUESTED_RICH_COURSE")
         return
     context.require_institutional_dispatch()
+    from backend.modules.pedagogical_context.contracts.dto.real_course_thread import (
+        REAL_CHAPTER,
+        thread_from_context,
+        validate_real_course,
+    )
+
+    thread = thread_from_context(context.data)
     if not isinstance(chapter_data, Mapping):
         raise ValueError("P0_RICH_COURSE_REQUIRED")
     chapter = CourseChapter(object_data(chapter_data))
-    expected = (COURSE_NOTION_LINEAGE_CONTRACT if context.data["contract_id"] == P0_NOTION_COURSE_CONTEXT_CONTRACT
+    expected = (REAL_CHAPTER if thread is not None else COURSE_NOTION_LINEAGE_CONTRACT if context.data["contract_id"] == P0_NOTION_COURSE_CONTEXT_CONTRACT
                 else COURSE_LINEAGE_CONTRACT)
     if chapter.data["contract_id"] != expected:
         raise ValueError("P0_RICH_COURSE_CONTRACT")
     chapter.bind_context(context)
+    if thread is not None:
+        validate_real_course(thread, chapter.data, references)
     evidence_ids = {str(row["evidence_id"]) for row in items(references, 8)}
     for doc in items(chapter.data["documents"]):
         provenance = object_data(doc["provenance"])

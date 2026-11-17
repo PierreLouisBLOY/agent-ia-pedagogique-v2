@@ -106,6 +106,14 @@ class P0Context:
             resolution = data["institutional_resolution"]
             if resolution is not None:
                 resolved = object_data(resolution)
+                if "course_thread" in resolved:
+                    from backend.modules.pedagogical_context.contracts.dto.real_course_thread import (
+                        RealCourseThread,
+                    )
+
+                    if data["contract_id"] != P0_NOTION_COURSE_CONTEXT_CONTRACT:
+                        raise ValueError("P0_REAL_ORGANIZATION_CHAPTER_REQUIRED")
+                    RealCourseThread(object_data(resolved["course_thread"]))
                 if resolved.get("contract_id") != ("BTS-RESOLUTION-1.0" if bts else "STMG-RESOLUTION-1.0") or resolved.get("selection_sha256") != fingerprint(selection):
                     raise ValueError("P0_INSTITUTIONAL_RESOLUTION_BINDING")
                 if resolved.get("status") not in {"RESOLVED_ADMITTED", "CONTENT_GAP"}:

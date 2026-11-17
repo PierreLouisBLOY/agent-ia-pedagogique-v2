@@ -21,7 +21,9 @@ def organization_capture_reader(descriptor: Mapping[str, object]) -> Organizatio
     if (
         not isinstance(data, dict)
         or not ((set(data) == {"schema", "records"} and data["schema"] == "LOCAL-ORGANIZATION-CAPTURES-1.0")
-                or (set(data) == {"schema", "records", "index"} and data["schema"] == "LOCAL-ORGANIZATION-CAPTURES-2.0"))
+                or (set(data) == {"schema", "records", "index"} and data["schema"] == "LOCAL-ORGANIZATION-CAPTURES-2.0")
+                or (set(data) == {"schema", "records", "index", "course_dossiers"}
+                    and data["schema"] == "LOCAL-ORGANIZATION-CAPTURES-3.0"))
     ):
         raise ValueError("P0_ORGANIZATION_CAPTURE_FIELDS")
     records = data["records"]
@@ -40,4 +42,22 @@ def organization_capture_reader(descriptor: Mapping[str, object]) -> Organizatio
         SearchOrganizations,
     )
     inbound.search_query = SearchOrganizations(captures)
+    if "course_dossiers" in data:
+        from backend.modules.pedagogical_context.contracts.dto.real_course_thread import (
+            RealCourseThread,
+        )
+        from backend.modules.pedagogical_design.contracts.dto.assessment_bundle import fingerprint
+        from backend.modules.resource_library.application.queries.read_course_threads import (
+            ReadCourseThreads,
+        )
+
+        dossiers = data["course_dossiers"]
+        if not isinstance(dossiers, list) or len(dossiers) > 16:
+            raise ValueError("P0_REAL_ORGANIZATION_CATALOGUE")
+        threads = tuple(RealCourseThread(row) for row in dossiers)
+        for thread in threads:
+            if not any(fingerprint(r.data) == fingerprint(thread.data["identity"])
+                       for r in captures.records):
+                raise ValueError("P0_REAL_ORGANIZATION_IDENTITY_NOT_IN_CATALOGUE")
+        inbound.course_threads = ReadCourseThreads(threads)
     return inbound

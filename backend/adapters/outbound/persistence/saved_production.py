@@ -147,6 +147,7 @@ class LocalSavedProductionStore:
                 and (bundle.data["contract_id"], chapter.get("contract_id")) in {
                     ("R6-P0-PRODUCTION-COURSE-2.0", "COURSE-CHAPTER-LINEAGE-3.0"),
                     ("R6-P0-PRODUCTION-COURSE-3.0", "COURSE-CHAPTER-LINEAGE-4.0"),
+                    ("R6-P0-PRODUCTION-COURSE-3.0", "COURSE-CHAPTER-REAL-5.0"),
                     ("R6-P0-PRODUCTION-LOCAL-CHAPTER-4.0", "COURSE-CHAPTER-ASSEMBLY-5.0"),
                 }
             )

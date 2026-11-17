@@ -95,6 +95,17 @@ def bind_course_provider_content(request: Mapping[str, object],
         raise ValueError("P0_CONTEXT_HASH")
     proposed = object_data(as_plain(content), RICH_CONTENT_FIELDS)
     chapter_content = object_data(proposed["course_chapter"], CHAPTER_CONTENT_FIELDS)
+    from backend.modules.pedagogical_context.contracts.dto.real_course_thread import (
+        REAL_CHAPTER,
+        thread_from_context,
+    )
+
+    thread = thread_from_context(context.data)
+    if thread is not None:
+        story = object_data(chapter_content["context"], {"organization_id", "title", "text"})
+        if story.pop("organization_id") != thread.organization_id or story["title"] != thread.label:
+            raise ValueError("COURSE_REAL_ORGANIZATION_CHANGED")
+        chapter_content["context"] = story
     for field in ("documents", "parts", "questions", "concepts", "teacher_answers"):
         for row in items(chapter_content[field], 60):
             if re.fullmatch(r"[A-Z][A-Z0-9_-]{0,39}", str(row.get("id"))) is None:
@@ -159,10 +170,11 @@ def bind_course_provider_content(request: Mapping[str, object],
         chapter_content["concepts"] = concepts
     elif any(row["notion"] not in topics for row in items(chapter_content["concepts"], 30)):
         raise ValueError("P0_RICH_COURSE_NOTION_UNKNOWN")
-    chapter = CourseChapter({"contract_id": COURSE_NOTION_LINEAGE_CONTRACT if notion_course else COURSE_LINEAGE_CONTRACT,
+    chapter = CourseChapter({"contract_id": REAL_CHAPTER if thread is not None else COURSE_NOTION_LINEAGE_CONTRACT if notion_course else COURSE_LINEAGE_CONTRACT,
         "chapter_number": int(chapter_number), "title": proposed["title"],
         "program_header": _header(context), "capabilities": capabilities, "notions": notions,
-        **chapter_content, "documents": documents})
+        **chapter_content, "documents": documents,
+        **({"organization_thread": thread.as_dict()} if thread is not None else {})})
     chapter.bind_context(context)
     from backend.modules.pedagogical_design.contracts.dto.course_delivery import (
         validate_course_delivery,

@@ -53,6 +53,8 @@ _MEDIA = {"index.html": "text/html; charset=utf-8",
           "saved-course-edit.js": "text/javascript; charset=utf-8",
           "normal-on.js": "text/javascript; charset=utf-8",
           "local-catalogue.js": "text/javascript; charset=utf-8",
+          "real-course.js": "text/javascript; charset=utf-8",
+          "documentary-library.js": "text/javascript; charset=utf-8",
           "styles.css": "text/css; charset=utf-8"}
 _CSP = "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; " \
        "base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
